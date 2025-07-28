@@ -1,0 +1,124 @@
+# Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
+# SPDX-License-Identifier: SUL-1.0
+
+import asyncio
+import logging
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
+
+from .request_context import RequestContext
+from .types import INTERSECTION, BasePadType
+
+if TYPE_CHECKING:
+    from core.node import Node
+
+
+class Pad(Protocol):
+    def get_id(self) -> str: ...
+    def set_id(self, id: str) -> None: ...
+    def get_group(self) -> str: ...
+    def get_editor_type(self) -> str: ...
+    def set_type_constraints(self, constraints: list[BasePadType] | None) -> None: ...
+    def get_type_constraints(self) -> list[BasePadType] | None: ...
+    def get_owner_node(self) -> "Node": ...
+
+
+@runtime_checkable
+class ProxyPad(Protocol):
+    def get_other(self) -> Pad: ...
+
+
+@runtime_checkable
+class SinkPad(Pad, Protocol):
+    def get_previous_pad(self) -> "SourcePad | None": ...
+    def set_previous_pad(self, pad: "SourcePad | None") -> None: ...
+    def _get_queue(self) -> asyncio.Queue["Item | None"]: ...
+
+    def disconnect(self) -> None:
+        prev_pad = self.get_previous_pad()
+        if prev_pad:
+            prev_pad.disconnect(self)
+
+    def __aiter__(self) -> "SinkPad":
+        return self
+
+    async def __anext__(self) -> "Item":
+        queue = self._get_queue()
+        item = await queue.get()
+        if item is None:
+            raise StopAsyncIteration
+        return item
+
+
+@runtime_checkable
+class SourcePad(Pad, Protocol):
+    def get_next_pads(self) -> list["SinkPad"]: ...
+    def set_next_pads(self, pads: list["SinkPad"]) -> None: ...
+
+    def push_item(self, value: Any, ctx: RequestContext) -> None:
+        for np in self.get_next_pads():
+            q = np._get_queue()
+            if q.qsize() > 1_000:
+                logging.warning(
+                    f"PropertySinkPad queue size exceeded 1000, skipping. {np.get_owner_node().id}:{np.get_id()}"
+                )
+                if ctx is not None:
+                    ctx.complete()
+            if isinstance(np, PropertyPad):
+                np.set_value(value)
+
+            new_ctx = RequestContext(
+                parent=ctx, timeout=ctx._timeout_s, originator=self.get_id()
+            )
+            item = Item(value=value, ctx=new_ctx)
+            q.put_nowait(item)
+
+    def connect(self, sink_pad: "SinkPad") -> None:
+        if not self.can_connect(sink_pad):
+            raise ValueError(
+                f"Cannot connect to this type of SinkPad: {self.get_owner_node().id}.{self.get_id()} -> {sink_pad.get_owner_node().id}.{sink_pad.get_id()}"
+            )
+        next_pads = self.get_next_pads()
+        next_pads.append(sink_pad)
+        self.set_next_pads(next_pads)
+        sink_pad.set_previous_pad(self)
+
+        if isinstance(self, PropertyPad):
+            v = self.get_value()
+            for np in next_pads:
+                if isinstance(np, PropertyPad):
+                    np.set_value(v)
+
+    def disconnect(self, sink_pad: "SinkPad") -> None:
+        next_pads = self.get_next_pads()
+        next_pads = [np for np in next_pads if np.get_id() != sink_pad.get_id()]
+        self.set_next_pads(next_pads)
+        sink_pad.set_previous_pad(None)
+
+    def can_connect(self, other: "Pad") -> bool:
+        if not isinstance(other, SinkPad):
+            return False
+
+        if other.get_previous_pad() is not None:
+            return False
+
+        intersection = INTERSECTION(
+            self.get_type_constraints(), other.get_type_constraints()
+        )
+
+        if intersection is not None and len(intersection) == 0:
+            return False
+
+        return True
+
+
+@runtime_checkable
+class PropertyPad(Pad, Protocol):
+    def get_value(self) -> Any: ...
+    def set_value(self, value: Any): ...
+
+
+@dataclass
+class Item:
+    value: Any
+    ctx: "RequestContext"
