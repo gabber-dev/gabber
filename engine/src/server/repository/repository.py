@@ -18,7 +18,8 @@ from uuid import uuid4
 
 
 class RepositoryServer:
-    def __init__(self, port: int, file_path: str = ".gabber/repository"):
+    def __init__(self, port: int):
+        file_path = os.environ["GABBER_REPOSITORY_DIR"]
         self.port = port
         self.file_path = file_path
         self.app = web.Application()

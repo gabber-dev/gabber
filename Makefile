@@ -7,7 +7,7 @@ editor:
 	cd engine && make editor
 
 repository:
-	cd engine && make repository
+	export GABBER_REPOSITORY_DIR=$(shell pwd)/.gabber && cd engine && make repository
 
 generate-ts:
 	engine/.venv/bin/python engine/src/main.py generate-editor-schema | json2ts -o frontend/generated/editor.ts && \
