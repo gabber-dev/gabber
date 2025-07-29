@@ -27,11 +27,6 @@ Request = Annotated[
 ]
 
 
-class SaveSubgraphResponse(BaseModel):
-    type: Literal["save_subgraph_response"] = "save_subgraph_response"
-    sub_graph: RepositorySubGraph
-
-
 class GetAppResponse(BaseModel):
     type: Literal["get_app_response"] = "get_app_response"
     app: RepositoryApp
@@ -47,7 +42,27 @@ class ListAppsResponse(BaseModel):
     apps: list[RepositoryApp]
 
 
+class GetSubgraphResponse(BaseModel):
+    type: Literal["get_subgraph_response"] = "get_subgraph_response"
+    sub_graph: RepositorySubGraph
+
+
+class SaveSubgraphResponse(BaseModel):
+    type: Literal["save_subgraph_response"] = "save_subgraph_response"
+    sub_graph: RepositorySubGraph
+
+
+class ListSubgraphsResponse(BaseModel):
+    type: Literal["list_subgraphs_response"] = "list_subgraphs_response"
+    sub_graphs: list[RepositorySubGraph]
+
+
 Response = Annotated[
-    SaveSubgraphResponse | SaveAppResponse | ListAppsResponse | GetAppResponse,
+    SaveSubgraphResponse
+    | SaveAppResponse
+    | ListAppsResponse
+    | GetAppResponse
+    | GetSubgraphResponse
+    | ListSubgraphsResponse,
     Field(discriminator="type", description="Response from the graph editor"),
 ]

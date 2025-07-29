@@ -5,7 +5,11 @@
 
 "use client";
 
-import { RepositoryApp, RepositorySubGraph, SaveAppRequest } from "@/generated/repository";
+import {
+  RepositoryApp,
+  RepositorySubGraph,
+  SaveAppRequest,
+} from "@/generated/repository";
 import React, { createContext, useCallback, useContext, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -23,9 +27,9 @@ type RepositoryContextType = {
   refreshSubGraphs: () => Promise<void>;
 };
 
-export const RepositoryContext = createContext<RepositoryContextType | undefined>(
-  undefined,
-);
+export const RepositoryContext = createContext<
+  RepositoryContextType | undefined
+>(undefined);
 
 type Props = {
   children: React.ReactNode;
@@ -40,11 +44,21 @@ type Props = {
   deleteSubGraphImpl: (subGraphId: string) => Promise<void>;
 };
 
-export function RepositoryProvider({ children, initialApps, initialSubGraphs, listAppsImpl, saveAppImpl, deleteAppImpl, listSubgraphsImpl, deleteSubGraphImpl }: Props) {
+export function RepositoryProvider({
+  children,
+  initialApps,
+  initialSubGraphs,
+  listAppsImpl,
+  saveAppImpl,
+  deleteAppImpl,
+  listSubgraphsImpl,
+  deleteSubGraphImpl,
+}: Props) {
   const [apps, setApps] = useState<RepositoryApp[]>(initialApps);
   const [appsLoading, setAppsLoading] = useState<boolean>(true);
 
-  const [subGraphs, setSubGraphs] = useState<RepositorySubGraph[]>(initialSubGraphs);
+  const [subGraphs, setSubGraphs] =
+    useState<RepositorySubGraph[]>(initialSubGraphs);
   const [subGraphsLoading, setSubGraphsLoading] = useState<boolean>(true);
 
   const refreshApps = useCallback(async () => {
@@ -102,7 +116,9 @@ export function RepositoryProvider({ children, initialApps, initialSubGraphs, li
     }
   }, [subGraphsLoading, listSubgraphsImpl]);
 
-  const saveSubGraph = async (params: SaveAppRequest): Promise<RepositorySubGraph> => {
+  const saveSubGraph = async (
+    params: SaveAppRequest,
+  ): Promise<RepositorySubGraph> => {
     try {
       const resp = await saveAppImpl(params);
       await refreshSubGraphs();
@@ -129,7 +145,18 @@ export function RepositoryProvider({ children, initialApps, initialSubGraphs, li
 
   return (
     <RepositoryContext.Provider
-      value={{ apps, appsLoading, refreshApps, saveApp: saveApp, deleteApp, subGraphs, subGraphsLoading, refreshSubGraphs, saveSubGraph, deleteSubGraph }}
+      value={{
+        apps,
+        appsLoading,
+        refreshApps,
+        saveApp: saveApp,
+        deleteApp,
+        subGraphs,
+        subGraphsLoading,
+        refreshSubGraphs,
+        saveSubGraph,
+        deleteSubGraph,
+      }}
     >
       {children}
     </RepositoryContext.Provider>

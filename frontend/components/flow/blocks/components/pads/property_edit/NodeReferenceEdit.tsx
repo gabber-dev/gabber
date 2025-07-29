@@ -4,7 +4,7 @@
  */
 
 import { usePropertyPad } from "../hooks/usePropertyPad";
-import { useEditor } from "@/app/(authenticated)/project/[project_id]/apps/(providers)/useEditor";
+import { useEditor } from "@/hooks/useEditor";
 import ReactModal from "react-modal";
 import { PropertyEditProps } from "./PropertyEdit";
 

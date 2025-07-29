@@ -2,17 +2,20 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
+import datetime
 import logging
 import os
+import json
 
 import aiofiles
 import aiohttp
 import aiohttp.web
-import messages
-import models
+from . import messages
+from . import models
 from aiohttp import web
+import aiohttp_cors
 
-from utils import short_uuid
+from uuid import uuid4
 
 
 class RepositoryServer:
@@ -21,6 +24,19 @@ class RepositoryServer:
         self.file_path = file_path
         self.app = web.Application()
         self.setup_routes()
+        cors = aiohttp_cors.setup(
+            self.app,
+            defaults={
+                "*": aiohttp_cors.ResourceOptions(
+                    allow_credentials=True,
+                    expose_headers="*",
+                    allow_headers="*",
+                    allow_methods="*",
+                )
+            },
+        )
+        for route in list(self.app.router.routes()):
+            cors.add(route)
 
     def setup_routes(self):
         self.app.router.add_get("/app/list", self.list_apps)
@@ -31,6 +47,9 @@ class RepositoryServer:
         self.app.router.add_post("/sub_graph", self.save_subgraph)
         self.app.router.add_delete("/sub_graph/{id}", self.delete_subgraph)
 
+    async def ensure_dir(self, dir_path: str):
+        await asyncio.to_thread(os.makedirs, dir_path, exist_ok=True)
+
     async def get_app(self, request: aiohttp.web.Request):
         app_id = request.match_info.get("id")
         if not app_id:
@@ -38,17 +57,29 @@ class RepositoryServer:
                 {"status": "error", "message": "Missing app ID"}, status=400
             )
 
-        async with aiofiles.open(
-            f"{self.file_path}/app/{app_id}.json", mode="r"
-        ) as json_file:
-            json_content = await json_file.read()
-        obj = models.RepositoryApp.model_validate_json(json_content)
-        resp = messages.GetAppResponse(app=obj)
-        return aiohttp.web.json_response(resp.model_dump())
+        try:
+            async with aiofiles.open(
+                f"{self.file_path}/app/{app_id}.json", mode="r"
+            ) as json_file:
+                json_content = await json_file.read()
+            obj = models.RepositoryApp.model_validate_json(json_content)
+            resp = messages.GetAppResponse(app=obj)
+            return aiohttp.web.Response(
+                body=resp.model_dump_json(), content_type="application/json"
+            )
+        except FileNotFoundError:
+            return aiohttp.web.json_response(
+                {"status": "error", "message": "App not found"}, status=404
+            )
 
     async def list_apps(self, request: aiohttp.web.Request):
         try:
-            files = await asyncio.to_thread(os.listdir, f"{self.file_path}/app")
+            app_dir = f"{self.file_path}/app"
+            try:
+                files = await asyncio.to_thread(os.listdir, app_dir)
+            except FileNotFoundError:
+                await self.ensure_dir(app_dir)
+                files = []
             apps = []
             for file in files:
                 if file.endswith(".json"):
@@ -62,7 +93,9 @@ class RepositoryServer:
                 apps, key=lambda x: x.created_at, reverse=True
             )
             response = messages.ListAppsResponse(apps=sorted_by_created_at)
-            return aiohttp.web.json_response(response.model_dump())
+            return aiohttp.web.Response(
+                body=response.model_dump_json(), content_type="application/json"
+            )
         except Exception as e:
             logging.error(f"Error listing apps: {e}")
             return aiohttp.web.json_response(
@@ -72,18 +105,48 @@ class RepositoryServer:
     async def save_app(self, request: aiohttp.web.Request):
         try:
             data = await request.json()
-            app = messages.SaveAppRequest.model_validate(data)
-            if not app.id:
-                app.id = short_uuid()
-            save_path = f"{self.file_path}/app/{app.id}.json"
+            req = messages.SaveAppRequest.model_validate(data)
+            app: models.RepositoryApp | None = None
+            if req.id:
+                try:
+                    async with aiofiles.open(
+                        f"{self.file_path}/app/{req.id}.json", mode="r"
+                    ) as f:
+                        content = await f.read()
+                        app = models.RepositoryApp.model_validate_json(content)
+                except FileNotFoundError:
+                    pass
+            else:
+                req.id = str(uuid4())
+                app = models.RepositoryApp(
+                    id=req.id,
+                    name=req.name,
+                    created_at=datetime.datetime.now(),
+                    updated_at=datetime.datetime.now(),
+                    graph=req.graph,
+                )
+
+            if not app:
+                return aiohttp.web.json_response(
+                    {"status": "error", "message": "App not found"}, status=404
+                )
+
+            app.updated_at = datetime.datetime.now()
+            app.name = req.name
+            app.graph = req.graph
+            save_path = f"{self.file_path}/app/{req.id}.json"
+
+            await self.ensure_dir(f"{self.file_path}/app")
             async with aiofiles.open(save_path, mode="w") as f:
                 await f.write(app.model_dump_json())
             response = messages.SaveAppResponse(
                 app=models.RepositoryApp.model_validate(app)
             )
-            return aiohttp.web.json_response(response.model_dump())
+            return aiohttp.web.Response(
+                body=response.model_dump_json(), content_type="application/json"
+            )
         except Exception as e:
-            logging.error(f"Error saving app: {e}")
+            logging.error(f"Error saving app: {e}", exc_info=True)
             return aiohttp.web.json_response(
                 {"status": "error", "message": str(e)}, status=400
             )
@@ -110,7 +173,12 @@ class RepositoryServer:
 
     async def list_subgraphs(self, request: aiohttp.web.Request):
         try:
-            files = await asyncio.to_thread(os.listdir, f"{self.file_path}/sub_graph")
+            sub_graph_dir = f"{self.file_path}/sub_graph"
+            try:
+                files = await asyncio.to_thread(os.listdir, sub_graph_dir)
+            except FileNotFoundError:
+                await self.ensure_dir(sub_graph_dir)
+                files = []
             subgraphs = []
             for file in files:
                 if file.endswith(".json"):
@@ -126,7 +194,9 @@ class RepositoryServer:
                 subgraphs, key=lambda x: x.created_at, reverse=True
             )
             response = messages.ListAppsResponse(apps=sorted_by_created_at)
-            return aiohttp.web.json_response(response.model_dump())
+            return aiohttp.web.Response(
+                body=response.model_dump_json(), content_type="application/json"
+            )
         except Exception as e:
             logging.error(f"Error listing subgraphs: {e}")
             return aiohttp.web.json_response(
@@ -136,15 +206,50 @@ class RepositoryServer:
     async def save_subgraph(self, request: aiohttp.web.Request):
         try:
             data = await request.json()
-            subgraph = messages.SaveSubgraphRequest.model_validate(data)
-            if not subgraph.id:
-                subgraph.id = short_uuid()
-            save_path = f"{self.file_path}/sub_graph/{subgraph.id}.json"
+            req = messages.SaveSubgraphRequest.model_validate(data)
+            subgraph: models.RepositorySubGraph | None = None
+            if req.id:
+                try:
+                    async with aiofiles.open(
+                        f"{self.file_path}/sub_graph/{req.id}.json", mode="r"
+                    ) as f:
+                        content = await f.read()
+                        subgraph = models.RepositorySubGraph.model_validate_json(
+                            content
+                        )
+                except FileNotFoundError:
+                    pass
+            else:
+                req.id = str(uuid4())
+                subgraph = models.RepositorySubGraph(
+                    id=req.id,
+                    name=req.name,
+                    created_at=datetime.datetime.now(),
+                    updated_at=datetime.datetime.now(),
+                    graph=req.graph,
+                )
+
+            if not subgraph:
+                return aiohttp.web.json_response(
+                    {"status": "error", "message": "Subgraph not found"}, status=404
+                )
+
+            subgraph.updated_at = datetime.datetime.now()
+            subgraph.name = req.name
+            subgraph.graph = req.graph
+            save_path = f"{self.file_path}/sub_graph/{req.id}.json"
+
+            await self.ensure_dir(f"{self.file_path}/sub_graph")
             async with aiofiles.open(save_path, mode="w") as f:
                 await f.write(subgraph.model_dump_json())
-            return aiohttp.web.json_response({"status": "success", "id": subgraph.id})
+            response = messages.SaveSubgraphResponse(
+                sub_graph=models.RepositorySubGraph.model_validate(subgraph)
+            )
+            return aiohttp.web.Response(
+                body=response.model_dump_json(), content_type="application/json"
+            )
         except Exception as e:
-            logging.error(f"Error saving subgraph: {e}")
+            logging.error(f"Error saving subgraph: {e}", exc_info=True)
             return aiohttp.web.json_response(
                 {"status": "error", "message": str(e)}, status=400
             )

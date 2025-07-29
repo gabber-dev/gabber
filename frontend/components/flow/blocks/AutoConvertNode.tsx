@@ -6,7 +6,7 @@
 import { useState, useMemo } from "react";
 import { Handle, Position, useNodeId } from "@xyflow/react";
 import { ArrowRightIcon } from "@heroicons/react/24/outline";
-import { useEditor } from "../../../(providers)/useEditor";
+import { useEditor } from "@/hooks/useEditor";
 import {
   getDataTypeColor,
   getPrimaryDataType,

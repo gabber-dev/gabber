@@ -4,7 +4,7 @@
  */
 
 import { BaseEdge, Node, Position } from "@xyflow/react";
-import { useEditor } from "../../../(providers)/useEditor";
+import { useEditor } from "@/hooks/useEditor";
 
 const HANDLE_OFFSET = 20;
 const BOTTOM_OFFSET = 80;

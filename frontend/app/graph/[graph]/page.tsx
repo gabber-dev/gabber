@@ -3,17 +3,15 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { getAppApi } from "@/lib/api";
+import { getSubgraph } from "@/lib/repository";
 import { ClientPage } from "./client_page";
 
 export default async function Page({
   params,
 }: {
-  params: Promise<{ project_id: string; graph: string }>;
+  params: Promise<{ graph: string }>;
 }) {
-  const { project_id, graph } = await params;
-  const appApi = await getAppApi(project_id);
-  const sgResp = await appApi.getSubGraph(graph);
-  const sg = sgResp.data;
-  return <ClientPage initialSubGraph={sg} />;
+  const { graph } = await params;
+  const subgraph = await getSubgraph(graph);
+  return <ClientPage initialSubGraph={subgraph} />;
 }

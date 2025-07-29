@@ -3,14 +3,13 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { NodeEditorRepresentation } from "@/app/(authenticated)/project/[project_id]/apps/(generated)/editor_server";
-import { useMemo, useState } from "react";
+import { NodeEditorRepresentation } from "@/generated/editor";
+import { useMemo } from "react";
 import { StatelessPad } from "./components/pads/StatelessPad";
 import { PropertyPad } from "./components/pads/PropertyPad";
 import { CubeIcon } from "@heroicons/react/24/outline";
 import { Publish } from "./Publish";
 import { Output } from "./Output";
-import { Handle, Position, useNodeId } from "@xyflow/react";
 import { AutoConvertNode } from "./AutoConvertNode";
 import { CommentNode } from "./CommentNode";
 import { SelfPad } from "./components/pads/SelfPad";

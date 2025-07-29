@@ -7,11 +7,12 @@ import logging
 
 import aiohttp
 import aiohttp.web
-import click
+import aiohttp_cors
 from aiohttp import web
+from pydantic import TypeAdapter
+
 from core import graph, secret
 from core.editor import messages
-from pydantic import TypeAdapter
 
 
 class GraphEditorServer:
@@ -26,7 +27,20 @@ class GraphEditorServer:
         self.graph_library = graph_library
         self.secret_provider = secret_provider
         self.app = web.Application()
+
         self.setup_routes()
+        cors = aiohttp_cors.setup(
+            self.app,
+            defaults={
+                "*": aiohttp_cors.ResourceOptions(
+                    allow_credentials=True,
+                    expose_headers="*",
+                    allow_headers="*",
+                )
+            },
+        )
+        for route in list(self.app.router.routes()):
+            cors.add(route)
 
     def setup_routes(self):
         self.app.router.add_get("/ws", self.websocket_handler)

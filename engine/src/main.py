@@ -3,12 +3,8 @@
 
 import asyncio
 import json
-import logging
-import os
-import time
 
 import click
-import dotenv
 from core.editor import messages
 from pydantic import TypeAdapter
 from server import (
@@ -32,7 +28,11 @@ def start(port):
     """Start the graph editor server"""
 
     async def run_server():
-        server = GraphEditorServer(port=port)
+        server = GraphEditorServer(
+            port=port,
+            graph_library=DefaultGraphLibrary(),
+            secret_provider=DefaultSecretProvider(),
+        )
         await server.run()
 
     asyncio.run(run_server())
@@ -47,6 +47,17 @@ def engine():
         livekit_api_secret="secret",
         livekit_url="ws://localhost:7880",
     )
+
+
+@cli.command("repository")
+def repository_server():
+    """Start the repository server"""
+
+    async def run_repository():
+        server = repository.RepositoryServer(port=8001)
+        await server.run()
+
+    asyncio.run(run_repository())
 
 
 @cli.command("generate-editor-schema")

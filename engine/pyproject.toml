@@ -33,4 +33,5 @@ dependencies = [
     "msgpack~=1.1.1",
     "python-dotenv~=1.1.1",
     "aiofiles~=24.1.0",
+    "aiohttp-cors~=0.8.1",
 ]

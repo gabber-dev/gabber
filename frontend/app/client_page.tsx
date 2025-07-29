@@ -4,13 +4,18 @@
  */
 
 "use client";
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 
 import { RepositoryProvider } from "@/hooks/useRepository";
-import { RepositoryApp, RepositorySubGraph } from "@/generated/repository";
+import {
+  GraphEditorRepresentation,
+  RepositoryApp,
+  RepositorySubGraph,
+} from "@/generated/repository";
 import { AppList } from "@/components/home/AppList";
 import { CreateAppModal } from "@/components/home/CreateAppModal";
-import { listApps, listSubgraphs } from "@/lib/repository";
+import { listApps, listSubgraphs, saveApp } from "@/lib/repository";
+import ReactModal from "react-modal";
 
 type Props = {
   initialApps: RepositoryApp[];
@@ -22,8 +27,8 @@ export function ClientPage({ initialApps, initialSubGraphs }: Props) {
     return listApps();
   }, []);
   const saveAppImpl = useCallback(
-    async (params: { name: string; graph: any }) => {
-      return {} as RepositoryApp;
+    async (params: { name: string; graph: GraphEditorRepresentation }) => {
+      return await saveApp(params);
     },
     [],
   );
@@ -44,9 +49,9 @@ export function ClientPage({ initialApps, initialSubGraphs }: Props) {
       listSubgraphsImpl={listSubgraphsImpl}
       deleteSubGraphImpl={deleteSubGraphImpl}
     >
-      <AppList />
-      {/* Modal */}
-      <CreateAppModal />
+      <div className="h-full w-full p-2">
+        <AppList />
+      </div>
     </RepositoryProvider>
   );
 }

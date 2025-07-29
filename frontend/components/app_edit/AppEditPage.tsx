@@ -3,37 +3,25 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { useState, useCallback, useEffect } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ConsolePanel } from "./ConsolePanel";
 import { FlowEdit } from "../flow/FlowEdit";
 import { BottomBar } from "./BottomBar";
 import { useEditor } from "@/hooks/useEditor";
 
 export function AppEditPage() {
-  return (
-    <ConsoleProvider>
-      <AppEditPageInner />
-    </ConsoleProvider>
-  );
+  return <AppEditPageInner />;
 }
 
 function AppEditPageInner() {
-  const [isConsoleOpen, setIsConsoleOpen] = useState(false);
   const { unsavedChanges } = useEditor();
   const router = useRouter();
-
-  const handleConsoleToggle = useCallback(() => {
-    setIsConsoleOpen(!isConsoleOpen);
-  }, [isConsoleOpen]);
 
   // Add beforeunload event listener to warn about unsaved changes
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (unsavedChanges) {
         e.preventDefault();
-        e.returnValue =
-          "You have unsaved changes. Are you sure you want to leave?";
         return "You have unsaved changes. Are you sure you want to leave?";
       }
     };
@@ -89,16 +77,8 @@ function AppEditPageInner() {
       </div>
 
       <div className="absolute bottom-0 left-0 right-0 h-16">
-        <BottomBar
-          isConsoleOpen={isConsoleOpen}
-          onConsoleToggle={handleConsoleToggle}
-        />
+        <BottomBar />
       </div>
-
-      <ConsolePanel
-        isOpen={isConsoleOpen}
-        onClose={() => setIsConsoleOpen(false)}
-      />
     </div>
   );
 }

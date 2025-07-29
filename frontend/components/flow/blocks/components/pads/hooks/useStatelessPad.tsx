@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { PadEditorRepresentation } from "@/app/(authenticated)/project/[project_id]/apps/(generated)/editor_server";
-import { useEditor } from "@/app/(authenticated)/project/[project_id]/apps/(providers)/useEditor";
+import { PadEditorRepresentation } from "@/generated/editor";
+import { useEditor } from "@/hooks/useEditor";
 import { useNodeId } from "@xyflow/react";
 import { useMemo } from "react";
 

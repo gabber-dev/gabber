@@ -1,0 +1,281 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=VT323:wght@400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bangers&display=swap');
+
+@import "tailwindcss";
+@plugin "daisyui";
+
+@theme {
+    --font-primary: "DM Sans";
+    --font-secondary: "IBM Plex Sans";
+    --font-inter: "Inter", "sans-serif";
+    --font-vt323: "VT323", "monospace";
+    --font-bangers: "Bangers", "cursive";
+}
+
+@plugin "daisyui/theme" {
+    name: "gabber-arcade";
+    default: true;
+    prefersdark: true;
+    color-scheme: "dark";
+
+    /* Clean Arcade Color Scheme - Warm Yellow Focus */
+    --color-base-100: #0A0A0A;
+    /* Deep Black */
+    --color-base-200: #1a1a1a;
+    /* Dark Gray */
+    --color-base-300: #2a2a2a;
+    /* Medium Gray */
+    --color-base-content: #FCD34D;
+    /* Warm Yellow - Primary Text */
+
+    /* Primary - Warm Yellow (Main Color) */
+    --color-primary: #FCD34D;
+    /* Warm Yellow */
+    --color-primary-content: #0A0A0A;
+
+    /* Secondary - Dark Blue Background (From Screenshots) */
+    --color-secondary: #1e3a8a;
+    /* Dark Blue Background */
+    --color-secondary-content: #FCD34D;
+
+    /* Accent - Orange-400 (Brown Orange) */
+    --color-accent: #FB923C;
+    /* Orange-400 - Brown Orange */
+    --color-accent-content: #FFFFFF;
+
+    /* Neutral - Grays */
+    --color-neutral: #374151;
+    --color-neutral-content: #FCD34D;
+
+    /* UI Colors - Muted */
+    --color-info: #60A5FA;
+    /* Softer Blue */
+    --color-info-content: #0A0A0A;
+    --color-success: #34D399;
+    /* Softer Green */
+    --color-success-content: #0A0A0A;
+    --color-warning: #FBBF24;
+    /* Warm Yellow Variant */
+    --color-warning-content: #0A0A0A;
+    --color-error: #F87171;
+    /* Softer Red */
+    --color-error-content: #0A0A0A;
+
+    --radius-selector: 0.375rem;
+    --radius-field: 0.375rem;
+    --radius-box: 0.375rem;
+    --size-selector: 0.25rem;
+    --size-field: 0.25rem;
+    --border: 2px;
+    --depth: 1;
+    --noise: 0;
+}
+
+
+
+
+:root {
+    color-scheme: dark;
+}
+
+.dark {
+    color-scheme: dark;
+}
+
+/* Additional customizations for dark mode */
+.dark .bg-primary\/10 {
+    background-color: rgba(30, 64, 175, 0.1) !important;
+}
+
+.dark .checkbox-primary {
+    border-color: #1E40AF !important;
+    background-color: transparent !important;
+}
+
+.dark .checkbox-primary:checked {
+    border-color: #1E40AF !important;
+    background-color: #1E40AF !important;
+}
+
+body {
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    background-color: #0A0A0A;
+    color: #FCD34D;
+}
+
+/* Clean Arcade Button Effects */
+@layer utilities {
+    .arcade-button {
+        @apply font-vt323 text-lg uppercase tracking-wider;
+        @apply bg-primary text-base-100 border-2 border-primary;
+        @apply relative transition-all duration-150 ease-in-out;
+        @apply shadow-[3px_3px_0px_0px] shadow-primary/80;
+        position: relative;
+    }
+
+    .arcade-button:hover {
+        @apply -translate-x-1 -translate-y-1;
+        @apply shadow-[4px_4px_0px_0px] shadow-primary;
+    }
+
+    .arcade-button:active {
+        @apply translate-x-1 translate-y-1;
+        @apply shadow-[1px_1px_0px_0px] shadow-primary/60;
+    }
+
+    .arcade-button-secondary {
+        @apply font-vt323 text-lg uppercase tracking-wider;
+        @apply bg-base-200 text-primary border-2 border-primary;
+        @apply relative transition-all duration-150 ease-in-out;
+        @apply shadow-[3px_3px_0px_0px] shadow-primary/60;
+    }
+
+    .arcade-button-secondary:hover {
+        @apply -translate-x-1 -translate-y-1;
+        @apply shadow-[4px_4px_0px_0px] shadow-primary/80;
+        @apply bg-base-300;
+    }
+
+    .arcade-button-secondary:active {
+        @apply translate-x-1 translate-y-1;
+        @apply shadow-[1px_1px_0px_0px] shadow-primary/40;
+    }
+
+    .arcade-button-accent {
+        @apply font-vt323 text-lg uppercase tracking-wider;
+        @apply bg-accent text-white border-2 border-primary;
+        @apply relative transition-all duration-150 ease-in-out;
+        @apply shadow-[3px_3px_0px_0px] shadow-primary/80;
+    }
+
+    .arcade-button-accent:hover {
+        @apply -translate-x-1 -translate-y-1;
+        @apply shadow-[4px_4px_0px_0px] shadow-primary;
+    }
+
+    .arcade-button-accent:active {
+        @apply translate-x-1 translate-y-1;
+        @apply shadow-[1px_1px_0px_0px] shadow-primary/60;
+    }
+
+    /* Subtle Ambient Movement */
+    .ambient-float {
+        animation: float 8s ease-in-out infinite;
+    }
+
+    .ambient-float-delay {
+        animation: float 8s ease-in-out infinite 3s;
+    }
+
+    .ambient-pulse {
+        animation: pulse-glow 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+
+        0%,
+        100% {
+            transform: translateY(0px);
+        }
+
+        50% {
+            transform: translateY(-4px);
+        }
+    }
+
+    @keyframes pulse-glow {
+
+        0%,
+        100% {
+            box-shadow: 0 0 8px rgba(252, 211, 77, 0.2);
+        }
+
+        50% {
+            box-shadow: 0 0 12px rgba(252, 211, 77, 0.4);
+        }
+    }
+
+    /* Flow Builder Specific */
+    .flow-edge-right-angle {
+        stroke: #FCD34D;
+        stroke-width: 2px;
+    }
+
+    /* ReactFlow Drag Handle */
+    .react-flow__node {
+        cursor: default;
+        outline: none !important;
+        border: none !important;
+    }
+
+    .react-flow__node .drag-handle {
+        cursor: grab;
+    }
+
+    .react-flow__node .drag-handle:active {
+        cursor: grabbing;
+    }
+
+    /* Remove React Flow default outlines */
+    .react-flow__node:focus {
+        outline: none !important;
+    }
+
+    .react-flow__node:focus-visible {
+        outline: none !important;
+    }
+
+    /* Custom selection styling - thin white border with rounded corners */
+    .react-flow__node.selected {
+        outline: none !important;
+        border: 2px solid hsl(var(--p)) !important;
+        border-radius: 0.5rem !important;
+    }
+
+    /* Typography Classes */
+    .font-vt323 {
+        font-family: var(--font-vt323);
+    }
+
+    .font-bangers {
+        font-family: var(--font-bangers);
+    }
+
+    /* Icon placeholder styles until custom icons are added */
+    .icon-placeholder {
+        @apply w-6 h-6 bg-primary/20 border border-primary rounded;
+        @apply flex items-center justify-center text-primary text-xs font-vt323;
+    }
+}
+
+.react-flow__node.ambient-float {
+    animation: float 8s ease-in-out infinite;
+}
+
+.react-flow__node.selected.ambient-float {
+    animation: none !important;
+}
+
+.pad-handle-connected {
+    border: 2px solid white !important;
+    border-radius: 9999px !important;
+    width: 18px !important;
+    height: 18px !important;
+    opacity: 0.8;
+    background: #18181b;
+    box-sizing: border-box !important;
+}
+
+.pad-handle-unconnected {
+    border: none !important;
+    border-radius: 9999px !important;
+    width: 18px !important;
+    height: 18px !important;
+    background: #18181b;
+    box-sizing: border-box !important;
+}

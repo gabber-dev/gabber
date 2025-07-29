@@ -3,16 +3,10 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { ChevronUpIcon } from "@heroicons/react/24/outline";
 import { useEditor } from "@/hooks/useEditor";
 import { DebugControls } from "../PlayButton";
 
-interface BottomBarProps {
-  isConsoleOpen: boolean;
-  onConsoleToggle: () => void;
-}
-
-export function BottomBar({ isConsoleOpen, onConsoleToggle }: BottomBarProps) {
+export function BottomBar() {
   const { unsavedChanges, saveChanges, saving } = useEditor();
 
   return (

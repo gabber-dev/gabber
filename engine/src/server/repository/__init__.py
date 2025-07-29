@@ -5,4 +5,4 @@ from . import models
 from . import messages
 from .repository import RepositoryServer
 
-__all__ = ["models", "RepositoryServer"]
+__all__ = ["models", "messages", "RepositoryServer"]

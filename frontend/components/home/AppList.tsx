@@ -5,10 +5,13 @@
 
 import { useRepository } from "@/hooks/useRepository";
 import { ChevronDownIcon, TrashIcon } from "@heroicons/react/24/solid";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { AppListItem } from "./AppListItem";
+import ReactModal from "react-modal";
+import { CreateAppModal } from "./CreateAppModal";
 
 export function AppList() {
+  const [showModal, setShowModal] = useState(false);
   const [appsExpanded, setAppsExpanded] = useState(false);
   const { apps, deleteApp } = useRepository();
   const [selectedApps, setSelectedApps] = useState<Set<string>>(new Set());
@@ -25,23 +28,30 @@ export function AppList() {
     }
     setSelectedApps(new Set());
   };
-  const sortedApps = useMemo(() => {
-    return [...apps].sort(
-      (a, b) =>
-        new Date(b.created_at).valueOf() - new Date(a.created_at).valueOf(),
-    );
-  }, [apps]);
-  const hasMoreThanFourApps = sortedApps.length > 4;
-  const displayedApps = appsExpanded ? sortedApps : sortedApps.slice(0, 4);
+  const hasMoreThanFourApps = apps.length > 4;
+  const displayedApps = appsExpanded ? apps : apps.slice(0, 4);
 
   const appsContainerClass = appsExpanded
     ? "max-h-[14rem] overflow-y-auto"
     : "max-h-none";
   return (
-    <div className="relative max-w-7xl mx-auto space-y-6 pt-8">
+    <div className="relative space-y-6 w-full h-full">
+      <div ref={(el) => ReactModal.setAppElement(el as HTMLElement)} />
+      <ReactModal
+        isOpen={showModal}
+        onRequestClose={() => setShowModal(false)}
+        overlayClassName="fixed top-0 bottom-0 left-0 right-0 backdrop-blur-lg bg-blur flex justify-center items-center"
+        className="w-full max-w-lg bg-white dark:bg-neutral-800 rounded-lg shadow-lg outline-none"
+        shouldCloseOnOverlayClick={true}
+      >
+        <CreateAppModal />
+      </ReactModal>
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-bangers text-2xl tracking-wider">Your Apps</h2>
+          <button className="btn" onClick={() => setShowModal(true)}>
+            Create App
+          </button>
           {selectedApps.size > 0 && (
             <div className="flex gap-2">
               <button
@@ -91,7 +101,7 @@ export function AppList() {
                 ) : (
                   <>
                     <ChevronDownIcon className="h-4 w-4" />
-                    Show More ({sortedApps.length - 4} more)
+                    Show More ({apps.length - 4} more)
                   </>
                 )}
               </button>

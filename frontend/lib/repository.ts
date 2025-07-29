@@ -3,26 +3,42 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { RepositoryApp, SaveAppRequest } from "@/generated/repository";
+import {
+  GetAppResponse,
+  GetSubgraphResponse,
+  ListAppsResponse,
+  ListSubgraphsResponse,
+  RepositorySubGraph,
+  SaveAppRequest,
+  SaveAppResponse,
+} from "@/generated/repository";
 import axios from "axios";
 
 const BASE_URL = "http://localhost:8001";
-
-export async function listApps(): Promise<RepositoryApp[]> {
-  const resp = await axios.get(`${BASE_URL}/app/list`);
-  return resp.data as RepositoryApp[];
-}
-
-export async function getApp(appId: string): Promise<RepositoryApp> {
+export async function getApp(appId: string) {
   const resp = await axios.get(`${BASE_URL}/app/${appId}`);
-  return resp.data as RepositoryApp;
+  return (resp.data as GetAppResponse).app;
 }
 
-export async function listSubgraphs(): Promise<RepositoryApp[]> {
-  const resp = await axios.get(`${BASE_URL}/subgraph/list`);
-  return resp.data as RepositoryApp[];
+export async function listApps() {
+  const resp = await axios.get(`${BASE_URL}/app/list`);
+  return (resp.data as ListAppsResponse).apps;
 }
 
 export async function saveApp(req: SaveAppRequest) {
-  await axios.post(`${BASE_URL}/app/save`, req);
+  req.type = "save_app";
+  const resp = await axios.post(`${BASE_URL}/app`, req);
+  return (resp.data as SaveAppResponse).app;
+}
+
+export async function getSubgraph(
+  graphId: string,
+): Promise<RepositorySubGraph> {
+  const resp = await axios.get(`${BASE_URL}/sub_graph/${graphId}`);
+  return (resp.data as GetSubgraphResponse).sub_graph;
+}
+
+export async function listSubgraphs(): Promise<RepositorySubGraph[]> {
+  const resp = await axios.get(`${BASE_URL}/sub_graph/list`);
+  return (resp.data as ListSubgraphsResponse).sub_graphs;
 }
