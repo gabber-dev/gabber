@@ -35,7 +35,7 @@ export function AppList() {
     ? "max-h-[14rem] overflow-y-auto"
     : "max-h-none";
   return (
-    <div className="relative space-y-6 w-full h-full">
+    <div className="relative w-full">
       <div ref={(el) => ReactModal.setAppElement(el as HTMLElement)} />
       <ReactModal
         isOpen={showModal}
