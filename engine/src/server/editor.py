@@ -2,12 +2,10 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
-import json
 import logging
 
 import aiohttp
 import aiohttp.web
-import aiohttp_cors
 from aiohttp import web
 from pydantic import TypeAdapter
 
