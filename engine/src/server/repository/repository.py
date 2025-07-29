@@ -5,7 +5,6 @@ import asyncio
 import datetime
 import logging
 import os
-import json
 
 import aiofiles
 import aiohttp

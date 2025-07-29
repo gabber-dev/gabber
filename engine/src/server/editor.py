@@ -84,7 +84,6 @@ class GraphEditorSession:
             library_items=library_items,
         )
         async for message in self.ws:
-            print("NEIL here", message)
             if message.type == aiohttp.WSMsgType.TEXT:
                 try:
                     adapter = TypeAdapter(messages.Request)
