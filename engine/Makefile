@@ -10,11 +10,11 @@ engine:
 
 repository:
 	make install && \
-	.venv/bin/python src/main.py repository
+	.venv/bin/watchfiles ".venv/bin/python src/main.py repository" src
 
 editor:
 	make install && \
-	.venv/bin/python src/main.py editor
+	.venv/bin/watchfiles ".venv/bin/python src/main.py editor" src
 
 lint:
 	make install && \

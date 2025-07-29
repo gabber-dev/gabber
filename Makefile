@@ -35,3 +35,18 @@ add-license:
 
 livekit:
 	livekit-server --dev
+
+BLUE=\033[0;34m
+GREEN=\033[0;32m
+MAGENTA=\033[0;35m
+WHITE=\033[1;37m
+CYAN=\033[0;36m
+NC=\033[0m
+
+all:
+	{ make engine 2>&1 | while IFS= read -r line; do echo "${BLUE}[ENGINE] $${line}${NC}"; done } & \
+	{ make editor 2>&1 | while IFS= read -r line; do echo "${GREEN}[EDITOR] $${line}${NC}"; done } & \
+	{ make repository 2>&1 | while IFS= read -r line; do echo "${WHITE}[REPOSITORY] $${line}${NC}"; done } & \
+	{ make frontend 2>&1 | while IFS= read -r line; do echo "${MAGENTA}[FRONTEND] $${line}${NC}"; done } & \
+	{ make livekit 2>&1 | while IFS= read -r line; do echo "${CYAN}[LIVEKIT] $${line}${NC}"; done } & \
+	wait
