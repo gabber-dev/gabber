@@ -18,11 +18,11 @@ from server import (
 
 
 @click.group()
-def cli():
+def main_cli():
     logging.basicConfig(level=logging.INFO)
 
 
-@cli.command("editor")
+@main_cli.command("editor")
 @click.option("--port", default=8000, help="Port to run the server on")
 def start(port):
     """Start the graph editor server"""
@@ -38,18 +38,18 @@ def start(port):
     asyncio.run(run_server())
 
 
-@cli.command("engine")
-def engine():
+@main_cli.command("engine")
+@click.pass_context
+def engine(ctx: click.Context):
+    """Start the engine"""
     run_engine(
-        graph_library=DefaultGraphLibrary(),
-        secret_provider=DefaultSecretProvider(),
-        livekit_api_key="devKey",
+        livekit_api_key="devkey",
         livekit_api_secret="secret",
         livekit_url="ws://localhost:7880",
     )
 
 
-@cli.command("repository")
+@main_cli.command("repository")
 def repository_server():
     """Start the repository server"""
 
@@ -60,7 +60,7 @@ def repository_server():
     asyncio.run(run_repository())
 
 
-@cli.command("generate-editor-schema")
+@main_cli.command("generate-editor-schema")
 def generate_editor_schema():
     """Generate merged JSON schema for TypeScript generation"""
 
@@ -107,7 +107,7 @@ def generate_editor_schema():
     print(json.dumps(merged_schema, indent=2))
 
 
-@cli.command("generate-repository-schema")
+@main_cli.command("generate-repository-schema")
 def generate_repository_schema():
     """Generate merged JSON schema for TypeScript generation"""
 
@@ -156,4 +156,4 @@ def generate_repository_schema():
 
 
 if __name__ == "__main__":
-    cli()
+    main_cli()

@@ -1,24 +1,25 @@
-.PHONY: engine editor repository 
+.PHONY: engine editor repository
+
+install: 
+	uv sync && \
+	uv sync --group dev
 
 engine:
-	uv sync && \
-	uv pip install -r dev-requirements.txt && \
-	.venv/bin/watchfiles ".venv/bin/python src/main.py engine" src
-
-editor:
-	uv sync && \
-	uv pip install -r dev-requirements.txt && \
-	.venv/bin/watchfiles ".venv/bin/python src/main.py editor" src
+	make install && \
+	.venv/bin/python src/main.py engine 
 
 repository:
-	uv sync && \
-	uv pip install -r dev-requirements.txt && \
-	.venv/bin/watchfiles ".venv/bin/python src/main.py repository" src
+	make install && \
+	.venv/bin/python src/main.py repository
 
-generate-editor-schema:
-	uv sync && \
-	.venv/bin/python src/main.py generate-editor-schema
+editor:
+	make install && \
+	.venv/bin/python src/main.py editor
 
-generate-repository-schema:
-	uv sync && \
-	.venv/bin/python src/main.py generate-repository-schema
+lint:
+	make install && \
+	.venv/bin/python -m ruff check .
+
+format:
+	make install && \
+	.venv/bin/python -m ruff format .

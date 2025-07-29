@@ -58,9 +58,7 @@ class Output(Node):
             track = rtc.LocalAudioTrack.create_audio_track("microphone", source)
             options = rtc.TrackPublishOptions()
             options.source = rtc.TrackSource.SOURCE_MICROPHONE
-            publication = await self.room.local_participant.publish_track(
-                track, options
-            )
+            await self.room.local_participant.publish_track(track, options)
 
             async for f in audio_sink:
                 a_frame = cast(AudioFrame, f.value)
@@ -77,9 +75,7 @@ class Output(Node):
             track = rtc.LocalVideoTrack.create_video_track("webcam", source)
             options = rtc.TrackPublishOptions()
             options.source = rtc.TrackSource.SOURCE_CAMERA
-            publication = await self.room.local_participant.publish_track(
-                track, options
-            )
+            await self.room.local_participant.publish_track(track, options)
             async for f in video_sink:
                 v_frame = cast(VideoFrame, f.value)
                 frame = rtc.VideoFrame(

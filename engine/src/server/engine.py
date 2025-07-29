@@ -5,32 +5,37 @@ import asyncio
 import json
 import logging
 import os
+import sys
 import time
+
+from livekit import agents
+from livekit.agents import cli
 
 from core.editor import models
 from core.graph import Graph, GraphLibrary
 from core.secret import SecretProvider
-from livekit import agents
-from livekit.agents import cli
-
-_graph_library: GraphLibrary
-_secret_provider: SecretProvider
+from .default_graph_library import DefaultGraphLibrary
+from .default_secret_provider import DefaultSecretProvider
 
 
 async def entrypoint(ctx: agents.JobContext):
+    global _graph_library, _secret_provider
     parsed = json.loads(ctx.job.metadata)
     app = parsed["app"]
     graph_rep = app["graph"]
     graph_rep = models.GraphEditorRepresentation.model_validate(graph_rep)
 
+    graph_library: GraphLibrary = DefaultGraphLibrary()
+    secret_provider: SecretProvider = DefaultSecretProvider()
+
     os.environ["TZ"] = "UTC"
     time.tzset()
 
-    library_items = await _graph_library.list_items()
-    secrets = await _secret_provider.list_secrets()
+    library_items = await graph_library.list_items()
+    secrets = await secret_provider.list_secrets()
     graph = Graph(
         secrets=secrets,
-        secret_provider=_secret_provider,
+        secret_provider=secret_provider,
         library_items=library_items,
     )
     await graph.load_from_snapshot(graph_rep)
@@ -52,8 +57,6 @@ def cpu_load_fnc(worker: agents.Worker) -> float:
 
 def run_engine(
     *,
-    graph_library: GraphLibrary,
-    secret_provider: SecretProvider,
     livekit_api_key: str,
     livekit_api_secret: str,
     livekit_url: str,
@@ -62,9 +65,8 @@ def run_engine(
     os.environ["LIVEKIT_API_SECRET"] = livekit_api_secret
     os.environ["LIVEKIT_URL"] = livekit_url
 
-    global _graph_library, _secret_provider
-    _graph_library = graph_library
-    _secret_provider = secret_provider
+    original_argv = sys.argv[:]
+    sys.argv = [sys.argv[0], "dev"]
     cli.run_app(
         agents.WorkerOptions(
             agent_name="gabber-engine",
@@ -75,3 +77,4 @@ def run_engine(
             shutdown_process_timeout=60,
         )
     )
+    sys.argv = original_argv

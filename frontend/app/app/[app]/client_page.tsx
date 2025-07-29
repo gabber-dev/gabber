@@ -12,6 +12,7 @@ import { RunProvider } from "@/hooks/useRun";
 import { GraphEditorRepresentation } from "@/generated/editor";
 import { useRepository } from "@/hooks/useRepository";
 import { RepositoryApp } from "@/generated/repository";
+import { createLivekitRoom } from "@/app/(actions)/livekit";
 
 type Props = {
   existingApp: RepositoryApp;
@@ -36,13 +37,9 @@ export function ClientPage({ existingApp }: Props) {
   );
 
   const startRunImpl = useCallback(async () => {
-    // TODO
-    // const res = await appApi.createAppRun({
-    //   app: selectedAppObject.id,
-    //   version: newestVersionObj.version,
-    // });
-    // return res.data.connection_details;
-  }, []);
+    const connDetails = await createLivekitRoom({ appId: existingApp.id });
+    return connDetails;
+  }, [existingApp.id]);
 
   return (
     <div className="realtive w-full h-full">

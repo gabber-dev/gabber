@@ -203,7 +203,7 @@ class WebRequest(Node):
         api_value = cast(pad.PropertySinkPad, self.get_pad("api_value"))
         request_body = cast(pad.StatelessSinkPad, self.get_pad_required("request_body"))
         # TODO: Handle query parameters if needed
-        query_params = cast(pad.StatelessSinkPad, self.get_pad("query_params"))
+        # query_params = cast(pad.StatelessSinkPad, self.get_pad("query_params"))
         response = cast(pad.StatelessSourcePad, self.get_pad_required("response"))
         error_response = cast(
             pad.StatelessSourcePad, self.get_pad_required("error_response")

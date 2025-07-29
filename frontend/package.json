@@ -16,12 +16,14 @@
     "@xyflow/react": "^12.8.2",
     "axios": "^1.11.0",
     "gabber-client-react": "^0.28.0",
+    "livekit-server-sdk": "^2.13.1",
     "next": "15.4.4",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hot-toast": "^2.5.2",
     "react-modal": "^3.16.3",
-    "react-use-websocket": "^4.13.0"
+    "react-use-websocket": "^4.13.0",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

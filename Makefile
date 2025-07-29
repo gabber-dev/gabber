@@ -1,13 +1,25 @@
-.PHONY: engine editor repository generate-ts frontend add-license
+.PHONY: engine editor repository frontend
+
+GABBER_REPOSITORY_DIR ?= $(shell pwd)/.gabber
+GABBER_SECRET_FILE ?= $(shell pwd)/.secret
 
 engine:
-	cd engine && make engine
+	export GABBER_REPOSITORY_DIR=$(GABBER_REPOSITORY_DIR) && \
+	export GABBER_SECRET_FILE=$(GABBER_SECRET_FILE) && \
+	cd engine && \
+	make engine
 
 editor:
-	cd engine && make editor
+	export GABBER_REPOSITORY_DIR=$(GABBER_REPOSITORY_DIR) && \
+	export GABBER_SECRET_FILE=$(GABBER_SECRET_FILE) && \
+	cd engine && \
+	make editor
 
 repository:
-	export GABBER_REPOSITORY_DIR=$(shell pwd)/.gabber && cd engine && make repository
+	export GABBER_REPOSITORY_DIR=$(GABBER_REPOSITORY_DIR) && \
+	export GABBER_SECRET_FILE=$(GABBER_SECRET_FILE) && \
+	cd engine && \
+	make repository 
 
 generate-ts:
 	engine/.venv/bin/python engine/src/main.py generate-editor-schema | json2ts -o frontend/generated/editor.ts && \

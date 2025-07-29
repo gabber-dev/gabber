@@ -30,7 +30,7 @@ class SetToolResult(node.Node):
     async def run(self):
         sink = cast(pad.StatelessSinkPad, self.get_pad_required("result"))
         async for item in sink:
-            v, ctx = item.value, item.ctx
+            _, ctx = item.value, item.ctx
             originator = ctx.find_parent_by_originator("tool_call")
             if originator:
                 originator.append_result(item.value)

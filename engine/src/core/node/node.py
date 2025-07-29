@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: SUL-1.0
 
 from abc import abstractmethod
-from typing import TYPE_CHECKING
 
 from livekit import rtc
 from pydantic import BaseModel

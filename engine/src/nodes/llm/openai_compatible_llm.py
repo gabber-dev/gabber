@@ -3,7 +3,6 @@
 
 import asyncio
 import logging
-import time
 from typing import cast
 
 from core import node, pad, runtime_types
