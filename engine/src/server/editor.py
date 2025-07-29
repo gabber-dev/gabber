@@ -29,18 +29,6 @@ class GraphEditorServer:
         self.app = web.Application()
 
         self.setup_routes()
-        cors = aiohttp_cors.setup(
-            self.app,
-            defaults={
-                "*": aiohttp_cors.ResourceOptions(
-                    allow_credentials=True,
-                    expose_headers="*",
-                    allow_headers="*",
-                )
-            },
-        )
-        for route in list(self.app.router.routes()):
-            cors.add(route)
 
     def setup_routes(self):
         self.app.router.add_get("/ws", self.websocket_handler)
@@ -48,13 +36,9 @@ class GraphEditorServer:
     async def websocket_handler(self, request: aiohttp.web.Request):
         ws = web.WebSocketResponse()
         await ws.prepare(request)
-        project = request.query.get("project", None)
-        if not project:
-            return aiohttp.web.Response(text="Project ID is required", status=400)
 
         editor_session = GraphEditorSession(
             ws=ws,
-            project=project,
             graph_library=self.graph_library,
             secret_provider=self.secret_provider,
         )
@@ -84,12 +68,10 @@ class GraphEditorSession:
         self,
         *,
         ws: web.WebSocketResponse,
-        project: str,
         graph_library: graph.GraphLibrary,
         secret_provider: secret.SecretProvider,
     ):
         self.ws = ws
-        self.project = project
         self.graph_library = graph_library
         self.secret_provider = secret_provider
 
@@ -102,6 +84,7 @@ class GraphEditorSession:
             library_items=library_items,
         )
         async for message in self.ws:
+            print("NEIL here", message)
             if message.type == aiohttp.WSMsgType.TEXT:
                 try:
                     adapter = TypeAdapter(messages.Request)

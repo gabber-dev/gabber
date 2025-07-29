@@ -58,11 +58,17 @@ const EditorContext = createContext<EditorContextType | undefined>(undefined);
 
 type Props = {
   children: React.ReactNode;
+  editor_url: string;
   savedGraph: GraphEditorRepresentation;
   saveImpl: (snapshot: GraphEditorRepresentation) => Promise<void>;
 };
 
-export function EditorProvider({ children, saveImpl, savedGraph }: Props) {
+export function EditorProvider({
+  children,
+  saveImpl,
+  savedGraph,
+  editor_url,
+}: Props) {
   const [localRepresentation, setLocalRepresentation] =
     useState<GraphEditorRepresentation>(savedGraph);
   const [nodeLibrary, setNodeLibrary] = useState<
@@ -72,18 +78,18 @@ export function EditorProvider({ children, saveImpl, savedGraph }: Props) {
   const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
   const [selectedEdges, setSelectedEdges] = useState<string[]>([]);
 
-  const socketUrl =
-    process.env.NEXT_PUBLIC_GRAPH_EDITOR_URL || "ws://ERROR_NOT_SET";
-
-  const { sendMessage, lastJsonMessage, readyState } = useWebSocket(socketUrl, {
-    shouldReconnect: (closeEvent: any) => {
-      return closeEvent.code !== 1000;
+  const { sendMessage, lastJsonMessage, readyState } = useWebSocket(
+    editor_url,
+    {
+      shouldReconnect: (closeEvent: any) => {
+        return closeEvent.code !== 1000;
+      },
+      reconnectAttempts: 5,
+      reconnectInterval: (attemptNumber: number) => {
+        return Math.min(Math.pow(2, attemptNumber) * 1000, 30000);
+      },
     },
-    reconnectAttempts: 5,
-    reconnectInterval: (attemptNumber: number) => {
-      return Math.min(Math.pow(2, attemptNumber) * 1000, 30000);
-    }
-  });
+  );
 
   const [prevReadyState, setPrevReadyState] = useState<ReadyState>(
     ReadyState.UNINSTANTIATED,
@@ -247,9 +253,7 @@ export function EditorProvider({ children, saveImpl, savedGraph }: Props) {
   );
 
   useEffect(() => {
-    console.log("NEIL", { readyState, prevReadyState });
     if (readyState === ReadyState.OPEN && prevReadyState !== ReadyState.OPEN) {
-      console.log("NEIL loading initial graph from snapshot");
       sendRequest({
         type: "load_from_snapshot",
         graph: localRepresentation,
@@ -506,10 +510,7 @@ export function EditorProvider({ children, saveImpl, savedGraph }: Props) {
   );
 
   const unsavedChanges = useMemo(() => {
-    return (
-      JSON.stringify(localRepresentation) !==
-      JSON.stringify(savedGraph)
-    );
+    return JSON.stringify(localRepresentation) !== JSON.stringify(savedGraph);
   }, [localRepresentation, savedGraph]);
 
   const saveChanges = useCallback(async () => {

@@ -47,7 +47,11 @@ export function ClientPage({ existingApp }: Props) {
   return (
     <div className="realtive w-full h-full">
       <div className="absolute top-0 left-0 right-0 bottom-0">
-        <EditorProvider savedGraph={savedGraph} saveImpl={saveImpl}>
+        <EditorProvider
+          editor_url="ws://localhost:8000/ws"
+          savedGraph={savedGraph}
+          saveImpl={saveImpl}
+        >
           <RunProvider startRunImpl={startRunImpl}>
             <AppEditPage />
           </RunProvider>

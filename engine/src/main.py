@@ -3,6 +3,7 @@
 
 import asyncio
 import json
+import logging
 
 import click
 from core.editor import messages
@@ -18,8 +19,7 @@ from server import (
 
 @click.group()
 def cli():
-    """Graph Editor CLI"""
-    pass
+    logging.basicConfig(level=logging.INFO)
 
 
 @cli.command("editor")
