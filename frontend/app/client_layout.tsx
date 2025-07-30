@@ -53,10 +53,10 @@ export function ClientLayout({
       deleteSubGraphImpl={deleteSubGraphImpl}
     >
       <Toaster />
-      <div className="absolute top-0 left-0 right-0 h-10">
+      <div className="absolute top-0 left-0 right-0 h-[70px]">
         <TopBar />
       </div>
-      <div className="absolute top-10 left-0 right-0 bottom-0 overflow-y-auto">
+      <div className="absolute top-[70px] left-0 right-0 bottom-0 overflow-y-auto">
         {children}
       </div>
     </RepositoryProvider>
