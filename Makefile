@@ -32,6 +32,7 @@ frontend:
 
 add-license:
 	addlicense -c "Fluently AI, Inc. DBA Gabber. All rights reserved." -l "SUL-1.0" -s -ignore frontend/node_modules -ignore frontend/.next -ignore engine/.venv engine frontend services
+	addlicense -c "Fluently AI, Inc. DBA Gabber. All rights reserved." -l "Apache-2.0" -s -ignore **/node_modules sdk examples
 
 livekit:
 	livekit-server --dev
@@ -39,14 +40,15 @@ livekit:
 BLUE=\033[0;34m
 GREEN=\033[0;32m
 MAGENTA=\033[0;35m
-WHITE=\033[1;37m
+WHITE=\033[0;37m
 CYAN=\033[0;36m
 NC=\033[0m
 
 all:
-	{ make engine 2>&1 | while IFS= read -r line; do echo "${BLUE}[ENGINE] $${line}${NC}"; done } & \
-	{ make editor 2>&1 | while IFS= read -r line; do echo "${GREEN}[EDITOR] $${line}${NC}"; done } & \
-	{ make repository 2>&1 | while IFS= read -r line; do echo "${WHITE}[REPOSITORY] $${line}${NC}"; done } & \
-	{ make frontend 2>&1 | while IFS= read -r line; do echo "${MAGENTA}[FRONTEND] $${line}${NC}"; done } & \
-	{ make livekit 2>&1 | while IFS= read -r line; do echo "${CYAN}[LIVEKIT] $${line}${NC}"; done } & \
+	make engine 2>&1 | while IFS= read -r line; do printf "\033[0;34m[ENGINE]\033[0m %s\n" "$$line"; done & ENGINE_PID=$$!; \
+	make editor 2>&1 | while IFS= read -r line; do printf "\033[0;32m[EDITOR]\033[0m %s\n" "$$line"; done & EDITOR_PID=$$!; \
+	make repository 2>&1 | while IFS= read -r line; do printf "\033[0;35m[REPOSITORY]\033[0m %s\n" "$$line"; done & REPOSITORY_PID=$$!; \
+	make frontend 2>&1 | while IFS= read -r line; do printf "\033[0;36m[FRONTEND]\033[0m %s\n" "$$line"; done & FRONTEND_PID=$$!; \
+	make livekit 2>&1 | while IFS= read -r line; do printf "\033[0;37m[LIVEKIT]\033[0m %s\n" "$$line"; done & LIVEKIT_PID=$$!; \
+	trap 'echo "Stopping all processes..."; kill 0' INT;\
 	wait

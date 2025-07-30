@@ -115,6 +115,9 @@ class GraphLibraryItem_SubGraph(BaseModel):
     graph: GraphEditorRepresentation = Field(
         ..., description="Graph representation of the subgraph"
     )
+    editable: bool = Field(
+        True, description="Whether the subgraph can be edited in the editor"
+    )
 
 
 GraphLibraryItem = Annotated[

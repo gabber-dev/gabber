@@ -65,10 +65,12 @@ All entities are stored in the `.gabber` directory. It runs on port `8001`.
 
 ## License
 
-Gabber is [fair-code](https://faircode.io) distributed under the [Sustainable Use License](https://github.com/gabber-dev/gabber/blob/master/LICENSE.md) and [Gabber Enterprise License](https://github.com/gabber-dev/gabber/blob/master/LICENSE_EE.md).
+The Gabber engine and frontend code are [fair-code](https://faircode.io) distributed under the [Sustainable Use License](https://github.com/gabber-dev/gabber/blob/master/LICENSE.md) and [Gabber Enterprise License](https://github.com/gabber-dev/gabber/blob/master/LICENSE_EE.md).
 
-Gabber follows the same License as n8n, a popular workflow automation platform.
+This code follows the same license as [n8n](https://github.com/n8n-io/n8n)
 
 - **Source Available**: Always visible source code
 - **Self-Hostable**: Deploy anywhere
 - **Extensible**: Add your own nodes and functionality
+
+Code that isn't core to the Gabber engine and editor, such as examples and SDKs, are licensed as Apache 2.0 which is denoted by a LICENSE file in the corresponding directories.

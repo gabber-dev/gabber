@@ -311,8 +311,16 @@ class RepositoryServer:
         # Keep the server running
         try:
             while True:
+                logging.info("Repository server is running...")
                 await asyncio.sleep(1)
-        except KeyboardInterrupt:
-            print("Shutting down server...")
-        finally:
+        except asyncio.CancelledError:
+            logging.info("Repository server has been cancelled.")
+        except Exception as e:
+            logging.error(f"Error in repository server: {e}", exc_info=True)
+
+        try:
             await runner.cleanup()
+        except Exception as e:
+            logging.error(f"Error during repository server cleanup: {e}", exc_info=True)
+
+        logging.info("Repository server has been shut down.")
