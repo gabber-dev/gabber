@@ -4,13 +4,21 @@
 
 ## Quickstart 
 
-Install dependencies:
+### Install dependencies
+
+__LiveKit__:
+The frontend sends/receives media to/from the backend services via a local WebRTC session.
 ```bash
-brew install livekit # LiveKit is used to send/receive media from the frontend to the engine via a local WebRTC session.
-curl -LsSf https://astral.sh/uv/install.sh | sh # uv is used for dependency management
+brew install livekit
 ```
 
-Run frontend, editor, repository
+__uv__:
+For python dependency management.
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+### Run Everything
 ```bash
 make all
 ```
