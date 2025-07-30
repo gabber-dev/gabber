@@ -17,7 +17,7 @@ import "@fontsource/inter/600.css";
 import "@fontsource/inter/700.css";
 import React from "react";
 import { ClientLayout } from "./client_layout";
-import { listApps, listSubgraphs } from "@/lib/repository";
+import { listApps, listSubGraphs } from "@/lib/repository";
 
 export const metadata: Metadata = {
   title: "Gabber - Real-time AI Engine",
@@ -30,7 +30,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const apps = await listApps();
-  const subgraphs = await listSubgraphs();
+  const subgraphs = await listSubGraphs();
   return (
     <html lang="en" data-theme="gabber-arcade">
       <head>

@@ -11,6 +11,8 @@ import {
   RepositorySubGraph,
   SaveAppRequest,
   SaveAppResponse,
+  SaveSubgraphRequest,
+  SaveSubgraphResponse,
 } from "@/generated/repository";
 import axios from "axios";
 
@@ -31,14 +33,22 @@ export async function saveApp(req: SaveAppRequest) {
   return (resp.data as SaveAppResponse).app;
 }
 
-export async function getSubgraph(
+export async function saveSubGraph(
+  params: SaveSubgraphRequest,
+): Promise<RepositorySubGraph> {
+  params.type = "save_subgraph";
+  const resp = await axios.post(`${BASE_URL}/sub_graph`, params);
+  return (resp.data as SaveSubgraphResponse).sub_graph;
+}
+
+export async function getSubGraph(
   graphId: string,
 ): Promise<RepositorySubGraph> {
   const resp = await axios.get(`${BASE_URL}/sub_graph/${graphId}`);
   return (resp.data as GetSubgraphResponse).sub_graph;
 }
 
-export async function listSubgraphs(): Promise<RepositorySubGraph[]> {
+export async function listSubGraphs(): Promise<RepositorySubGraph[]> {
   const resp = await axios.get(`${BASE_URL}/sub_graph/list`);
   return (resp.data as ListSubgraphsResponse).sub_graphs;
 }
