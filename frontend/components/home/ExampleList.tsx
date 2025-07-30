@@ -4,6 +4,7 @@
  */
 
 import { useRepository } from "@/hooks/useRepository";
+import Link from "next/link";
 
 export function ExampleList() {
   const { examples } = useRepository();
@@ -17,7 +18,9 @@ export function ExampleList() {
         <div className="border-2 border-black border-b-4 border-r-4 rounded-xl p-4 bg-base-200">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             {examples.map((example) => (
-              <div key={example.id}>{example.name}</div>
+              <Link key={example.id} href={`/example/${example.id}`}>
+                <div>{example.name}</div>
+              </Link>
             ))}
           </div>
         </div>

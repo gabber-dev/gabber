@@ -4,7 +4,8 @@
  */
 
 "use server";
-import { getApp } from "@/lib/repository";
+import { GraphEditorRepresentation } from "@/generated/editor";
+import { getApp, getExample } from "@/lib/repository";
 import {
   AccessToken,
   RoomServiceClient,
@@ -13,7 +14,8 @@ import {
 import { v4 as uuidv4 } from "uuid";
 
 type CreateLivekitRoomParams = {
-  appId: string;
+  appId?: string;
+  exampleId?: string;
 };
 
 type ConnectionDetails = {
@@ -23,7 +25,11 @@ type ConnectionDetails = {
 
 export async function createLivekitRoom({
   appId,
+  exampleId,
 }: CreateLivekitRoomParams): Promise<ConnectionDetails> {
+  if (!appId && !exampleId) {
+    throw new Error("Either appId or exampleId must be provided");
+  }
   const livekitUrl = "ws://localhost:7880";
   const livekitApiKey = "devkey";
   const livekitApiSecret = "secret";
@@ -50,10 +56,17 @@ export async function createLivekitRoom({
   await roomServiceClient.createRoom({
     name: roomName,
   });
-  const appObj = await getApp(appId);
+  let graph: GraphEditorRepresentation | undefined;
+  if (appId) {
+    const appObj = await getApp(appId);
+    graph = appObj.graph;
+  } else if (exampleId) {
+    const exampleApp = await getExample(exampleId);
+    graph = exampleApp.graph;
+  }
 
   await agentDispatchClient.createDispatch(roomName, "gabber-engine", {
-    metadata: JSON.stringify({ app: appObj }),
+    metadata: JSON.stringify({ graph }),
   });
   const connectionDetails = {
     url: livekitUrl,

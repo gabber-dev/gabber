@@ -1,8 +1,8 @@
 {
-    "id": "9d9d03a0-ceb1-4a86-8adb-db8c6dac721e",
+    "id": "echo",
     "name": "Hello World: Echo",
     "created_at": "2025-07-29T10:41:27.850348",
-    "updated_at": "2025-07-29T11:34:27.053330",
+    "updated_at": "2025-07-30T13:28:27.549167",
     "graph": {
         "nodes": [
             {
@@ -23,7 +23,12 @@
                         "group": "audio",
                         "type": "StatelessSourcePad",
                         "value": null,
-                        "next_pads": [],
+                        "next_pads": [
+                            {
+                                "node": "output_274c2131",
+                                "pad": "audio_sink"
+                            }
+                        ],
                         "previous_pad": null,
                         "allowed_types": [
                             {
@@ -38,8 +43,8 @@
                         "value": null,
                         "next_pads": [
                             {
-                                "node": "fps_50e96313",
-                                "pad": "video_in"
+                                "node": "output_274c2131",
+                                "pad": "video_sink"
                             }
                         ],
                         "previous_pad": null,
@@ -61,85 +66,12 @@
                 }
             },
             {
-                "id": "fps_50e96313",
-                "type": "FPS",
-                "editor_name": "FPS",
-                "editor_position": [
-                    524.5174870466321,
-                    515.9727979274612
-                ],
-                "editor_dimensions": [
-                    256.0,
-                    239.0
-                ],
-                "pads": [
-                    {
-                        "id": "video_in",
-                        "group": "video_in",
-                        "type": "StatelessSinkPad",
-                        "value": null,
-                        "next_pads": [],
-                        "previous_pad": {
-                            "node": "publish_7d5e1852",
-                            "pad": "video"
-                        },
-                        "allowed_types": [
-                            {
-                                "type": "video"
-                            }
-                        ]
-                    },
-                    {
-                        "id": "video_out",
-                        "group": "video_out",
-                        "type": "StatelessSourcePad",
-                        "value": null,
-                        "next_pads": [
-                            {
-                                "node": "output_274c2131",
-                                "pad": "video_sink"
-                            }
-                        ],
-                        "previous_pad": null,
-                        "allowed_types": [
-                            {
-                                "type": "video"
-                            }
-                        ]
-                    },
-                    {
-                        "id": "fps",
-                        "group": "fps",
-                        "type": "PropertySinkPad",
-                        "value": 0.5,
-                        "next_pads": [],
-                        "previous_pad": null,
-                        "allowed_types": [
-                            {
-                                "type": "float",
-                                "maximum": 30.0,
-                                "minimum": 0.0
-                            }
-                        ]
-                    }
-                ],
-                "description": "Controls the frame rate of the video being processed",
-                "metadata": {
-                    "primary": "core",
-                    "secondary": "media",
-                    "tags": [
-                        "control",
-                        "fps"
-                    ]
-                }
-            },
-            {
                 "id": "output_274c2131",
                 "type": "Output",
                 "editor_name": "Output",
                 "editor_position": [
-                    1008.856865284974,
-                    453.8549222797928
+                    479.9251808402332,
+                    504.51789285312304
                 ],
                 "editor_dimensions": [
                     256.0,
@@ -152,7 +84,10 @@
                         "type": "StatelessSinkPad",
                         "value": null,
                         "next_pads": [],
-                        "previous_pad": null,
+                        "previous_pad": {
+                            "node": "publish_7d5e1852",
+                            "pad": "audio"
+                        },
                         "allowed_types": [
                             {
                                 "type": "audio"
@@ -166,8 +101,8 @@
                         "value": null,
                         "next_pads": [],
                         "previous_pad": {
-                            "node": "fps_50e96313",
-                            "pad": "video_out"
+                            "node": "publish_7d5e1852",
+                            "pad": "video"
                         },
                         "allowed_types": [
                             {

@@ -21,8 +21,7 @@ from .default_secret_provider import DefaultSecretProvider
 async def entrypoint(ctx: agents.JobContext):
     global _graph_library, _secret_provider
     parsed = json.loads(ctx.job.metadata)
-    app = parsed["app"]
-    graph_rep = app["graph"]
+    graph_rep = parsed["graph"]
     graph_rep = models.GraphEditorRepresentation.model_validate(graph_rep)
 
     graph_library: GraphLibrary = DefaultGraphLibrary()
