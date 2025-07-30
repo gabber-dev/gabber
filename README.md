@@ -1,3 +1,8 @@
+
+<p align="center">
+  <img src="frontend/public/banner.png" alt="Gabber Logo" width="400"/>
+</p>
+
 # Gabber - 
 
 [Gabber](https://gabber.dev) is an engine for making real-time AI across all modalities.
