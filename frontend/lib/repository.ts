@@ -8,6 +8,7 @@ import {
   GetSubgraphResponse,
   ListAppsResponse,
   ListSubgraphsResponse,
+  RepositoryApp,
   RepositorySubGraph,
   SaveAppRequest,
   SaveAppResponse,
@@ -51,4 +52,14 @@ export async function getSubGraph(
 export async function listSubGraphs(): Promise<RepositorySubGraph[]> {
   const resp = await axios.get(`${BASE_URL}/sub_graph/list`);
   return (resp.data as ListSubgraphsResponse).sub_graphs;
+}
+
+export async function getExample(exampleId: string): Promise<RepositoryApp> {
+  const resp = await axios.get(`${BASE_URL}/example/${exampleId}`);
+  return (resp.data as GetAppResponse).app;
+}
+
+export async function listExamples(): Promise<RepositoryApp[]> {
+  const resp = await axios.get(`${BASE_URL}/example/list`);
+  return (resp.data as ListAppsResponse).apps;
 }

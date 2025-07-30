@@ -24,12 +24,14 @@ import { Toaster } from "react-hot-toast";
 type Props = {
   initialApps: RepositoryApp[];
   initialSubGraphs: RepositorySubGraph[];
+  examples: RepositoryApp[];
   children: React.ReactNode;
 };
 export function ClientLayout({
   children,
   initialApps,
   initialSubGraphs,
+  examples: initialExamples,
 }: Props) {
   const listAppsImpl = useCallback(async () => {
     return listApps();
@@ -59,6 +61,7 @@ export function ClientLayout({
       listSubgraphsImpl={listSubgraphsImpl}
       saveSubGraphImpl={saveSubGraphImpl}
       deleteSubGraphImpl={deleteSubGraphImpl}
+      examples={initialExamples}
     >
       <Toaster />
       <div className="absolute top-0 left-0 right-0 h-10">

@@ -26,6 +26,8 @@ type RepositoryContextType = {
   saveSubGraph: (params: SaveSubgraphRequest) => Promise<RepositorySubGraph>;
   deleteSubGraph: (subGraphId: string) => Promise<void>;
   refreshSubGraphs: () => Promise<void>;
+
+  examples: RepositoryApp[];
 };
 
 export const RepositoryContext = createContext<
@@ -46,18 +48,23 @@ type Props = {
   ) => Promise<RepositorySubGraph>;
   listSubgraphsImpl: () => Promise<RepositorySubGraph[]>;
   deleteSubGraphImpl: (subGraphId: string) => Promise<void>;
+
+  examples: RepositoryApp[];
 };
 
 export function RepositoryProvider({
   children,
   initialApps,
-  initialSubGraphs,
-  listAppsImpl,
-  saveSubGraphImpl,
-  saveAppImpl,
   deleteAppImpl,
+  listAppsImpl,
+  saveAppImpl,
+
+  initialSubGraphs,
+  saveSubGraphImpl,
   listSubgraphsImpl,
   deleteSubGraphImpl,
+
+  examples,
 }: Props) {
   const [apps, setApps] = useState<RepositoryApp[]>(initialApps);
   const [appsLoading, setAppsLoading] = useState<boolean>(true);
@@ -156,11 +163,14 @@ export function RepositoryProvider({
         refreshApps,
         saveApp: saveApp,
         deleteApp,
+
         subGraphs,
         subGraphsLoading,
         refreshSubGraphs,
         saveSubGraph,
         deleteSubGraph,
+
+        examples,
       }}
     >
       {children}

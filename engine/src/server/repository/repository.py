@@ -20,8 +20,8 @@ from uuid import uuid4
 class RepositoryServer:
     def __init__(self, port: int):
         file_path = os.environ["GABBER_REPOSITORY_DIR"]
-        self.port = port
         self.file_path = file_path
+        self.port = port
         self.app = web.Application()
         self.setup_routes()
         cors = aiohttp_cors.setup(
@@ -47,6 +47,8 @@ class RepositoryServer:
         self.app.router.add_post("/sub_graph", self.save_subgraph)
         self.app.router.add_get("/sub_graph/{id}", self.get_subgraph)
         self.app.router.add_delete("/sub_graph/{id}", self.delete_subgraph)
+        self.app.router.add_get("/example/{id}", self.get_example)
+        self.app.router.add_get("/example/list", self.list_examples)
 
     async def ensure_dir(self, dir_path: str):
         await asyncio.to_thread(os.makedirs, dir_path, exist_ok=True)
@@ -324,3 +326,50 @@ class RepositoryServer:
             logging.error(f"Error during repository server cleanup: {e}", exc_info=True)
 
         logging.info("Repository server has been shut down.")
+
+    async def list_examples(self, request: aiohttp.web.Request):
+        try:
+            example_dir = "data/example"
+            files = await asyncio.to_thread(os.listdir, example_dir)
+            apps = []
+            for file in files:
+                if file.endswith(".json"):
+                    async with aiofiles.open(f"{example_dir}/{file}", mode="r") as f:
+                        content = await f.read()
+                        app = models.RepositoryApp.model_validate_json(content)
+                        apps.append(app)
+            sorted_by_created_at = sorted(
+                apps, key=lambda x: x.created_at, reverse=True
+            )
+            response = messages.ListAppsResponse(apps=sorted_by_created_at)
+            return aiohttp.web.Response(
+                body=response.model_dump_json(), content_type="application/json"
+            )
+        except Exception as e:
+            logging.error(f"Error listing apps: {e}")
+            return aiohttp.web.json_response(
+                {"status": "error", "message": str(e)}, status=500
+            )
+
+    async def get_example(self, request: aiohttp.web.Request):
+        example_dir = "data/example"
+        example_id = request.match_info.get("id")
+        if not example_id:
+            return aiohttp.web.json_response(
+                {"status": "error", "message": "Missing app ID"}, status=400
+            )
+
+        try:
+            async with aiofiles.open(
+                f"{example_dir}/{example_id}.json", mode="r"
+            ) as json_file:
+                json_content = await json_file.read()
+            obj = models.RepositoryApp.model_validate_json(json_content)
+            resp = messages.GetAppResponse(app=obj)
+            return aiohttp.web.Response(
+                body=resp.model_dump_json(), content_type="application/json"
+            )
+        except FileNotFoundError:
+            return aiohttp.web.json_response(
+                {"status": "error", "message": "App not found"}, status=404
+            )
