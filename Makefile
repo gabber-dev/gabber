@@ -45,3 +45,6 @@ all:
 	make livekit 2>&1 | while IFS= read -r line; do printf "\033[0;37m[LIVEKIT]\033[0m %s\n" "$$line"; done & LIVEKIT_PID=$$!; \
 	trap 'echo "Stopping all processes..."; kill 0' INT;\
 	wait
+
+make service-kyutai-stt:
+	./services/kyutai-stt/start.sh

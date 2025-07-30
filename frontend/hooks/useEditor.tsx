@@ -97,7 +97,6 @@ export function EditorProvider({
 
   useEffect(() => {
     if (readyState !== prevReadyState) {
-      console.log("WebSocket state changed:", readyState);
       setPrevReadyState(readyState);
     }
   }, [readyState, prevReadyState]);
