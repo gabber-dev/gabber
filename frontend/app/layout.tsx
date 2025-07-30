@@ -21,7 +21,8 @@ import { listApps, listSubgraphs } from "@/lib/repository";
 
 export const metadata: Metadata = {
   title: "Gabber - Real-time AI Engine",
-  description: "",
+  description: "Real-time AI Engine for building interactive applications",
+  icons: "/favicon.ico",
 };
 
 export default async function RootLayout({
@@ -33,10 +34,6 @@ export default async function RootLayout({
   const subgraphs = await listSubgraphs();
   return (
     <html lang="en" data-theme="gabber-arcade">
-      <head>
-        <link rel="icon" href="/favicon.ico" />
-      </head>
-
       <body className="absolute w-full h-full bg-base-100">
         <ClientLayout initialApps={apps} initialSubGraphs={subgraphs}>
           {children}
