@@ -1,0 +1,126 @@
+{
+    "id": "echo",
+    "name": "Hello World: Echo",
+    "created_at": "2025-07-29T10:41:27.850348",
+    "updated_at": "2025-07-30T13:28:27.549167",
+    "graph": {
+        "nodes": [
+            {
+                "id": "publish_7d5e1852",
+                "type": "Publish",
+                "editor_name": "Publish",
+                "editor_position": [
+                    164.41386010362697,
+                    456.5556994818653
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    352.0
+                ],
+                "pads": [
+                    {
+                        "id": "audio",
+                        "group": "audio",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "output_274c2131",
+                                "pad": "audio_sink"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "video",
+                        "group": "video",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "output_274c2131",
+                                "pad": "video_sink"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "video"
+                            }
+                        ]
+                    }
+                ],
+                "description": "Stream audio and video into your Gabber flow",
+                "metadata": {
+                    "primary": "core",
+                    "secondary": "media",
+                    "tags": [
+                        "input",
+                        "stream"
+                    ]
+                }
+            },
+            {
+                "id": "output_274c2131",
+                "type": "Output",
+                "editor_name": "Output",
+                "editor_position": [
+                    479.9251808402332,
+                    504.51789285312304
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    304.0
+                ],
+                "pads": [
+                    {
+                        "id": "audio_sink",
+                        "group": "audio_sink",
+                        "type": "StatelessSinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "publish_7d5e1852",
+                            "pad": "audio"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "video_sink",
+                        "group": "video_sink",
+                        "type": "StatelessSinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "publish_7d5e1852",
+                            "pad": "video"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "video"
+                            }
+                        ]
+                    }
+                ],
+                "description": "Outputs audio and video to the end user",
+                "metadata": {
+                    "primary": "core",
+                    "secondary": "debug",
+                    "tags": [
+                        "output",
+                        "display"
+                    ]
+                }
+            }
+        ]
+    }
+}

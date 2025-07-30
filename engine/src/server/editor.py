@@ -54,11 +54,19 @@ class GraphEditorServer:
         # Keep the server running
         try:
             while True:
+                logging.info("Editor server is running...")
                 await asyncio.sleep(1)
-        except KeyboardInterrupt:
-            print("Shutting down server...")
-        finally:
+        except asyncio.CancelledError:
+            logging.info("Editor server has been cancelled.")
+        except Exception as e:
+            logging.error(f"Error in editor server: {e}", exc_info=True)
+
+        try:
             await runner.cleanup()
+        except Exception as e:
+            logging.error(f"Error during editor server cleanup: {e}", exc_info=True)
+
+        logging.info("Editor server has been shut down.")
 
 
 class GraphEditorSession:
