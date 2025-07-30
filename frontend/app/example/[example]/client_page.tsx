@@ -23,7 +23,7 @@ export function ClientPage({ existingExample: existingApp }: Props) {
   }, []);
 
   const startRunImpl = useCallback(async () => {
-    const connDetails = await createLivekitRoom({ appId: existingApp.id });
+    const connDetails = await createLivekitRoom({ exampleId: existingApp.id });
     return connDetails;
   }, [existingApp.id]);
 
