@@ -37,13 +37,6 @@ add-license:
 livekit:
 	livekit-server --dev
 
-BLUE=\033[0;34m
-GREEN=\033[0;32m
-MAGENTA=\033[0;35m
-WHITE=\033[0;37m
-CYAN=\033[0;36m
-NC=\033[0m
-
 all:
 	make engine 2>&1 | while IFS= read -r line; do printf "\033[0;34m[ENGINE]\033[0m %s\n" "$$line"; done & ENGINE_PID=$$!; \
 	make editor 2>&1 | while IFS= read -r line; do printf "\033[0;32m[EDITOR]\033[0m %s\n" "$$line"; done & EDITOR_PID=$$!; \
