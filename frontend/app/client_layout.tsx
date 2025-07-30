@@ -7,12 +7,18 @@
 
 import { TopBar } from "@/components/TopBar";
 import {
-  GraphEditorRepresentation,
   RepositoryApp,
   RepositorySubGraph,
+  SaveAppRequest,
+  SaveSubgraphRequest,
 } from "@/generated/repository";
 import { RepositoryProvider } from "@/hooks/useRepository";
-import { listApps, listSubgraphs, saveApp } from "@/lib/repository";
+import {
+  listApps,
+  listSubGraphs,
+  saveApp,
+  saveSubGraph,
+} from "@/lib/repository";
 import { useCallback } from "react";
 import { Toaster } from "react-hot-toast";
 type Props = {
@@ -28,16 +34,17 @@ export function ClientLayout({
   const listAppsImpl = useCallback(async () => {
     return listApps();
   }, []);
-  const saveAppImpl = useCallback(
-    async (params: { name: string; graph: GraphEditorRepresentation }) => {
-      return await saveApp(params);
-    },
-    [],
-  );
+  const saveAppImpl = useCallback(async (params: SaveAppRequest) => {
+    return await saveApp(params);
+  }, []);
   const deleteAppImpl = useCallback(async (appId: string) => {}, []);
 
+  const saveSubGraphImpl = useCallback(async (params: SaveSubgraphRequest) => {
+    return await saveSubGraph(params);
+  }, []);
+
   const listSubgraphsImpl = useCallback(async () => {
-    return listSubgraphs();
+    return listSubGraphs();
   }, []);
 
   const deleteSubGraphImpl = useCallback(async (subGraphId: string) => {}, []);
@@ -50,6 +57,7 @@ export function ClientLayout({
       saveAppImpl={saveAppImpl}
       deleteAppImpl={deleteAppImpl}
       listSubgraphsImpl={listSubgraphsImpl}
+      saveSubGraphImpl={saveSubGraphImpl}
       deleteSubGraphImpl={deleteSubGraphImpl}
     >
       <Toaster />

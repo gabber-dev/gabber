@@ -45,6 +45,7 @@ class RepositoryServer:
         self.app.router.add_delete("/app/{id}", self.delete_app)
         self.app.router.add_get("/sub_graph/list", self.list_subgraphs)
         self.app.router.add_post("/sub_graph", self.save_subgraph)
+        self.app.router.add_get("/sub_graph/{id}", self.get_subgraph)
         self.app.router.add_delete("/sub_graph/{id}", self.delete_subgraph)
 
     async def ensure_dir(self, dir_path: str):
@@ -171,6 +172,28 @@ class RepositoryServer:
                 {"status": "error", "message": str(e)}, status=500
             )
 
+    async def get_subgraph(self, request: aiohttp.web.Request):
+        subgraph_id = request.match_info.get("id")
+        if not subgraph_id:
+            return aiohttp.web.json_response(
+                {"status": "error", "message": "Missing subgraph ID"}, status=400
+            )
+
+        try:
+            async with aiofiles.open(
+                f"{self.file_path}/sub_graph/{subgraph_id}.json", mode="r"
+            ) as json_file:
+                json_content = await json_file.read()
+            obj = models.RepositorySubGraph.model_validate_json(json_content)
+            resp = messages.GetSubgraphResponse(sub_graph=obj)
+            return aiohttp.web.Response(
+                body=resp.model_dump_json(), content_type="application/json"
+            )
+        except FileNotFoundError:
+            return aiohttp.web.json_response(
+                {"status": "error", "message": "Subgraph not found"}, status=404
+            )
+
     async def list_subgraphs(self, request: aiohttp.web.Request):
         try:
             sub_graph_dir = f"{self.file_path}/sub_graph"
@@ -193,7 +216,7 @@ class RepositoryServer:
             sorted_by_created_at = sorted(
                 subgraphs, key=lambda x: x.created_at, reverse=True
             )
-            response = messages.ListAppsResponse(apps=sorted_by_created_at)
+            response = messages.ListSubgraphsResponse(sub_graphs=sorted_by_created_at)
             return aiohttp.web.Response(
                 body=response.model_dump_json(), content_type="application/json"
             )

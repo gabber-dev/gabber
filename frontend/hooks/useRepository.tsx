@@ -9,6 +9,7 @@ import {
   RepositoryApp,
   RepositorySubGraph,
   SaveAppRequest,
+  SaveSubgraphRequest,
 } from "@/generated/repository";
 import React, { createContext, useCallback, useContext, useState } from "react";
 import toast from "react-hot-toast";
@@ -22,7 +23,7 @@ type RepositoryContextType = {
 
   subGraphs: RepositorySubGraph[];
   subGraphsLoading: boolean;
-  saveSubGraph: (params: SaveAppRequest) => Promise<RepositorySubGraph>;
+  saveSubGraph: (params: SaveSubgraphRequest) => Promise<RepositorySubGraph>;
   deleteSubGraph: (subGraphId: string) => Promise<void>;
   refreshSubGraphs: () => Promise<void>;
 };
@@ -40,6 +41,9 @@ type Props = {
   deleteAppImpl: (appId: string) => Promise<void>;
 
   initialSubGraphs: RepositorySubGraph[];
+  saveSubGraphImpl: (
+    params: SaveSubgraphRequest,
+  ) => Promise<RepositorySubGraph>;
   listSubgraphsImpl: () => Promise<RepositorySubGraph[]>;
   deleteSubGraphImpl: (subGraphId: string) => Promise<void>;
 };
@@ -49,6 +53,7 @@ export function RepositoryProvider({
   initialApps,
   initialSubGraphs,
   listAppsImpl,
+  saveSubGraphImpl,
   saveAppImpl,
   deleteAppImpl,
   listSubgraphsImpl,
@@ -117,10 +122,10 @@ export function RepositoryProvider({
   }, [subGraphsLoading, listSubgraphsImpl]);
 
   const saveSubGraph = async (
-    params: SaveAppRequest,
+    params: SaveSubgraphRequest,
   ): Promise<RepositorySubGraph> => {
     try {
-      const resp = await saveAppImpl(params);
+      const resp = await saveSubGraphImpl(params);
       await refreshSubGraphs();
       return resp;
     } catch (error) {
