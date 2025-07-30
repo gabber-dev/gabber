@@ -10,14 +10,23 @@ import { useCallback } from "react";
 import { SubGraphEdit } from "@/components/subgraph/SubGraphEdit";
 import { RunProvider } from "@/hooks/useRun";
 import { RepositorySubGraph } from "@/generated/repository";
+import { saveSubGraph } from "@/lib/repository";
+import { GraphEditorRepresentation } from "@/generated/editor";
 
 type Props = {
   initialSubGraph: RepositorySubGraph;
 };
 export function ClientPage({ initialSubGraph }: Props) {
-  const saveImpl = useCallback(async () => {
-    //TODO
-  }, []);
+  const saveImpl = useCallback(
+    async (graph: GraphEditorRepresentation) => {
+      saveSubGraph({
+        id: initialSubGraph.id,
+        name: initialSubGraph.name,
+        graph,
+      });
+    },
+    [initialSubGraph.id, initialSubGraph.name],
+  );
 
   const startRunImpl = useCallback(async () => {
     throw new Error("startRunImpl is not implemented for SubGraphEdit");

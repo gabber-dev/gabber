@@ -9,6 +9,7 @@ import {
   RepositoryApp,
   RepositorySubGraph,
   SaveAppRequest,
+  SaveSubgraphRequest,
 } from "@/generated/repository";
 import React, { createContext, useCallback, useContext, useState } from "react";
 import toast from "react-hot-toast";
@@ -22,9 +23,11 @@ type RepositoryContextType = {
 
   subGraphs: RepositorySubGraph[];
   subGraphsLoading: boolean;
-  saveSubGraph: (params: SaveAppRequest) => Promise<RepositorySubGraph>;
+  saveSubGraph: (params: SaveSubgraphRequest) => Promise<RepositorySubGraph>;
   deleteSubGraph: (subGraphId: string) => Promise<void>;
   refreshSubGraphs: () => Promise<void>;
+
+  examples: RepositoryApp[];
 };
 
 export const RepositoryContext = createContext<
@@ -40,19 +43,28 @@ type Props = {
   deleteAppImpl: (appId: string) => Promise<void>;
 
   initialSubGraphs: RepositorySubGraph[];
+  saveSubGraphImpl: (
+    params: SaveSubgraphRequest,
+  ) => Promise<RepositorySubGraph>;
   listSubgraphsImpl: () => Promise<RepositorySubGraph[]>;
   deleteSubGraphImpl: (subGraphId: string) => Promise<void>;
+
+  examples: RepositoryApp[];
 };
 
 export function RepositoryProvider({
   children,
   initialApps,
-  initialSubGraphs,
+  deleteAppImpl,
   listAppsImpl,
   saveAppImpl,
-  deleteAppImpl,
+
+  initialSubGraphs,
+  saveSubGraphImpl,
   listSubgraphsImpl,
   deleteSubGraphImpl,
+
+  examples,
 }: Props) {
   const [apps, setApps] = useState<RepositoryApp[]>(initialApps);
   const [appsLoading, setAppsLoading] = useState<boolean>(true);
@@ -117,10 +129,10 @@ export function RepositoryProvider({
   }, [subGraphsLoading, listSubgraphsImpl]);
 
   const saveSubGraph = async (
-    params: SaveAppRequest,
+    params: SaveSubgraphRequest,
   ): Promise<RepositorySubGraph> => {
     try {
-      const resp = await saveAppImpl(params);
+      const resp = await saveSubGraphImpl(params);
       await refreshSubGraphs();
       return resp;
     } catch (error) {
@@ -151,11 +163,14 @@ export function RepositoryProvider({
         refreshApps,
         saveApp: saveApp,
         deleteApp,
+
         subGraphs,
         subGraphsLoading,
         refreshSubGraphs,
         saveSubGraph,
         deleteSubGraph,
+
+        examples,
       }}
     >
       {children}
