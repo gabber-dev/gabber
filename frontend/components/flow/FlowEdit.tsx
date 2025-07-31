@@ -3,7 +3,14 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import {
+  useState,
+  useCallback,
+  useMemo,
+  useEffect,
+  createContext,
+  useContext,
+} from "react";
 import {
   ReactFlow,
   Background,
@@ -17,6 +24,7 @@ import "@xyflow/react/dist/base.css";
 import { FlowErrorBoundary } from "./ErrorBoundary";
 import { useEditor } from "@/hooks/useEditor";
 import { BaseBlock } from "./blocks/BaseBlock";
+import { PadEditorRepresentation } from "@/generated/editor";
 import { XMarkIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { NodeLibrary } from "./NodeLibrary";
 import { PropertySidebar } from "./PropertySidebar";
@@ -25,6 +33,24 @@ import { CustomConnectionLine } from "./edges/CustomConnectionLine";
 
 const edgeTypes = {
   step: CustomStepEdge,
+};
+
+// Context for node minimization state
+interface MinimizationContextType {
+  minimizedNodes: Set<string>;
+  toggleNodeMinimization: (nodeId: string) => void;
+}
+
+const MinimizationContext = createContext<MinimizationContextType | undefined>(
+  undefined,
+);
+
+export const useMinimization = () => {
+  const context = useContext(MinimizationContext);
+  if (!context) {
+    throw new Error("useMinimization must be used within MinimizationProvider");
+  }
+  return context;
 };
 
 export function FlowEdit() {
@@ -46,74 +72,152 @@ function FlowEditInner() {
   } = useEditor();
 
   const [isPropertyPanelOpen, setIsPropertyPanelOpen] = useState(false);
+  const [minimizedNodes, setMinimizedNodes] = useState<Set<string>>(new Set());
   const { connectionStatus } = useEditor();
 
   const handlePropertyPanelToggle = useCallback(() => {
     setIsPropertyPanelOpen(!isPropertyPanelOpen);
   }, [isPropertyPanelOpen]);
 
+  const toggleNodeMinimization = useCallback((nodeId: string) => {
+    setMinimizedNodes((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(nodeId)) {
+        newSet.delete(nodeId);
+      } else {
+        newSet.add(nodeId);
+      }
+      return newSet;
+    });
+  }, []);
+
   const selectedNode = reactFlowRepresentation.nodes.find(
     (node: Node) => node.selected,
   );
-  useEffect(() => {
-    if (selectedNode && !isPropertyPanelOpen) {
-      handlePropertyPanelToggle();
-    } else if (!selectedNode && isPropertyPanelOpen) {
+
+  // Track if we're currently dragging
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Handle drag events
+  const onNodeDragStart = useCallback(() => {
+    setIsDragging(true);
+  }, []);
+
+  const onNodeDragStop = useCallback(() => {
+    // Reset dragging state after a short delay to prevent click events from firing
+    setTimeout(() => setIsDragging(false), 50);
+  }, []);
+
+  // Handle node clicks - only show panel if clicking on node body and not dragging
+  const onNodeClick = useCallback(
+    (event: React.MouseEvent) => {
+      // Don't show panel if we're dragging
+      if (isDragging) {
+        return;
+      }
+
+      // Check if the click was on the drag handle (header)
+      const isDragHandle = (event.target as HTMLElement).closest(
+        ".drag-handle",
+      );
+
+      // Only show panel if NOT clicking on drag handle and panel isn't already open
+      if (!isDragHandle && !isPropertyPanelOpen) {
+        handlePropertyPanelToggle();
+      }
+    },
+    [isDragging, isPropertyPanelOpen, handlePropertyPanelToggle],
+  );
+
+  // Handle clicking on empty space to close panel
+  const onPaneClick = useCallback(() => {
+    if (isPropertyPanelOpen) {
       setIsPropertyPanelOpen(false);
     }
-  }, [selectedNode, isPropertyPanelOpen, handlePropertyPanelToggle]);
+  }, [isPropertyPanelOpen]);
+
+  // Close panel when node is deselected
+  useEffect(() => {
+    if (!selectedNode && isPropertyPanelOpen) {
+      setIsPropertyPanelOpen(false);
+    }
+  }, [selectedNode, isPropertyPanelOpen]);
 
   const styledEdges = useMemo(() => {
-    return reactFlowRepresentation.edges.map((edge: Edge) => ({
-      ...edge,
-      type: "step",
-    }));
-  }, [reactFlowRepresentation.edges]);
+    return reactFlowRepresentation.edges.map((edge: Edge) => {
+      const modifiedEdge = { ...edge, type: "step" };
+
+      // Redirect edges to consolidated pads for minimized nodes
+      if (minimizedNodes.has(edge.source)) {
+        console.log(`Redirecting source edge for minimized node ${edge.source}`);
+        modifiedEdge.sourceHandle = `${edge.source}-consolidated-source`;
+      }
+
+      if (minimizedNodes.has(edge.target)) {
+        console.log(`Redirecting target edge for minimized node ${edge.target}`);
+        modifiedEdge.targetHandle = `${edge.target}-consolidated-sink`;
+      }
+
+      return modifiedEdge;
+    });
+  }, [
+    reactFlowRepresentation.edges,
+    minimizedNodes,
+    reactFlowRepresentation.nodes,
+  ]);
 
   return (
-    <div className="relative w-full h-full flex flex-col">
-      <div className="absolute top-2 right-2 flex z-60">
-        <AddBlockButton />
-      </div>
-      {connectionStatus && (
-        <div className="absolute top-[3.25rem] right-2 z-0 text-xs text-success pointer-events-none">
-          {connectionStatus}
+    <MinimizationContext.Provider
+      value={{ minimizedNodes, toggleNodeMinimization }}
+    >
+      <div className="relative w-full h-full flex flex-col">
+        <div className="absolute top-2 right-2 flex z-60">
+          <AddBlockButton />
         </div>
-      )}
+        {connectionStatus && (
+          <div className="absolute top-[3.25rem] right-2 z-0 text-xs text-success pointer-events-none">
+            {connectionStatus}
+          </div>
+        )}
 
-      <div
-        className={`absolute top-0 left-0 right-0 bottom-0 transition-all duration-300 ease-in-out`}
-      >
-        <FlowErrorBoundary>
-          <ReactFlow
-            nodes={reactFlowRepresentation.nodes as Node[]}
-            edges={styledEdges as Edge[]}
-            onNodesChange={onReactFlowNodesChange}
-            onEdgesChange={onReactFlowEdgesChange}
-            onConnect={onReactFlowConnect}
-            edgeTypes={edgeTypes}
-            connectionLineComponent={CustomConnectionLine}
-            fitView
-            nodeTypes={{ default: BaseBlock }}
-            defaultEdgeOptions={{
-              type: "step",
-              style: { strokeWidth: 2, stroke: "#FCD34D" },
-            }}
-            proOptions={{
-              hideAttribution: true,
-            }}
-          >
-            <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
-          </ReactFlow>
-        </FlowErrorBoundary>
-      </div>
-
-      {selectedNode && (
-        <div className="absolute top-16 right-2 bottom-2 z-10">
-          <PropertySidebar onToggle={handlePropertyPanelToggle} />
+        <div
+          className={`absolute top-0 left-0 right-0 bottom-0 transition-all duration-300 ease-in-out`}
+        >
+          <FlowErrorBoundary>
+            <ReactFlow
+              nodes={reactFlowRepresentation.nodes as Node[]}
+              edges={styledEdges as Edge[]}
+              onNodesChange={onReactFlowNodesChange}
+              onEdgesChange={onReactFlowEdgesChange}
+              onConnect={onReactFlowConnect}
+              onNodeClick={onNodeClick}
+              onNodeDragStart={onNodeDragStart}
+              onNodeDragStop={onNodeDragStop}
+              onPaneClick={onPaneClick}
+              edgeTypes={edgeTypes}
+              connectionLineComponent={CustomConnectionLine}
+              fitView
+              nodeTypes={{ default: BaseBlock }}
+              defaultEdgeOptions={{
+                type: "step",
+                style: { strokeWidth: 2, stroke: "#FCD34D" },
+              }}
+              proOptions={{
+                hideAttribution: true,
+              }}
+            >
+              <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+            </ReactFlow>
+          </FlowErrorBoundary>
         </div>
-      )}
-    </div>
+
+        {selectedNode && (
+          <div className="absolute top-16 right-2 bottom-2 z-10">
+            <PropertySidebar onToggle={handlePropertyPanelToggle} />
+          </div>
+        )}
+      </div>
+    </MinimizationContext.Provider>
   );
 }
 
