@@ -17,3 +17,7 @@
  */
 
 export { Engine } from './Engine'
+
+export type { LocalTrack, LocalAudioTrack, LocalVideoTrack } from './LocalTrack';
+export type { RemoteTrack, RemoteAudioTrack, RemoteVideoTrack } from './RemoteTrack';
+export type { SourcePad } from './pad/SourcePad';

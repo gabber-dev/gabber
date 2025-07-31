@@ -17,7 +17,6 @@
  */
 
 import { Room } from 'livekit-client';
-import { SinkPad } from './pad/SinkPad';
 import { SourcePad } from './pad/SourcePad';
 import { LocalAudioTrack, LocalVideoTrack, LocalTrack } from './LocalTrack';
 import { Subscription } from './Subscription';
@@ -115,10 +114,6 @@ export class Engine  {
     return new Subscription({nodeId: params.outputNodeId, livekitRoom: this.livekitRoom});
   }
 
-  public getSinkPad<DataType>(nodeId: string, padId: string): SinkPad<DataType> {
-    return new SinkPad<DataType>({ nodeId, padId, livekitRoom: this.livekitRoom });
-  }
-
   public getSourcePad<DataType>(nodeId: string, padId: string): SourcePad<DataType> {
     return new SourcePad<DataType>({ nodeId, padId, livekitRoom: this.livekitRoom });
   }
@@ -132,11 +127,6 @@ export class Engine  {
       this.emitConnectionStateChange();
     });
 
-    this.livekitRoom.on('dataReceived', (payload, participant, kind, topic) => {
-      console.log('🔍 Raw data received - Topic:', topic, 'Participant:', participant?.identity, 'Kind:', kind, 'Payload size:', payload.length);
-      this.handleDataReceived(payload, participant);
-    });
-
     this.livekitRoom.on('participantConnected', (participant) => {
       this.emitConnectionStateChange();
     });
@@ -144,10 +134,6 @@ export class Engine  {
     this.livekitRoom.on('participantDisconnected', (participant) => {
       this.emitConnectionStateChange();
     });
-  }
-
-
-  private handleDataReceived(payload: Uint8Array, participant: any): void {
   }
 }
 

@@ -29,6 +29,7 @@
         let debugLink = null;
         let appRunId;
         let engineConnectionState = "disconnected";
+        let buttonSourcePad = null;
         let handler = {
             onConnectionStateChange: (state) => {
                 engineConnectionState = state;
@@ -47,6 +48,7 @@
                     // Show publish buttons when connected
                     document.getElementById("webcam-button").style.display = "block";
                     document.getElementById("screenshare-button").style.display = "block";
+                    document.getElementById("button-container").style.display = "block";
                 } else {
                     if (debugLink) {
                         let linkContainer = document.getElementById("link-container");
@@ -61,6 +63,7 @@
             }
         };
         const engine = new window.Gabber.Engine({ handler });
+        buttonSourcePad = engine.getSourcePad("test_button", "trigger");
 
         async function connect() {
             let res = await fetch("http://localhost:8001/app/run", {
@@ -150,8 +153,12 @@
     </div>
 
     <!-- Button -->
-    <div id="button-container">
+    <div id="connect-container">
         <button id="connect-button" onclick="connect()">Connect</button>
+    </div>
+
+    <div id="button-container" style="display: none;">
+        <button id="trigger-button" onclick="buttonSourcePad.pushValue()">Trigger</button>
     </div>
 
     <div id="link-container">

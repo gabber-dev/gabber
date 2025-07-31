@@ -8,7 +8,7 @@ from typing import Annotated, Any, Literal, Type, TypeVar, cast
 from livekit import rtc
 from pydantic import BaseModel, Field
 
-from core import pad, runtime_types
+from core import pad
 from core.editor import messages, models, serialize
 from core.editor.models import (
     ConnectPadEdit,
@@ -374,11 +374,8 @@ class Graph:
                 await self._propagate_update([source_node, target_node])
 
     async def run(self, room: rtc.Room):
-        node_pad_lookup: dict[tuple[str, str], pad.SourcePad] = {
-            (n.id, p.get_id()): p
-            for n in self.nodes
-            for p in n.pads
-            if isinstance(p, pad.SourcePad)
+        node_pad_lookup: dict[tuple[str, str], pad.Pad] = {
+            (n.id, p.get_id()): p for n in self.nodes for p in n.pads
         }
 
         dc_queue = asyncio.Queue[
@@ -397,6 +394,14 @@ class Graph:
                     pad_obj = node_pad_lookup.get(
                         (payload.node_id, payload.source_pad_id)
                     )
+                    if not isinstance(pad_obj, pad.SourcePad):
+                        logging.error(
+                            f"Pad {payload.source_pad_id} in node {payload.node_id} is not a SourcePad."
+                        )
+                        complete_resp.error = f"Pad {payload.source_pad_id} in node {payload.node_id} is not a SourcePad."
+                        dc_queue.put_nowait((packet.participant, complete_resp))
+                        return
+
                     if not pad_obj:
                         logging.error(
                             f"Pad {payload.source_pad_id} in node {payload.node_id} not found."
@@ -415,6 +420,7 @@ class Graph:
                             (packet.participant, complete_resp)
                         )
                     )
+                    ctx.complete()
                 else:
                     logging.error(f"Unknown request type: {request.payload.type}")
                     complete_resp.error = (
@@ -516,7 +522,7 @@ class RuntimeRequestPayload_PushValue(BaseModel):
     type: Literal["push_value"] = "push_value"
     node_id: str
     source_pad_id: str
-    value: Any
+    value: Any = None
 
 
 RuntimeRequestPayload = Annotated[

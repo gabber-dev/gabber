@@ -40,10 +40,6 @@ def deserialize_pad_value(
         return None
     tc = type_constraints[0]
 
-    if not isinstance(p, pad.PropertyPad):
-        logging.error(f"Expected PropertyPad instance, got {type(p)}")
-        return None
-
     if isinstance(tc, pad.types.NodeReference):
         if isinstance(p, pad.ProxyPad):
             other = p.get_other()
