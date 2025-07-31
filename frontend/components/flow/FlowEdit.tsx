@@ -11,6 +11,7 @@ import {
   ReactFlowProvider,
   Node,
   Edge,
+  NodeChange,
 } from "@xyflow/react";
 
 import "@xyflow/react/dist/base.css";
@@ -41,9 +42,29 @@ function FlowEditInner() {
   const {
     reactFlowRepresentation,
     onReactFlowEdgesChange,
-    onReactFlowNodesChange,
+    onReactFlowNodesChange: originalOnNodesChange,
     onReactFlowConnect,
   } = useEditor();
+
+  const onReactFlowNodesChange = useCallback(
+    (changes: NodeChange[]) => {
+      const snappedChanges = changes.map((change: NodeChange) => {
+        if (change.type === "position" && !change.dragging && change.position) {
+          // Only snap when drag ends
+          return {
+            ...change,
+            position: {
+              x: Math.round(change.position.x / 12) * 12,
+              y: Math.round(change.position.y / 12) * 12,
+            },
+          };
+        }
+        return change;
+      });
+      originalOnNodesChange(snappedChanges);
+    },
+    [originalOnNodesChange],
+  );
 
   const [isPropertyPanelOpen, setIsPropertyPanelOpen] = useState(false);
   const { connectionStatus } = useEditor();
