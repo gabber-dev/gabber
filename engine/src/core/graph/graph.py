@@ -3,11 +3,10 @@
 
 import asyncio
 import logging
-from typing import Any, Type, TypeVar, cast
+from typing import Annotated, Any, Literal, Type, TypeVar, cast
 
 from livekit import rtc
-from nodes.core.sub_graph import SubGraph
-from utils import short_uuid
+from pydantic import BaseModel, Field
 
 from core import pad, runtime_types
 from core.editor import messages, models, serialize
@@ -26,6 +25,8 @@ from core.editor.models import (
 )
 from core.node import Node
 from core.secret import PublicSecret, SecretProvider
+from nodes.core.sub_graph import SubGraph
+from utils import short_uuid
 
 T = TypeVar("T", bound=Node)
 
@@ -373,34 +374,53 @@ class Graph:
                 await self._propagate_update([source_node, target_node])
 
     async def run(self, room: rtc.Room):
+        node_pad_lookup: dict[tuple[str, str], pad.SourcePad] = {
+            (n.id, p.get_id()): p
+            for n in self.nodes
+            for p in n.pads
+            if isinstance(p, pad.SourcePad)
+        }
+
+        dc_queue = asyncio.Queue[
+            tuple[rtc.RemoteParticipant | None, BaseModel] | None
+        ]()
+
         def on_data(packet: rtc.DataPacket):
-            if not packet.topic:
-                return
-            split = packet.topic.split(":")
-            node_id = split[0] if len(split) > 0 else None
-            pad_id = split[1] if len(split) > 1 else None
-            if not node_id or not pad_id:
-                logging.error(f"Invalid topic format: {packet.topic}")
-                return
-            data_type = split[2] if len(split) > 2 else None
-            if data_type == "trigger":
-                node = next((n for n in self.nodes if n.id == node_id), None)
-                if not node:
-                    logging.error(f"Node with ID {node_id} not found.")
-                    return
+            if packet.topic == "runtime":
+                request = RuntimeRequest.model_validate_json(packet.data)
+                req_id = request.req_id
+                ack_resp = RuntimeRequestAck(req_id=req_id)
+                dc_queue.put_nowait((packet.participant, ack_resp))
+                complete_resp = RuntimeRequestComplete(req_id=req_id)
+                if request.payload.type == "push_value":
+                    payload = request.payload
+                    pad_obj = node_pad_lookup.get(
+                        (payload.node_id, payload.source_pad_id)
+                    )
+                    if not pad_obj:
+                        logging.error(
+                            f"Pad {payload.source_pad_id} in node {payload.node_id} not found."
+                        )
+                        complete_resp.error = f"Pad {payload.source_pad_id} in node {payload.node_id} not found."
+                        dc_queue.put_nowait((packet.participant, complete_resp))
+                        return
 
-                p = node.get_pad(pad_id)
-                if not p:
-                    logging.error(f"Pad with ID {pad_id} not found in node {node_id}.")
-                    return
-
-                if not isinstance(p, pad.SourcePad):
-                    logging.error(f"Pad {pad_id} in node {node_id} is not a SourcePad.")
-                    return
-
-                ctx = pad.RequestContext(parent=None)
-                p.push_item(runtime_types.Trigger(), ctx)
-                ctx.complete()
+                    value = serialize.deserialize_pad_value(
+                        self.nodes, pad_obj, payload.value
+                    )
+                    ctx = pad.RequestContext(parent=None)
+                    pad_obj.push_item(value, ctx)
+                    ctx.add_done_callback(
+                        lambda _: dc_queue.put_nowait(
+                            (packet.participant, complete_resp)
+                        )
+                    )
+                else:
+                    logging.error(f"Unknown request type: {request.payload.type}")
+                    complete_resp.error = (
+                        f"Unknown request type: {request.payload.type}"
+                    )
+                    dc_queue.put_nowait((packet.participant, complete_resp))
 
         # Only top level graph gets events
         if self.id == "default":
@@ -409,10 +429,114 @@ class Graph:
         for node in self.nodes:
             node.room = room
 
+        async def dc_queue_consumer():
+            while True:
+                item = await dc_queue.get()
+                if item is None:
+                    break
+
+                try:
+                    participant, payload = item
+                    destination_identities: list[str] = []
+                    payload_bytes = payload.model_dump_json().encode("utf-8")
+                    if participant:
+                        destination_identities.append(participant.identity)
+                    await room.local_participant.publish_data(
+                        payload_bytes, destination_identities=destination_identities
+                    )
+                except Exception as e:
+                    logging.error(f"Error sending data packet: {e}", exc_info=e)
+
         try:
-            await asyncio.gather(*[node.run() for node in self.nodes])
+            await asyncio.gather(
+                *[node.run() for node in self.nodes], dc_queue_consumer()
+            )
         except Exception as e:
             logging.error(f"Error running graph: {e}", exc_info=e)
 
         if self.id == "default":
             room.off("data_received", on_data)
+
+
+class PadTriggeredValue_String(BaseModel):
+    type: Literal["string"] = "string"
+    value: str
+
+
+class PadTriggeredValue_Boolean(BaseModel):
+    type: Literal["boolean"] = "boolean"
+    value: bool
+
+
+class PadTriggeredValue_Number(BaseModel):
+    type: Literal["number"] = "number"
+    value: float
+
+
+class PadTriggeredValue_Trigger(BaseModel):
+    type: Literal["trigger"] = "trigger"
+
+
+class PadTriggeredValue_AudioClip(BaseModel):
+    type: Literal["audio_clip"] = "audio_clip"
+    transcript: str
+    duration: float
+
+
+class PadTriggeredValue_VideoClip(BaseModel):
+    type: Literal["video_clip"] = "video_clip"
+    transcript: str
+    duration: float
+
+
+PadTriggeredValue = Annotated[
+    PadTriggeredValue_String
+    | PadTriggeredValue_Boolean
+    | PadTriggeredValue_Number
+    | PadTriggeredValue_Trigger
+    | PadTriggeredValue_AudioClip,
+    Field(discriminator="type", description="Type of the pad triggered value"),
+]
+
+
+class RuntimeEvent_PadTriggered(BaseModel):
+    type: Literal["pad_triggered"] = "pad_triggered"
+    node_id: str
+    pad_id: str
+    value: PadTriggeredValue
+
+
+RuntimeEvent = Annotated[
+    RuntimeEvent_PadTriggered,
+    Field(discriminator="type", description="Request to perform on the graph editor"),
+]
+
+
+class RuntimeRequestPayload_PushValue(BaseModel):
+    type: Literal["push_value"] = "push_value"
+    node_id: str
+    source_pad_id: str
+    value: Any
+
+
+RuntimeRequestPayload = Annotated[
+    RuntimeRequestPayload_PushValue,
+    Field(discriminator="type", description="Request to push data to a pad"),
+]
+
+
+class RuntimeRequest(BaseModel):
+    type: Literal["request"] = "request"
+    req_id: str
+    payload: RuntimeRequestPayload
+
+
+class RuntimeRequestAck(BaseModel):
+    type: Literal["ack"] = "ack"
+    req_id: str
+
+
+class RuntimeRequestComplete(BaseModel):
+    type: Literal["complete"] = "complete"
+    req_id: str
+    error: str | None = None

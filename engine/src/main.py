@@ -7,6 +7,7 @@ import logging
 
 import click
 from core.editor import messages
+from core import graph
 from pydantic import TypeAdapter
 from server import (
     GraphEditorServer,
@@ -143,6 +144,85 @@ def generate_repository_schema():
 
     merged_schema["$defs"]["Request"] = request_root
     merged_schema["$defs"]["Response"] = response_root
+
+    # Convert $defs to definitions for older tools if needed
+    if merged_schema["$defs"]:
+        merged_schema["definitions"] = merged_schema.pop("$defs")
+        # Update all $ref pointers
+        schema_str = json.dumps(merged_schema)
+        schema_str = schema_str.replace("#/$defs/", "#/definitions/")
+        merged_schema = json.loads(schema_str)
+
+    print(json.dumps(merged_schema, indent=2))
+
+
+@main_cli.command("generate-runtime-schema")
+def generate_runtime_schema():
+    """Generate merged JSON schema for TypeScript generation"""
+
+    runtime_request_schema = graph.RuntimeRequest.model_json_schema()
+    runtime_ack_schema = graph.RuntimeRequestAck.model_json_schema()
+    runtime_complete_schema = graph.RuntimeRequestComplete.model_json_schema()
+    event_adapter = TypeAdapter(graph.RuntimeEvent)
+    runtime_event_schema = event_adapter.json_schema()
+
+    # Merge schemas at root level
+    merged_schema = {
+        "$defs": {},
+        "oneOf": [
+            {"$ref": "#/$defs/RuntimeRequest"},
+            {"$ref": "#/$defs/RuntimeEvent"},
+            {"$ref": "#/$defs/RuntimeRequestAck"},
+            {"$ref": "#/$defs/RuntimeRequestComplete"},
+        ],
+    }
+
+    # Add all definitions from both schemas
+    if "$defs" in runtime_request_schema:
+        merged_schema["$defs"].update(runtime_request_schema["$defs"])
+    if "definitions" in runtime_request_schema:
+        merged_schema["$defs"].update(runtime_request_schema["definitions"])
+
+    if "$defs" in runtime_ack_schema:
+        merged_schema["$defs"].update(runtime_ack_schema["$defs"])
+    if "definitions" in runtime_ack_schema:
+        merged_schema["$defs"].update(runtime_ack_schema["definitions"])
+
+    if "$defs" in runtime_complete_schema:
+        merged_schema["$defs"].update(runtime_complete_schema["$defs"])
+    if "definitions" in runtime_complete_schema:
+        merged_schema["$defs"].update(runtime_complete_schema["definitions"])
+
+    if "$defs" in runtime_event_schema:
+        merged_schema["$defs"].update(runtime_event_schema["$defs"])
+    if "definitions" in runtime_event_schema:
+        merged_schema["$defs"].update(runtime_event_schema["definitions"])
+
+    # Add the root schemas as definitions
+    request_root = {
+        k: v
+        for k, v in runtime_request_schema.items()
+        if k not in ["$defs", "definitions"]
+    }
+    ack_root = {
+        k: v for k, v in runtime_ack_schema.items() if k not in ["$defs", "definitions"]
+    }
+
+    complete_root = {
+        k: v
+        for k, v in runtime_complete_schema.items()
+        if k not in ["$defs", "definitions"]
+    }
+    event_root = {
+        k: v
+        for k, v in runtime_event_schema.items()
+        if k not in ["$defs", "definitions"]
+    }
+
+    merged_schema["$defs"]["RuntimeRequest"] = request_root
+    merged_schema["$defs"]["RuntimeRequestAck"] = ack_root
+    merged_schema["$defs"]["RuntimeRequestComplete"] = complete_root
+    merged_schema["$defs"]["RuntimeEvent"] = event_root
 
     # Convert $defs to definitions for older tools if needed
     if merged_schema["$defs"]:

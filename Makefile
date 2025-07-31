@@ -21,9 +21,11 @@ repository:
 	cd engine && \
 	make repository 
 
-generate-ts:
+generate:
 	engine/.venv/bin/python engine/src/main.py generate-editor-schema | json2ts -o frontend/generated/editor.ts && \
 	engine/.venv/bin/python engine/src/main.py generate-repository-schema | json2ts -o frontend/generated/repository.ts
+	engine/.venv/bin/python engine/src/main.py generate-runtime-schema | json2ts -o sdks/javascript/generated/runtime.ts
+	engine/.venv/bin/python engine/src/main.py generate-runtime-schema | json2ts -o sdks/react/generated/runtime.ts
 
 frontend:
 	cd frontend && \
