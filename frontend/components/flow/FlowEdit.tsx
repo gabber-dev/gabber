@@ -20,11 +20,11 @@ import { BaseBlock } from "./blocks/BaseBlock";
 import { XMarkIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { NodeLibrary } from "./NodeLibrary";
 import { PropertySidebar } from "./PropertySidebar";
-import { CustomStepEdge } from "./edges/CustomStepEdge";
+import { HybridEdge } from "./edges/HybridEdge";
 import { CustomConnectionLine } from "./edges/CustomConnectionLine";
 
 const edgeTypes = {
-  step: CustomStepEdge,
+  hybrid: HybridEdge,
 };
 
 export function FlowEdit() {
@@ -66,7 +66,7 @@ function FlowEditInner() {
   const styledEdges = useMemo(() => {
     return reactFlowRepresentation.edges.map((edge: Edge) => ({
       ...edge,
-      type: "step",
+      type: "hybrid",
     }));
   }, [reactFlowRepresentation.edges]);
 
@@ -96,7 +96,7 @@ function FlowEditInner() {
             fitView
             nodeTypes={{ default: BaseBlock }}
             defaultEdgeOptions={{
-              type: "step",
+              type: "hybrid",
               style: { strokeWidth: 2, stroke: "#FCD34D" },
             }}
             proOptions={{
