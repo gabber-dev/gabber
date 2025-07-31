@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
+import { useEditor } from "@/hooks/useEditor";
 import { MicrophoneIcon, VideoCameraIcon } from "@heroicons/react/24/solid";
 import { useRealtimeSessionEngine } from "gabber-client-react";
-import { useEffect, useMemo, useRef } from "react";
 
 export function Publish() {
   const {
@@ -15,7 +15,12 @@ export function Publish() {
     setMicrophoneEnabled,
     innerEngine,
   } = useRealtimeSessionEngine();
+  const { debug } = useEditor();
   const cameraEnabled = webcamState === "on" || webcamState === "preview";
+
+  if (debug) {
+    return <div></div>;
+  }
 
   return (
     <div className="flex flex-col w-full p-1">

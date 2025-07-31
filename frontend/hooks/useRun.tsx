@@ -14,26 +14,31 @@ import React, {
 } from "react";
 import toast from "react-hot-toast";
 import { RealtimeSessionEngineProvider } from "gabber-client-react";
+import { GraphEditorRepresentation } from "@/generated/editor";
+import { AppRunConnectionDetails } from "@/generated/repository";
 
 type ConnectionState = "not_connected" | "connecting" | "connected";
 
 type RunContextType = {
   connectionState: ConnectionState;
   stopRun: () => void;
-  startRun: () => void;
+  startRun: (params: { graph: GraphEditorRepresentation }) => void;
 };
 
 const RunContext = createContext<RunContextType | undefined>(undefined);
 
 interface RunProviderProps {
   children: React.ReactNode;
-  startRunImpl: () => Promise<any>;
+  startRunImpl: (params: {
+    graph: GraphEditorRepresentation;
+  }) => Promise<AppRunConnectionDetails>;
 }
 
 export function RunProvider({ children, startRunImpl }: RunProviderProps) {
   // const { selectedAppObject, selectedFlow, newestVersionObj } = useApp();
 
-  const [connectionOpts, setConnectionOpts] = useState<any | null>(null);
+  const [connectionDetails, setConnectionDetails] =
+    useState<AppRunConnectionDetails | null>(null);
   const [connectionDetailsLoading, setConnectionDetailsLoading] =
     useState(false);
 
@@ -41,36 +46,37 @@ export function RunProvider({ children, startRunImpl }: RunProviderProps) {
     if (connectionDetailsLoading) {
       return "connecting";
     }
-    if (connectionOpts) {
+    if (connectionDetails) {
       return "connected";
     }
     return "not_connected";
-  }, [connectionOpts, connectionDetailsLoading]);
+  }, [connectionDetails, connectionDetailsLoading]);
 
-  const startRun = useCallback(async () => {
-    if (connectionState !== "not_connected") {
-      return;
-    }
+  const startRun = useCallback(
+    async (params: { graph: GraphEditorRepresentation }) => {
+      if (connectionState !== "not_connected") {
+        return;
+      }
 
-    setConnectionDetailsLoading(true);
-    try {
-      const res = await startRunImpl();
-
-      setConnectionOpts({
-        connection_details: res,
-      });
-    } catch (e) {
-      toast.error("Failed to start run. Please try again.");
-    } finally {
-      setConnectionDetailsLoading(false);
-    }
-  }, [connectionState, startRunImpl]);
+      setConnectionDetailsLoading(true);
+      try {
+        const res = await startRunImpl({ graph: params.graph });
+        setConnectionDetails(res);
+      } catch (e) {
+        console.error("Failed to start run:", e);
+        toast.error("Failed to start run. Please try again.");
+      } finally {
+        setConnectionDetailsLoading(false);
+      }
+    },
+    [connectionState, startRunImpl],
+  );
 
   const stopRun = useCallback(async () => {
     if (connectionState !== "connected") {
       return;
     }
-    setConnectionOpts(null);
+    setConnectionDetails(null);
   }, [connectionState]);
 
   return (
@@ -81,8 +87,12 @@ export function RunProvider({ children, startRunImpl }: RunProviderProps) {
         startRun,
       }}
     >
-      <RealtimeSessionEngineProvider connectionOpts={connectionOpts as any}>
-        {children as any}
+      <RealtimeSessionEngineProvider
+        connectionOpts={
+          connectionDetails ? { connection_details: connectionDetails } : null
+        }
+      >
+        {children}
       </RealtimeSessionEngineProvider>
     </RunContext.Provider>
   );

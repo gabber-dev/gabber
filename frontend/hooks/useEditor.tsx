@@ -32,6 +32,7 @@ import useWebSocket, { ReadyState } from "react-use-websocket";
 import toast from "react-hot-toast";
 
 type EditorContextType = {
+  debug: boolean;
   editorRepresentation: GraphEditorRepresentation;
   reactFlowRepresentation: Record<string, any>;
   isConnected: boolean;
@@ -58,6 +59,7 @@ const EditorContext = createContext<EditorContextType | undefined>(undefined);
 
 type Props = {
   children: React.ReactNode;
+  debug: boolean;
   editor_url: string;
   savedGraph: GraphEditorRepresentation;
   saveImpl: (snapshot: GraphEditorRepresentation) => Promise<void>;
@@ -65,6 +67,7 @@ type Props = {
 
 export function EditorProvider({
   children,
+  debug,
   saveImpl,
   savedGraph,
   editor_url,
@@ -81,7 +84,7 @@ export function EditorProvider({
   const { sendMessage, lastJsonMessage, readyState } = useWebSocket(
     editor_url,
     {
-      shouldReconnect: (closeEvent: any) => {
+      shouldReconnect: (closeEvent) => {
         return closeEvent.code !== 1000;
       },
       reconnectAttempts: 5,
@@ -543,6 +546,7 @@ export function EditorProvider({
         nodeLibrary,
         unsavedChanges,
         saving,
+        debug,
         saveChanges,
         onReactFlowConnect,
         onReactFlowNodesChange,

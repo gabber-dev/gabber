@@ -57,7 +57,9 @@ class Publish(node.Node):
 
         async def video_consume():
             while True:
-                video_stream = await video_stream_provider(self.room)
+                video_stream = await video_stream_provider(
+                    self.room, f"{self.id}:video"
+                )
                 async for frame in video_stream:
                     timestamp_s = frame.timestamp_us / 1_000_000.0
                     converted = frame.frame.convert(rtc.VideoBufferType.RGBA)
@@ -76,7 +78,9 @@ class Publish(node.Node):
 
         async def audio_consume():
             while True:
-                audio_stream = await audio_stream_provider(self.room)
+                audio_stream = await audio_stream_provider(
+                    self.room, f"{self.id}:audio"
+                )
                 async for frame in audio_stream:
                     original_data = AudioFrameData(
                         data=np.frombuffer(frame.frame.data, dtype=np.int16).reshape(

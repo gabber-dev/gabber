@@ -3,18 +3,21 @@
 
 import asyncio
 import datetime
+import json
 import logging
 import os
+from uuid import uuid4
 
 import aiofiles
 import aiohttp
 import aiohttp.web
-from . import messages
-from . import models
-from aiohttp import web
 import aiohttp_cors
+from aiohttp import web
+from livekit import api
 
-from uuid import uuid4
+from core.editor.models import GraphEditorRepresentation
+
+from . import messages, models
 
 
 class RepositoryServer:
@@ -49,6 +52,8 @@ class RepositoryServer:
         self.app.router.add_delete("/sub_graph/{id}", self.delete_subgraph)
         self.app.router.add_get("/example/{id}", self.get_example)
         self.app.router.add_get("/example/list", self.list_examples)
+        self.app.router.add_post("/app/run", self.app_run)
+        self.app.router.add_post("/app/debug_connection", self.debug_connection)
 
     async def ensure_dir(self, dir_path: str):
         await asyncio.to_thread(os.makedirs, dir_path, exist_ok=True)
@@ -313,7 +318,6 @@ class RepositoryServer:
         # Keep the server running
         try:
             while True:
-                logging.info("Repository server is running...")
                 await asyncio.sleep(1)
         except asyncio.CancelledError:
             logging.info("Repository server has been cancelled.")
@@ -373,3 +377,91 @@ class RepositoryServer:
             return aiohttp.web.json_response(
                 {"status": "error", "message": "App not found"}, status=404
             )
+
+    async def app_run(self, request: aiohttp.web.Request):
+        livekit_url = "ws://localhost:7880"
+        livekit_api_key = "devkey"
+        livekit_api_secret = "secret"
+        room_name = str(uuid4())
+        req = messages.CreateAppRunRequest.model_validate(await request.json())
+
+        at = api.AccessToken(livekit_api_key, livekit_api_secret)
+        at = at.with_grants(
+            api.VideoGrants(
+                room_join=True,
+                room=room_name,
+                can_publish=True,
+                can_subscribe=True,
+            )
+        ).with_identity("human")
+        lkapi = api.LiveKitAPI(
+            url=livekit_url, api_key=livekit_api_key, api_secret=livekit_api_secret
+        )
+        await lkapi.room.create_room(create=api.CreateRoomRequest(name=room_name))
+        await lkapi.agent_dispatch.create_dispatch(
+            req=api.CreateAgentDispatchRequest(
+                room=room_name,
+                agent_name="gabber-engine",
+                metadata=req.model_dump_json(),
+            )
+        )
+        connection_details = models.AppRunConnectionDetails(
+            url=livekit_url,
+            token=at.to_jwt(),
+        )
+        response = messages.CreateAppRunResponse(
+            connection_details=connection_details,
+            id=room_name,
+        )
+        return aiohttp.web.Response(
+            body=response.model_dump_json(), content_type="application/json"
+        )
+
+    async def debug_connection(self, request: aiohttp.web.Request):
+        livekit_url = "ws://localhost:7880"
+        livekit_api_key = "devkey"
+        livekit_api_secret = "secret"
+        req = messages.DebugConnectionRequest.model_validate(await request.json())
+        at = api.AccessToken(livekit_api_key, livekit_api_secret)
+        at = at.with_grants(
+            api.VideoGrants(
+                room_join=True,
+                room=req.app_run,
+                can_publish=False,
+                can_publish_data=True,
+                can_subscribe=True,
+            )
+        ).with_identity("debug")
+
+        connection_details = models.AppRunConnectionDetails(
+            url=livekit_url,
+            token=at.to_jwt(),
+        )
+
+        lkapi = api.LiveKitAPI(
+            url=livekit_url, api_key=livekit_api_key, api_secret=livekit_api_secret
+        )
+        dispatches = await lkapi.agent_dispatch.list_dispatch(room_name=req.app_run)
+        if not dispatches:
+            return aiohttp.web.json_response(
+                {"status": "error", "message": "No dispatch found for the room"},
+                status=404,
+            )
+
+        dispatch = next(
+            (d for d in dispatches if d.agent_name == "gabber-engine"), None
+        )
+        if not dispatch:
+            return aiohttp.web.json_response(
+                {"status": "error", "message": "No gabber-engine dispatch found"},
+                status=404,
+            )
+        dispatch_metadata = json.loads(dispatch.metadata)
+        graph = GraphEditorRepresentation.model_validate(dispatch_metadata["graph"])
+        response = messages.DebugConnectionResponse(
+            connection_details=connection_details,
+            graph=graph,
+        )
+        return aiohttp.web.Response(
+            body=response.model_dump_json(), content_type="application/json"
+        )

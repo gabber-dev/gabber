@@ -32,7 +32,7 @@ frontend:
 
 add-license:
 	addlicense -c "Fluently AI, Inc. DBA Gabber. All rights reserved." -l "SUL-1.0" -s -ignore frontend/node_modules -ignore frontend/.next -ignore engine/.venv engine frontend services
-	addlicense -c "Fluently AI, Inc. DBA Gabber. All rights reserved." -l "Apache-2.0" -s -ignore **/node_modules sdk examples
+	addlicense -c "Fluently AI, Inc. DBA Gabber. All rights reserved." -l "Apache-2.0" -s -ignore **/node_modules sdks examples
 
 livekit:
 	livekit-server --dev

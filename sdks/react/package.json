@@ -1,0 +1,36 @@
+{
+    "name": "@gabber-dev/react",
+    "version": "0.1.0",
+    "main": "./dist/index.js",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsup && npm run build-iife",
+        "build-iife": "rollup -c rollup.config.iife.js",
+        "lint": "eslint --fix",
+        "tsc": "tsc"
+    },
+    "devDependencies": {
+        "@rollup/plugin-node-resolve": "^15.3.1",
+        "@rollup/plugin-typescript": "^11.1.6",
+        "eslint": "^8.57.1",
+        "eslint-config-prettier": "^9.1.0",
+        "eslint-plugin-import": "^2.31.0",
+        "eslint-plugin-prettier": "^5.4.0",
+        "prettier": "^3.5.3",
+        "rollup": "^4.28.1",
+        "tsup": "^8.3.5",
+        "typescript": "^5.7.2"
+    },
+    "dependencies": {
+        "axios": "^1.7.9",
+        "eventemitter3": "^5.0.1",
+        "livekit-client": "^2.7.5"
+    },
+    "publishConfig": {
+        "access": "public"
+    }
+}

@@ -92,7 +92,7 @@ class ParenthesisRemover:
         return res
 
 
-async def audio_stream_provider(room: rtc.Room):
+async def audio_stream_provider(room: rtc.Room, track_name: str):
     while True:
         await asyncio.sleep(0.2)
         for participant in room.remote_participants.values():
@@ -107,6 +107,9 @@ async def audio_stream_provider(room: rtc.Room):
                 if track_pub.kind != rtc.TrackKind.KIND_AUDIO:
                     continue
 
+                if track_pub.name != track_name:
+                    continue
+
                 noise_canc = None
 
                 # This track is not a audio track
@@ -119,7 +122,7 @@ async def audio_stream_provider(room: rtc.Room):
                 return stream
 
 
-async def video_stream_provider(room: rtc.Room):
+async def video_stream_provider(room: rtc.Room, track_name: str):
     while True:
         await asyncio.sleep(0.2)
         for participant in room.remote_participants.values():
@@ -130,6 +133,9 @@ async def video_stream_provider(room: rtc.Room):
                     continue
 
                 if track_pub.kind != rtc.TrackKind.KIND_VIDEO:
+                    continue
+
+                if track_pub.name != track_name:
                     continue
 
                 stream = rtc.VideoStream.from_track(track=track_pub.track)

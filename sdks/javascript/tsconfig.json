@@ -1,0 +1,24 @@
+{
+    "compilerOptions": {
+        "module": "esnext",
+        "lib": [
+            "dom",
+            "esnext"
+        ],
+        "target": "ES6",
+        "importHelpers": true,
+        "declaration": true,
+        "declarationMap": true,
+        "outDir": "dist",
+        "sourceMap": true,
+        "strict": true,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true,
+        // "noUnusedLocals": true,
+        // "noUnusedParameters": true,
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+    }
+}
