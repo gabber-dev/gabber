@@ -8,7 +8,13 @@ from pydantic import BaseModel
 
 from core import node, pad, runtime_types
 
-from .models import NodeEditorRepresentation, PadEditorRepresentation, PadReference
+from .models import (
+    NodeEditorRepresentation, 
+    PadEditorRepresentation, 
+    PadReference,
+    DisplayState,
+    ConsolidatedPadRepresentation,
+)
 
 
 def serialize_pad_value(v: Any | None):
@@ -124,6 +130,24 @@ def pad_editor_rep(p: pad.Pad):
 
 def node_editor_rep(n: node.Node) -> "NodeEditorRepresentation":
     pads = [pad_editor_rep(p) for p in n.pads]
+    
+    # Create consolidated pads when node is minimized
+    consolidated_pads = []
+    if n.display_state == "minimized":
+        pad_groups = n.get_consolidated_pads()
+        if pad_groups["sink"]:
+            consolidated_pads.append(ConsolidatedPadRepresentation(
+                id=f"{n.id}-consolidated-sink",
+                type="sink",
+                represented_pads=pad_groups["sink"]
+            ))
+        if pad_groups["source"]:
+            consolidated_pads.append(ConsolidatedPadRepresentation(
+                id=f"{n.id}-consolidated-source", 
+                type="source",
+                represented_pads=pad_groups["source"]
+            ))
+    
     return NodeEditorRepresentation(
         id=n.id,
         type=n.get_type(),
@@ -133,4 +157,6 @@ def node_editor_rep(n: node.Node) -> "NodeEditorRepresentation":
         pads=pads,
         description=n.get_description(),
         metadata=n.get_metadata(),
+        display_state=DisplayState(n.display_state),
+        consolidated_pads=consolidated_pads,
     )

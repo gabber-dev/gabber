@@ -10,6 +10,17 @@ from core.node import Node, NodeMetadata
 from core.pad import types
 
 
+class DisplayState(str, Enum):
+    EXPANDED = "expanded"
+    MINIMIZED = "minimized"
+
+
+class ConsolidatedPadRepresentation(BaseModel):
+    id: str
+    type: Literal["sink", "source"]
+    represented_pads: list[str]  # List of original pad IDs this represents
+
+
 class EditType(str, Enum):
     INSERT_NODE = "insert_node"
     INSERT_SUBGRAPH = "insert_sub_graph"
@@ -18,6 +29,7 @@ class EditType(str, Enum):
     CONNECT_PAD = "connect_pad"
     DISCONNECT_PAD = "disconnect_pad"
     UPDATE_PAD = "update_pad"
+    TOGGLE_DISPLAY_STATE = "toggle_display_state"
 
 
 class InsertNodeEdit(BaseModel):
@@ -75,6 +87,11 @@ class UpdatePadEdit(BaseModel):
     value: Any = Field(..., description="New value for the pad")
 
 
+class ToggleDisplayStateEdit(BaseModel):
+    type: Literal[EditType.TOGGLE_DISPLAY_STATE] = EditType.TOGGLE_DISPLAY_STATE
+    node_id: str = Field(..., description="ID of the node to toggle display state")
+
+
 Edit = Annotated[
     InsertNodeEdit
     | InsertSubGraphEdit
@@ -82,7 +99,8 @@ Edit = Annotated[
     | RemoveNodeEdit
     | ConnectPadEdit
     | DisconnectPadEdit
-    | UpdatePadEdit,
+    | UpdatePadEdit
+    | ToggleDisplayStateEdit,
     Field(
         discriminator="type", description="Type of edit to perform on the graph editor"
     ),
@@ -159,3 +177,5 @@ class NodeEditorRepresentation(BaseModel):
     pads: list[PadEditorRepresentation]
     description: str | None = None
     metadata: NodeMetadata
+    display_state: DisplayState = DisplayState.EXPANDED
+    consolidated_pads: list[ConsolidatedPadRepresentation] = []

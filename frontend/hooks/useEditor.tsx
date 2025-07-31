@@ -52,6 +52,7 @@ type EditorContextType = {
   connectPad: (req: ConnectPadEdit) => void;
   updatePad: (req: UpdatePadEdit) => void;
   updateNode: (req: UpdateNodeEdit) => void;
+  toggleDisplayState: (nodeId: string) => void;
 };
 
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
@@ -246,6 +247,19 @@ export function EditorProvider({
         );
 
         return { ...prev, nodes: updatedNodes };
+      });
+    },
+    [sendRequest],
+  );
+
+  const toggleDisplayState = useCallback(
+    (nodeId: string) => {
+      sendRequest({
+        type: "edit",
+        edit: {
+          type: "toggle_display_state",
+          node_id: nodeId,
+        },
       });
     },
     [sendRequest],
@@ -553,6 +567,7 @@ export function EditorProvider({
         connectPad,
         updatePad,
         updateNode,
+        toggleDisplayState,
       }}
     >
       {children}

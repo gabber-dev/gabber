@@ -3,14 +3,7 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import {
-  useState,
-  useCallback,
-  useMemo,
-  useEffect,
-  createContext,
-  useContext,
-} from "react";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import {
   ReactFlow,
   Background,
@@ -30,26 +23,17 @@ import { PropertySidebar } from "./PropertySidebar";
 import { HybridEdge } from "./edges/HybridEdge";
 import { CustomConnectionLine } from "./edges/CustomConnectionLine";
 
-const edgeTypes = {
-  hybrid: HybridEdge,
-};
-
-// Context for node minimization state
-interface MinimizationContextType {
-  minimizedNodes: Set<string>;
-  toggleNodeMinimization: (nodeId: string) => void;
+interface NodeData {
+  display_state: "expanded" | "minimized";
+  consolidated_pads?: Array<{
+    id: string;
+    type: "sink" | "source";
+    represented_pads: string[];
+  }>;
 }
 
-const MinimizationContext = createContext<MinimizationContextType | undefined>(
-  undefined,
-);
-
-export const useMinimization = () => {
-  const context = useContext(MinimizationContext);
-  if (!context) {
-    throw new Error("useMinimization must be used within MinimizationProvider");
-  }
-  return context;
+const edgeTypes = {
+  hybrid: HybridEdge,
 };
 
 export function FlowEdit() {
@@ -71,24 +55,11 @@ function FlowEditInner() {
   } = useEditor();
 
   const [isPropertyPanelOpen, setIsPropertyPanelOpen] = useState(false);
-  const [minimizedNodes, setMinimizedNodes] = useState<Set<string>>(new Set());
   const { connectionStatus } = useEditor();
 
   const handlePropertyPanelToggle = useCallback(() => {
     setIsPropertyPanelOpen(!isPropertyPanelOpen);
   }, [isPropertyPanelOpen]);
-
-  const toggleNodeMinimization = useCallback((nodeId: string) => {
-    setMinimizedNodes((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(nodeId)) {
-        newSet.delete(nodeId);
-      } else {
-        newSet.add(nodeId);
-      }
-      return newSet;
-    });
-  }, []);
 
   const selectedNode = reactFlowRepresentation.nodes.find(
     (node: Node) => node.selected,
@@ -103,75 +74,94 @@ function FlowEditInner() {
 
   const styledEdges = useMemo(() => {
     return reactFlowRepresentation.edges.map((edge: Edge) => {
-      const modifiedEdge = { ...edge, type: "hybrid" };
+      let sourceHandle = edge.sourceHandle;
+      let targetHandle = edge.targetHandle;
 
-      // Redirect edges to consolidated pads for minimized nodes
-      if (minimizedNodes.has(edge.source)) {
-        console.log(
-          `Redirecting source edge for minimized node ${edge.source}`,
-        );
-        modifiedEdge.sourceHandle = `${edge.source}-consolidated-source`;
+      // Check if source node is minimized and redirect to consolidated pad
+      const sourceNode = reactFlowRepresentation.nodes.find(
+        (node: Node) => node.id === edge.source,
+      );
+      if (
+        sourceNode &&
+        (sourceNode.data as NodeData).display_state === "minimized"
+      ) {
+        const consolidatedPads =
+          (sourceNode.data as NodeData).consolidated_pads || [];
+        const sourcePad = consolidatedPads.find((pad) => pad.type === "source");
+        if (sourcePad) {
+          sourceHandle = sourcePad.id;
+        }
       }
 
-      if (minimizedNodes.has(edge.target)) {
-        console.log(
-          `Redirecting target edge for minimized node ${edge.target}`,
-        );
-        modifiedEdge.targetHandle = `${edge.target}-consolidated-sink`;
+      // Check if target node is minimized and redirect to consolidated pad
+      const targetNode = reactFlowRepresentation.nodes.find(
+        (node: Node) => node.id === edge.target,
+      );
+      if (
+        targetNode &&
+        (targetNode.data as NodeData).display_state === "minimized"
+      ) {
+        const consolidatedPads =
+          (targetNode.data as NodeData).consolidated_pads || [];
+        const targetPad = consolidatedPads.find((pad) => pad.type === "sink");
+        if (targetPad) {
+          targetHandle = targetPad.id;
+        }
       }
 
-      return modifiedEdge;
+      return {
+        ...edge,
+        type: "hybrid",
+        sourceHandle,
+        targetHandle,
+      };
     });
-  }, [reactFlowRepresentation.edges, minimizedNodes]);
+  }, [reactFlowRepresentation.edges, reactFlowRepresentation.nodes]);
 
   return (
-    <MinimizationContext.Provider
-      value={{ minimizedNodes, toggleNodeMinimization }}
-    >
-      <div className="relative w-full h-full flex flex-col">
-        <div className="absolute top-2 right-2 flex z-60">
-          <AddBlockButton />
-        </div>
-        {connectionStatus && (
-          <div className="absolute top-[3.25rem] right-2 z-0 text-xs text-success pointer-events-none">
-            {connectionStatus}
-          </div>
-        )}
-
-        <div
-          className={`absolute top-0 left-0 right-0 bottom-0 transition-all duration-300 ease-in-out`}
-        >
-          <FlowErrorBoundary>
-            <ReactFlow
-              nodes={reactFlowRepresentation.nodes as Node[]}
-              edges={styledEdges as Edge[]}
-              onNodesChange={onReactFlowNodesChange}
-              onEdgesChange={onReactFlowEdgesChange}
-              onConnect={onReactFlowConnect}
-              edgeTypes={edgeTypes}
-              connectionLineComponent={CustomConnectionLine}
-              fitView
-              nodeTypes={{ default: BaseBlock }}
-              defaultEdgeOptions={{
-                type: "hybrid",
-                style: { strokeWidth: 2, stroke: "#FCD34D" },
-              }}
-              proOptions={{
-                hideAttribution: true,
-              }}
-            >
-              <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
-            </ReactFlow>
-          </FlowErrorBoundary>
-        </div>
-
-        {selectedNode && (
-          <div className="absolute top-16 right-2 bottom-2 z-10">
-            <PropertySidebar onToggle={handlePropertyPanelToggle} />
-          </div>
-        )}
+    <div className="relative w-full h-full flex flex-col">
+      <div className="absolute top-2 right-2 flex z-60">
+        <AddBlockButton />
       </div>
-    </MinimizationContext.Provider>
+      {connectionStatus && (
+        <div className="absolute top-[3.25rem] right-2 z-0 text-xs text-success pointer-events-none">
+          {connectionStatus}
+        </div>
+      )}
+
+      <div
+        className={`absolute top-0 left-0 right-0 bottom-0 transition-all duration-300 ease-in-out`}
+      >
+        <FlowErrorBoundary>
+          <ReactFlow
+            nodes={reactFlowRepresentation.nodes as Node[]}
+            edges={styledEdges as Edge[]}
+            onNodesChange={onReactFlowNodesChange}
+            onEdgesChange={onReactFlowEdgesChange}
+            onConnect={onReactFlowConnect}
+            edgeTypes={edgeTypes}
+            connectionLineComponent={CustomConnectionLine}
+            fitView
+            nodeTypes={{ default: BaseBlock }}
+            defaultEdgeOptions={{
+              type: "hybrid",
+              style: { strokeWidth: 2, stroke: "#FCD34D" },
+            }}
+            proOptions={{
+              hideAttribution: true,
+            }}
+          >
+            <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+          </ReactFlow>
+        </FlowErrorBoundary>
+      </div>
+
+      {selectedNode && (
+        <div className="absolute top-16 right-2 bottom-2 z-10">
+          <PropertySidebar onToggle={handlePropertyPanelToggle} />
+        </div>
+      )}
+    </div>
   );
 }
 

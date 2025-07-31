@@ -1,0 +1,1461 @@
+{
+  "oneOf": [
+    {
+      "$ref": "#/definitions/Request"
+    },
+    {
+      "$ref": "#/definitions/Response"
+    }
+  ],
+  "definitions": {
+    "AVClip": {
+      "properties": {
+        "type": {
+          "const": "av_clip",
+          "default": "av_clip",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "AVClip",
+      "type": "object"
+    },
+    "Audio": {
+      "properties": {
+        "type": {
+          "const": "audio",
+          "default": "audio",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "Audio",
+      "type": "object"
+    },
+    "AudioClip": {
+      "properties": {
+        "type": {
+          "const": "audio_clip",
+          "default": "audio_clip",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "AudioClip",
+      "type": "object"
+    },
+    "BasePadType": {
+      "properties": {},
+      "title": "BasePadType",
+      "type": "object"
+    },
+    "Boolean": {
+      "properties": {
+        "type": {
+          "const": "boolean",
+          "default": "boolean",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "Boolean",
+      "type": "object"
+    },
+    "BoundingBox": {
+      "properties": {
+        "type": {
+          "const": "bounding_box",
+          "default": "bounding_box",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "BoundingBox",
+      "type": "object"
+    },
+    "ConnectPadEdit": {
+      "properties": {
+        "type": {
+          "const": "connect_pad",
+          "default": "connect_pad",
+          "title": "Type",
+          "type": "string"
+        },
+        "node": {
+          "description": "ID of the source node",
+          "title": "Node",
+          "type": "string"
+        },
+        "pad": {
+          "description": "Handle ID of the source pad",
+          "title": "Pad",
+          "type": "string"
+        },
+        "connected_node": {
+          "description": "ID of the target node",
+          "title": "Connected Node",
+          "type": "string"
+        },
+        "connected_pad": {
+          "description": "Handle ID of the target pad",
+          "title": "Connected Pad",
+          "type": "string"
+        }
+      },
+      "required": [
+        "node",
+        "pad",
+        "connected_node",
+        "connected_pad"
+      ],
+      "title": "ConnectPadEdit",
+      "type": "object"
+    },
+    "ConsolidatedPadRepresentation": {
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "sink",
+            "source"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "represented_pads": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Represented Pads",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "represented_pads"
+      ],
+      "title": "ConsolidatedPadRepresentation",
+      "type": "object"
+    },
+    "ContextMessage": {
+      "properties": {
+        "type": {
+          "const": "context_message",
+          "default": "context_message",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "ContextMessage",
+      "type": "object"
+    },
+    "ContextMessageRole": {
+      "properties": {
+        "type": {
+          "const": "context_message_role",
+          "default": "context_message_role",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "ContextMessageRole",
+      "type": "object"
+    },
+    "DisconnectPadEdit": {
+      "properties": {
+        "type": {
+          "const": "disconnect_pad",
+          "default": "disconnect_pad",
+          "title": "Type",
+          "type": "string"
+        },
+        "node": {
+          "description": "ID of the source node",
+          "title": "Node",
+          "type": "string"
+        },
+        "pad": {
+          "description": "Handle ID of the source pad",
+          "title": "Pad",
+          "type": "string"
+        },
+        "connected_node": {
+          "description": "ID of the target node",
+          "title": "Connected Node",
+          "type": "string"
+        },
+        "connected_pad": {
+          "description": "Handle ID of the target pad",
+          "title": "Connected Pad",
+          "type": "string"
+        }
+      },
+      "required": [
+        "node",
+        "pad",
+        "connected_node",
+        "connected_pad"
+      ],
+      "title": "DisconnectPadEdit",
+      "type": "object"
+    },
+    "DisplayState": {
+      "enum": [
+        "expanded",
+        "minimized"
+      ],
+      "title": "DisplayState",
+      "type": "string"
+    },
+    "EditRequest": {
+      "properties": {
+        "type": {
+          "const": "edit",
+          "default": "edit",
+          "title": "Type",
+          "type": "string"
+        },
+        "edit": {
+          "description": "Edit request to perform on the graph editor",
+          "discriminator": {
+            "mapping": {
+              "connect_pad": "#/definitions/ConnectPadEdit",
+              "disconnect_pad": "#/definitions/DisconnectPadEdit",
+              "insert_node": "#/definitions/InsertNodeEdit",
+              "insert_sub_graph": "#/definitions/InsertSubGraphEdit",
+              "remove_node": "#/definitions/RemoveNodeEdit",
+              "toggle_display_state": "#/definitions/ToggleDisplayStateEdit",
+              "update_node": "#/definitions/UpdateNodeEdit",
+              "update_pad": "#/definitions/UpdatePadEdit"
+            },
+            "propertyName": "type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/definitions/InsertNodeEdit"
+            },
+            {
+              "$ref": "#/definitions/InsertSubGraphEdit"
+            },
+            {
+              "$ref": "#/definitions/UpdateNodeEdit"
+            },
+            {
+              "$ref": "#/definitions/RemoveNodeEdit"
+            },
+            {
+              "$ref": "#/definitions/ConnectPadEdit"
+            },
+            {
+              "$ref": "#/definitions/DisconnectPadEdit"
+            },
+            {
+              "$ref": "#/definitions/UpdatePadEdit"
+            },
+            {
+              "$ref": "#/definitions/ToggleDisplayStateEdit"
+            }
+          ],
+          "title": "Edit"
+        }
+      },
+      "required": [
+        "edit"
+      ],
+      "title": "EditRequest",
+      "type": "object"
+    },
+    "Enum": {
+      "properties": {
+        "type": {
+          "const": "enum",
+          "default": "enum",
+          "title": "Type",
+          "type": "string"
+        },
+        "options": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Options"
+        }
+      },
+      "title": "Enum",
+      "type": "object"
+    },
+    "Float": {
+      "properties": {
+        "type": {
+          "const": "float",
+          "default": "float",
+          "title": "Type",
+          "type": "string"
+        },
+        "maximum": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maximum"
+        },
+        "minimum": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Minimum"
+        }
+      },
+      "title": "Float",
+      "type": "object"
+    },
+    "GetNodeLibraryRequest": {
+      "properties": {
+        "type": {
+          "const": "get_node_library",
+          "default": "get_node_library",
+          "title": "Type",
+          "type": "string"
+        },
+        "filter": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Filter for node types (optional)",
+          "title": "Filter"
+        },
+        "include_metadata": {
+          "default": false,
+          "description": "Whether to include metadata in the response",
+          "title": "Include Metadata",
+          "type": "boolean"
+        }
+      },
+      "title": "GetNodeLibraryRequest",
+      "type": "object"
+    },
+    "GraphEditorRepresentation": {
+      "properties": {
+        "nodes": {
+          "items": {
+            "$ref": "#/definitions/NodeEditorRepresentation"
+          },
+          "title": "Nodes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "nodes"
+      ],
+      "title": "GraphEditorRepresentation",
+      "type": "object"
+    },
+    "InsertNodeEdit": {
+      "properties": {
+        "type": {
+          "const": "insert_node",
+          "default": "insert_node",
+          "title": "Type",
+          "type": "string"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "node_type": {
+          "title": "Node Type",
+          "type": "string"
+        },
+        "editor_position": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Editor Position",
+          "type": "array"
+        },
+        "editor_dimensions": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Editor Dimensions"
+        },
+        "editor_name": {
+          "title": "Editor Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "node_type",
+        "editor_position",
+        "editor_name"
+      ],
+      "title": "InsertNodeEdit",
+      "type": "object"
+    },
+    "InsertSubGraphEdit": {
+      "properties": {
+        "type": {
+          "const": "insert_sub_graph",
+          "default": "insert_sub_graph",
+          "title": "Type",
+          "type": "string"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Id"
+        },
+        "subgraph_id": {
+          "title": "Subgraph Id",
+          "type": "string"
+        },
+        "editor_position": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Editor Position",
+          "type": "array"
+        },
+        "editor_dimensions": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Editor Dimensions"
+        },
+        "editor_name": {
+          "title": "Editor Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "subgraph_id",
+        "editor_position",
+        "editor_name"
+      ],
+      "title": "InsertSubGraphEdit",
+      "type": "object"
+    },
+    "Integer": {
+      "properties": {
+        "type": {
+          "const": "integer",
+          "default": "integer",
+          "title": "Type",
+          "type": "string"
+        },
+        "maximum": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maximum"
+        },
+        "minimum": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Minimum"
+        }
+      },
+      "title": "Integer",
+      "type": "object"
+    },
+    "List": {
+      "properties": {
+        "type": {
+          "const": "list",
+          "default": "list",
+          "title": "Type",
+          "type": "string"
+        },
+        "max_length": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Length"
+        },
+        "item_type_constraints": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/definitions/BasePadType"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Item Type Constraints"
+        }
+      },
+      "required": [
+        "item_type_constraints"
+      ],
+      "title": "List",
+      "type": "object"
+    },
+    "LoadFromSnapshotRequest": {
+      "properties": {
+        "type": {
+          "const": "load_from_snapshot",
+          "default": "load_from_snapshot",
+          "title": "Type",
+          "type": "string"
+        },
+        "graph": {
+          "$ref": "#/definitions/GraphEditorRepresentation"
+        }
+      },
+      "required": [
+        "graph"
+      ],
+      "title": "LoadFromSnapshotRequest",
+      "type": "object"
+    },
+    "NodeEditorRepresentation": {
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "editor_name": {
+          "title": "Editor Name",
+          "type": "string"
+        },
+        "editor_position": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Editor Position",
+          "type": "array"
+        },
+        "editor_dimensions": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Editor Dimensions"
+        },
+        "pads": {
+          "items": {
+            "$ref": "#/definitions/PadEditorRepresentation"
+          },
+          "title": "Pads",
+          "type": "array"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "metadata": {
+          "$ref": "#/definitions/NodeMetadata"
+        },
+        "display_state": {
+          "$ref": "#/definitions/DisplayState",
+          "default": "expanded"
+        },
+        "consolidated_pads": {
+          "default": [],
+          "items": {
+            "$ref": "#/definitions/ConsolidatedPadRepresentation"
+          },
+          "title": "Consolidated Pads",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "editor_name",
+        "editor_position",
+        "pads",
+        "metadata"
+      ],
+      "title": "NodeEditorRepresentation",
+      "type": "object"
+    },
+    "NodeMetadata": {
+      "properties": {
+        "primary": {
+          "title": "Primary",
+          "type": "string"
+        },
+        "secondary": {
+          "title": "Secondary",
+          "type": "string"
+        },
+        "tags": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        }
+      },
+      "required": [
+        "primary",
+        "secondary"
+      ],
+      "title": "NodeMetadata",
+      "type": "object"
+    },
+    "NodeReference": {
+      "properties": {
+        "type": {
+          "const": "node_reference",
+          "default": "node_reference",
+          "title": "Type",
+          "type": "string"
+        },
+        "node_types": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Node Types",
+          "type": "array"
+        }
+      },
+      "required": [
+        "node_types"
+      ],
+      "title": "NodeReference",
+      "type": "object"
+    },
+    "Object": {
+      "properties": {
+        "type": {
+          "const": "object",
+          "default": "object",
+          "title": "Type",
+          "type": "string"
+        },
+        "object_schema": {
+          "anyOf": [
+            {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Object Schema"
+        }
+      },
+      "title": "Object",
+      "type": "object"
+    },
+    "PadEditorRepresentation": {
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "group": {
+          "title": "Group",
+          "type": "string"
+        },
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {},
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        },
+        "next_pads": {
+          "items": {
+            "$ref": "#/definitions/PadReference"
+          },
+          "title": "Next Pads",
+          "type": "array"
+        },
+        "previous_pad": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/PadReference"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "allowed_types": {
+          "anyOf": [
+            {
+              "items": {
+                "discriminator": {
+                  "mapping": {
+                    "audio": "#/definitions/Audio",
+                    "audio_clip": "#/definitions/AudioClip",
+                    "av_clip": "#/definitions/AVClip",
+                    "boolean": "#/definitions/Boolean",
+                    "bounding_box": "#/definitions/BoundingBox",
+                    "context_message": "#/definitions/ContextMessage",
+                    "context_message_role": "#/definitions/ContextMessageRole",
+                    "enum": "#/definitions/Enum",
+                    "float": "#/definitions/Float",
+                    "integer": "#/definitions/Integer",
+                    "list": "#/definitions/List",
+                    "node_reference": "#/definitions/NodeReference",
+                    "object": "#/definitions/Object",
+                    "point": "#/definitions/Point",
+                    "schema": "#/definitions/Schema",
+                    "secret": "#/definitions/Secret",
+                    "string": "#/definitions/String",
+                    "text_stream": "#/definitions/TextStream",
+                    "trigger": "#/definitions/Trigger",
+                    "video": "#/definitions/Video",
+                    "video_clip": "#/definitions/VideoClip"
+                  },
+                  "propertyName": "type"
+                },
+                "oneOf": [
+                  {
+                    "$ref": "#/definitions/String"
+                  },
+                  {
+                    "$ref": "#/definitions/Integer"
+                  },
+                  {
+                    "$ref": "#/definitions/Float"
+                  },
+                  {
+                    "$ref": "#/definitions/Boolean"
+                  },
+                  {
+                    "$ref": "#/definitions/Enum"
+                  },
+                  {
+                    "$ref": "#/definitions/Secret"
+                  },
+                  {
+                    "$ref": "#/definitions/BoundingBox"
+                  },
+                  {
+                    "$ref": "#/definitions/Point"
+                  },
+                  {
+                    "$ref": "#/definitions/Audio"
+                  },
+                  {
+                    "$ref": "#/definitions/Video"
+                  },
+                  {
+                    "$ref": "#/definitions/Trigger"
+                  },
+                  {
+                    "$ref": "#/definitions/AudioClip"
+                  },
+                  {
+                    "$ref": "#/definitions/VideoClip"
+                  },
+                  {
+                    "$ref": "#/definitions/AVClip"
+                  },
+                  {
+                    "$ref": "#/definitions/TextStream"
+                  },
+                  {
+                    "$ref": "#/definitions/ContextMessage"
+                  },
+                  {
+                    "$ref": "#/definitions/ContextMessageRole"
+                  },
+                  {
+                    "$ref": "#/definitions/List"
+                  },
+                  {
+                    "$ref": "#/definitions/Schema"
+                  },
+                  {
+                    "$ref": "#/definitions/Object"
+                  },
+                  {
+                    "$ref": "#/definitions/NodeReference"
+                  }
+                ]
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Allowed Types"
+        }
+      },
+      "required": [
+        "id",
+        "group",
+        "type",
+        "next_pads"
+      ],
+      "title": "PadEditorRepresentation",
+      "type": "object"
+    },
+    "PadReference": {
+      "properties": {
+        "node": {
+          "title": "Node",
+          "type": "string"
+        },
+        "pad": {
+          "title": "Pad",
+          "type": "string"
+        }
+      },
+      "required": [
+        "node",
+        "pad"
+      ],
+      "title": "PadReference",
+      "type": "object"
+    },
+    "Point": {
+      "properties": {
+        "type": {
+          "const": "point",
+          "default": "point",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "Point",
+      "type": "object"
+    },
+    "PublicSecret": {
+      "properties": {
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "updated_at",
+        "created_at",
+        "id",
+        "name"
+      ],
+      "title": "PublicSecret",
+      "type": "object"
+    },
+    "RemoveNodeEdit": {
+      "properties": {
+        "type": {
+          "const": "remove_node",
+          "default": "remove_node",
+          "title": "Type",
+          "type": "string"
+        },
+        "node_id": {
+          "description": "ID of the node to remove",
+          "title": "Node Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "node_id"
+      ],
+      "title": "RemoveNodeEdit",
+      "type": "object"
+    },
+    "Schema": {
+      "properties": {
+        "type": {
+          "const": "schema",
+          "default": "schema",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "Schema",
+      "type": "object"
+    },
+    "Secret": {
+      "properties": {
+        "type": {
+          "const": "secret",
+          "default": "secret",
+          "title": "Type",
+          "type": "string"
+        },
+        "options": {
+          "default": [],
+          "items": {
+            "$ref": "#/definitions/PublicSecret"
+          },
+          "title": "Options",
+          "type": "array"
+        }
+      },
+      "title": "Secret",
+      "type": "object"
+    },
+    "String": {
+      "properties": {
+        "type": {
+          "const": "string",
+          "default": "string",
+          "title": "Type",
+          "type": "string"
+        },
+        "max_length": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Length"
+        },
+        "min_length": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Min Length"
+        }
+      },
+      "title": "String",
+      "type": "object"
+    },
+    "TextStream": {
+      "properties": {
+        "type": {
+          "const": "text_stream",
+          "default": "text_stream",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "TextStream",
+      "type": "object"
+    },
+    "ToggleDisplayStateEdit": {
+      "properties": {
+        "type": {
+          "const": "toggle_display_state",
+          "default": "toggle_display_state",
+          "title": "Type",
+          "type": "string"
+        },
+        "node_id": {
+          "description": "ID of the node to toggle display state",
+          "title": "Node Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "node_id"
+      ],
+      "title": "ToggleDisplayStateEdit",
+      "type": "object"
+    },
+    "Trigger": {
+      "properties": {
+        "type": {
+          "const": "trigger",
+          "default": "trigger",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "Trigger",
+      "type": "object"
+    },
+    "UpdateNodeEdit": {
+      "properties": {
+        "type": {
+          "const": "update_node",
+          "default": "update_node",
+          "title": "Type",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "editor_position": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Editor Position"
+        },
+        "editor_dimensions": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Editor Dimensions"
+        },
+        "editor_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Editor Name"
+        },
+        "new_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "New Id"
+        }
+      },
+      "required": [
+        "id",
+        "editor_position",
+        "editor_dimensions",
+        "editor_name"
+      ],
+      "title": "UpdateNodeEdit",
+      "type": "object"
+    },
+    "UpdatePadEdit": {
+      "properties": {
+        "type": {
+          "const": "update_pad",
+          "default": "update_pad",
+          "title": "Type",
+          "type": "string"
+        },
+        "node": {
+          "description": "ID of the node containing the pad",
+          "title": "Node",
+          "type": "string"
+        },
+        "pad": {
+          "description": "ID of the pad to update",
+          "title": "Pad",
+          "type": "string"
+        },
+        "value": {
+          "description": "New value for the pad",
+          "title": "Value"
+        }
+      },
+      "required": [
+        "node",
+        "pad",
+        "value"
+      ],
+      "title": "UpdatePadEdit",
+      "type": "object"
+    },
+    "Video": {
+      "properties": {
+        "type": {
+          "const": "video",
+          "default": "video",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "Video",
+      "type": "object"
+    },
+    "VideoClip": {
+      "properties": {
+        "type": {
+          "const": "video_clip",
+          "default": "video_clip",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "title": "VideoClip",
+      "type": "object"
+    },
+    "FullGraphResponse": {
+      "properties": {
+        "type": {
+          "const": "full_graph",
+          "default": "full_graph",
+          "title": "Type",
+          "type": "string"
+        },
+        "graph": {
+          "$ref": "#/definitions/GraphEditorRepresentation",
+          "description": "Full graph representation including all nodes and their connections"
+        }
+      },
+      "required": [
+        "graph"
+      ],
+      "title": "FullGraphResponse",
+      "type": "object"
+    },
+    "GraphLibraryItem_Node": {
+      "properties": {
+        "type": {
+          "const": "node",
+          "default": "node",
+          "title": "Type",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of the node",
+          "title": "Name",
+          "type": "string"
+        },
+        "node_type": {
+          "description": "Class of the node",
+          "title": "Node Type"
+        },
+        "description": {
+          "description": "Human-readable description of what the node does",
+          "title": "Description",
+          "type": "string"
+        },
+        "metadata": {
+          "$ref": "#/definitions/NodeMetadata",
+          "description": "Metadata for categorizing and filtering nodes"
+        }
+      },
+      "required": [
+        "name",
+        "node_type",
+        "description",
+        "metadata"
+      ],
+      "title": "GraphLibraryItem_Node",
+      "type": "object"
+    },
+    "GraphLibraryItem_SubGraph": {
+      "properties": {
+        "type": {
+          "const": "subgraph",
+          "default": "subgraph",
+          "title": "Type",
+          "type": "string"
+        },
+        "id": {
+          "description": "ID of the subgraph",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "description": "Name of the subgraph",
+          "title": "Name",
+          "type": "string"
+        },
+        "graph": {
+          "$ref": "#/definitions/GraphEditorRepresentation",
+          "description": "Graph representation of the subgraph"
+        },
+        "editable": {
+          "default": true,
+          "description": "Whether the subgraph can be edited in the editor",
+          "title": "Editable",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "graph"
+      ],
+      "title": "GraphLibraryItem_SubGraph",
+      "type": "object"
+    },
+    "NodeLibraryResponse": {
+      "properties": {
+        "type": {
+          "const": "node_library",
+          "default": "node_library",
+          "title": "Type",
+          "type": "string"
+        },
+        "node_library": {
+          "description": "List of available nodes in the library",
+          "items": {
+            "description": "Type of graph library item",
+            "discriminator": {
+              "mapping": {
+                "node": "#/definitions/GraphLibraryItem_Node",
+                "subgraph": "#/definitions/GraphLibraryItem_SubGraph"
+              },
+              "propertyName": "type"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/definitions/GraphLibraryItem_Node"
+              },
+              {
+                "$ref": "#/definitions/GraphLibraryItem_SubGraph"
+              }
+            ]
+          },
+          "title": "Node Library",
+          "type": "array"
+        }
+      },
+      "title": "NodeLibraryResponse",
+      "type": "object"
+    },
+    "Request": {
+      "description": "Request to perform on the graph editor",
+      "discriminator": {
+        "mapping": {
+          "edit": "#/definitions/EditRequest",
+          "get_node_library": "#/definitions/GetNodeLibraryRequest",
+          "load_from_snapshot": "#/definitions/LoadFromSnapshotRequest"
+        },
+        "propertyName": "type"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/definitions/GetNodeLibraryRequest"
+        },
+        {
+          "$ref": "#/definitions/EditRequest"
+        },
+        {
+          "$ref": "#/definitions/LoadFromSnapshotRequest"
+        }
+      ]
+    },
+    "Response": {
+      "properties": {
+        "response": {
+          "description": "Change to apply to the graph editor",
+          "discriminator": {
+            "mapping": {
+              "full_graph": "#/definitions/FullGraphResponse",
+              "node_library": "#/definitions/NodeLibraryResponse"
+            },
+            "propertyName": "type"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/definitions/FullGraphResponse"
+            },
+            {
+              "$ref": "#/definitions/NodeLibraryResponse"
+            }
+          ],
+          "title": "Response"
+        }
+      },
+      "required": [
+        "response"
+      ],
+      "title": "Response",
+      "type": "object"
+    }
+  }
+}

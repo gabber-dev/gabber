@@ -32,6 +32,8 @@ class Node:
         self.editor_name: str = "ERROR"
         self.secret_provider = secret_provider
         self.secrets = secrets
+        # Display state for editor minimization
+        self.display_state: str = "expanded"  # "expanded" | "minimized"
 
     @classmethod
     def get_type(cls) -> str:
@@ -95,3 +97,26 @@ class Node:
                         pad.disconnect(np)
         except Exception as e:
             print(f"Error disconnecting pads for node {self.id}: {e}")
+
+    def toggle_display_state(self):
+        """Toggle between expanded and minimized display states"""
+        if self.display_state == "expanded":
+            self.display_state = "minimized"
+        else:
+            self.display_state = "expanded"
+
+    def get_consolidated_pads(self) -> dict[str, list[str]]:
+        """Get lists of pad IDs grouped by type for consolidated display"""
+        sink_pads = []
+        source_pads = []
+        
+        for pad in self.pads:
+            if isinstance(pad, SinkPad):
+                sink_pads.append(pad.get_id())
+            elif isinstance(pad, SourcePad):
+                source_pads.append(pad.get_id())
+        
+        return {
+            "sink": sink_pads,
+            "source": source_pads
+        }

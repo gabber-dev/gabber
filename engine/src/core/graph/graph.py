@@ -21,6 +21,7 @@ from core.editor.models import (
     InsertNodeEdit,
     InsertSubGraphEdit,
     RemoveNodeEdit,
+    ToggleDisplayStateEdit,
     UpdateNodeEdit,
     UpdatePadEdit,
 )
@@ -91,6 +92,8 @@ class Graph:
                 await self._handle_disconnect_pad(request)
             elif request.type == EditType.UPDATE_PAD:
                 await self._handle_update_pad(request)
+            elif request.type == EditType.TOGGLE_DISPLAY_STATE:
+                await self._handle_toggle_display_state(request)
 
             return True
         except Exception as e:
@@ -177,8 +180,12 @@ class Graph:
         if not source_node or not target_node:
             raise ValueError("Source or target node not found.")
 
-        source_pad = source_node.get_pad(edit.pad)
-        target_pad = target_node.get_pad(edit.connected_pad)
+        # Resolve consolidated pad connections
+        source_pad_id = self._resolve_pad_id(source_node, edit.pad)
+        target_pad_id = self._resolve_pad_id(target_node, edit.connected_pad)
+
+        source_pad = source_node.get_pad(source_pad_id)
+        target_pad = target_node.get_pad(target_pad_id)
 
         if not source_pad or not target_pad:
             raise ValueError("Source or target pad not found.")
@@ -187,7 +194,24 @@ class Graph:
             raise ValueError("Source pad is not a source pad type.")
 
         source_pad.connect(cast(Any, target_pad))
+
         await self._propagate_update([source_node, target_node])
+
+    def _resolve_pad_id(self, node: Node, pad_id: str) -> str:
+        """Resolve consolidated pad IDs to actual pad IDs"""
+        if pad_id == f"{node.id}-consolidated-sink":
+            # For consolidated sink, connect to the first available sink pad
+            for p in node.pads:
+                if isinstance(p, pad.SinkPad):
+                    return p.get_id()
+        elif pad_id == f"{node.id}-consolidated-source":
+            # For consolidated source, connect to the first available source pad
+            for p in node.pads:
+                if isinstance(p, pad.SourcePad):
+                    return p.get_id()
+        
+        # Return original pad_id if not a consolidated pad
+        return pad_id
 
     async def _handle_disconnect_pad(self, edit: DisconnectPadEdit):
         source_node = next((n for n in self.nodes if n.id == edit.node), None)
@@ -224,6 +248,16 @@ class Graph:
             p.set_value(v)
 
         await self._propagate_update([node])
+
+    async def _handle_toggle_display_state(self, edit: ToggleDisplayStateEdit):
+        node = next((n for n in self.nodes if n.id == edit.node_id), None)
+        if not node:
+            raise ValueError(f"Node with ID {edit.node_id} not found.")
+        
+        node.toggle_display_state()
+        
+        # No need to propagate update as this is just a visual change
+        # The serialization will pick up the new display state
 
     async def _propagate_update(self, starting_nodes: list[Node]):
         seen: set[str] = set()
@@ -294,6 +328,7 @@ class Graph:
             node.editor_position = node_data.editor_position
             node.editor_name = node_data.editor_name
             node.editor_dimensions = node_data.editor_dimensions
+            node.display_state = node_data.display_state.value
 
             for pad_data in node_data.pads:
                 casted_allowed_types = cast(
