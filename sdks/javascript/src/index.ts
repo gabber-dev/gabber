@@ -20,4 +20,4 @@ export { Engine } from './Engine'
 
 export type { LocalTrack, LocalAudioTrack, LocalVideoTrack } from './LocalTrack';
 export type { RemoteTrack, RemoteAudioTrack, RemoteVideoTrack } from './RemoteTrack';
-export type { SourcePad } from './pad/SourcePad';
+export type { SourcePad, SinkPad, PropertySinkPad, PropertySourcePad } from './pad/Pad';

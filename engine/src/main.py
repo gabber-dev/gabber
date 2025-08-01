@@ -162,7 +162,7 @@ def generate_runtime_schema():
 
     runtime_request_schema = graph.RuntimeRequest.model_json_schema()
     runtime_ack_schema = graph.RuntimeRequestAck.model_json_schema()
-    runtime_complete_schema = graph.RuntimeRequestComplete.model_json_schema()
+    runtime_complete_schema = graph.RuntimeResponse.model_json_schema()
     event_adapter = TypeAdapter(graph.RuntimeEvent)
     runtime_event_schema = event_adapter.json_schema()
 
@@ -173,7 +173,7 @@ def generate_runtime_schema():
             {"$ref": "#/$defs/RuntimeRequest"},
             {"$ref": "#/$defs/RuntimeEvent"},
             {"$ref": "#/$defs/RuntimeRequestAck"},
-            {"$ref": "#/$defs/RuntimeRequestComplete"},
+            {"$ref": "#/$defs/RuntimeResponse"},
         ],
     }
 
@@ -221,7 +221,7 @@ def generate_runtime_schema():
 
     merged_schema["$defs"]["RuntimeRequest"] = request_root
     merged_schema["$defs"]["RuntimeRequestAck"] = ack_root
-    merged_schema["$defs"]["RuntimeRequestComplete"] = complete_root
+    merged_schema["$defs"]["RuntimeResponse"] = complete_root
     merged_schema["$defs"]["RuntimeEvent"] = event_root
 
     # Convert $defs to definitions for older tools if needed

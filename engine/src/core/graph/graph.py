@@ -3,6 +3,7 @@
 
 import asyncio
 import logging
+from dataclasses import dataclass
 from typing import Annotated, Any, Literal, Type, TypeVar, cast
 
 from livekit import rtc
@@ -378,55 +379,126 @@ class Graph:
             (n.id, p.get_id()): p for n in self.nodes for p in n.pads
         }
 
-        dc_queue = asyncio.Queue[
-            tuple[rtc.RemoteParticipant | None, BaseModel] | None
-        ]()
+        @dataclass(frozen=True)
+        class QueueItem:
+            payload: BaseModel
+            participant: rtc.RemoteParticipant | None
+            node_id: str | None
+            pad_id: str | None
+
+        dc_queue = asyncio.Queue[QueueItem | None]()
 
         def on_data(packet: rtc.DataPacket):
-            if packet.topic == "runtime":
-                request = RuntimeRequest.model_validate_json(packet.data)
-                req_id = request.req_id
-                ack_resp = RuntimeRequestAck(req_id=req_id)
-                dc_queue.put_nowait((packet.participant, ack_resp))
-                complete_resp = RuntimeRequestComplete(req_id=req_id)
-                if request.payload.type == "push_value":
-                    payload = request.payload
-                    pad_obj = node_pad_lookup.get(
-                        (payload.node_id, payload.source_pad_id)
-                    )
-                    if not isinstance(pad_obj, pad.SourcePad):
-                        logging.error(
-                            f"Pad {payload.source_pad_id} in node {payload.node_id} is not a SourcePad."
-                        )
-                        complete_resp.error = f"Pad {payload.source_pad_id} in node {payload.node_id} is not a SourcePad."
-                        dc_queue.put_nowait((packet.participant, complete_resp))
-                        return
+            if not packet.topic or not packet.topic.startswith("runtime:"):
+                return
 
-                    if not pad_obj:
-                        logging.error(
-                            f"Pad {payload.source_pad_id} in node {payload.node_id} not found."
+            request = RuntimeRequest.model_validate_json(packet.data)
+            req_id = request.req_id
+            ack_resp = RuntimeRequestAck(req_id=req_id)
+            dc_queue.put_nowait(
+                QueueItem(
+                    payload=ack_resp,
+                    participant=packet.participant,
+                    node_id=None,
+                    pad_id=None,
+                )
+            )
+            complete_resp = RuntimeResponse(req_id=req_id)
+            if request.payload.type == "push_value":
+                payload = request.payload
+                pad_obj = node_pad_lookup.get((payload.node_id, payload.source_pad_id))
+                if not isinstance(pad_obj, pad.SourcePad):
+                    logging.error(
+                        f"Pad {payload.source_pad_id} in node {payload.node_id} is not a SourcePad."
+                    )
+                    complete_resp.error = f"Pad {payload.source_pad_id} in node {payload.node_id} is not a SourcePad."
+                    dc_queue.put_nowait(
+                        QueueItem(
+                            payload=complete_resp,
+                            participant=packet.participant,
+                            node_id=None,
+                            pad_id=None,
                         )
-                        complete_resp.error = f"Pad {payload.source_pad_id} in node {payload.node_id} not found."
-                        dc_queue.put_nowait((packet.participant, complete_resp))
-                        return
+                    )
+                    return
 
-                    value = serialize.deserialize_pad_value(
-                        self.nodes, pad_obj, payload.value
+                if not pad_obj:
+                    logging.error(
+                        f"Pad {payload.source_pad_id} in node {payload.node_id} not found."
                     )
-                    ctx = pad.RequestContext(parent=None)
-                    pad_obj.push_item(value, ctx)
-                    ctx.add_done_callback(
-                        lambda _: dc_queue.put_nowait(
-                            (packet.participant, complete_resp)
+                    complete_resp.error = f"Pad {payload.source_pad_id} in node {payload.node_id} not found."
+                    dc_queue.put_nowait(
+                        QueueItem(
+                            payload=complete_resp,
+                            participant=packet.participant,
+                            node_id=None,
+                            pad_id=None,
                         )
                     )
-                    ctx.complete()
-                else:
-                    logging.error(f"Unknown request type: {request.payload.type}")
-                    complete_resp.error = (
-                        f"Unknown request type: {request.payload.type}"
+                    return
+
+                value = serialize.deserialize_pad_value(
+                    self.nodes, pad_obj, payload.value
+                )
+                ctx = pad.RequestContext(parent=None)
+                complete_resp.payload = RuntimeResponsePayload_PushValue(
+                    type="push_value"
+                )
+                pad_obj.push_item(value, ctx)
+                ctx.add_done_callback(
+                    lambda _: dc_queue.put_nowait(
+                        QueueItem(
+                            payload=complete_resp,
+                            participant=packet.participant,
+                            node_id=payload.node_id,
+                            pad_id=payload.source_pad_id,
+                        )
                     )
-                    dc_queue.put_nowait((packet.participant, complete_resp))
+                )
+                ctx.complete()
+            elif request.payload.type == "get_value":
+                payload = request.payload
+                pad_obj = node_pad_lookup.get(
+                    (payload.node_id, payload.property_pad_id)
+                )
+                if not isinstance(pad_obj, pad.PropertyPad):
+                    logging.error(
+                        f"Pad {payload.property_pad_id} in node {payload.node_id} is not a PropertyPad."
+                    )
+                    complete_resp.error = f"Pad {payload.property_pad_id} in node {payload.node_id} is not a PropertyPad."
+                    dc_queue.put_nowait(
+                        QueueItem(
+                            payload=complete_resp,
+                            participant=packet.participant,
+                            node_id=payload.node_id,
+                            pad_id=payload.property_pad_id,
+                        )
+                    )
+                    return
+
+                value = pad_obj.get_value()
+                complete_resp.payload = RuntimeResponsePayload_GetValue(
+                    type="get_value", value=value
+                )
+                dc_queue.put_nowait(
+                    QueueItem(
+                        payload=complete_resp,
+                        participant=packet.participant,
+                        node_id=payload.node_id,
+                        pad_id=payload.property_pad_id,
+                    )
+                )
+            else:
+                logging.error(f"Unknown request type: {request.payload.type}")
+                complete_resp.error = f"Unknown request type: {request.payload.type}"
+                dc_queue.put_nowait(
+                    QueueItem(
+                        payload=complete_resp,
+                        participant=packet.participant,
+                        node_id=None,
+                        pad_id=None,
+                    )
+                )
 
         # Only top level graph gets events
         if self.id == "default":
@@ -442,13 +514,18 @@ class Graph:
                     break
 
                 try:
-                    participant, payload = item
                     destination_identities: list[str] = []
-                    payload_bytes = payload.model_dump_json().encode("utf-8")
-                    if participant:
-                        destination_identities.append(participant.identity)
+                    payload_bytes = item.payload.model_dump_json().encode("utf-8")
+                    if item.participant:
+                        destination_identities.append(item.participant.identity)
+
+                    logging.info(
+                        f"Sending data packet to {destination_identities} for node {item.node_id}, pad {item.pad_id}"
+                    )
                     await room.local_participant.publish_data(
-                        payload_bytes, destination_identities=destination_identities
+                        payload_bytes,
+                        destination_identities=destination_identities,
+                        topic=f"runtime:{item.node_id}:{item.pad_id}",
                     )
                 except Exception as e:
                     logging.error(f"Error sending data packet: {e}", exc_info=e)
@@ -525,8 +602,14 @@ class RuntimeRequestPayload_PushValue(BaseModel):
     value: Any = None
 
 
+class RuntimeRequestPayload_GetValue(BaseModel):
+    type: Literal["get_value"] = "get_value"
+    node_id: str
+    property_pad_id: str
+
+
 RuntimeRequestPayload = Annotated[
-    RuntimeRequestPayload_PushValue,
+    RuntimeRequestPayload_PushValue | RuntimeRequestPayload_GetValue,
     Field(discriminator="type", description="Request to push data to a pad"),
 ]
 
@@ -542,7 +625,23 @@ class RuntimeRequestAck(BaseModel):
     req_id: str
 
 
-class RuntimeRequestComplete(BaseModel):
+class RuntimeResponsePayload_PushValue(BaseModel):
+    type: Literal["push_value"] = "push_value"
+
+
+class RuntimeResponsePayload_GetValue(BaseModel):
+    type: Literal["get_value"] = "get_value"
+    value: Any | None = None
+
+
+RuntimeResponsePayload = Annotated[
+    RuntimeResponsePayload_PushValue | RuntimeResponsePayload_GetValue,
+    Field(discriminator="type", description="Payload for the runtime request complete"),
+]
+
+
+class RuntimeResponse(BaseModel):
     type: Literal["complete"] = "complete"
     req_id: str
     error: str | None = None
+    payload: RuntimeResponsePayload | None = None

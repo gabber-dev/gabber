@@ -6,7 +6,7 @@ from .graph import (
     RuntimeEvent,
     RuntimeRequest,
     RuntimeRequestAck,
-    RuntimeRequestComplete,
+    RuntimeResponse,
 )
 from .graph_library import (
     GraphLibrary,
@@ -18,5 +18,5 @@ __all__ = [
     "RuntimeEvent",
     "RuntimeRequest",
     "RuntimeRequestAck",
-    "RuntimeRequestComplete",
+    "RuntimeResponse",
 ]

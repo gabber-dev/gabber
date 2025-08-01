@@ -17,7 +17,7 @@
  */
 
 import { Room } from 'livekit-client';
-import { SourcePad } from './pad/SourcePad';
+import { PropertySinkPad, PropertySourcePad, SinkPad, SourcePad } from './pad/Pad';
 import { LocalAudioTrack, LocalVideoTrack, LocalTrack } from './LocalTrack';
 import { Subscription } from './Subscription';
 
@@ -116,6 +116,18 @@ export class Engine  {
 
   public getSourcePad<DataType>(nodeId: string, padId: string): SourcePad<DataType> {
     return new SourcePad<DataType>({ nodeId, padId, livekitRoom: this.livekitRoom });
+  }
+
+  public getSinkPad<DataType>(nodeId: string, padId: string): SinkPad<DataType> {
+    return new SinkPad<DataType>({ nodeId, padId, livekitRoom: this.livekitRoom });
+  }
+
+  public getPropertySourcePad<DataType>(nodeId: string, padId: string): SourcePad<DataType> {
+    return new PropertySourcePad<DataType>({ nodeId, padId, livekitRoom: this.livekitRoom });
+  }
+
+  public getPropertySinkPad<DataType>(nodeId: string, padId: string): SinkPad<DataType> {
+    return new PropertySinkPad<DataType>({ nodeId, padId, livekitRoom: this.livekitRoom });
   }
 
   private setupRoomEventListeners(): void {

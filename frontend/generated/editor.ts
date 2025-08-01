@@ -120,70 +120,7 @@ export type Type11 = string;
 export type Node3 = string;
 export type Pad3 = string;
 export type NextPads = PadReference[];
-export type AllowedTypes =
-  | (
-      | String
-      | Integer
-      | Float
-      | Boolean
-      | Enum
-      | Secret
-      | BoundingBox
-      | Point
-      | Audio
-      | Video
-      | Trigger
-      | AudioClip
-      | VideoClip
-      | AVClip
-      | TextStream
-      | ContextMessage
-      | ContextMessageRole
-      | List
-      | Schema
-      | Object
-      | NodeReference
-    )[]
-  | null;
-export type Type12 = "string";
-export type MaxLength = number | null;
-export type MinLength = number | null;
-export type Type13 = "integer";
-export type Maximum = number | null;
-export type Minimum = number | null;
-export type Type14 = "float";
-export type Maximum1 = number | null;
-export type Minimum1 = number | null;
-export type Type15 = "boolean";
-export type Type16 = "enum";
-export type Options = string[] | null;
-export type Type17 = "secret";
-export type UpdatedAt = string;
-export type CreatedAt = string;
-export type Id5 = string;
-export type Name = string;
-export type Options1 = PublicSecret[];
-export type Type18 = "bounding_box";
-export type Type19 = "point";
-export type Type20 = "audio";
-export type Type21 = "video";
-export type Type22 = "trigger";
-export type Type23 = "audio_clip";
-export type Type24 = "video_clip";
-export type Type25 = "av_clip";
-export type Type26 = "text_stream";
-export type Type27 = "context_message";
-export type Type28 = "context_message_role";
-export type Type29 = "list";
-export type MaxLength1 = number | null;
-export type ItemTypeConstraints = BasePadType[] | null;
-export type Type30 = "schema";
-export type Type31 = "object";
-export type ObjectSchema = {
-  [k: string]: unknown;
-} | null;
-export type Type32 = "node_reference";
-export type NodeTypes = string[];
+export type AllowedTypes = BasePadType[] | null;
 export type Pads = PadEditorRepresentation[];
 export type Description = string | null;
 export type Primary = string;
@@ -194,26 +131,26 @@ export type Nodes = NodeEditorRepresentation[];
  * Change to apply to the graph editor
  */
 export type Response1 = FullGraphResponse | NodeLibraryResponse;
-export type Type33 = "full_graph";
-export type Type34 = "node_library";
-export type Type35 = "node";
+export type Type12 = "full_graph";
+export type Type13 = "node_library";
+export type Type14 = "node";
 /**
  * Name of the node
  */
-export type Name1 = string;
+export type Name = string;
 /**
  * Human-readable description of what the node does
  */
 export type Description1 = string;
-export type Type36 = "subgraph";
+export type Type15 = "subgraph";
 /**
  * ID of the subgraph
  */
-export type Id6 = string;
+export type Id5 = string;
 /**
  * Name of the subgraph
  */
-export type Name2 = string;
+export type Name1 = string;
 /**
  * Whether the subgraph can be edited in the editor
  */
@@ -330,110 +267,7 @@ export interface PadReference {
   pad: Pad3;
   [k: string]: unknown;
 }
-export interface String {
-  type?: Type12;
-  max_length?: MaxLength;
-  min_length?: MinLength;
-  [k: string]: unknown;
-}
-export interface Integer {
-  type?: Type13;
-  maximum?: Maximum;
-  minimum?: Minimum;
-  [k: string]: unknown;
-}
-export interface Float {
-  type?: Type14;
-  maximum?: Maximum1;
-  minimum?: Minimum1;
-  [k: string]: unknown;
-}
-export interface Boolean {
-  type?: Type15;
-  [k: string]: unknown;
-}
-export interface Enum {
-  type?: Type16;
-  options?: Options;
-  [k: string]: unknown;
-}
-export interface Secret {
-  type?: Type17;
-  options?: Options1;
-  [k: string]: unknown;
-}
-export interface PublicSecret {
-  updated_at: UpdatedAt;
-  created_at: CreatedAt;
-  id: Id5;
-  name: Name;
-  [k: string]: unknown;
-}
-export interface BoundingBox {
-  type?: Type18;
-  [k: string]: unknown;
-}
-export interface Point {
-  type?: Type19;
-  [k: string]: unknown;
-}
-export interface Audio {
-  type?: Type20;
-  [k: string]: unknown;
-}
-export interface Video {
-  type?: Type21;
-  [k: string]: unknown;
-}
-export interface Trigger {
-  type?: Type22;
-  [k: string]: unknown;
-}
-export interface AudioClip {
-  type?: Type23;
-  [k: string]: unknown;
-}
-export interface VideoClip {
-  type?: Type24;
-  [k: string]: unknown;
-}
-export interface AVClip {
-  type?: Type25;
-  [k: string]: unknown;
-}
-export interface TextStream {
-  type?: Type26;
-  [k: string]: unknown;
-}
-export interface ContextMessage {
-  type?: Type27;
-  [k: string]: unknown;
-}
-export interface ContextMessageRole {
-  type?: Type28;
-  [k: string]: unknown;
-}
-export interface List {
-  type?: Type29;
-  max_length?: MaxLength1;
-  item_type_constraints: ItemTypeConstraints;
-  [k: string]: unknown;
-}
 export interface BasePadType {
-  [k: string]: unknown;
-}
-export interface Schema {
-  type?: Type30;
-  [k: string]: unknown;
-}
-export interface Object {
-  type?: Type31;
-  object_schema?: ObjectSchema;
-  [k: string]: unknown;
-}
-export interface NodeReference {
-  type?: Type32;
-  node_types: NodeTypes;
   [k: string]: unknown;
 }
 export interface NodeMetadata {
@@ -447,7 +281,7 @@ export interface Response {
   [k: string]: unknown;
 }
 export interface FullGraphResponse {
-  type?: Type33;
+  type?: Type12;
   graph: GraphEditorRepresentation1;
   [k: string]: unknown;
 }
@@ -459,13 +293,13 @@ export interface GraphEditorRepresentation1 {
   [k: string]: unknown;
 }
 export interface NodeLibraryResponse {
-  type?: Type34;
+  type?: Type13;
   node_library?: NodeLibrary;
   [k: string]: unknown;
 }
 export interface GraphLibraryItem_Node {
-  type?: Type35;
-  name: Name1;
+  type?: Type14;
+  name: Name;
   node_type: NodeType1;
   description: Description1;
   metadata: NodeMetadata1;
@@ -487,9 +321,9 @@ export interface NodeMetadata1 {
   [k: string]: unknown;
 }
 export interface GraphLibraryItem_SubGraph {
-  type?: Type36;
-  id: Id6;
-  name: Name2;
+  type?: Type15;
+  id: Id5;
+  name: Name1;
   graph: GraphEditorRepresentation2;
   editable?: Editable;
   [k: string]: unknown;

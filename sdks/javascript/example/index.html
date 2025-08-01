@@ -64,6 +64,7 @@
         };
         const engine = new window.Gabber.Engine({ handler });
         buttonSourcePad = engine.getSourcePad("test_button", "trigger");
+        stringPropertyPad = engine.getPropertySourcePad("string_property", "value");
 
         async function connect() {
             let res = await fetch("http://localhost:8001/app/run", {
@@ -159,6 +160,8 @@
 
     <div id="button-container" style="display: none;">
         <button id="trigger-button" onclick="buttonSourcePad.pushValue()">Trigger</button>
+        <button id="string-property-button"
+            onclick="stringPropertyPad.getValue().then(value => { console.log(value); })">Log string value</button>
     </div>
 
     <div id="link-container">
