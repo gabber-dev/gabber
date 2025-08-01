@@ -5,7 +5,7 @@ import asyncio
 from typing import TYPE_CHECKING, Any, Literal
 
 from . import types
-from .pad import Item, PropertyPad, SinkPad, SourcePad
+from .pad import Item, PropertyPad, SinkPad, SourcePad, NOTIFIABLE_TYPES
 
 if TYPE_CHECKING:
     from core.node import Node
@@ -64,6 +64,8 @@ class PropertySinkPad(SinkPad, PropertyPad):
 
     def set_value(self, value: Any):
         self._value = value
+        if isinstance(value, NOTIFIABLE_TYPES):
+            self._notify_update(value)
 
     def _get_queue(self) -> asyncio.Queue[Item | None]:
         return self._queue

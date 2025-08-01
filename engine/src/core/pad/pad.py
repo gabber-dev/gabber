@@ -73,18 +73,16 @@ class SourcePad(Pad, Protocol):
     def set_next_pads(self, pads: list["SinkPad"]) -> None: ...
 
     def push_item(self, value: Any, ctx: RequestContext) -> None:
-        if isinstance(self, PropertyPad):
-            self.set_value(value)
-
         notify_type = False
-        if isinstance(
-            value,
-            (str, int, float, bool, runtime_types.AudioClip, runtime_types.VideoClip),
-        ):
+        if isinstance(value, NOTIFIABLE_TYPES):
             notify_type = True
 
-        if notify_type:
-            self._notify_update(value)
+        # Setting value notifies for itself so we skip it
+        if isinstance(self, PropertyPad):
+            self.set_value(value)
+        else:
+            if notify_type:
+                self._notify_update(value)
 
         for np in self.get_next_pads():
             q = np._get_queue()
@@ -94,16 +92,17 @@ class SourcePad(Pad, Protocol):
                 )
                 if ctx is not None:
                     ctx.complete()
-            if isinstance(np, PropertyPad):
-                np.set_value(value)
+            if isinstance(self, PropertyPad):
+                self.set_value(value)
+            else:
+                if notify_type:
+                    self._notify_update(value)
 
             new_ctx = RequestContext(
                 parent=ctx, timeout=ctx._timeout_s, originator=self.get_id()
             )
 
             item = Item(value=value, ctx=new_ctx)
-            if notify_type:
-                np._notify_update(value)
 
             q.put_nowait(item)
 
@@ -156,3 +155,13 @@ class PropertyPad(Pad, Protocol):
 class Item:
     value: Any
     ctx: "RequestContext"
+
+
+NOTIFIABLE_TYPES = (
+    str,
+    int,
+    float,
+    bool,
+    runtime_types.AudioClip,
+    runtime_types.VideoClip,
+)
