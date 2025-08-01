@@ -63,7 +63,7 @@
             }
         };
         const engine = new window.Gabber.Engine({ handler });
-        buttonSourcePad = engine.getSourcePad("test_button", "trigger");
+        buttonSourcePad = engine.getSourcePad("button_trigger", "trigger");
         stringPropertyPad = engine.getPropertySourcePad("string_property", "value");
 
         async function connect() {
@@ -86,7 +86,7 @@
             webcamLocalTrack.attachToElement(document.getElementById("local_webcam"));
             await engine.publishToNode({
                 localTrack: webcamLocalTrack,
-                publishNodeId: "webcam_publish",
+                publishNodeId: "publish_webcam",
             });
             document.getElementById("webcam-sub-button").style.display = "block";
         }
@@ -96,7 +96,7 @@
             screenshareLocalTrack.attachToElement(document.getElementById("local_screenshare"));
             await engine.publishToNode({
                 localTrack: screenshareLocalTrack,
-                publishNodeId: "screen_publish",
+                publishNodeId: "publish_screen",
             });
             document.getElementById("screenshare-sub-button").style.display = "block";
         }

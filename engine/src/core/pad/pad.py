@@ -73,6 +73,9 @@ class SourcePad(Pad, Protocol):
     def set_next_pads(self, pads: list["SinkPad"]) -> None: ...
 
     def push_item(self, value: Any, ctx: RequestContext) -> None:
+        if isinstance(self, PropertyPad):
+            self.set_value(value)
+
         notify_type = False
         if isinstance(
             value,
@@ -87,7 +90,7 @@ class SourcePad(Pad, Protocol):
             q = np._get_queue()
             if q.qsize() > 1_000:
                 logging.warning(
-                    f"PropertySinkPad queue size exceeded 1000, skipping. {np.get_owner_node().id}:{np.get_id()}"
+                    f"SinkPad queue size exceeded 1000, skipping. {np.get_owner_node().id}:{np.get_id()}"
                 )
                 if ctx is not None:
                     ctx.complete()

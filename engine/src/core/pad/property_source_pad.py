@@ -3,9 +3,8 @@
 
 from typing import TYPE_CHECKING, Any, Literal
 
-from core.pad.pad import SourcePad
 
-from .pad import PropertyPad, SinkPad
+from .pad import PropertyPad, SinkPad, SourcePad
 from .types import BasePadType
 
 if TYPE_CHECKING:

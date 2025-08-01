@@ -4,13 +4,8 @@
 import asyncio
 from typing import TYPE_CHECKING, Any, Literal
 
-from core.pad import (
-    Item,
-    PropertyPad,
-    SinkPad,
-    SourcePad,
-    types,
-)
+from . import types
+from .pad import Item, PropertyPad, SinkPad, SourcePad
 
 if TYPE_CHECKING:
     from core.node import Node
