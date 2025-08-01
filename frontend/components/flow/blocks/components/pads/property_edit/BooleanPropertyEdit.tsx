@@ -14,15 +14,15 @@ export function BooleanPropertyEdit({ nodeId, padId }: PropertyEditProps) {
   };
 
   return (
-    <div className="flex items-center justify-between bg-base-300 border-2 border-black border-b-4 border-r-4 rounded-lg p-3 hover:bg-base-100 transition-colors duration-150">
-      <span className="font-vt323 text-sm text-base-content">
+    <div className="flex items-center justify-between bg-base-300 border-2 border-black border-b-4 border-r-4 rounded-lg py-1.5 px-3 hover:bg-base-100 transition-colors duration-150">
+      <span className="font-vt323 text-xs text-base-content">
         {value ? "TRUE" : "FALSE"}
       </span>
       <input
         type="checkbox"
         checked={value || false}
         onChange={handleToggle}
-        className="toggle toggle-primary bg-base-300 border-2 border-black border-b-4 border-r-4 rounded-lg focus:outline-none"
+        className="toggle toggle-primary toggle-sm bg-base-300 border-2 border-black border-b-4 border-r-4 rounded-lg focus:outline-none"
       />
     </div>
   );

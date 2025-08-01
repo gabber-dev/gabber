@@ -15,20 +15,24 @@ type Props = {
 export function PropertyPad({ data, nodeId }: Props) {
   const isSource = data.type.indexOf("Source") !== -1;
 
-  const { singleAllowedType } = usePropertyPad(nodeId, data.id);
+  usePropertyPad(nodeId, data.id);
 
   return (
-    <div className={`relative w-full flex items-center`}>
-      <div className="w-full flex flex-col gap-2">
-        <div
-          className={`relative w-full flex gap-2 items-center ${isSource ? "justify-end" : "justify-start"}`}
-        >
-          <div className="text-sm text-accent font-medium">{data.id}</div>
-          <div className={`absolute ${isSource ? "-right-4" : "-left-4"}`}>
-            <PadHandle data={data} />
-          </div>
+    <div
+      className={`relative w-full flex items-center ${isSource ? "justify-end" : "justify-start"}`}
+    >
+      <div
+        className={`absolute ${isSource ? "right-0" : "left-0"} -translate-x-4`}
+      >
+        <PadHandle data={data} />
+      </div>
+      <div
+        className={`flex-1 flex items-center gap-2 ${isSource ? "justify-end" : "justify-start"}`}
+      >
+        <div className="text-sm text-accent font-medium">{data.id}</div>
+        <div className="flex-1 max-w-64">
+          <PropertyEdit padId={data.id} nodeId={nodeId} />
         </div>
-        <PropertyEdit padId={data.id} nodeId={nodeId} />
       </div>
     </div>
   );
