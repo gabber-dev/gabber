@@ -3,11 +3,9 @@
 
 import asyncio
 import logging
-from dataclasses import dataclass
-from typing import Annotated, Any, Literal, Type, TypeVar, cast
+from typing import Any, Type, TypeVar, cast
 
 from livekit import rtc
-from pydantic import BaseModel, Field
 
 from core import pad
 from core.editor import messages, models, serialize
@@ -388,9 +386,7 @@ class Graph:
             node.room = room
 
         try:
-            runtime_api_coro = (
-                runtime_api.run() if runtime_api else asyncio.sleep(0)
-            )
+            runtime_api_coro = runtime_api.run() if runtime_api else asyncio.sleep(0)
 
             await asyncio.gather(
                 *[node.run() for node in self.nodes],
