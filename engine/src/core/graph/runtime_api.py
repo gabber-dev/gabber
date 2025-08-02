@@ -50,11 +50,10 @@ class RuntimeApi:
                 ev_value = PadTriggeredValue_Trigger()
             dc_queue.put_nowait(
                 QueueItem(
-                    payload=RuntimeEvent_PadTriggered(
-                        type="pad_triggered",
-                        node_id=p.get_owner_node().id,
-                        pad_id=p.get_id(),
-                        value=ev_value,
+                    payload=RuntimeEvent(
+                        payload=RuntimeEventPayload_PadTriggered(
+                            value=ev_value,
+                        )
                     ),
                     participant=None,
                     node_id=p.get_owner_node().id,
@@ -69,6 +68,13 @@ class RuntimeApi:
             if not packet.topic or not packet.topic.startswith("runtime:"):
                 return
 
+            split_topic = packet.topic.split(":")
+            if len(split_topic) < 3:
+                logging.error(f"Invalid topic format: {packet.topic}")
+                return
+
+            node_id = split_topic[1]
+            pad_id = split_topic[2]
             request = RuntimeRequest.model_validate_json(packet.data)
             req_id = request.req_id
             ack_resp = RuntimeRequestAck(req_id=req_id)
@@ -76,40 +82,37 @@ class RuntimeApi:
                 QueueItem(
                     payload=ack_resp,
                     participant=packet.participant,
-                    node_id=None,
-                    pad_id=None,
+                    node_id=node_id,
+                    pad_id=pad_id,
                 )
             )
             complete_resp = RuntimeResponse(req_id=req_id)
             if request.payload.type == "push_value":
                 payload = request.payload
-                pad_obj = node_pad_lookup.get((payload.node_id, payload.source_pad_id))
-                if not isinstance(pad_obj, pad.SourcePad):
-                    logging.error(
-                        f"Pad {payload.source_pad_id} in node {payload.node_id} is not a SourcePad."
-                    )
-                    complete_resp.error = f"Pad {payload.source_pad_id} in node {payload.node_id} is not a SourcePad."
+                pad_obj = node_pad_lookup.get((node_id, pad_id))
+                if not pad_obj:
+                    logging.error(f"Pad {pad_id} in node {node_id} not found.")
+                    complete_resp.error = f"Pad {pad_id} in node {node_id} not found."
                     dc_queue.put_nowait(
                         QueueItem(
                             payload=complete_resp,
                             participant=packet.participant,
-                            node_id=None,
-                            pad_id=None,
+                            node_id=node_id,
+                            pad_id=pad_id,
                         )
                     )
                     return
-
-                if not pad_obj:
-                    logging.error(
-                        f"Pad {payload.source_pad_id} in node {payload.node_id} not found."
+                if not isinstance(pad_obj, pad.SourcePad):
+                    logging.error(f"Pad {pad_id} in node {node_id} is not a SourcePad.")
+                    complete_resp.error = (
+                        f"Pad {pad_id} in node {node_id} is not a SourcePad."
                     )
-                    complete_resp.error = f"Pad {payload.source_pad_id} in node {payload.node_id} not found."
                     dc_queue.put_nowait(
                         QueueItem(
                             payload=complete_resp,
                             participant=packet.participant,
-                            node_id=None,
-                            pad_id=None,
+                            node_id=node_id,
+                            pad_id=pad_id,
                         )
                     )
                     return
@@ -127,28 +130,28 @@ class RuntimeApi:
                         QueueItem(
                             payload=complete_resp,
                             participant=packet.participant,
-                            node_id=payload.node_id,
-                            pad_id=payload.source_pad_id,
+                            node_id=node_id,
+                            pad_id=pad_id,
                         )
                     )
                 )
                 ctx.complete()
             elif request.payload.type == "get_value":
                 payload = request.payload
-                pad_obj = node_pad_lookup.get(
-                    (payload.node_id, payload.property_pad_id)
-                )
+                pad_obj = node_pad_lookup.get((node_id, pad_id))
                 if not isinstance(pad_obj, pad.PropertyPad):
                     logging.error(
-                        f"Pad {payload.property_pad_id} in node {payload.node_id} is not a PropertyPad."
+                        f"Pad {pad_id} in node {node_id} is not a PropertyPad."
                     )
-                    complete_resp.error = f"Pad {payload.property_pad_id} in node {payload.node_id} is not a PropertyPad."
+                    complete_resp.error = (
+                        f"Pad {pad_id} in node {node_id} is not a PropertyPad."
+                    )
                     dc_queue.put_nowait(
                         QueueItem(
                             payload=complete_resp,
                             participant=packet.participant,
-                            node_id=payload.node_id,
-                            pad_id=payload.property_pad_id,
+                            node_id=node_id,
+                            pad_id=pad_id,
                         )
                     )
                     return
@@ -161,8 +164,8 @@ class RuntimeApi:
                     QueueItem(
                         payload=complete_resp,
                         participant=packet.participant,
-                        node_id=payload.node_id,
-                        pad_id=payload.property_pad_id,
+                        node_id=node_id,
+                        pad_id=pad_id,
                     )
                 )
             else:
@@ -172,8 +175,8 @@ class RuntimeApi:
                     QueueItem(
                         payload=complete_resp,
                         participant=packet.participant,
-                        node_id=None,
-                        pad_id=None,
+                        node_id=node_id,
+                        pad_id=pad_id,
                     )
                 )
 
@@ -191,9 +194,6 @@ class RuntimeApi:
                     if item.participant:
                         destination_identities.append(item.participant.identity)
 
-                    logging.info(
-                        f"Sending data packet to {destination_identities} for node {item.node_id}, pad {item.pad_id}"
-                    )
                     await self.room.local_participant.publish_data(
                         payload_bytes,
                         destination_identities=destination_identities,
@@ -253,30 +253,29 @@ PadTriggeredValue = Annotated[
 ]
 
 
-class RuntimeEvent_PadTriggered(BaseModel):
+class RuntimeEventPayload_PadTriggered(BaseModel):
     type: Literal["pad_triggered"] = "pad_triggered"
-    node_id: str
-    pad_id: str
     value: PadTriggeredValue
 
 
-RuntimeEvent = Annotated[
-    RuntimeEvent_PadTriggered,
-    Field(discriminator="type", description="Request to perform on the graph editor"),
+RuntimeEventPayload = Annotated[
+    RuntimeEventPayload_PadTriggered,
+    Field(discriminator="type", description="Payload for the runtime event"),
 ]
+
+
+class RuntimeEvent(BaseModel):
+    type: Literal["event"] = "event"
+    payload: RuntimeEventPayload
 
 
 class RuntimeRequestPayload_PushValue(BaseModel):
     type: Literal["push_value"] = "push_value"
-    node_id: str
-    source_pad_id: str
     value: Any = None
 
 
 class RuntimeRequestPayload_GetValue(BaseModel):
     type: Literal["get_value"] = "get_value"
-    node_id: str
-    property_pad_id: str
 
 
 RuntimeRequestPayload = Annotated[

@@ -17,7 +17,7 @@
  */
 
 import { DataPacket_Kind, RemoteParticipant, Room } from "livekit-client";
-import { RuntimeRequest, RuntimeRequestAck, RuntimeRequestPayload_PushValue, RuntimeEvent, RuntimeEvent_PadTriggered, RuntimeRequestPayload_GetValue, RuntimeResponsePayload_GetValue } from "../generated/runtime"
+import { RuntimeRequest, RuntimeRequestPayload_PushValue, RuntimeEvent, RuntimeRequestPayload_GetValue, Value1 as PadTriggeredValue } from "../generated/runtime"
 
 type PadParams = {
     nodeId: string;
@@ -25,7 +25,7 @@ type PadParams = {
     livekitRoom: Room;
 }
 
-export class BasePad<DataType> {
+export class BasePad<DataType extends PadTriggeredValue> {
     protected handlers: Array<(data: DataType) => void> = [];
     private _nodeId: string;
     private _padId: string;
@@ -66,6 +66,7 @@ export class BasePad<DataType> {
 
     private onData(data: Uint8Array, _: RemoteParticipant | undefined, __: DataPacket_Kind | undefined, topic: string | undefined): void {
         if (topic !== this.channelTopic) {
+            const msg = JSON.parse(new TextDecoder().decode(data));
             return; // Ignore data not on this pad's channel
         }
         const msg = JSON.parse(new TextDecoder().decode(data));
@@ -87,7 +88,14 @@ export class BasePad<DataType> {
             }
             this.pendingRequests.delete(msg.req_id);
         } else if (msg.type === "event") {
-            console.log("Received event:", msg.event);
+            const castedMsg: RuntimeEvent = msg
+            const payload = castedMsg.payload;
+            if(payload.type === "pad_triggered") {
+                for (const handler of this.handlers) {
+                    const value = payload.value as DataType;
+                    handler(value);
+                }
+            }
         }
     }
 
@@ -113,7 +121,7 @@ export class BasePad<DataType> {
     }
 }
 
-export class SourcePad<DataType> extends BasePad<DataType> {
+export class SourcePad<DataType extends PadTriggeredValue> extends BasePad<DataType> {
     constructor(params: PadParams) {
         super(params);
         this.pushValue = this.pushValue.bind(this);
@@ -144,13 +152,13 @@ export class SourcePad<DataType> extends BasePad<DataType> {
     }
 }
 
-export class SinkPad<DataType> extends BasePad<DataType> {
+export class SinkPad<DataType extends PadTriggeredValue> extends BasePad<DataType> {
     constructor(params: PadParams) {
         super(params);
     }
 }
 
-export class PropertySourcePad<DataType> extends SourcePad<DataType> {
+export class PropertySourcePad<DataType extends PadTriggeredValue> extends SourcePad<DataType> {
     constructor(params: PadParams) {
         super(params);
     }
@@ -160,7 +168,7 @@ export class PropertySourcePad<DataType> extends SourcePad<DataType> {
     }
 }
 
-export class PropertySinkPad<DataType> extends SinkPad<DataType> {
+export class PropertySinkPad<DataType extends PadTriggeredValue> extends SinkPad<DataType> {
     constructor(params: PadParams) {
         super(params);
     

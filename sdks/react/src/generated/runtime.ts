@@ -12,45 +12,46 @@ export type ReqId = string;
  */
 export type Payload = RuntimeRequestPayload_PushValue | RuntimeRequestPayload_GetValue;
 export type Type1 = "push_value";
-export type NodeId = string;
-export type SourcePadId = string;
 export type Type2 = "get_value";
-export type NodeId1 = string;
-export type SourcePadId1 = string;
+export type Type3 = "event";
 /**
- * Request to perform on the graph editor
+ * Payload for the runtime event
  */
-export type RuntimeEvent = RuntimeEvent_PadTriggered;
-export type Type3 = "pad_triggered";
-export type NodeId2 = string;
-export type PadId = string;
+export type Payload1 = RuntimeEventPayload_PadTriggered;
+export type Type4 = "pad_triggered";
 /**
  * Type of the pad triggered value
  */
 export type Value1 =
   | PadTriggeredValue_String
+  | PadTriggeredValue_Integer
+  | PadTriggeredValue_Float
   | PadTriggeredValue_Boolean
-  | PadTriggeredValue_Number
   | PadTriggeredValue_Trigger
-  | PadTriggeredValue_AudioClip;
-export type Type4 = "string";
+  | PadTriggeredValue_AudioClip
+  | PadTriggeredValue_VideoClip;
+export type Type5 = "string";
 export type Value2 = string;
-export type Type5 = "boolean";
-export type Value3 = boolean;
-export type Type6 = "number";
+export type Type6 = "integer";
+export type Value3 = number;
+export type Type7 = "float";
 export type Value4 = number;
-export type Type7 = "trigger";
-export type Type8 = "audio_clip";
+export type Type8 = "boolean";
+export type Value5 = boolean;
+export type Type9 = "trigger";
+export type Type10 = "audio_clip";
 export type Transcript = string;
 export type Duration = number;
-export type Type9 = "ack";
+export type Type11 = "video_clip";
+export type Duration1 = number;
+export type Type12 = "ack";
 export type ReqId1 = string;
-export type Type10 = "complete";
+export type Type13 = "complete";
 export type ReqId2 = string;
 export type Error = string | null;
-export type Payload1 = (RuntimeResponsePayload_PushValue | RuntimeResponsePayload_GetValue) | null;
-export type Type11 = "push_value";
-export type Type12 = "get_value";
+export type Payload2 = (RuntimeResponsePayload_PushValue | RuntimeResponsePayload_GetValue) | null;
+export type Type14 = "push_value";
+export type Type15 = "get_value";
 
 export interface RuntimeRequest {
   type?: Type;
@@ -60,8 +61,6 @@ export interface RuntimeRequest {
 }
 export interface RuntimeRequestPayload_PushValue {
   type?: Type1;
-  node_id: NodeId;
-  source_pad_id: SourcePadId;
   value?: Value;
   [k: string]: unknown;
 }
@@ -70,60 +69,71 @@ export interface Value {
 }
 export interface RuntimeRequestPayload_GetValue {
   type?: Type2;
-  node_id: NodeId1;
-  source_pad_id: SourcePadId1;
   [k: string]: unknown;
 }
-export interface RuntimeEvent_PadTriggered {
+export interface RuntimeEvent {
   type?: Type3;
-  node_id: NodeId2;
-  pad_id: PadId;
+  payload: Payload1;
+  [k: string]: unknown;
+}
+export interface RuntimeEventPayload_PadTriggered {
+  type?: Type4;
   value: Value1;
   [k: string]: unknown;
 }
 export interface PadTriggeredValue_String {
-  type?: Type4;
+  type?: Type5;
   value: Value2;
   [k: string]: unknown;
 }
-export interface PadTriggeredValue_Boolean {
-  type?: Type5;
+export interface PadTriggeredValue_Integer {
+  type?: Type6;
   value: Value3;
   [k: string]: unknown;
 }
-export interface PadTriggeredValue_Number {
-  type?: Type6;
+export interface PadTriggeredValue_Float {
+  type?: Type7;
   value: Value4;
   [k: string]: unknown;
 }
+export interface PadTriggeredValue_Boolean {
+  type?: Type8;
+  value: Value5;
+  [k: string]: unknown;
+}
 export interface PadTriggeredValue_Trigger {
-  type?: Type7;
+  type?: Type9;
   [k: string]: unknown;
 }
 export interface PadTriggeredValue_AudioClip {
-  type?: Type8;
+  type?: Type10;
   transcript: Transcript;
   duration: Duration;
   [k: string]: unknown;
 }
+export interface PadTriggeredValue_VideoClip {
+  type?: Type11;
+  duration: Duration1;
+  [k: string]: unknown;
+}
 export interface RuntimeRequestAck {
-  type?: Type9;
+  type?: Type12;
   req_id: ReqId1;
   [k: string]: unknown;
 }
 export interface RuntimeResponse {
-  type?: Type10;
+  type?: Type13;
   req_id: ReqId2;
   error?: Error;
-  payload?: Payload1;
+  payload?: Payload2;
   [k: string]: unknown;
 }
 export interface RuntimeResponsePayload_PushValue {
-  type?: Type11;
+  type?: Type14;
   [k: string]: unknown;
 }
 export interface RuntimeResponsePayload_GetValue {
-  type?: Type12;
+  type?: Type15;
   value?: unknown;
   [k: string]: unknown;
 }

@@ -27,18 +27,81 @@ export type Type2 = string;
 export type Node = string;
 export type Pad = string;
 export type NextPads = PadReference[];
-export type AllowedTypes = BasePadType[] | null;
+export type AllowedTypes =
+  | (
+      | String
+      | Integer
+      | Float
+      | Boolean
+      | Enum
+      | Secret
+      | BoundingBox
+      | Point
+      | Audio
+      | Video
+      | Trigger
+      | AudioClip
+      | VideoClip
+      | AVClip
+      | TextStream
+      | ContextMessage
+      | ContextMessageRole
+      | List
+      | Schema
+      | Object
+      | NodeReference
+    )[]
+  | null;
+export type Type3 = "string";
+export type MaxLength = number | null;
+export type MinLength = number | null;
+export type Type4 = "integer";
+export type Maximum = number | null;
+export type Minimum = number | null;
+export type Type5 = "float";
+export type Maximum1 = number | null;
+export type Minimum1 = number | null;
+export type Type6 = "boolean";
+export type Type7 = "enum";
+export type Options = string[] | null;
+export type Type8 = "secret";
+export type UpdatedAt = string;
+export type CreatedAt = string;
+export type Id3 = string;
+export type Name1 = string;
+export type Options1 = PublicSecret[];
+export type Type9 = "bounding_box";
+export type Type10 = "point";
+export type Type11 = "audio";
+export type Type12 = "video";
+export type Type13 = "trigger";
+export type Type14 = "audio_clip";
+export type Type15 = "video_clip";
+export type Type16 = "av_clip";
+export type Type17 = "text_stream";
+export type Type18 = "context_message";
+export type Type19 = "context_message_role";
+export type Type20 = "list";
+export type MaxLength1 = number | null;
+export type ItemTypeConstraints = BasePadType[] | null;
+export type Type21 = "schema";
+export type Type22 = "object";
+export type ObjectSchema = {
+  [k: string]: unknown;
+} | null;
+export type Type23 = "node_reference";
+export type NodeTypes = string[];
 export type Pads = PadEditorRepresentation[];
 export type Description = string | null;
 export type Primary = string;
 export type Secondary = string;
 export type Tags = string[];
 export type Nodes = NodeEditorRepresentation[];
-export type Type3 = "save_app";
-export type Id3 = string | null;
-export type Name1 = string;
-export type Type4 = "create_app_run";
-export type Type5 = "create_debug_connection";
+export type Type24 = "save_app";
+export type Id4 = string | null;
+export type Name2 = string;
+export type Type25 = "create_app_run";
+export type Type26 = "create_debug_connection";
 export type AppRun = string;
 /**
  * Response from the graph editor
@@ -52,27 +115,27 @@ export type Response =
   | ListSubgraphsResponse
   | CreateAppRunResponse
   | DebugConnectionResponse;
-export type Type6 = "save_subgraph";
-export type Id4 = string;
-export type Name2 = string;
-export type CreatedAt = string;
-export type UpdatedAt = string;
-export type Type7 = "save_app";
+export type Type27 = "save_subgraph";
 export type Id5 = string;
 export type Name3 = string;
 export type CreatedAt1 = string;
 export type UpdatedAt1 = string;
-export type Type8 = "list_apps";
+export type Type28 = "save_app";
+export type Id6 = string;
+export type Name4 = string;
+export type CreatedAt2 = string;
+export type UpdatedAt2 = string;
+export type Type29 = "list_apps";
 export type Apps = RepositoryApp[];
-export type Type9 = "get_app";
-export type Type10 = "get_subgraph";
-export type Type11 = "list_subgraphs";
+export type Type30 = "get_app";
+export type Type31 = "get_subgraph";
+export type Type32 = "list_subgraphs";
 export type SubGraphs = RepositorySubGraph[];
-export type Type12 = "create_app_run";
+export type Type33 = "create_app_run";
 export type Url = string;
 export type Token = string;
-export type Id6 = string;
-export type Type13 = "debug_connection";
+export type Id7 = string;
+export type Type34 = "debug_connection";
 
 export interface SaveSubgraphRequest {
   type?: Type;
@@ -111,7 +174,110 @@ export interface PadReference {
   pad: Pad;
   [k: string]: unknown;
 }
+export interface String {
+  type?: Type3;
+  max_length?: MaxLength;
+  min_length?: MinLength;
+  [k: string]: unknown;
+}
+export interface Integer {
+  type?: Type4;
+  maximum?: Maximum;
+  minimum?: Minimum;
+  [k: string]: unknown;
+}
+export interface Float {
+  type?: Type5;
+  maximum?: Maximum1;
+  minimum?: Minimum1;
+  [k: string]: unknown;
+}
+export interface Boolean {
+  type?: Type6;
+  [k: string]: unknown;
+}
+export interface Enum {
+  type?: Type7;
+  options?: Options;
+  [k: string]: unknown;
+}
+export interface Secret {
+  type?: Type8;
+  options?: Options1;
+  [k: string]: unknown;
+}
+export interface PublicSecret {
+  updated_at: UpdatedAt;
+  created_at: CreatedAt;
+  id: Id3;
+  name: Name1;
+  [k: string]: unknown;
+}
+export interface BoundingBox {
+  type?: Type9;
+  [k: string]: unknown;
+}
+export interface Point {
+  type?: Type10;
+  [k: string]: unknown;
+}
+export interface Audio {
+  type?: Type11;
+  [k: string]: unknown;
+}
+export interface Video {
+  type?: Type12;
+  [k: string]: unknown;
+}
+export interface Trigger {
+  type?: Type13;
+  [k: string]: unknown;
+}
+export interface AudioClip {
+  type?: Type14;
+  [k: string]: unknown;
+}
+export interface VideoClip {
+  type?: Type15;
+  [k: string]: unknown;
+}
+export interface AVClip {
+  type?: Type16;
+  [k: string]: unknown;
+}
+export interface TextStream {
+  type?: Type17;
+  [k: string]: unknown;
+}
+export interface ContextMessage {
+  type?: Type18;
+  [k: string]: unknown;
+}
+export interface ContextMessageRole {
+  type?: Type19;
+  [k: string]: unknown;
+}
+export interface List {
+  type?: Type20;
+  max_length?: MaxLength1;
+  item_type_constraints: ItemTypeConstraints;
+  [k: string]: unknown;
+}
 export interface BasePadType {
+  [k: string]: unknown;
+}
+export interface Schema {
+  type?: Type21;
+  [k: string]: unknown;
+}
+export interface Object {
+  type?: Type22;
+  object_schema?: ObjectSchema;
+  [k: string]: unknown;
+}
+export interface NodeReference {
+  type?: Type23;
+  node_types: NodeTypes;
   [k: string]: unknown;
 }
 export interface NodeMetadata {
@@ -121,41 +287,28 @@ export interface NodeMetadata {
   [k: string]: unknown;
 }
 export interface SaveAppRequest {
-  type?: Type3;
-  id?: Id3;
-  name: Name1;
+  type?: Type24;
+  id?: Id4;
+  name: Name2;
   graph: GraphEditorRepresentation;
   [k: string]: unknown;
 }
 export interface CreateAppRunRequest {
-  type?: Type4;
+  type?: Type25;
   graph: GraphEditorRepresentation;
   [k: string]: unknown;
 }
 export interface DebugConnectionRequest {
-  type?: Type5;
+  type?: Type26;
   app_run: AppRun;
   [k: string]: unknown;
 }
 export interface SaveSubgraphResponse {
-  type?: Type6;
+  type?: Type27;
   sub_graph: RepositorySubGraph;
   [k: string]: unknown;
 }
 export interface RepositorySubGraph {
-  id: Id4;
-  name: Name2;
-  created_at: CreatedAt;
-  updated_at: UpdatedAt;
-  graph: GraphEditorRepresentation;
-  [k: string]: unknown;
-}
-export interface SaveAppResponse {
-  type?: Type7;
-  app: RepositoryApp;
-  [k: string]: unknown;
-}
-export interface RepositoryApp {
   id: Id5;
   name: Name3;
   created_at: CreatedAt1;
@@ -163,30 +316,43 @@ export interface RepositoryApp {
   graph: GraphEditorRepresentation;
   [k: string]: unknown;
 }
+export interface SaveAppResponse {
+  type?: Type28;
+  app: RepositoryApp;
+  [k: string]: unknown;
+}
+export interface RepositoryApp {
+  id: Id6;
+  name: Name4;
+  created_at: CreatedAt2;
+  updated_at: UpdatedAt2;
+  graph: GraphEditorRepresentation;
+  [k: string]: unknown;
+}
 export interface ListAppsResponse {
-  type?: Type8;
+  type?: Type29;
   apps: Apps;
   [k: string]: unknown;
 }
 export interface GetAppResponse {
-  type?: Type9;
+  type?: Type30;
   app: RepositoryApp;
   [k: string]: unknown;
 }
 export interface GetSubgraphResponse {
-  type?: Type10;
+  type?: Type31;
   sub_graph: RepositorySubGraph;
   [k: string]: unknown;
 }
 export interface ListSubgraphsResponse {
-  type?: Type11;
+  type?: Type32;
   sub_graphs: SubGraphs;
   [k: string]: unknown;
 }
 export interface CreateAppRunResponse {
-  type?: Type12;
+  type?: Type33;
   connection_details: AppRunConnectionDetails;
-  id: Id6;
+  id: Id7;
   [k: string]: unknown;
 }
 export interface AppRunConnectionDetails {
@@ -195,7 +361,7 @@ export interface AppRunConnectionDetails {
   [k: string]: unknown;
 }
 export interface DebugConnectionResponse {
-  type?: Type13;
+  type?: Type34;
   connection_details: AppRunConnectionDetails;
   graph: GraphEditorRepresentation;
   [k: string]: unknown;
