@@ -3,9 +3,10 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, Field
 from livekit import rtc
 from dataclasses import dataclass
-from core import node, pad
+from core import node, pad, runtime_types
 import logging
 from core.editor import serialize
+
 
 class RuntimeApi:
     def __init__(self, *, room: rtc.Room, nodes: list[node.Node]):
@@ -13,7 +14,6 @@ class RuntimeApi:
         self.nodes = nodes
 
     async def run(self):
-
         node_pad_lookup: dict[tuple[str, str], pad.Pad] = {
             (n.id, p.get_id()): p for n in self.nodes for p in n.pads
         }
@@ -28,28 +28,42 @@ class RuntimeApi:
 
         dc_queue = asyncio.Queue[QueueItem | None]()
 
-        def on_pad(pad: pad.Pad, value: Any):
+        def on_pad(p: pad.Pad, value: Any):
             v = serialize.serialize_pad_value(value)
             ev_value: PadTriggeredValue | None = None
             if isinstance(v, int):
-                ev_value = PadTriggeredValue_Number(value=float(v))
+                ev_value = PadTriggeredValue_Integer(value=v)
+            elif isinstance(v, float):
+                ev_value = PadTriggeredValue_Float(value=v)
+            elif isinstance(v, str):
+                ev_value = PadTriggeredValue_String(value=v)
+            elif isinstance(v, bool):
+                ev_value = PadTriggeredValue_Boolean(value=v)
+            elif isinstance(v, runtime_types.AudioClip):
+                trans = v.transcription if v.transcription else ""
+                ev_value = PadTriggeredValue_AudioClip(
+                    transcript=trans, duration=v.duration
+                )
+            elif isinstance(v, runtime_types.VideoClip):
+                ev_value = PadTriggeredValue_VideoClip(duration=v.duration)
+            else:
+                ev_value = PadTriggeredValue_Trigger()
             dc_queue.put_nowait(
                 QueueItem(
                     payload=RuntimeEvent_PadTriggered(
                         type="pad_triggered",
-                        node_id=pad.get_owner_node().id,
-                        pad_id=pad.get_id(),
-                        value=v,
+                        node_id=p.get_owner_node().id,
+                        pad_id=p.get_id(),
+                        value=ev_value,
                     ),
                     participant=None,
-                    node_id=pad.get_owner_node().id,
-                    pad_id=pad.get_id(),
+                    node_id=p.get_owner_node().id,
+                    pad_id=p.get_id(),
                 )
             )
 
         for p in all_pads:
             p._add_update_handler(on_pad)
-
 
         def on_data(packet: rtc.DataPacket):
             if not packet.topic or not packet.topic.startswith("runtime:"):
@@ -164,6 +178,7 @@ class RuntimeApi:
                 )
 
         self.room.on("data_received", on_data)
+
         async def dc_queue_consumer():
             while True:
                 item = await dc_queue.get()
@@ -190,6 +205,7 @@ class RuntimeApi:
         await dc_queue_consumer()
         self.room.off("data_received", on_data)
 
+
 class PadTriggeredValue_String(BaseModel):
     type: Literal["string"] = "string"
     value: str
@@ -202,7 +218,8 @@ class PadTriggeredValue_Boolean(BaseModel):
 
 class PadTriggeredValue_Integer(BaseModel):
     type: Literal["integer"] = "integer"
-    value: int 
+    value: int
+
 
 class PadTriggeredValue_Float(BaseModel):
     type: Literal["float"] = "float"
@@ -221,16 +238,17 @@ class PadTriggeredValue_AudioClip(BaseModel):
 
 class PadTriggeredValue_VideoClip(BaseModel):
     type: Literal["video_clip"] = "video_clip"
-    transcript: str
     duration: float
 
 
 PadTriggeredValue = Annotated[
     PadTriggeredValue_String
+    | PadTriggeredValue_Integer
+    | PadTriggeredValue_Float
     | PadTriggeredValue_Boolean
-    | PadTriggeredValue_Number
     | PadTriggeredValue_Trigger
-    | PadTriggeredValue_AudioClip,
+    | PadTriggeredValue_AudioClip
+    | PadTriggeredValue_VideoClip,
     Field(discriminator="type", description="Type of the pad triggered value"),
 ]
 
