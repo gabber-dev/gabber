@@ -17,8 +17,8 @@ export type Type3 = "event";
 /**
  * Payload for the runtime event
  */
-export type Payload1 = RuntimeEventPayload_PadTriggered;
-export type Type4 = "pad_triggered";
+export type Payload1 = RuntimeEventPayload_Value;
+export type Type4 = "value";
 /**
  * Type of the pad triggered value
  */
@@ -76,7 +76,7 @@ export interface RuntimeEvent {
   payload: Payload1;
   [k: string]: unknown;
 }
-export interface RuntimeEventPayload_PadTriggered {
+export interface RuntimeEventPayload_Value {
   type?: Type4;
   value: Value1;
   [k: string]: unknown;

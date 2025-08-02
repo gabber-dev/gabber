@@ -21,3 +21,12 @@ export { Engine } from './Engine'
 export type { LocalTrack, LocalAudioTrack, LocalVideoTrack } from './LocalTrack';
 export type { RemoteTrack, RemoteAudioTrack, RemoteVideoTrack } from './RemoteTrack';
 export type { SourcePad, SinkPad, PropertySinkPad, PropertySourcePad } from './pad/Pad';
+
+export type { Value1 as PadTriggeredValue,
+    PadTriggeredValue_AudioClip,
+    PadTriggeredValue_VideoClip,
+    PadTriggeredValue_Boolean,
+    PadTriggeredValue_Float,
+    PadTriggeredValue_Integer,
+    PadTriggeredValue_String,
+} from './generated/runtime';

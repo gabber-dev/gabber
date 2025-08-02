@@ -51,7 +51,7 @@ class RuntimeApi:
             dc_queue.put_nowait(
                 QueueItem(
                     payload=RuntimeEvent(
-                        payload=RuntimeEventPayload_PadTriggered(
+                        payload=RuntimeEventPayload_Value(
                             value=ev_value,
                         )
                     ),
@@ -253,13 +253,13 @@ PadTriggeredValue = Annotated[
 ]
 
 
-class RuntimeEventPayload_PadTriggered(BaseModel):
-    type: Literal["pad_triggered"] = "pad_triggered"
+class RuntimeEventPayload_Value(BaseModel):
+    type: Literal["value"] = "value"
     value: PadTriggeredValue
 
 
 RuntimeEventPayload = Annotated[
-    RuntimeEventPayload_PadTriggered,
+    RuntimeEventPayload_Value,
     Field(discriminator="type", description="Payload for the runtime event"),
 ]
 

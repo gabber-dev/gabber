@@ -20,6 +20,7 @@ import { Room } from 'livekit-client';
 import { PropertySinkPad, PropertySourcePad, SinkPad, SourcePad } from './pad/Pad';
 import { LocalAudioTrack, LocalVideoTrack, LocalTrack } from './LocalTrack';
 import { Subscription } from './Subscription';
+import { Value1 as PadTriggeredValue } from './generated/runtime';
 
 interface EngineHandler {
   onConnectionStateChange?: (state: string) => void;
@@ -114,19 +115,19 @@ export class Engine  {
     return new Subscription({nodeId: params.outputNodeId, livekitRoom: this.livekitRoom});
   }
 
-  public getSourcePad<DataType>(nodeId: string, padId: string): SourcePad<DataType> {
+  public getSourcePad<DataType extends PadTriggeredValue>(nodeId: string, padId: string): SourcePad<DataType> {
     return new SourcePad<DataType>({ nodeId, padId, livekitRoom: this.livekitRoom });
   }
 
-  public getSinkPad<DataType>(nodeId: string, padId: string): SinkPad<DataType> {
+  public getSinkPad<DataType extends PadTriggeredValue>(nodeId: string, padId: string): SinkPad<DataType> {
     return new SinkPad<DataType>({ nodeId, padId, livekitRoom: this.livekitRoom });
   }
 
-  public getPropertySourcePad<DataType>(nodeId: string, padId: string): SourcePad<DataType> {
+  public getPropertySourcePad<DataType extends PadTriggeredValue>(nodeId: string, padId: string): SourcePad<DataType> {
     return new PropertySourcePad<DataType>({ nodeId, padId, livekitRoom: this.livekitRoom });
   }
 
-  public getPropertySinkPad<DataType>(nodeId: string, padId: string): SinkPad<DataType> {
+  public getPropertySinkPad<DataType extends PadTriggeredValue>(nodeId: string, padId: string): SinkPad<DataType> {
     return new PropertySinkPad<DataType>({ nodeId, padId, livekitRoom: this.livekitRoom });
   }
 

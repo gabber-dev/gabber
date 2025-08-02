@@ -44,6 +44,14 @@ export class BasePad<DataType extends PadTriggeredValue> {
         this.channelTopic = "runtime:" + this._nodeId + ":" + this._padId;
     }
 
+    public on(event: "value", handler: (data: DataType) => void): void {
+        this.handlers.push(handler);
+    }
+
+    public off(event: "value", handler: (data: DataType) => void): void {
+        this.handlers = this.handlers.filter(h => h !== handler);
+    }
+
     public get nodeId(): string {
         return this._nodeId;
     }
@@ -90,7 +98,7 @@ export class BasePad<DataType extends PadTriggeredValue> {
         } else if (msg.type === "event") {
             const castedMsg: RuntimeEvent = msg
             const payload = castedMsg.payload;
-            if(payload.type === "pad_triggered") {
+            if(payload.type === "value") {
                 for (const handler of this.handlers) {
                     const value = payload.value as DataType;
                     handler(value);
@@ -128,8 +136,6 @@ export class SourcePad<DataType extends PadTriggeredValue> extends BasePad<DataT
     }
 
     public async pushValue(value: DataType): Promise<void> {
-        this.handlers.forEach(handler => handler(value));
-
         const payload: RuntimeRequestPayload_PushValue = {
             type: "push_value",
             node_id: this.nodeId,

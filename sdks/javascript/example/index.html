@@ -65,6 +65,9 @@
         const engine = new window.Gabber.Engine({ handler });
         buttonSourcePad = engine.getSourcePad("button_trigger", "trigger");
         stringPropertyPad = engine.getPropertySourcePad("string_property", "value");
+        stringPropertyPad.on("value", (value) => {
+            console.log("String property value:", value);
+        });
 
         async function connect() {
             let res = await fetch("http://localhost:8001/app/run", {
