@@ -17,12 +17,27 @@
  */
 
 export { Engine } from './Engine'
+export { Publication } from './Publication';
+export { Subscription } from './Subscription';
+
+export type { 
+    EngineHandler, 
+    ConnectionDetails,
+    ConnectionState,
+    GetLocalTrackOptions,
+    GetLocalTrackOptions_Microphone,
+    GetLocalTrackOptions_Webcam,
+    GetLocalTrackOptions_Screen,
+    PublishParams,
+    SubscribeParams,
+} from './Engine';
 
 export type { LocalTrack, LocalAudioTrack, LocalVideoTrack } from './LocalTrack';
 export type { RemoteTrack, RemoteAudioTrack, RemoteVideoTrack } from './RemoteTrack';
 export type { SourcePad, SinkPad, PropertySinkPad, PropertySourcePad } from './pad/Pad';
 
-export type { Value1 as PadTriggeredValue,
+export type { 
+    Value1 as PadTriggeredValue,
     PadTriggeredValue_AudioClip,
     PadTriggeredValue_VideoClip,
     PadTriggeredValue_Boolean,

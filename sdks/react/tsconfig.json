@@ -1,5 +1,9 @@
 {
+    "include": [
+        "./src"
+    ],
     "compilerOptions": {
+        "jsx": "react-jsx",
         "module": "esnext",
         "lib": [
             "dom",
@@ -20,7 +24,12 @@
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
-        "rootDir": "src",
-        "declarationDir": "dist",
-    }
+        "rootDir": "./src",
+        "declarationDir": "./dist",
+        "skipDefaultLibCheck": true,
+    },
+    "external": [
+        "react",
+        "react-dom"
+    ],
 }

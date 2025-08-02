@@ -1,6 +1,6 @@
 {
-    "name": "@gabber-dev/react",
-    "version": "0.1.0",
+    "name": "@gabber/client-react",
+    "version": "0.28.0",
     "main": "./dist/index.js",
     "module": "./dist/index.mjs",
     "types": "./dist/index.d.ts",
@@ -8,27 +8,25 @@
         "dist"
     ],
     "scripts": {
-        "build": "tsup && npm run build-iife",
-        "build-iife": "rollup -c rollup.config.iife.js",
-        "lint": "eslint --fix",
-        "tsc": "tsc"
-    },
-    "devDependencies": {
-        "@rollup/plugin-node-resolve": "^15.3.1",
-        "@rollup/plugin-typescript": "^11.1.6",
-        "eslint": "^8.57.1",
-        "eslint-config-prettier": "^9.1.0",
-        "eslint-plugin-import": "^2.31.0",
-        "eslint-plugin-prettier": "^5.4.0",
-        "prettier": "^3.5.3",
-        "rollup": "^4.28.1",
-        "tsup": "^8.3.5",
-        "typescript": "^5.7.2"
+        "build": "tsup",
+        "lint": "eslint -f unix \"src/**/*.{ts,tsx}\""
     },
     "dependencies": {
-        "axios": "^1.7.9",
-        "eventemitter3": "^5.0.1",
-        "livekit-client": "^2.7.5"
+        "@gabber/client": "file:../javascript",
+        "eslint-config-react-app": "^7.0.1"
+    },
+    "peerDependencies": {
+        "react": "^18.0.0 || ^19.0.0",
+        "react-dom": "^18.0.0 || ^19.0.0"
+    },
+    "devDependencies": {
+        "@types/node": "^20.17.10",
+        "@types/react": "^18.0.0 || ^19.0.0",
+        "@types/react-dom": "^18.0.0 || ^19.0.0",
+        "eslint": "^8.57.1",
+        "eslint-plugin-react": "^7.37.2",
+        "tslib": "^2.8.1",
+        "tsup": "^8.3.5"
     },
     "publishConfig": {
         "access": "public"

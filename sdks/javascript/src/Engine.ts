@@ -21,9 +21,10 @@ import { PropertySinkPad, PropertySourcePad, SinkPad, SourcePad } from './pad/Pa
 import { LocalAudioTrack, LocalVideoTrack, LocalTrack } from './LocalTrack';
 import { Subscription } from './Subscription';
 import { Value1 as PadTriggeredValue } from './generated/runtime';
+import { Publication } from './Publication';
 
-interface EngineHandler {
-  onConnectionStateChange?: (state: string) => void;
+export interface EngineHandler {
+  onConnectionStateChange?: (state: ConnectionState) => void;
 }
 
 export class Engine  {
@@ -93,22 +94,27 @@ export class Engine  {
     throw new Error(`Unsupported track type`);
   }
 
-  public async publishToNode(params: PublishParams): Promise<void> {
+  public async publishToNode(params: PublishParams): Promise<Publication> {
     if(params.localTrack.type === 'audio') {
       const track = params.localTrack as LocalAudioTrack;
       const mediaStreamTrack = track.mediaStream.getAudioTracks()[0];
       if (!mediaStreamTrack) {
         throw new Error('No audio track available to publish.');
       }
-      await this.livekitRoom.localParticipant.publishTrack(mediaStreamTrack, {name: params.publishNodeId + ":audio"});
+      const trackName = params.publishNodeId + ":audio";
+      await this.livekitRoom.localParticipant.publishTrack(mediaStreamTrack, {name: trackName});
+      return new Publication({ nodeId: params.publishNodeId, livekitRoom: this.livekitRoom, trackName });
     } else if (params.localTrack.type === 'video') {
       const track = params.localTrack as LocalVideoTrack;
       const mediaStreamTrack = track.mediaStream.getVideoTracks()[0];
       if (!mediaStreamTrack) {
         throw new Error('No video track available to publish.');
       }
-      await this.livekitRoom.localParticipant.publishTrack(mediaStreamTrack, {name: params.publishNodeId + ":video"});
+      const trackName = params.publishNodeId + ":video";
+      await this.livekitRoom.localParticipant.publishTrack(mediaStreamTrack, {name: trackName});
+      return new Publication({ nodeId: params.publishNodeId, livekitRoom: this.livekitRoom, trackName });
     }
+    throw new Error(`Unsupported track type: ${params.localTrack.type}`);
   }
 
   public async subscribeToNode(params: SubscribeParams): Promise<Subscription> {
@@ -150,39 +156,39 @@ export class Engine  {
   }
 }
 
-type GetLocalTrackOptions_Webcam = {
+export type GetLocalTrackOptions_Webcam = {
   type: 'webcam';
   width?: number;
   height?: number;
   fps?: number;
 }
 
-type GetLocalTrackOptions_Screen = {
+export type GetLocalTrackOptions_Screen = {
   type: 'screen';
   audio: boolean;
 }
 
-type GetLocalTrackOptions_Microphone = {
+export type GetLocalTrackOptions_Microphone = {
   type: 'microphone';
   echoCancellation?: boolean;
   noiseSuppression?: boolean;
 }
 
-type GetLocalTrackOptions = GetLocalTrackOptions_Webcam | GetLocalTrackOptions_Screen | GetLocalTrackOptions_Microphone;
+export type GetLocalTrackOptions = GetLocalTrackOptions_Webcam | GetLocalTrackOptions_Screen | GetLocalTrackOptions_Microphone;
 
 
-type ConnectionDetails = {
+export type ConnectionDetails = {
   token: string;
   url: string;
 }
 
-type PublishParams = {
+export type PublishParams = {
   localTrack: LocalTrack;
   publishNodeId: string;
 }
 
-type SubscribeParams = {
+export type SubscribeParams = {
   outputNodeId: string;
 }
 
-type ConnectionState = 'disconnected' | 'connecting' | 'waiting_for_engine' | 'connected';
+export type ConnectionState = 'disconnected' | 'connecting' | 'waiting_for_engine' | 'connected';
