@@ -17,6 +17,7 @@ class RuntimeApi:
         node_pad_lookup: dict[tuple[str, str], pad.Pad] = {
             (n.id, p.get_id()): p for n in self.nodes for p in n.pads
         }
+        all_pads = list(node_pad_lookup.values())
 
         @dataclass(frozen=True)
         class QueueItem:
@@ -24,6 +25,31 @@ class RuntimeApi:
             participant: rtc.RemoteParticipant | None
             node_id: str | None
             pad_id: str | None
+
+        dc_queue = asyncio.Queue[QueueItem | None]()
+
+        def on_pad(pad: pad.Pad, value: Any):
+            v = serialize.serialize_pad_value(value)
+            ev_value: PadTriggeredValue | None = None
+            if isinstance(v, int):
+                ev_value = PadTriggeredValue_Number(value=float(v))
+            dc_queue.put_nowait(
+                QueueItem(
+                    payload=RuntimeEvent_PadTriggered(
+                        type="pad_triggered",
+                        node_id=pad.get_owner_node().id,
+                        pad_id=pad.get_id(),
+                        value=v,
+                    ),
+                    participant=None,
+                    node_id=pad.get_owner_node().id,
+                    pad_id=pad.get_id(),
+                )
+            )
+
+        for p in all_pads:
+            p._add_update_handler(on_pad)
+
 
         def on_data(packet: rtc.DataPacket):
             if not packet.topic or not packet.topic.startswith("runtime:"):
@@ -138,7 +164,6 @@ class RuntimeApi:
                 )
 
         self.room.on("data_received", on_data)
-        dc_queue = asyncio.Queue[QueueItem | None]()
         async def dc_queue_consumer():
             while True:
                 item = await dc_queue.get()
@@ -175,8 +200,12 @@ class PadTriggeredValue_Boolean(BaseModel):
     value: bool
 
 
-class PadTriggeredValue_Number(BaseModel):
-    type: Literal["number"] = "number"
+class PadTriggeredValue_Integer(BaseModel):
+    type: Literal["integer"] = "integer"
+    value: int 
+
+class PadTriggeredValue_Float(BaseModel):
+    type: Literal["float"] = "float"
     value: float
 
 

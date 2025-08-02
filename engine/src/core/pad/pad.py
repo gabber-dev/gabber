@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 class Pad(Protocol):
-    _update_handlers: set[Callable[[Any], None]] = set()
+    _update_handlers: set[Callable[["Pad", Any], None]] = set()
 
     def get_id(self) -> str: ...
     def set_id(self, id: str) -> None: ...
@@ -25,17 +25,17 @@ class Pad(Protocol):
     def get_type_constraints(self) -> list[BasePadType] | None: ...
     def get_owner_node(self) -> "Node": ...
 
-    def _add_update_handler(self, handler: Callable[[Any], None]):
+    def _add_update_handler(self, handler: Callable[["Pad", Any], None]):
         self._update_handlers.add(handler)
 
-    def _remove_update_handler(self, handler: Callable[[Any], None]) -> None:
+    def _remove_update_handler(self, handler: Callable[["Pad", Any], None]) -> None:
         if handler in self._update_handlers:
             self._update_handlers.remove(handler)
 
     def _notify_update(self, value: Any) -> None:
         for handler in self._update_handlers:
             try:
-                handler(value)
+                handler(self, value)
             except Exception as e:
                 logging.error(f"Error in update handler {handler}: {e}")
 
