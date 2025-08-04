@@ -48,7 +48,7 @@ export function usePropertyPad<DataType extends PadTriggeredValue>(nodeId: strin
         } else if(connectionState !== "connected") {
             setCurrentValue("loading");
         }
-    }, [lastValue]);
+    }, [lastValue, connectionState]);
 
     return {
         currentValue,
