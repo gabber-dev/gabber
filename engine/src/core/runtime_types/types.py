@@ -119,11 +119,18 @@ class AudioClip:
     def fp32_44100(self) -> NDArray[np.float32]:
         return np.concatenate([f.data_44100hz.fp32.flatten() for f in self.audio])
 
+    @property
+    def duration(self) -> float:
+        if not self.audio:
+            return 0.0
+
+        total_duration = sum(frame.original_data.duration for frame in self.audio)
+        return total_duration
+
 
 @dataclass
 class VideoClip:
     video: list[VideoFrame]
-    transcription: str | None = None
 
     @property
     def stacked_bgr_frames(self) -> np.ndarray:
@@ -135,6 +142,15 @@ class VideoClip:
             cv2.cvtColor(frame.data, cv2.COLOR_BGRA2BGR) for frame in self.video
         ]
         return np.stack(bgr_frames, axis=0)
+
+    @property
+    def duration(self) -> float:
+        if not self.video:
+            return 0.0
+
+        first_timestamp = self.video[0].timestamp
+        last_timestamp = self.video[-1].timestamp
+        return last_timestamp - first_timestamp
 
 
 @dataclass
@@ -276,8 +292,8 @@ class Schema(BaseModel):
         ] = {}
         for key, value in self.properties.items():
             if key in other.properties:
-                intersection = cast(pad.types.Intersectable, value).intersect(
-                    cast(pad.types.Intersectable, other.properties[key])
+                intersection = cast(pad.types.BasePadType, value).intersect(
+                    cast(pad.types.BasePadType, other.properties[key])
                 )
                 intersection = cast(
                     pad.types.String

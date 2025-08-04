@@ -12,7 +12,7 @@ import { RunProvider } from "@/hooks/useRun";
 import { GraphEditorRepresentation } from "@/generated/editor";
 import { useRepository } from "@/hooks/useRepository";
 import { RepositoryApp } from "@/generated/repository";
-import { createLivekitRoom } from "@/app/(actions)/livekit";
+import { createAppRun } from "@/lib/repository";
 
 type Props = {
   existingApp: RepositoryApp;
@@ -36,20 +36,24 @@ export function ClientPage({ existingApp }: Props) {
     [existingApp.id, existingApp.name, saveApp],
   );
 
-  const startRunImpl = useCallback(async () => {
-    const connDetails = await createLivekitRoom({ appId: existingApp.id });
-    return connDetails;
-  }, [existingApp.id]);
+  const startRunImpl = useCallback(
+    async (params: { graph: GraphEditorRepresentation }) => {
+      const resp = await createAppRun({ graph: params.graph });
+      return resp.connection_details;
+    },
+    [],
+  );
 
   return (
     <div className="realtive w-full h-full">
       <div className="absolute top-0 left-0 right-0 bottom-0">
         <EditorProvider
+          debug={false}
           editor_url="ws://localhost:8000/ws"
           savedGraph={savedGraph}
           saveImpl={saveImpl}
         >
-          <RunProvider startRunImpl={startRunImpl}>
+          <RunProvider generateConnectionDetailsImpl={startRunImpl}>
             <AppEditPage />
           </RunProvider>
         </EditorProvider>
