@@ -74,14 +74,12 @@ export class Subscription {
     }
 
     private onTrackPublished(track: RemoteTrackPublication): void {
-        console.log(`NEIL Track published`, track);
         if(track.trackName.startsWith(this._nodeId)) {
             track.setSubscribed(true);
         }
     }
 
     private onTrackSubscribed(track: LKRemoteTrack): void {
-        console.log(`NEIL Track subscribed`, track);
         if(track.kind === 'audio') {
             const lkAudioTrack = track as LKRemoteAudioTrack;
             const res = new RemoteAudioTrack({track: lkAudioTrack});
