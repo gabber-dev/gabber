@@ -35,6 +35,14 @@ export class Engine  {
   constructor(params: {handler?: EngineHandler}) {
     this.livekitRoom = new Room();
     this.handler = params.handler;
+    this.connect = this.connect.bind(this);
+    this.disconnect = this.disconnect.bind(this);
+    this.getLocalTrack = this.getLocalTrack.bind(this);
+    this.publishToNode = this.publishToNode.bind(this);
+    this.subscribeToNode = this.subscribeToNode.bind(this);
+    this.getSourcePad = this.getSourcePad.bind(this);
+    this.getSinkPad = this.getSinkPad.bind(this);
+    this.getPropertyPad = this.getPropertyPad.bind(this);
     this.setupRoomEventListeners();
   }
 

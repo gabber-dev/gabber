@@ -28,6 +28,7 @@ export class Subscription {
     constructor(params: {nodeId: string, livekitRoom: Room}) {
         this.room = params.livekitRoom;
         this._nodeId = params.nodeId;
+        this.checkTrackSid = this.checkTrackSid.bind(this);
         this.waitForAudioTrack = this.waitForAudioTrack.bind(this);
         this.waitForVideoTrack = this.waitForVideoTrack.bind(this);
         this.onTrackSubscribed = this.onTrackSubscribed.bind(this);
@@ -74,14 +75,15 @@ export class Subscription {
     }
 
     private onTrackPublished(track: RemoteTrackPublication): void {
-        console.log(`NEIL Track published`, track);
         if(track.trackName.startsWith(this._nodeId)) {
             track.setSubscribed(true);
         }
     }
 
     private onTrackSubscribed(track: LKRemoteTrack): void {
-        console.log(`NEIL Track subscribed`, track);
+        if(!this.checkTrackSid(track)) {
+            return;
+        }
         if(track.kind === 'audio') {
             const lkAudioTrack = track as LKRemoteAudioTrack;
             const res = new RemoteAudioTrack({track: lkAudioTrack});
@@ -132,5 +134,19 @@ export class Subscription {
             }
         }
         return res;
+    }
+
+    private checkTrackSid(track: LKRemoteTrack): boolean {
+        if(!track.sid) {
+            console.warn("Track does not have a valid SID:", track);
+            return false;
+        }
+        const allPublications = this.getExistingPublications();
+        for(const publication of allPublications) {
+            if(publication.trackSid === track.sid) {
+                return true;
+            }
+        }
+        return false;
     }
 }
