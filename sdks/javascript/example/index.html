@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<!--
+ Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+
+ SPDX-License-Identifier: Apache-2.0
+-->
+
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Page</title>
+    <script src="../dist/index.iife.js"></script>
+    <script src="./graph.js"></script>
+    <script>
+        let debugLink = null;
+        let appRunId;
+        let engineConnectionState = "disconnected";
+        let buttonSourcePad = null;
+        let handler = {
+            onConnectionStateChange: (state) => {
+                engineConnectionState = state;
+                console.log("Engine connection state changed:", state);
+                if (state === "connected") {
+                    let linkContainer = document.getElementById("link-container");
+                    if (debugLink) {
+                        linkContainer.removeChild(debugLink);
+                    }
+                    debugLink = document.createElement("a");
+                    debugLink.href = "http://localhost:3000/debug/" + appRunId;
+                    debugLink.target = "_blank";
+                    debugLink.textContent = "Debug Link";
+                    linkContainer.appendChild(debugLink);
+
+                    // Show publish buttons when connected
+                    document.getElementById("webcam-button").style.display = "block";
+                    document.getElementById("screenshare-button").style.display = "block";
+                    document.getElementById("button-container").style.display = "block";
+                } else {
+                    if (debugLink) {
+                        let linkContainer = document.getElementById("link-container");
+                        linkContainer.removeChild(debugLink);
+                        debugLink = null;
+                    }
+
+                    // Hide publish buttons when disconnected
+                    document.getElementById("webcam-button").style.display = "none";
+                    document.getElementById("screenshare-button").style.display = "none";
+                }
+            }
+        };
+        const engine = new window.Gabber.Engine({ handler });
+        buttonSourcePad = engine.getSourcePad("button_trigger", "trigger");
+        stringPropertyPad = engine.getPropertyPad("string_property", "value");
+        stringPropertyPad.on("value", (value) => {
+            console.log("String property value:", value);
+        });
+
+        async function connect() {
+            let res = await fetch("http://localhost:8001/app/run", {
+                method: "POST", body: JSON.stringify(GRAPH),
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            });
+            const respBody = await res.json();
+            const connectionDetails = respBody.connection_details;
+            appRunId = respBody.id;
+            console.log("Response from debug_connection:", respBody);
+            await engine.connect(connectionDetails);
+            console.log("Connecting...", engine);
+        }
+
+        async function publishWebcam() {
+            let webcamLocalTrack = await engine.getLocalTrack({ type: "webcam", width: 1280, height: 720 });
+            webcamLocalTrack.attachToElement(document.getElementById("local_webcam"));
+            await engine.publishToNode({
+                localTrack: webcamLocalTrack,
+                publishNodeId: "publish_webcam",
+            });
+            document.getElementById("webcam-sub-button").style.display = "block";
+        }
+
+        async function publishScreenshare() {
+            let screenshareLocalTrack = await engine.getLocalTrack({ type: "screen_share", width: 1920, height: 1080 });
+            screenshareLocalTrack.attachToElement(document.getElementById("local_screenshare"));
+            await engine.publishToNode({
+                localTrack: screenshareLocalTrack,
+                publishNodeId: "publish_screen",
+            });
+            document.getElementById("screenshare-sub-button").style.display = "block";
+        }
+
+        async function subscribeWebcam() {
+            const subscription = await engine.subscribeToNode({ outputNodeId: "output_webcam" });
+            const remoteTrack = await subscription.waitForVideoTrack();
+            remoteTrack.attachToElement(document.getElementById("remote_webcam"));
+        }
+
+        async function subscribeScreenshare() {
+            const subscription = await engine.subscribeToNode({ outputNodeId: "output_screen" });
+            const remoteTrack = await subscription.waitForVideoTrack();
+            remoteTrack.attachToElement(document.getElementById("remote_screenshare"));
+        }
+
+    </script>
+</head>
+
+<body>
+    <h1>Basic Javascript SDK Example</h1>
+
+    <div style="display: flex; flex-direction: row; align-items: center;">
+        <div>
+            <video id="local_webcam" width="320" height="240" controls>
+            </video>
+            <button id="webcam-button" onclick="publishWebcam()" style="display: none;">Publish Webcam</button>
+        </div>
+        <div> ==> </div>
+        <div>
+            <video id="remote_webcam" width="320" height="240" controls>
+            </video>
+            <button id="webcam-sub-button" onclick="subscribeWebcam()" style="display: none;">
+                Subscribe Webcam</button>
+
+        </div>
+    </div>
+
+
+    <div style="display: flex; flex-direction: row; align-items: center;">
+        <div>
+            <video id="local_screenshare" width="320" height="240" controls>
+            </video>
+            <button id="screenshare-button" onclick="publishScreenshare()" style="display: none;">Publish
+                Screenshare</button>
+        </div>
+        <div> ==> </div>
+        <div>
+            <video id="remote_screenshare" width="320" height="240" controls>
+            </video>
+            <button id="screenshare-sub-button" onclick="subscribeScreenshare()" style="display: none;">
+                Subscribe Screenshare</button>
+        </div>
+
+    </div>
+
+    <!-- Button -->
+    <div id="connect-container">
+        <button id="connect-button" onclick="connect()">Connect</button>
+    </div>
+
+    <div id="button-container" style="display: none;">
+        <button id="trigger-button" onclick="buttonSourcePad.pushValue()">Trigger</button>
+        <button id="string-property-button"
+            onclick="stringPropertyPad.getValue().then(value => { console.log(value); })">Log string value</button>
+    </div>
+
+    <div id="link-container">
+    </div>
+
+</body>
+
+</html>

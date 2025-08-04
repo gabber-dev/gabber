@@ -6,15 +6,15 @@ install:
 
 engine:
 	make install && \
-	.venv/bin/python src/main.py engine 
+	.venv/bin/python -u src/main.py engine 
 
 repository:
 	make install && \
-	.venv/bin/watchfiles ".venv/bin/python src/main.py repository" src
+	.venv/bin/watchfiles ".venv/bin/python -u src/main.py repository" src
 
 editor:
 	make install && \
-	.venv/bin/watchfiles ".venv/bin/python src/main.py editor" src
+	.venv/bin/watchfiles ".venv/bin/python -u src/main.py editor" src
 
 lint:
 	make install && \
