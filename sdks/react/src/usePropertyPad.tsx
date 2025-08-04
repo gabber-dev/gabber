@@ -1,4 +1,4 @@
-import { PadTriggeredValue, PropertyPad, SourcePad } from "@gabber/client";
+import { PadTriggeredValue } from "@gabber/client";
 import { useEngine, useEngineInternal } from "./useEngine";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePad } from "./usePad";
