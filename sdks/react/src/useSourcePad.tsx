@@ -1,7 +1,6 @@
 import { PadTriggeredValue, SourcePad } from "@gabber/client";
 import { useEngineInternal } from "./useEngine";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { usePad } from "./usePad";
 
 type UseSourcePadType<DataType extends PadTriggeredValue> = {
     pushValue: (v: DataType) => Promise<void>;

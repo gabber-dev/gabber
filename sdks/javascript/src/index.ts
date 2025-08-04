@@ -34,7 +34,7 @@ export type {
 
 export type { LocalTrack, LocalAudioTrack, LocalVideoTrack } from './LocalTrack';
 export type { RemoteTrack, RemoteAudioTrack, RemoteVideoTrack } from './RemoteTrack';
-export type { SourcePad, SinkPad, PropertySinkPad, PropertySourcePad } from './pad/Pad';
+export type { SourcePad, SinkPad, PropertyPad } from './pad/Pad';
 
 export type { 
     Value1 as PadTriggeredValue,

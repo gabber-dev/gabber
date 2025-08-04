@@ -64,7 +64,7 @@
         };
         const engine = new window.Gabber.Engine({ handler });
         buttonSourcePad = engine.getSourcePad("button_trigger", "trigger");
-        stringPropertyPad = engine.getPropertySourcePad("string_property", "value");
+        stringPropertyPad = engine.getPropertyPad("string_property", "value");
         stringPropertyPad.on("value", (value) => {
             console.log("String property value:", value);
         });

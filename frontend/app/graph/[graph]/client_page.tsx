@@ -40,7 +40,7 @@ export function ClientPage({ initialSubGraph }: Props) {
         saveImpl={saveImpl}
         savedGraph={initialSubGraph.graph}
       >
-        <RunProvider startRunImpl={startRunImpl}>
+        <RunProvider generateConnectionDetailsImpl={startRunImpl}>
           <SubGraphEdit />
         </RunProvider>
       </EditorProvider>

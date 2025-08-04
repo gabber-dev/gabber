@@ -164,20 +164,9 @@ export class SinkPad<DataType extends PadTriggeredValue> extends BasePad<DataTyp
     }
 }
 
-export class PropertySourcePad<DataType extends PadTriggeredValue> extends SourcePad<DataType> {
+export class PropertyPad<DataType extends PadTriggeredValue> extends BasePad<DataType> {
     constructor(params: PadParams) {
         super(params);
-    }
-
-    public async getValue(): Promise<DataType> {
-        return this._getValue();
-    }
-}
-
-export class PropertySinkPad<DataType extends PadTriggeredValue> extends SinkPad<DataType> {
-    constructor(params: PadParams) {
-        super(params);
-    
     }
 
     public async getValue(): Promise<DataType> {

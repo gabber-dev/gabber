@@ -33,7 +33,7 @@ export function ClientPage({ graph, connectionDetails }: Props) {
         saveImpl={saveImpl}
         savedGraph={graph}
       >
-        <RunProvider startRunImpl={startRunImpl}>
+        <RunProvider generateConnectionDetailsImpl={startRunImpl}>
           <DebugGraph />
         </RunProvider>
       </EditorProvider>

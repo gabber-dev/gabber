@@ -53,7 +53,7 @@ export function ClientPage({ existingApp }: Props) {
           savedGraph={savedGraph}
           saveImpl={saveImpl}
         >
-          <RunProvider startRunImpl={startRunImpl}>
+          <RunProvider generateConnectionDetailsImpl={startRunImpl}>
             <AppEditPage />
           </RunProvider>
         </EditorProvider>

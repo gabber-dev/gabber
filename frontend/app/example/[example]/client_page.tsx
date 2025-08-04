@@ -40,7 +40,7 @@ export function ClientPage({ existingExample: existingApp }: Props) {
           savedGraph={existingApp.graph}
           saveImpl={saveImpl}
         >
-          <RunProvider startRunImpl={startRunImpl}>
+          <RunProvider generateConnectionDetailsImpl={startRunImpl}>
             <AppEditPage />
           </RunProvider>
         </EditorProvider>
