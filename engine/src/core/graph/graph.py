@@ -6,10 +6,8 @@ import logging
 from typing import Any, Type, TypeVar, cast
 
 from livekit import rtc
-from nodes.core.sub_graph import SubGraph
-from utils import short_uuid
 
-from core import pad, runtime_types
+from core import pad
 from core.editor import messages, models, serialize
 from core.editor.models import (
     ConnectPadEdit,
@@ -27,6 +25,9 @@ from core.editor.models import (
 )
 from core.node import Node
 from core.secret import PublicSecret, SecretProvider
+from nodes.core.sub_graph import SubGraph
+from utils import short_uuid
+from .runtime_api import RuntimeApi
 
 T = TypeVar("T", bound=Node)
 
@@ -408,46 +409,23 @@ class Graph:
                 await self._propagate_update([source_node, target_node])
 
     async def run(self, room: rtc.Room):
-        def on_data(packet: rtc.DataPacket):
-            if not packet.topic:
-                return
-            split = packet.topic.split(":")
-            node_id = split[0] if len(split) > 0 else None
-            pad_id = split[1] if len(split) > 1 else None
-            if not node_id or not pad_id:
-                logging.error(f"Invalid topic format: {packet.topic}")
-                return
-            data_type = split[2] if len(split) > 2 else None
-            if data_type == "trigger":
-                node = next((n for n in self.nodes if n.id == node_id), None)
-                if not node:
-                    logging.error(f"Node with ID {node_id} not found.")
-                    return
-
-                p = node.get_pad(pad_id)
-                if not p:
-                    logging.error(f"Pad with ID {pad_id} not found in node {node_id}.")
-                    return
-
-                if not isinstance(p, pad.SourcePad):
-                    logging.error(f"Pad {pad_id} in node {node_id} is not a SourcePad.")
-                    return
-
-                ctx = pad.RequestContext(parent=None)
-                p.push_item(runtime_types.Trigger(), ctx)
-                ctx.complete()
-
         # Only top level graph gets events
+        runtime_api: RuntimeApi | None = None
         if self.id == "default":
-            room.on("data_received", on_data)
+            runtime_api = RuntimeApi(
+                room=room,
+                nodes=self.nodes,
+            )
 
         for node in self.nodes:
             node.room = room
 
         try:
-            await asyncio.gather(*[node.run() for node in self.nodes])
+            runtime_api_coro = runtime_api.run() if runtime_api else asyncio.sleep(0)
+
+            await asyncio.gather(
+                *[node.run() for node in self.nodes],
+                runtime_api_coro,
+            )
         except Exception as e:
             logging.error(f"Error running graph: {e}", exc_info=e)
-
-        if self.id == "default":
-            room.off("data_received", on_data)

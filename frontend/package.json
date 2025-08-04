@@ -11,11 +11,11 @@
   "dependencies": {
     "@fontsource/fredoka": "^5.1.0",
     "@fontsource/inter": "^5.1.0",
+    "@gabber/client-react": "0.0.4",
     "@heroicons/react": "^2.2.0",
     "@types/react-modal": "^3.16.3",
     "@xyflow/react": "^12.8.2",
     "axios": "^1.11.0",
-    "gabber-client-react": "^0.28.0",
     "livekit-server-sdk": "^2.13.1",
     "next": "15.4.4",
     "react": "19.1.0",
