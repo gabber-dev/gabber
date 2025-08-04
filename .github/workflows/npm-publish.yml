@@ -28,8 +28,6 @@ jobs:
 
       - name: Publish to npm
         run: |
-          rm package.json
-          rm package-lock.json
           cd ${{inputs.package}}
           npm install
           npm run build
