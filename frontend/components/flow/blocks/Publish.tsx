@@ -4,17 +4,26 @@
  */
 
 import { useEditor } from "@/hooks/useEditor";
-import { useEngine } from "@gabber/client-react";
+import {
+  LocalAudioTrack,
+  LocalVideoTrack,
+  useEngine,
+} from "@gabber/client-react";
 import { MicrophoneIcon, VideoCameraIcon } from "@heroicons/react/24/solid";
-import { useState } from "react";
+import { useNodeId } from "@xyflow/react";
+import { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
 
 export function Publish() {
-  const { publishToNode } = useEngine();
+  const { publishToNode, getLocalTrack } = useEngine();
   const { debug } = useEditor();
   const [microphoneEnabled, setMicrophoneEnabled] = useState(false);
-  const [webcamState, setWebcamEnabled] = useState<"off" | "on" | "preview">(
-    "off",
-  );
+  const [localWebcamTrack, setLocalWebcamTrack] =
+    useState<LocalVideoTrack | null>(null);
+  const [localMicrophoneTrack, setLocalMicrophoneTrack] =
+    useState<LocalAudioTrack | null>(null);
+  const nodeId = useNodeId();
+  const videoElRef = useRef<HTMLVideoElement>(null);
 
   if (debug) {
     return <div></div>;
@@ -25,10 +34,7 @@ export function Publish() {
       <div className="relative w-full aspect-video overflow-hidden">
         <div className="absolute z-10 right-2 bottom-2 h-[30px] w-1/3"></div>
         <video
-          ref={(ref) => {
-            if (!ref) return;
-            // innerEngine.setWebcamTrackDestination({ element: ref });
-          }}
+          ref={videoElRef}
           id="gabber-webcam-track"
           className="absolute left-0 right-0 bottom-0 top-0 bg-black aspect-video"
         />
@@ -36,11 +42,29 @@ export function Publish() {
       <div className="flex items-center justify-center gap-2 p-2">
         <button
           className={`rounded-full h-8 w-8 p-1.5 btn-primary btn text-primary-content relative ${
-            webcamState !== "off"
+            localWebcamTrack !== null
               ? "border-2 border-primary border-opacity-50"
               : ""
           }`}
-          onClick={() => setWebcamEnabled("on")}
+          onClick={async () => {
+            if (!nodeId) {
+              toast.error("Node ID is not available.");
+              return;
+            }
+            if (localWebcamTrack) {
+              setLocalWebcamTrack(null);
+              return;
+            }
+            const webcamTrack = (await getLocalTrack({
+              type: "webcam",
+            })) as LocalVideoTrack;
+            webcamTrack.attachToElement(videoElRef.current!);
+            setLocalWebcamTrack(webcamTrack);
+            await publishToNode({
+              localTrack: webcamTrack,
+              publishNodeId: nodeId,
+            });
+          }}
         >
           <VideoCameraIcon className="w-full h-full" />
         </button>
