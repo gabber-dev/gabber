@@ -3,19 +3,22 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
+import { useEditor } from "@/hooks/useEditor";
+import { useEngine } from "@gabber/client-react";
 import { MicrophoneIcon, VideoCameraIcon } from "@heroicons/react/24/solid";
-import { useRealtimeSessionEngine } from "gabber-client-react";
-import { useEffect, useMemo, useRef } from "react";
+import { useState } from "react";
 
 export function Publish() {
-  const {
-    webcamState,
-    microphoneEnabled,
-    setWebcamEnabled,
-    setMicrophoneEnabled,
-    innerEngine,
-  } = useRealtimeSessionEngine();
-  const cameraEnabled = webcamState === "on" || webcamState === "preview";
+  const {} = useEngine();
+  const { debug } = useEditor();
+  const [microphoneEnabled, setMicrophoneEnabled] = useState(false);
+  const [webcamState, setWebcamEnabled] = useState<"off" | "on" | "preview">(
+    "off",
+  );
+
+  if (debug) {
+    return <div></div>;
+  }
 
   return (
     <div className="flex flex-col w-full p-1">
@@ -24,7 +27,7 @@ export function Publish() {
         <video
           ref={(ref) => {
             if (!ref) return;
-            innerEngine.setWebcamTrackDestination({ element: ref });
+            // innerEngine.setWebcamTrackDestination({ element: ref });
           }}
           id="gabber-webcam-track"
           className="absolute left-0 right-0 bottom-0 top-0 bg-black aspect-video"
@@ -33,7 +36,9 @@ export function Publish() {
       <div className="flex items-center justify-center gap-2 p-2">
         <button
           className={`rounded-full h-8 w-8 p-1.5 btn-primary btn text-primary-content relative ${
-            cameraEnabled ? "border-2 border-primary border-opacity-50" : ""
+            webcamState !== "off"
+              ? "border-2 border-primary border-opacity-50"
+              : ""
           }`}
           onClick={() => setWebcamEnabled("on")}
         >

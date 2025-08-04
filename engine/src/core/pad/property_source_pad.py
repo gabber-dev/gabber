@@ -3,9 +3,8 @@
 
 from typing import TYPE_CHECKING, Any, Literal
 
-from core.pad.pad import SourcePad
 
-from .pad import PropertyPad, SinkPad
+from .pad import PropertyPad, SinkPad, SourcePad, NOTIFIABLE_TYPES
 from .types import BasePadType
 
 if TYPE_CHECKING:
@@ -64,6 +63,8 @@ class PropertySourcePad(SourcePad, PropertyPad):
 
     def set_value(self, value: Any):
         self._value = value
+        if isinstance(value, NOTIFIABLE_TYPES):
+            self._notify_update(value)
         for np in self.get_next_pads():
             if isinstance(np, PropertyPad):
                 np.set_value(value)

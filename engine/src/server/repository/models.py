@@ -20,3 +20,8 @@ class RepositoryApp(BaseModel):
     created_at: datetime.datetime
     updated_at: datetime.datetime
     graph: models.GraphEditorRepresentation
+
+
+class AppRunConnectionDetails(BaseModel):
+    url: str
+    token: str

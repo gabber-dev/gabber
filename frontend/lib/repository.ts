@@ -3,7 +3,10 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
+import { GraphEditorRepresentation } from "@/generated/editor";
 import {
+  CreateAppRunResponse,
+  DebugConnectionResponse,
   GetAppResponse,
   GetSubgraphResponse,
   ListAppsResponse,
@@ -62,4 +65,28 @@ export async function getExample(exampleId: string): Promise<RepositoryApp> {
 export async function listExamples(): Promise<RepositoryApp[]> {
   const resp = await axios.get(`${BASE_URL}/example/list`);
   return (resp.data as ListAppsResponse).apps;
+}
+
+export async function createAppRun({
+  graph,
+}: {
+  graph: GraphEditorRepresentation;
+}): Promise<CreateAppRunResponse> {
+  const resp = await axios.post(`${BASE_URL}/app/run`, {
+    type: "create_app_run",
+    graph,
+  });
+  return resp.data;
+}
+
+export async function createDebugConnection({
+  app_run,
+}: {
+  app_run: string;
+}): Promise<DebugConnectionResponse> {
+  const resp = await axios.post(`${BASE_URL}/app/debug_connection`, {
+    type: "create_debug_connection",
+    app_run,
+  });
+  return resp.data;
 }

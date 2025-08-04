@@ -10,8 +10,9 @@ import { AppEditPage } from "@/components/app_edit/AppEditPage";
 import { EditorProvider } from "@/hooks/useEditor";
 import { RunProvider } from "@/hooks/useRun";
 import { RepositoryApp } from "@/generated/repository";
-import { createLivekitRoom } from "@/app/(actions)/livekit";
 import toast from "react-hot-toast";
+import { createAppRun } from "@/lib/repository";
+import { GraphEditorRepresentation } from "@/generated/editor";
 
 type Props = {
   existingExample: RepositoryApp;
@@ -22,10 +23,14 @@ export function ClientPage({ existingExample: existingApp }: Props) {
     toast.error("Examples can't be saved. Please try again.");
   }, []);
 
-  const startRunImpl = useCallback(async () => {
-    const connDetails = await createLivekitRoom({ exampleId: existingApp.id });
-    return connDetails;
-  }, [existingApp.id]);
+  const startRunImpl = useCallback(
+    async (params: { graph: GraphEditorRepresentation }) => {
+      const resp = await createAppRun({ graph: params.graph });
+      const connDetails = resp.connection_details;
+      return connDetails;
+    },
+    [],
+  );
 
   return (
     <div className="realtive w-full h-full">
@@ -35,7 +40,7 @@ export function ClientPage({ existingExample: existingApp }: Props) {
           savedGraph={existingApp.graph}
           saveImpl={saveImpl}
         >
-          <RunProvider startRunImpl={startRunImpl}>
+          <RunProvider generateConnectionDetailsImpl={startRunImpl}>
             <AppEditPage />
           </RunProvider>
         </EditorProvider>

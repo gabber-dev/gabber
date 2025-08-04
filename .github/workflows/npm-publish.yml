@@ -1,0 +1,36 @@
+name: Publish to npm
+
+on:
+  workflow_call:
+    inputs:
+      package:
+        type: string
+        required: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+
+      - name: Set publishing config
+        run: npm config set '//registry.npmjs.org/:_authToken' "${NODE_AUTH_TOKEN}"
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NPM_TOKEN}}
+
+      - name: Publish to npm
+        run: |
+          rm package.json
+          rm package-lock.json
+          cd ${{inputs.package}}
+          npm install
+          npm run build
+          npm publish --access public

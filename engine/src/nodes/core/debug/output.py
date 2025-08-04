@@ -55,7 +55,7 @@ class Output(Node):
 
         async def audio_consume():
             source = rtc.AudioSource(24000, 1)
-            track = rtc.LocalAudioTrack.create_audio_track("microphone", source)
+            track = rtc.LocalAudioTrack.create_audio_track(f"{self.id}:audio", source)
             options = rtc.TrackPublishOptions()
             options.source = rtc.TrackSource.SOURCE_MICROPHONE
             await self.room.local_participant.publish_track(track, options)
@@ -72,7 +72,7 @@ class Output(Node):
 
         async def video_consume():
             source = rtc.VideoSource(width=640, height=480)
-            track = rtc.LocalVideoTrack.create_video_track("webcam", source)
+            track = rtc.LocalVideoTrack.create_video_track(f"{self.id}:video", source)
             options = rtc.TrackPublishOptions()
             options.source = rtc.TrackSource.SOURCE_CAMERA
             await self.room.local_participant.publish_track(track, options)
