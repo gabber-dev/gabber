@@ -1,9 +1,12 @@
 import { Engine, EngineHandler, Publication, Subscription } from "@gabber/client"
+import { LocalTrack } from "@gabber/client";
+import { GetLocalTrackOptions } from "@gabber/client";
 import { ConnectionDetails, PublishParams, SubscribeParams, ConnectionState } from "@gabber/client";
-import { createContext, useContext, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useRef, useState } from "react";
 
 type EngineContextType = {
     connectionState: ConnectionState;
+    getLocalTrack: (opts: GetLocalTrackOptions) => Promise<LocalTrack>;
     connect: (details: ConnectionDetails) => Promise<void>;
     disconnect: () => Promise<void>;
     publishToNode: (params: PublishParams) => Promise<Publication>;
@@ -31,6 +34,7 @@ export function EngineProvider({ children }: { children: React.ReactNode }) {
         <EngineContext.Provider value={{
             main: {
                 connectionState,
+                getLocalTrack: engineRef.current.getLocalTrack,
                 connect: engineRef.current.connect,
                 disconnect: engineRef.current.disconnect,
                 publishToNode: engineRef.current.publishToNode,
