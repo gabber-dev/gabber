@@ -7,12 +7,10 @@ import { usePropertyPad } from "../hooks/usePropertyPad";
 import { PropertyEditProps } from "./PropertyEdit";
 
 export function StringPropertyEdit({ nodeId, padId }: PropertyEditProps) {
-  const {
-    editorValue: value,
-    runtimeValue,
-    runtimeChanged,
-    setEditorValue: setValue,
-  } = usePropertyPad<string>(nodeId, padId);
+  const { runtimeValue, setEditorValue: setValue } = usePropertyPad<string>(
+    nodeId,
+    padId,
+  );
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setValue(event.target.value);

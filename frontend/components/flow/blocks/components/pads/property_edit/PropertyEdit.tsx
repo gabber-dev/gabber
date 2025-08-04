@@ -14,7 +14,6 @@ import { NodeReferenceEdit } from "./NodeReferenceEdit";
 import { SecretPropertyEdit } from "./SecretPropertyEdit";
 import { MultiLineTextPropertyEdit } from "./MultiLineTextPropertyEdit";
 import { EnumPropertyEdit } from "./EnumPropertyEdit";
-import { useEffect } from "react";
 
 export type PropertyEditProps = {
   nodeId: string;

@@ -4,7 +4,7 @@
  */
 
 // JsonSchemaEdit.tsx
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { JsonSchemaModal } from "./JsonSchemaModal";
 import ReactModal from "react-modal";
 import { usePropertyPad } from "../hooks/usePropertyPad";
@@ -12,8 +12,10 @@ import { PropertyEditProps } from "./PropertyEdit";
 
 export function JsonSchemaEdit({ nodeId, padId }: PropertyEditProps) {
   const [showModal, setShowModal] = useState(false);
-  const modalRef = useRef<HTMLDivElement>(null);
-  const { editorValue: value, setEditorValue: setValue } = usePropertyPad(nodeId, padId);
+  const { runtimeValue, setEditorValue: setValue } = usePropertyPad(
+    nodeId,
+    padId,
+  );
 
   return (
     <>
@@ -30,7 +32,7 @@ export function JsonSchemaEdit({ nodeId, padId }: PropertyEditProps) {
       >
         <JsonSchemaModal
           title="Edit JSON Schema"
-          schema={value as any}
+          schema={runtimeValue as any}
           setSchema={setValue}
         />
       </ReactModal>

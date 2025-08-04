@@ -10,14 +10,17 @@ export function MultiLineTextPropertyEdit({
   nodeId,
   padId,
 }: PropertyEditProps) {
-  const { editorValue: value, setEditorValue: setValue } = usePropertyPad<string>(nodeId, padId);
+  const { runtimeValue, setEditorValue: setValue } = usePropertyPad<string>(
+    nodeId,
+    padId,
+  );
   const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setValue(event.target.value);
   };
 
   return (
     <textarea
-      value={value || ""}
+      value={runtimeValue || ""}
       onChange={handleChange}
       placeholder="Add your comment here..."
       rows={8}
