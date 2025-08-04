@@ -1,6 +1,7 @@
 import { PadTriggeredValue, PropertyPad, SourcePad } from "@gabber/client";
 import { useEngine, useEngineInternal } from "./useEngine";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { usePad } from "./usePad";
 
 type UsePropertyPadType<DataType extends PadTriggeredValue> = {
     currentValue: DataType | "loading";
@@ -12,6 +13,7 @@ export function usePropertyPad<DataType extends PadTriggeredValue>(nodeId: strin
     const padRef = useRef(engineRef.current.getPropertyPad<DataType>(nodeId, padId));
     const [currentValue, setCurrentValue] = useState<DataType | "loading">("loading");
     const padLoadingRef = useRef(false);
+    const { lastValue } = usePad<DataType>(nodeId, padId);
 
     const loadPadValue = useCallback(async () => {
         if (padLoadingRef.current) return; // Prevent multiple calls
@@ -32,6 +34,12 @@ export function usePropertyPad<DataType extends PadTriggeredValue>(nodeId: strin
             loadPadValue();
         }
     }, [connectionState, padRef]);
+
+    useEffect(() => {
+        if (lastValue) {
+            setCurrentValue(lastValue as DataType);
+        }
+    }, [lastValue]);
 
     return {
         currentValue,

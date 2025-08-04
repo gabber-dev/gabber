@@ -4,6 +4,7 @@
  */
 
 import { usePropertyPad } from "../hooks/usePropertyPad";
+import { usePropertyPad as useRuntimePropertyPad } from "@gabber/client-react";
 import { ContextMessageRoleEdit } from "./ContextMessageRoleEdit";
 import { StringPropertyEdit } from "./StringPropertyEdit";
 import { FloatPropertyEdit } from "./FloatPropertyEdit";
@@ -14,6 +15,7 @@ import { NodeReferenceEdit } from "./NodeReferenceEdit";
 import { SecretPropertyEdit } from "./SecretPropertyEdit";
 import { MultiLineTextPropertyEdit } from "./MultiLineTextPropertyEdit";
 import { EnumPropertyEdit } from "./EnumPropertyEdit";
+import { useEffect } from "react";
 
 export type PropertyEditProps = {
   nodeId: string;
@@ -22,6 +24,15 @@ export type PropertyEditProps = {
 
 export function PropertyEdit({ nodeId, padId }: PropertyEditProps) {
   const { singleAllowedType } = usePropertyPad(nodeId, padId);
+  const { currentValue } = useRuntimePropertyPad(nodeId, padId);
+
+  useEffect(() => {
+    console.debug("NEIL currentValue", {
+      nodeId,
+      padId,
+      currentValue,
+    });
+  }, [currentValue, padId, nodeId]);
 
   if (!singleAllowedType) {
     return null;

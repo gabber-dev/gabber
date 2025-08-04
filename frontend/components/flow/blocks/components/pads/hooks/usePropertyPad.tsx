@@ -3,14 +3,18 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { PadEditorRepresentation } from "@/generated/editor";
+import {
+  BasePadType,
+  PadEditorRepresentation,
+  Value,
+} from "@/generated/editor";
 import { useEditor } from "@/hooks/useEditor";
-import { useCallback, useMemo, useEffect } from "react";
+import { useCallback, useMemo } from "react";
 
 type Result<T> = {
   pad: PadEditorRepresentation | undefined;
   value: T | undefined;
-  singleAllowedType: Record<string, any> | undefined;
+  singleAllowedType: BasePadType | undefined;
   setValue: (value: T) => void;
 };
 
@@ -48,7 +52,7 @@ export function usePropertyPad<T>(nodeId: string, padId: string): Result<T> {
         type: "update_pad",
         node: nodeId,
         pad: padId,
-        value: value as any,
+        value: value as Value,
       });
     },
     [nodeId, pad, padId, updatePad],
