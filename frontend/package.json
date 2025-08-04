@@ -11,7 +11,7 @@
   "dependencies": {
     "@fontsource/fredoka": "^5.1.0",
     "@fontsource/inter": "^5.1.0",
-    "@gabber/client-react": "file:../sdks/react",
+    "@gabber/client-react": "0.0.8",
     "@heroicons/react": "^2.2.0",
     "@types/react-modal": "^3.16.3",
     "@xyflow/react": "^12.8.2",

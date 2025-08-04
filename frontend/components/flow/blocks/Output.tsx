@@ -36,6 +36,7 @@ export function Output() {
 
   useEffect(() => {
     if (connectionState !== "connected") {
+      subscribed.current = false;
       return;
     }
     subscribe();
