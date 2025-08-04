@@ -8,7 +8,7 @@ import { useNodeId } from "@xyflow/react";
 import { useCallback, useEffect, useRef } from "react";
 
 export function Output() {
-  const { subscribeToNode } = useEngine();
+  const { subscribeToNode, connectionState } = useEngine();
   const nodeId = useNodeId();
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -35,8 +35,11 @@ export function Output() {
   }, [nodeId, subscribeToNode]);
 
   useEffect(() => {
+    if (connectionState !== "connected") {
+      return;
+    }
     subscribe();
-  }, [subscribe]);
+  }, [connectionState, subscribe]);
 
   return (
     <div className="flex flex-col w-full p-1">
