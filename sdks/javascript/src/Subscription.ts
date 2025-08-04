@@ -41,8 +41,11 @@ export class Subscription {
         this.subscribeToPublications = this.subscribeToPublications.bind(this);
         this.getExistingPublications = this.getExistingPublications.bind(this);
         this.onTrackPublished = this.onTrackPublished.bind(this);
+        this.onDisconnected = this.onDisconnected.bind(this);
+        this.cleanup = this.cleanup.bind(this);
         this.room.on('trackSubscribed', this.onTrackSubscribed);
         this.room.on('trackPublished', this.onTrackPublished);
+        this.room.on('disconnected', this.onDisconnected);
     }
 
     public get nodeId(): string {
@@ -110,6 +113,10 @@ export class Subscription {
         } else {
             console.warn("Received unsupported track type:", track.kind);
         }
+    }
+
+    private onDisconnected(): void {
+        this.cleanup();
     }
 
     private subscribeToPublications(): void {
