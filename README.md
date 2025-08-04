@@ -5,7 +5,9 @@
 
 # Gabber - 
 
-[Gabber](https://gabber.dev) is an engine for making real-time AI across all modalities.
+[Gabber](https://gabber.dev) is an engine for building real-time AI across all modalities — voice, text, video, and more. It supports graph-based apps with multiple participants and simultaneous media streams. Our goal is to give developers the **most powerful, developer-friendly AI app builder** available.
+
+If you found this interesting, please consider leaving a star ⭐️. We will be updating this repo frequently with new nodes and functionality.
 
 ## Quickstart 
 
@@ -34,15 +36,38 @@ make all
 
 An App is a graph consisting of nodes and their Pad connections. It's the highest level object in Gabber.
 
-### SubGraph
-
-A SubGraph is very similar to an App. It's a collection of nodes and their pad connections. SubGraphs themselves become
-nodes that can be embedded into apps. The primary purpose of Subgraphs is to create re-usable implementations and
-to abstract complicated implementations into single, simple nodes.
-
 ### Node
 
+A Node is a functional building block within a Gabber app or subgraph. Each node performs a specific operation — like ingesting media, transcribing audio, analyzing emotions, calling an external API, or generating a response. Nodes can be composed into flows that define how your AI app behaves in real time.
+
+Nodes have:
+- Inputs and Outputs (called Pads)
+- Configurable Properties (like model type, thresholds, tool integrations)
+
+You can think of nodes like nodes in a media pipeline, but with AI logic, state transitions, and tool-calling built in.
+
 ### Pad
+
+A Pad is a connection point on a node that allows it to send or receive data. There are two types of pads:
+
+- Input Pads: Receive data from upstream nodes
+- Output Pads: Send data to downstream nodes
+
+Pads are typed — for example, audio pads, control/event pads, and text pads — so only compatible nodes can be linked. This type-safe wiring ensures your graph behaves predictably and enforces valid data flows between components.
+
+Pads allow Gabber apps to function like reactive pipelines: when a node emits output on a pad, any downstream nodes connected to that pad can process the result in real time.
+
+### SubGraph
+
+A SubGraph is very similar to an App — it’s a collection of nodes and their pad connections. However, unlike an App, a SubGraph is designed to be embedded within other apps as a single node.
+
+By using Proxy nodes, you can expose specific pads from within the SubGraph so they appear in the parent app. This makes it easy to pass data in and out of the SubGraph just like any other node.
+
+The primary purpose of SubGraphs is to:
+- Create reusable logic and implementations
+- Abstract complex behaviors into simple, modular units
+
+This helps keep your main app graphs clean, composable, and easier to maintain.
 
 ## Anatomy
 
@@ -55,7 +80,7 @@ can be accessed `http://localhost:3000`.
 
 ### Editor
 
-The editor is responsible for 
+The editor is responsible for visually designing the experience. The editor consists of building blocks called nodes that can be configured to create apps that can ingest media streams from audio, video, and screen sources. Using these inputs, create state machines, tool calls, and text, voice, or soon video responses.
 
 ### Engine
 
@@ -67,6 +92,13 @@ The repository service is a very thin local http server reponsible for fetching 
 All entities are stored in the `.gabber` directory. It runs on port `8001`.
 
 ## Community
+Gabber is source-available and developer-first — we’d love for you to build with us.
+
+- **Questions or feedback?** Open a [GitHub Discussion](https://github.com/gabber-dev/gabber/discussions) or start a thread in [Issues](https://github.com/gabber-dev/gabber/issues).
+- **See something missing?** We welcome contributions — new nodes or bugfixes are all appreciated.
+- **Early access or enterprise?** [Reach out](mailto:brian@gabber.dev) or file an issue with the label `enterprise`.
+- **Stay in the loop:** Follow [@gabberdev](https://x.com/gabberdev) on Twitter/X or star the repo to get updates.
+- **Join the community** Join the [Discord](https://discord.gg/hJdjwBRc7g) to leave feedback, chat with the team & other builders, and stay up to date.
 
 ## License
 
