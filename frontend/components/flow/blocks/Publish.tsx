@@ -11,13 +11,12 @@ import {
 } from "@gabber/client-react";
 import { MicrophoneIcon, VideoCameraIcon } from "@heroicons/react/24/solid";
 import { useNodeId } from "@xyflow/react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 export function Publish() {
   const { publishToNode, getLocalTrack } = useEngine();
   const { debug } = useEditor();
-  const [microphoneEnabled, setMicrophoneEnabled] = useState(false);
   const [localWebcamTrack, setLocalWebcamTrack] =
     useState<LocalVideoTrack | null>(null);
   const [localMicrophoneTrack, setLocalMicrophoneTrack] =
@@ -70,9 +69,28 @@ export function Publish() {
         </button>
         <button
           className={`rounded-full h-8 w-8 p-1.5 btn-primary btn text-primary-content relative ${
-            microphoneEnabled ? "border-2 border-primary border-opacity-50" : ""
+            localMicrophoneTrack
+              ? "border-2 border-primary border-opacity-50"
+              : ""
           }`}
-          onClick={() => setMicrophoneEnabled(!microphoneEnabled)}
+          onClick={async () => {
+            if (!nodeId) {
+              toast.error("Node ID is not available.");
+              return;
+            }
+            if (localMicrophoneTrack) {
+              setLocalMicrophoneTrack(null);
+              return;
+            }
+            const microphoneTrack = (await getLocalTrack({
+              type: "microphone",
+            })) as LocalAudioTrack;
+            setLocalMicrophoneTrack(microphoneTrack);
+            await publishToNode({
+              localTrack: microphoneTrack,
+              publishNodeId: nodeId,
+            });
+          }}
         >
           <MicrophoneIcon className="w-full h-full" />
         </button>
