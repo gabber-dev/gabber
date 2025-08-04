@@ -12,7 +12,7 @@
         "lint": "eslint -f unix \"src/**/*.{ts,tsx}\""
     },
     "dependencies": {
-        "@gabber/client": "file:../javascript",
+        "@gabber/client": "0.0.4",
         "eslint-config-react-app": "^7.0.1"
     },
     "peerDependencies": {
