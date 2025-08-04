@@ -11,6 +11,7 @@ from core.pad import (
     SourcePad,
     types,
 )
+from .pad import NOTIFIABLE_TYPES
 
 if TYPE_CHECKING:
     from core.node import Node
@@ -70,4 +71,6 @@ class ProxyPropertySourcePad(SourcePad, PropertyPad, ProxyPad):
         return self._other.get_value()
 
     def set_value(self, value: Any):
+        if isinstance(value, NOTIFIABLE_TYPES):
+            self._notify_update(value)
         self._other.set_value(value)

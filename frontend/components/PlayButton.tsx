@@ -6,12 +6,14 @@
 import { PlayIcon, StopIcon } from "@heroicons/react/24/solid";
 import { useCallback, useMemo } from "react";
 import { useRun } from "@/hooks/useRun";
+import { useEditor } from "@/hooks/useEditor";
 
 export function DebugControls() {
   const { connectionState, startRun, stopRun } = useRun();
+  const { editorRepresentation } = useEditor();
 
   const buttonIcon = useMemo(() => {
-    if (connectionState === "not_connected") {
+    if (connectionState === "disconnected") {
       return <PlayIcon className="w-8 h-8" />;
     } else if (connectionState === "connecting") {
       return <div className="loading loading-dots loading-lg" />;
@@ -22,17 +24,17 @@ export function DebugControls() {
   }, [connectionState]);
 
   const buttonAction = useCallback(() => {
-    if (connectionState === "not_connected") {
-      startRun();
+    if (connectionState === "disconnected") {
+      startRun({ graph: editorRepresentation });
     } else if (connectionState === "connecting") {
       stopRun();
     } else if (connectionState === "connected") {
       stopRun();
     }
-  }, [connectionState, startRun, stopRun]);
+  }, [connectionState, editorRepresentation, startRun, stopRun]);
 
   const getButtonText = () => {
-    if (connectionState === "not_connected") {
+    if (connectionState === "disconnected") {
       return "Run";
     } else if (connectionState === "connecting") {
       return "Starting...";
@@ -51,7 +53,7 @@ export function DebugControls() {
         className={`
           btn btn-lg gap-3 font-medium transition-all duration-200
           ${
-            connectionState === "not_connected"
+            connectionState === "disconnected"
               ? "btn-primary border border-neutral/30 hover:border-neutral/50"
               : connectionState === "connecting"
                 ? "btn-primary border border-neutral/30"

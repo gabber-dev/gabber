@@ -21,9 +21,11 @@ repository:
 	cd engine && \
 	make repository 
 
-generate-ts:
+generate:
 	engine/.venv/bin/python engine/src/main.py generate-editor-schema | json2ts -o frontend/generated/editor.ts && \
 	engine/.venv/bin/python engine/src/main.py generate-repository-schema | json2ts -o frontend/generated/repository.ts
+	engine/.venv/bin/python engine/src/main.py generate-runtime-schema | json2ts -o sdks/javascript/src/generated/runtime.ts
+	engine/.venv/bin/python engine/src/main.py generate-runtime-schema | json2ts -o sdks/react/src/generated/runtime.ts
 
 frontend:
 	cd frontend && \
@@ -32,10 +34,10 @@ frontend:
 
 add-license:
 	addlicense -c "Fluently AI, Inc. DBA Gabber. All rights reserved." -l "SUL-1.0" -s -ignore frontend/node_modules -ignore frontend/.next -ignore engine/.venv engine frontend services
-	addlicense -c "Fluently AI, Inc. DBA Gabber. All rights reserved." -l "Apache-2.0" -s -ignore **/node_modules sdk examples
+	addlicense -c "Fluently AI, Inc. DBA Gabber. All rights reserved." -l "Apache-2.0" -s -ignore **/node_modules sdks examples
 
 livekit:
-	livekit-server --dev
+	LIVEKIT_LOG_LEVEL=INFO livekit-server --dev
 
 all:
 	make engine 2>&1 | while IFS= read -r line; do printf "\033[0;34m[ENGINE]\033[0m %s\n" "$$line"; done & ENGINE_PID=$$!; \

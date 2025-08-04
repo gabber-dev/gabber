@@ -1,0 +1,11 @@
+name: Publish Client Javascript 
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    uses: ./.github/workflows/npm-publish.yml
+    with:
+      package: sdks/javascript
+    secrets: inherit
