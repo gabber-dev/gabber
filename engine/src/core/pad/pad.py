@@ -4,7 +4,8 @@
 import asyncio
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
+from core import runtime_types
+from typing import TYPE_CHECKING, Any, Callable, Protocol, runtime_checkable
 
 from .request_context import RequestContext
 from .types import INTERSECTION, BasePadType
@@ -14,6 +15,8 @@ if TYPE_CHECKING:
 
 
 class Pad(Protocol):
+    _update_handlers: set[Callable[["Pad", Any], None]] = set()
+
     def get_id(self) -> str: ...
     def set_id(self, id: str) -> None: ...
     def get_group(self) -> str: ...
@@ -21,6 +24,20 @@ class Pad(Protocol):
     def set_type_constraints(self, constraints: list[BasePadType] | None) -> None: ...
     def get_type_constraints(self) -> list[BasePadType] | None: ...
     def get_owner_node(self) -> "Node": ...
+
+    def _add_update_handler(self, handler: Callable[["Pad", Any], None]):
+        self._update_handlers.add(handler)
+
+    def _remove_update_handler(self, handler: Callable[["Pad", Any], None]) -> None:
+        if handler in self._update_handlers:
+            self._update_handlers.remove(handler)
+
+    def _notify_update(self, value: Any) -> None:
+        for handler in self._update_handlers:
+            try:
+                handler(self, value)
+            except Exception as e:
+                logging.error(f"Error in update handler {handler}: {e}")
 
 
 @runtime_checkable
@@ -56,21 +73,37 @@ class SourcePad(Pad, Protocol):
     def set_next_pads(self, pads: list["SinkPad"]) -> None: ...
 
     def push_item(self, value: Any, ctx: RequestContext) -> None:
+        notify_type = False
+        if isinstance(value, NOTIFIABLE_TYPES):
+            notify_type = True
+
+        # Setting value notifies for itself so we skip it
+        if isinstance(self, PropertyPad):
+            self.set_value(value)
+        else:
+            if notify_type:
+                self._notify_update(value)
+
         for np in self.get_next_pads():
             q = np._get_queue()
             if q.qsize() > 1_000:
                 logging.warning(
-                    f"PropertySinkPad queue size exceeded 1000, skipping. {np.get_owner_node().id}:{np.get_id()}"
+                    f"SinkPad queue size exceeded 1000, skipping. {np.get_owner_node().id}:{np.get_id()}"
                 )
                 if ctx is not None:
                     ctx.complete()
-            if isinstance(np, PropertyPad):
-                np.set_value(value)
+            if isinstance(self, PropertyPad):
+                self.set_value(value)
+            else:
+                if notify_type:
+                    self._notify_update(value)
 
             new_ctx = RequestContext(
                 parent=ctx, timeout=ctx._timeout_s, originator=self.get_id()
             )
+
             item = Item(value=value, ctx=new_ctx)
+
             q.put_nowait(item)
 
     def connect(self, sink_pad: "SinkPad") -> None:
@@ -122,3 +155,13 @@ class PropertyPad(Pad, Protocol):
 class Item:
     value: Any
     ctx: "RequestContext"
+
+
+NOTIFIABLE_TYPES = (
+    str,
+    int,
+    float,
+    bool,
+    runtime_types.AudioClip,
+    runtime_types.VideoClip,
+)

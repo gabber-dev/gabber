@@ -13,6 +13,7 @@ from core.pad import (
     types,
 )
 from core.pad.pad import Pad
+from .pad import NOTIFIABLE_TYPES
 
 if TYPE_CHECKING:
     from core.node import Node
@@ -73,3 +74,5 @@ class ProxyPropertySinkPad(SinkPad, PropertyPad, ProxyPad):
 
     def set_value(self, value: Any):
         self._other.set_value(value)
+        if isinstance(value, NOTIFIABLE_TYPES):
+            self._notify_update(value)
