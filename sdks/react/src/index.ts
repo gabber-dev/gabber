@@ -3,4 +3,4 @@ export { usePropertyPad } from './usePropertyPad';
 export { useSourcePad } from './useSourcePad';
 export { usePad } from './usePad';
 
-export type { ConnectionDetails, ConnectionState } from '@gabber/client'
+export type { ConnectionDetails, ConnectionState, LocalAudioTrack, LocalTrack, LocalVideoTrack, GetLocalTrackOptions } from '@gabber/client'

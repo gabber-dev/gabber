@@ -9,7 +9,7 @@ import { MicrophoneIcon, VideoCameraIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 
 export function Publish() {
-  const {} = useEngine();
+  const { publishToNode } = useEngine();
   const { debug } = useEditor();
   const [microphoneEnabled, setMicrophoneEnabled] = useState(false);
   const [webcamState, setWebcamEnabled] = useState<"off" | "on" | "preview">(
