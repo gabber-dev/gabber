@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
+import logging
 from typing import cast
 
 from core import node, pad

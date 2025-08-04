@@ -6,9 +6,11 @@
 import { PlayIcon, StopIcon } from "@heroicons/react/24/solid";
 import { useCallback, useMemo } from "react";
 import { useRun } from "@/hooks/useRun";
+import { useEditor } from "@/hooks/useEditor";
 
 export function DebugControls() {
   const { connectionState, startRun, stopRun } = useRun();
+  const { editorRepresentation } = useEditor();
 
   const buttonIcon = useMemo(() => {
     if (connectionState === "not_connected") {
@@ -23,13 +25,13 @@ export function DebugControls() {
 
   const buttonAction = useCallback(() => {
     if (connectionState === "not_connected") {
-      startRun();
+      startRun({ graph: editorRepresentation });
     } else if (connectionState === "connecting") {
       stopRun();
     } else if (connectionState === "connected") {
       stopRun();
     }
-  }, [connectionState, startRun, stopRun]);
+  }, [connectionState, editorRepresentation, startRun, stopRun]);
 
   const getButtonText = () => {
     if (connectionState === "not_connected") {

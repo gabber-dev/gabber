@@ -54,7 +54,6 @@ class GraphEditorServer:
         # Keep the server running
         try:
             while True:
-                logging.info("Editor server is running...")
                 await asyncio.sleep(1)
         except asyncio.CancelledError:
             logging.info("Editor server has been cancelled.")

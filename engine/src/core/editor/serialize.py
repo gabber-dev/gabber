@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import logging
-from typing import Any
+from typing import Any, cast
 
 from pydantic import BaseModel
 
@@ -39,10 +39,6 @@ def deserialize_pad_value(
     if type_constraints is None:
         return None
     tc = type_constraints[0]
-
-    if not isinstance(p, pad.PropertyPad):
-        logging.error(f"Expected PropertyPad instance, got {type(p)}")
-        return None
 
     if isinstance(tc, pad.types.NodeReference):
         if isinstance(p, pad.ProxyPad):
@@ -111,6 +107,12 @@ def pad_editor_rep(p: pad.Pad):
             previous_pad = PadReference(
                 node=prev_pad.get_owner_node().id, pad=prev_pad.get_id()
             )
+
+    # TODO: remove this cast. BasePadType is used for covariance elsewhere
+    # but pydantic needs the Annotated PadType for serialization
+    allowed_types: list[pad.types.PadType] | None = cast(
+        list[pad.types.PadType], p.get_type_constraints()
+    )
     return PadEditorRepresentation(
         id=p.get_id(),
         group=p.get_group(),
@@ -118,7 +120,7 @@ def pad_editor_rep(p: pad.Pad):
         value=value,
         next_pads=next_pads,
         previous_pad=previous_pad,
-        allowed_types=p.get_type_constraints(),
+        allowed_types=allowed_types,
     )
 
 

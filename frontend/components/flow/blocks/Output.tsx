@@ -3,11 +3,7 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { useRealtimeSessionEngine } from "gabber-client-react";
-
 export function Output() {
-  const { innerEngine } = useRealtimeSessionEngine();
-
   return (
     <div className="flex flex-col w-full p-1">
       <div className="relative w-full aspect-video overflow-hidden">
@@ -15,7 +11,7 @@ export function Output() {
         <video
           ref={(ref) => {
             if (!ref) return;
-            innerEngine.setVideoTrackDestination({ element: ref });
+            // innerEngine.setVideoTrackDestination({ element: ref });
           }}
           id="gabber-webcam-track"
           className="absolute left-0 right-0 bottom-0 top-0 bg-black aspect-video"
