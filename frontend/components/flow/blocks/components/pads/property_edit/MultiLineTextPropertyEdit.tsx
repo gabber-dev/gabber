@@ -10,7 +10,7 @@ export function MultiLineTextPropertyEdit({
   nodeId,
   padId,
 }: PropertyEditProps) {
-  const { value, setValue } = usePropertyPad<string>(nodeId, padId);
+  const { editorValue: value, setEditorValue: setValue } = usePropertyPad<string>(nodeId, padId);
   const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setValue(event.target.value);
   };

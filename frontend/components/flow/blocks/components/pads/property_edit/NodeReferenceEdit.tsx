@@ -9,7 +9,7 @@ import ReactModal from "react-modal";
 import { PropertyEditProps } from "./PropertyEdit";
 
 export function NodeReferenceEdit({ nodeId, padId }: PropertyEditProps) {
-  const { value } = usePropertyPad(nodeId, padId);
+  const { editorValue: value } = usePropertyPad(nodeId, padId);
   const { editorRepresentation } = useEditor();
 
   const selectedNode = editorRepresentation.nodes.find((n) => n.id === value);

@@ -8,18 +8,22 @@ import {
   PadEditorRepresentation,
   Value,
 } from "@/generated/editor";
-import { useEditor } from "@/hooks/useEditor";
 import { useCallback, useMemo } from "react";
+import { usePropertyPad as useRuntimePropertyPad } from "@gabber/client-react";
+import { useEditor } from "@/hooks/useEditor";
 
 type Result<T> = {
   pad: PadEditorRepresentation | undefined;
-  value: T | undefined;
+  editorValue: T | undefined;
   singleAllowedType: BasePadType | undefined;
-  setValue: (value: T) => void;
+  runtimeValue: T | undefined;
+  runtimeChanged: boolean;
+  setEditorValue: (value: T) => void;
 };
 
 export function usePropertyPad<T>(nodeId: string, padId: string): Result<T> {
   const { editorRepresentation, updatePad } = useEditor();
+  const { currentValue } = useRuntimePropertyPad(nodeId, padId);
 
   const node = editorRepresentation.nodes.find((n) => n.id === nodeId);
   const pad = node?.pads.find((p) => p.id === padId);
@@ -32,7 +36,7 @@ export function usePropertyPad<T>(nodeId: string, padId: string): Result<T> {
     return undefined;
   }, [pad]);
 
-  const value = useMemo(() => {
+  const editorValue = useMemo(() => {
     if (!pad) {
       return undefined;
     }
@@ -42,7 +46,7 @@ export function usePropertyPad<T>(nodeId: string, padId: string): Result<T> {
     return pad.value as T;
   }, [pad]);
 
-  const setValue = useCallback(
+  const setEditorValue = useCallback(
     (value: T) => {
       if (!pad || !nodeId) {
         console.warn(`Pad with id ${padId} not found in node ${nodeId}`);
@@ -58,10 +62,30 @@ export function usePropertyPad<T>(nodeId: string, padId: string): Result<T> {
     [nodeId, pad, padId, updatePad],
   );
 
+  const runtimeValue = useMemo(() => {
+    if (currentValue === "loading") {
+      return editorValue;
+    }
+    const cv = currentValue.value;
+    if (cv !== editorValue) {
+      return cv as T;
+    }
+    return editorValue;
+  }, [currentValue, editorValue]);
+
+  const runtimeChanged = useMemo(() => {
+    if (currentValue === "loading") {
+      return false;
+    }
+    return currentValue.value !== editorValue;
+  }, [currentValue, editorValue]);
+
   return {
     pad: pad as PadEditorRepresentation | undefined,
-    value,
+    editorValue,
+    runtimeValue,
+    runtimeChanged,
     singleAllowedType,
-    setValue,
+    setEditorValue,
   };
 }

@@ -8,7 +8,7 @@ import { usePropertyPad } from "../hooks/usePropertyPad";
 import { PropertyEditProps } from "./PropertyEdit";
 
 export function FloatPropertyEdit({ nodeId, padId }: PropertyEditProps) {
-  const { value, setValue } = usePropertyPad<number>(nodeId, padId);
+  const { editorValue: value, setEditorValue: setValue } = usePropertyPad<number>(nodeId, padId);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const numValue = parseFloat(event.target.value);

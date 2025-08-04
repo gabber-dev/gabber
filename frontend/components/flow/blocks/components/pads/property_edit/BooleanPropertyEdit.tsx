@@ -7,7 +7,8 @@ import { usePropertyPad } from "../hooks/usePropertyPad";
 import { PropertyEditProps } from "./PropertyEdit";
 
 export function BooleanPropertyEdit({ nodeId, padId }: PropertyEditProps) {
-  const { value, setValue } = usePropertyPad<boolean>(nodeId, padId);
+  const { editorValue: value, setEditorValue: setValue } =
+    usePropertyPad<boolean>(nodeId, padId);
 
   const handleToggle = () => {
     setValue(!value);

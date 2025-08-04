@@ -7,7 +7,7 @@ import { usePropertyPad } from "../hooks/usePropertyPad";
 import { PropertyEditProps } from "./PropertyEdit";
 
 export function IntPropertyEdit({ nodeId, padId }: PropertyEditProps) {
-  const { value, setValue } = usePropertyPad<number>(nodeId, padId);
+  const { editorValue: value, setEditorValue: setValue } = usePropertyPad<number>(nodeId, padId);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const intValue = parseInt(event.target.value);

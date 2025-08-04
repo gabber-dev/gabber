@@ -13,7 +13,7 @@ import { PropertyEditProps } from "./PropertyEdit";
 export function JsonSchemaEdit({ nodeId, padId }: PropertyEditProps) {
   const [showModal, setShowModal] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
-  const { value, setValue } = usePropertyPad(nodeId, padId);
+  const { editorValue: value, setEditorValue: setValue } = usePropertyPad(nodeId, padId);
 
   return (
     <>

@@ -8,7 +8,7 @@ import { PropertyEditProps } from "./PropertyEdit";
 import { useMemo } from "react";
 
 export function SecretPropertyEdit({ nodeId, padId }: PropertyEditProps) {
-  const { value, setValue, singleAllowedType } = usePropertyPad<string>(
+  const { editorValue: value, setEditorValue: setValue, singleAllowedType } = usePropertyPad<string>(
     nodeId,
     padId,
   );
