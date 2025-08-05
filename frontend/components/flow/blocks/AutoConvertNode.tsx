@@ -74,7 +74,7 @@ export function AutoConvertNode() {
     <div
       className={`
         relative flex items-center justify-center
-        w-12 h-12 rounded-full border-2 border-warning bg-neutral
+        w-20 h-12 rounded-lg border-2 border-warning bg-neutral
         shadow-md
         ${hovered ? "ring-4 ring-warning/40" : ""}
       `}
@@ -146,7 +146,18 @@ export function AutoConvertNode() {
           />
         </div>
       )}
-      <ArrowRightIcon className="text-warning w-5 h-5" />
+
+      {/* Three icons: Circle, Arrow, Square */}
+      <div className="flex items-center justify-center gap-2 px-2">
+        {/* Circle icon */}
+        <div className="w-4 h-4 rounded-full border-2 border-warning bg-transparent" />
+
+        {/* Arrow icon */}
+        <ArrowRightIcon className="text-warning w-4 h-4" />
+
+        {/* Square icon */}
+        <div className="w-4 h-4 border-2 border-warning bg-transparent" />
+      </div>
     </div>
   );
 }
