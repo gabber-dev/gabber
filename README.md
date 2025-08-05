@@ -40,9 +40,7 @@ An App is a graph consisting of nodes and their Pad connections. It's the highes
 
 A Node is a functional building block within a Gabber app or subgraph. Each node performs a specific operation — like ingesting media, transcribing audio, analyzing emotions, calling an external API, or generating a response. Nodes can be composed into flows that define how your AI app behaves in real time.
 
-Nodes have:
-- Inputs and Outputs (called Pads)
-- Configurable Properties (like model type, thresholds, tool integrations)
+Nodes have Inputs and Outputs called pads. Some pads have configurable properties that effect the behavior of the node.
 
 You can think of nodes like nodes in a media pipeline, but with AI logic, state transitions, and tool-calling built in.
 
@@ -50,8 +48,10 @@ You can think of nodes like nodes in a media pipeline, but with AI logic, state 
 
 A Pad is a connection point on a node that allows it to send or receive data. There are two types of pads:
 
-- Input Pads: Receive data from upstream nodes
-- Output Pads: Send data to downstream nodes
+- Sink Pads: Receive data from upstream nodes
+- Source Pads: Send data to downstream nodes
+- Property Pads: Dynamic pads that adjust the behavior of the containing node
+- Stateless Pads: Static nodes that simply receive or emit data
 
 Pads are typed — for example, audio pads, control/event pads, and text pads — so only compatible nodes can be linked. This type-safe wiring ensures your graph behaves predictably and enforces valid data flows between components.
 
