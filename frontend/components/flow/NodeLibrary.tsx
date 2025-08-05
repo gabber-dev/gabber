@@ -399,9 +399,21 @@ export function NodeLibrary({ setIsModalOpen }: NodeLibraryProps) {
                     flex flex-col
                   `}
                 >
-                  <h3 className="font-medium text-sm text-primary group-hover:text-accent transition-colors">
-                    {block.name}
-                  </h3>
+                  <div className="flex items-center gap-1.5">
+                    <h3 className="font-medium text-sm text-primary group-hover:text-accent transition-colors">
+                      {block.name}
+                    </h3>
+                    {(block as any).metadata?.primary && (
+                      <span className="text-[10px] text-base-content/50 font-mono">
+                        ·{(block as any).metadata.primary}
+                      </span>
+                    )}
+                    {(block as any).metadata?.secondary && (
+                      <span className="text-[10px] text-base-content/50 font-mono">
+                        ·{(block as any).metadata.secondary}
+                      </span>
+                    )}
+                  </div>
                   {(block as any).description && (
                     <p className="text-xs text-base-content/70 mt-0.5">
                       {(block as any).description}

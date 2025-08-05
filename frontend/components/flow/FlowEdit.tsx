@@ -103,7 +103,16 @@ function FlowEditInner() {
           <ReactFlow
             nodes={reactFlowRepresentation.nodes as Node[]}
             edges={styledEdges as Edge[]}
-            onNodesChange={onReactFlowNodesChange}
+            onNodesChange={(changes) => {
+              // Close node library if a node is selected
+              const selectionChange = changes.find(
+                (change) => change.type === "select",
+              );
+              if (selectionChange?.selected && isNodeLibraryOpen) {
+                setIsNodeLibraryOpen(false);
+              }
+              onReactFlowNodesChange(changes);
+            }}
             onEdgesChange={onReactFlowEdgesChange}
             onConnect={onReactFlowConnect}
             edgeTypes={edgeTypes}
