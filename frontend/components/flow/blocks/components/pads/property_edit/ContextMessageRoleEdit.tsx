@@ -7,7 +7,10 @@ import { usePropertyPad } from "../hooks/usePropertyPad";
 import { PropertyEditProps } from "./PropertyEdit";
 
 export function ContextMessageRoleEdit({ nodeId, padId }: PropertyEditProps) {
-  const { value, setValue } = usePropertyPad<string>(nodeId, padId);
+  const { runtimeValue, setEditorValue: setValue } = usePropertyPad<string>(
+    nodeId,
+    padId,
+  );
 
   const roleOptions = [
     { value: "system", label: "System" },
@@ -21,7 +24,7 @@ export function ContextMessageRoleEdit({ nodeId, padId }: PropertyEditProps) {
 
   return (
     <select
-      value={value || ""}
+      value={runtimeValue || ""}
       onChange={handleChange}
       className="select select-bordered select-sm w-full bg-base-300 border-2 border-black border-b-4 border-r-4 rounded-lg text-base-content font-vt323 text-xs hover:bg-base-100 transition-colors duration-150 focus:outline-none"
     >
