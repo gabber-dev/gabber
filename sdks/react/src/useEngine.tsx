@@ -22,13 +22,19 @@ export const EngineContext = createContext<({main: EngineContextType, internal: 
 export function EngineProvider({ children }: { children: React.ReactNode }) {
     const [connectionState, setConnectionState] = useState<ConnectionState>("disconnected");
 
-    const handlerRef = useRef<EngineHandler>({
-        onConnectionStateChange: (state) => {
-            setConnectionState(state);
-        }
-    });
+    const handlerRef = useRef<EngineHandler>(undefined);
+    if (!handlerRef.current) {
+        handlerRef.current = {
+            onConnectionStateChange: (state) => {
+                setConnectionState(state);
+            }
+        };
+    }
 
-    const engineRef = useRef<Engine>(new Engine({ handler: handlerRef.current }));
+    const engineRef = useRef<Engine>(undefined);
+    if (!engineRef.current) {
+        engineRef.current = new Engine({ handler: handlerRef.current });
+    }
 
     return (
         <EngineContext.Provider value={{
@@ -41,7 +47,7 @@ export function EngineProvider({ children }: { children: React.ReactNode }) {
                 subscribeToNode: engineRef.current.subscribeToNode,
             },
             internal: {
-                engineRef
+                engineRef: engineRef as React.RefObject<Engine>
             }
         }}>
             {children}
