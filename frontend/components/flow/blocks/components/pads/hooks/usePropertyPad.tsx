@@ -3,19 +3,27 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { PadEditorRepresentation } from "@/generated/editor";
+import {
+  BasePadType,
+  PadEditorRepresentation,
+  Value,
+} from "@/generated/editor";
+import { useCallback, useMemo } from "react";
+import { usePropertyPad as useRuntimePropertyPad } from "@gabber/client-react";
 import { useEditor } from "@/hooks/useEditor";
-import { useCallback, useMemo, useEffect } from "react";
 
 type Result<T> = {
   pad: PadEditorRepresentation | undefined;
-  value: T | undefined;
-  singleAllowedType: Record<string, any> | undefined;
-  setValue: (value: T) => void;
+  editorValue: T | undefined;
+  singleAllowedType: BasePadType | undefined;
+  runtimeValue: T | undefined;
+  runtimeChanged: boolean;
+  setEditorValue: (value: T) => void;
 };
 
 export function usePropertyPad<T>(nodeId: string, padId: string): Result<T> {
   const { editorRepresentation, updatePad } = useEditor();
+  const { currentValue } = useRuntimePropertyPad(nodeId, padId);
 
   const node = editorRepresentation.nodes.find((n) => n.id === nodeId);
   const pad = node?.pads.find((p) => p.id === padId);
@@ -28,7 +36,7 @@ export function usePropertyPad<T>(nodeId: string, padId: string): Result<T> {
     return undefined;
   }, [pad]);
 
-  const value = useMemo(() => {
+  const editorValue = useMemo(() => {
     if (!pad) {
       return undefined;
     }
@@ -38,7 +46,7 @@ export function usePropertyPad<T>(nodeId: string, padId: string): Result<T> {
     return pad.value as T;
   }, [pad]);
 
-  const setValue = useCallback(
+  const setEditorValue = useCallback(
     (value: T) => {
       if (!pad || !nodeId) {
         console.warn(`Pad with id ${padId} not found in node ${nodeId}`);
@@ -48,16 +56,36 @@ export function usePropertyPad<T>(nodeId: string, padId: string): Result<T> {
         type: "update_pad",
         node: nodeId,
         pad: padId,
-        value: value as any,
+        value: value as Value,
       });
     },
     [nodeId, pad, padId, updatePad],
   );
 
+  const runtimeValue = useMemo(() => {
+    if (currentValue === "loading") {
+      return editorValue;
+    }
+    const cv = currentValue.value;
+    if (cv !== editorValue) {
+      return cv as T;
+    }
+    return editorValue;
+  }, [currentValue, editorValue]);
+
+  const runtimeChanged = useMemo(() => {
+    if (currentValue === "loading") {
+      return false;
+    }
+    return currentValue.value !== editorValue;
+  }, [currentValue, editorValue]);
+
   return {
     pad: pad as PadEditorRepresentation | undefined,
-    value,
+    editorValue,
+    runtimeValue,
+    runtimeChanged,
     singleAllowedType,
-    setValue,
+    setEditorValue,
   };
 }
