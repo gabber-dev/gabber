@@ -19,7 +19,15 @@ import {
   UpdateNodeEdit,
   UpdatePadEdit,
 } from "@/generated/editor";
-import { Connection, Edge, EdgeChange, Node, NodeChange } from "@xyflow/react";
+import {
+  applyEdgeChanges,
+  applyNodeChanges,
+  Connection,
+  Edge,
+  EdgeChange,
+  Node,
+  NodeChange,
+} from "@xyflow/react";
 import React, {
   createContext,
   useContext,
@@ -83,8 +91,6 @@ export function EditorProvider({
     (GraphLibraryItem_Node | GraphLibraryItem_SubGraph)[] | undefined
   >(undefined);
   const [saving, setSaving] = useState(false);
-  const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
-  const [selectedEdges, setSelectedEdges] = useState<string[]>([]);
   const [reactFlowRepresentation, setReactFlowRepresentation] = useState<{
     nodes: Node[];
     edges: Edge[];
@@ -117,13 +123,9 @@ export function EditorProvider({
   }, [readyState, prevReadyState]);
 
   useEffect(() => {
-    const rfRep = graphToReact(
-      localRepresentation,
-      selectedNodes,
-      selectedEdges,
-    );
+    const rfRep = graphToReact(localRepresentation);
     setReactFlowRepresentation(rfRep);
-  }, [localRepresentation, selectedNodes, selectedEdges]);
+  }, [localRepresentation]);
 
   // Determine connection status and isConnected based on readyState
   const connectionStatus = (() => {
@@ -234,9 +236,7 @@ export function EditorProvider({
 
       // Update selection state if node ID is changing
       if (edit.new_id !== null && edit.new_id !== edit.id) {
-        setSelectedNodes((prev) =>
-          prev.map((nodeId) => (nodeId === edit.id ? edit.new_id! : nodeId)),
-        );
+        // TODO?
       }
 
       setLocalRepresentation((prev) => {
@@ -308,28 +308,22 @@ export function EditorProvider({
   const onReactFlowNodesChange = useCallback(
     (changes: NodeChange[]) => {
       const prev = localRepresentation;
-      let dirty = false;
       if (!prev) {
         console.warn("No previous representation available");
         return;
       }
       const requests: Request[] = [];
-      const selectedNodes: string[] = [];
       for (const change of changes) {
         if (change.type === "position") {
-          const { reactFlow } = updateDims({
-            graph: prev,
-            reactFlow: reactFlowRepresentation,
-            nodeId: change.id,
-            x: change.position?.x,
-            y: change.position?.y,
-          });
-          const nodeId = change.id;
+          reactFlowRepresentation.nodes = applyNodeChanges(
+            [change],
+            reactFlowRepresentation.nodes,
+          );
 
           if (!change.dragging) {
             const edit: UpdateNodeEdit = {
               type: "update_node",
-              id: nodeId,
+              id: change.id,
               editor_name: null,
               new_id: null,
               editor_position: [change.position?.x, change.position?.y],
@@ -337,14 +331,17 @@ export function EditorProvider({
             };
             requests.push({ type: "edit", edit });
           }
-          setReactFlowRepresentation(reactFlow);
+          setReactFlowRepresentation((prev) => ({
+            ...prev,
+            nodes: applyNodeChanges([change], prev.nodes),
+          }));
         } else if (change.type === "select") {
-          if (change.selected) {
-            selectedNodes.push(change.id);
-          }
+          setReactFlowRepresentation((prev) => {
+            const updatedNodes = applyNodeChanges([change], prev.nodes);
+            return { ...prev, nodes: updatedNodes };
+          });
         } else if (change.type === "remove") {
           const nodeId = change.id;
-          dirty = true;
           requests.push({
             type: "edit",
             edit: {
@@ -355,6 +352,7 @@ export function EditorProvider({
           prev.nodes = prev.nodes.filter((n) => n.id !== nodeId);
         } else if (change.type === "add") {
         } else if (change.type === "dimensions") {
+          // Handle node dimension changes
           const nodeId = change.id;
           const newDims = change.dimensions;
           if (!newDims) {
@@ -370,7 +368,6 @@ export function EditorProvider({
           if (newDims.width === oldDims[0] && newDims.height === oldDims[1]) {
             continue; // No change in dimensions
           }
-          dirty = true;
           const edit: UpdateNodeEdit = {
             type: "update_node",
             id: nodeId,
@@ -387,10 +384,6 @@ export function EditorProvider({
           }
         }
       }
-      setSelectedNodes(selectedNodes);
-      if (dirty) {
-        setLocalRepresentation({ ...prev });
-      }
       for (const req of requests) {
         sendRequest(req);
       }
@@ -400,7 +393,6 @@ export function EditorProvider({
 
   const onReactFlowEdgesChange = useCallback(
     (changes: EdgeChange[]) => {
-      const selectedEdges: string[] = [];
       let dirty = false;
       const prev = localRepresentation;
       if (!prev) {
@@ -410,9 +402,10 @@ export function EditorProvider({
       const requests: Request[] = [];
       for (const change of changes) {
         if (change.type === "select") {
-          if (change.selected) {
-            selectedEdges.push(change.id);
-          }
+          setReactFlowRepresentation((prev) => {
+            const updatedEdges = applyEdgeChanges([change], prev.edges);
+            return { ...prev, edges: updatedEdges };
+          });
         } else if (change.type === "remove") {
           const fullId = change.id;
           const [sourceNodeId, sourcePadId, targetNodeId, targetPadId] =
@@ -456,7 +449,6 @@ export function EditorProvider({
       for (const req of requests) {
         sendRequest(req);
       }
-      setSelectedEdges(selectedEdges);
     },
     [localRepresentation, sendRequest],
   );
@@ -538,8 +530,6 @@ export function useEditor() {
 
 function graphToReact(
   representation: GraphEditorRepresentation,
-  selectedNodes: string[] = [],
-  selectedEdges: string[] = [],
 ): ReactFlowRepresentation {
   const nodes: Node[] = representation.nodes.map((node) => ({
     id: node.id,
@@ -552,7 +542,6 @@ function graphToReact(
       width: (node.editor_dimensions?.[0] || 10) as number,
       height: (node.editor_dimensions?.[1] || 10) as number,
     },
-    selected: selectedNodes.includes(node.id),
     data: node,
   }));
 
@@ -569,56 +558,10 @@ function graphToReact(
           sourceHandle: pad.id,
           target: connectedPad.node,
           targetHandle: connectedPad.pad,
-          selected: selectedEdges.includes(edgeId),
         });
       }
     }
   }
 
   return { nodes, edges };
-}
-
-function updateDims(params: {
-  graph: GraphEditorRepresentation;
-  reactFlow: ReactFlowRepresentation;
-  nodeId: string;
-  x?: number;
-  y?: number;
-  width?: number;
-  height?: number;
-}): { graph: GraphEditorRepresentation; reactFlow: ReactFlowRepresentation } {
-  const node = params.graph.nodes.find((n) => n.id === params.nodeId);
-  if (!node) {
-    throw new Error(`Node not found: ${params.nodeId}`);
-  }
-
-  // Update the node's position and dimensions
-  node.editor_position = [params.x, params.y];
-  node.editor_dimensions = [params.width, params.height];
-
-  const rNode = params.reactFlow.nodes.find((n) => n.id === params.nodeId);
-  let newX = rNode?.position?.x ?? 0;
-  let newY = rNode?.position?.y ?? 0;
-  let newWidth = rNode?.measured?.width ?? 0;
-  let newHeight = rNode?.measured?.height ?? 0;
-  if (params.x !== undefined) {
-    newX = params.x;
-  }
-  if (params.y !== undefined) {
-    newY = params.y;
-  }
-
-  if (params.width !== undefined) {
-    newWidth = params.width;
-  }
-  if (params.height !== undefined) {
-    newHeight = params.height;
-  }
-
-  if (rNode) {
-    rNode.position = { x: newX, y: newY };
-    rNode.measured = { width: newWidth, height: newHeight };
-  }
-
-  return { graph: params.graph, reactFlow: params.reactFlow };
 }
