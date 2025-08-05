@@ -159,7 +159,7 @@ class RequestContextRegistry:
                     elapsed = now - request.start_time
                     if elapsed > request._timeout_s:
                         logging.warning(
-                            f"RequestContext {request} timed out after {elapsed:.2f} seconds."
+                            f"RequestContext {request} timed out after {elapsed:.2f} seconds. Originator: {request.originator}"
                         )
                         request.timeout()
                         self._requests.remove(request)

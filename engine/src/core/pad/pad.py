@@ -106,6 +106,8 @@ class SourcePad(Pad, Protocol):
 
             q.put_nowait(item)
 
+        ctx.complete()
+
     def connect(self, sink_pad: "SinkPad") -> None:
         if not self.can_connect(sink_pad):
             raise ValueError(

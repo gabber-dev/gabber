@@ -19,7 +19,15 @@ import {
   UpdateNodeEdit,
   UpdatePadEdit,
 } from "@/generated/editor";
-import { Connection, Edge, EdgeChange, Node, NodeChange } from "@xyflow/react";
+import {
+  applyEdgeChanges,
+  applyNodeChanges,
+  Connection,
+  Edge,
+  EdgeChange,
+  Node,
+  NodeChange,
+} from "@xyflow/react";
 import React, {
   createContext,
   useContext,
@@ -30,6 +38,11 @@ import React, {
 } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import toast from "react-hot-toast";
+
+type ReactFlowRepresentation = {
+  nodes: Node[];
+  edges: Edge[];
+};
 
 type EditorContextType = {
   debug: boolean;
@@ -78,8 +91,13 @@ export function EditorProvider({
     (GraphLibraryItem_Node | GraphLibraryItem_SubGraph)[] | undefined
   >(undefined);
   const [saving, setSaving] = useState(false);
-  const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
-  const [selectedEdges, setSelectedEdges] = useState<string[]>([]);
+  const [reactFlowRepresentation, setReactFlowRepresentation] = useState<{
+    nodes: Node[];
+    edges: Edge[];
+  }>({
+    nodes: [],
+    edges: [],
+  });
 
   const { sendMessage, lastJsonMessage, readyState } = useWebSocket(
     editor_url,
@@ -103,6 +121,11 @@ export function EditorProvider({
       setPrevReadyState(readyState);
     }
   }, [readyState, prevReadyState]);
+
+  useEffect(() => {
+    const rfRep = graphToReact(localRepresentation);
+    setReactFlowRepresentation(rfRep);
+  }, [localRepresentation]);
 
   // Determine connection status and isConnected based on readyState
   const connectionStatus = (() => {
@@ -213,9 +236,7 @@ export function EditorProvider({
 
       // Update selection state if node ID is changing
       if (edit.new_id !== null && edit.new_id !== edit.id) {
-        setSelectedNodes((prev) =>
-          prev.map((nodeId) => (nodeId === edit.id ? edit.new_id! : nodeId)),
-        );
+        // TODO?
       }
 
       setLocalRepresentation((prev) => {
@@ -284,103 +305,43 @@ export function EditorProvider({
     }
   }, [lastJsonMessage]);
 
-  const reactFlowRepresentation = useMemo(() => {
-    if (!localRepresentation)
-      return {
-        nodes: [],
-        edges: [],
-      };
-
-    const nodes: Node[] = localRepresentation.nodes.map((node) => ({
-      id: node.id,
-      type: "default",
-      position: {
-        x: (node.editor_position?.[0] || 0) as number,
-        y: (node.editor_position?.[1] || 0) as number,
-      },
-      measured: {
-        width: (node.editor_dimensions?.[0] || 10) as number,
-        height: (node.editor_dimensions?.[1] || 10) as number,
-      },
-      data: node,
-      selected: selectedNodes.includes(node.id),
-    }));
-
-    const edges: Edge[] = [];
-
-    for (const node of localRepresentation.nodes) {
-      if (!node.pads) continue;
-      for (const pad of node.pads) {
-        if (!pad.next_pads) continue;
-        for (const connectedPad of pad.next_pads) {
-          const edgeId = `${node.id}-${pad.id}-${connectedPad.node}-${connectedPad.pad}`;
-          edges.push({
-            id: edgeId,
-            source: node.id,
-            sourceHandle: pad.id,
-            target: connectedPad.node,
-            targetHandle: connectedPad.pad,
-            selected: selectedEdges.includes(edgeId),
-          });
-        }
-      }
-    }
-
-    return { nodes, edges };
-  }, [localRepresentation, selectedEdges, selectedNodes]);
-
   const onReactFlowNodesChange = useCallback(
     (changes: NodeChange[]) => {
       const prev = localRepresentation;
-      let dirty = false;
       if (!prev) {
         console.warn("No previous representation available");
         return;
       }
       const requests: Request[] = [];
-      const selectedNodes: string[] = [];
       for (const change of changes) {
         if (change.type === "position") {
-          const nodeId = change.id;
-          const newPosition = change.position;
-          const oldPosition = prev.nodes.find(
-            (n) => n.id === nodeId,
-          )?.editor_position;
-          if (!newPosition || !oldPosition) {
-            continue;
-          }
+          reactFlowRepresentation.nodes = applyNodeChanges(
+            [change],
+            reactFlowRepresentation.nodes,
+          );
 
           if (!change.dragging) {
             const edit: UpdateNodeEdit = {
               type: "update_node",
-              id: nodeId,
+              id: change.id,
               editor_name: null,
               new_id: null,
-              editor_position: [newPosition.x, newPosition.y],
+              editor_position: [change.position?.x, change.position?.y],
               editor_dimensions: null,
             };
             requests.push({ type: "edit", edit });
           }
-
-          if (
-            newPosition.x === oldPosition[0] &&
-            newPosition.y === oldPosition[1]
-          ) {
-            continue; // No change in position
-          }
-          dirty = true;
-          for (const node of prev?.nodes || []) {
-            if (node.id === nodeId) {
-              node.editor_position = [newPosition?.x, newPosition?.y];
-            }
-          }
+          setReactFlowRepresentation((prev) => ({
+            ...prev,
+            nodes: applyNodeChanges([change], prev.nodes),
+          }));
         } else if (change.type === "select") {
-          if (change.selected) {
-            selectedNodes.push(change.id);
-          }
+          setReactFlowRepresentation((prev) => {
+            const updatedNodes = applyNodeChanges([change], prev.nodes);
+            return { ...prev, nodes: updatedNodes };
+          });
         } else if (change.type === "remove") {
           const nodeId = change.id;
-          dirty = true;
           requests.push({
             type: "edit",
             edit: {
@@ -391,6 +352,7 @@ export function EditorProvider({
           prev.nodes = prev.nodes.filter((n) => n.id !== nodeId);
         } else if (change.type === "add") {
         } else if (change.type === "dimensions") {
+          // Handle node dimension changes
           const nodeId = change.id;
           const newDims = change.dimensions;
           if (!newDims) {
@@ -406,7 +368,6 @@ export function EditorProvider({
           if (newDims.width === oldDims[0] && newDims.height === oldDims[1]) {
             continue; // No change in dimensions
           }
-          dirty = true;
           const edit: UpdateNodeEdit = {
             type: "update_node",
             id: nodeId,
@@ -423,20 +384,15 @@ export function EditorProvider({
           }
         }
       }
-      setSelectedNodes(selectedNodes);
-      if (dirty) {
-        setLocalRepresentation({ ...prev });
-      }
       for (const req of requests) {
         sendRequest(req);
       }
     },
-    [localRepresentation, sendRequest],
+    [localRepresentation, reactFlowRepresentation, sendRequest],
   );
 
   const onReactFlowEdgesChange = useCallback(
     (changes: EdgeChange[]) => {
-      const selectedEdges: string[] = [];
       let dirty = false;
       const prev = localRepresentation;
       if (!prev) {
@@ -446,9 +402,10 @@ export function EditorProvider({
       const requests: Request[] = [];
       for (const change of changes) {
         if (change.type === "select") {
-          if (change.selected) {
-            selectedEdges.push(change.id);
-          }
+          setReactFlowRepresentation((prev) => {
+            const updatedEdges = applyEdgeChanges([change], prev.edges);
+            return { ...prev, edges: updatedEdges };
+          });
         } else if (change.type === "remove") {
           const fullId = change.id;
           const [sourceNodeId, sourcePadId, targetNodeId, targetPadId] =
@@ -492,7 +449,6 @@ export function EditorProvider({
       for (const req of requests) {
         sendRequest(req);
       }
-      setSelectedEdges(selectedEdges);
     },
     [localRepresentation, sendRequest],
   );
@@ -570,4 +526,42 @@ export function useEditor() {
     throw new Error("useEditor must be used within a EditorProvider");
   }
   return context;
+}
+
+function graphToReact(
+  representation: GraphEditorRepresentation,
+): ReactFlowRepresentation {
+  const nodes: Node[] = representation.nodes.map((node) => ({
+    id: node.id,
+    type: "default",
+    position: {
+      x: (node.editor_position?.[0] || 0) as number,
+      y: (node.editor_position?.[1] || 0) as number,
+    },
+    measured: {
+      width: (node.editor_dimensions?.[0] || 10) as number,
+      height: (node.editor_dimensions?.[1] || 10) as number,
+    },
+    data: node,
+  }));
+
+  const edges: Edge[] = [];
+  for (const node of representation.nodes) {
+    if (!node.pads) continue;
+    for (const pad of node.pads) {
+      if (!pad.next_pads) continue;
+      for (const connectedPad of pad.next_pads) {
+        const edgeId = `${node.id}-${pad.id}-${connectedPad.node}-${connectedPad.pad}`;
+        edges.push({
+          id: edgeId,
+          source: node.id,
+          sourceHandle: pad.id,
+          target: connectedPad.node,
+          targetHandle: connectedPad.pad,
+        });
+      }
+    }
+  }
+
+  return { nodes, edges };
 }
