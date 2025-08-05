@@ -112,6 +112,8 @@ function FlowEditInner() {
             connectionLineComponent={CustomConnectionLine}
             fitView
             nodeTypes={{ default: BaseBlock }}
+            snapGrid={[12, 12]}
+            snapToGrid={true}
             defaultEdgeOptions={{
               type: "hybrid",
               style: { strokeWidth: 2, stroke: "#FCD34D" },
