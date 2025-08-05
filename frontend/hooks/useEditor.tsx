@@ -116,6 +116,15 @@ export function EditorProvider({
     }
   }, [readyState, prevReadyState]);
 
+  useEffect(() => {
+    const rfRep = graphToReact(
+      localRepresentation,
+      selectedNodes,
+      selectedEdges,
+    );
+    setReactFlowRepresentation(rfRep);
+  }, [localRepresentation, selectedNodes, selectedEdges]);
+
   // Determine connection status and isConnected based on readyState
   const connectionStatus = (() => {
     switch (readyState) {
