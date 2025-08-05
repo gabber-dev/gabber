@@ -9,8 +9,11 @@ from .state_machine import StateMachine
 
 
 class StateMachineMember(node.Node):
-    async def resolve_pads(self):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.state_machine: StateMachine | None = None
+
+    async def resolve_pads(self):
         self.resolve_entry_pads()
         self.rename_entry_pads()
         self.make_empty_entry()
