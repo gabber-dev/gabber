@@ -35,6 +35,7 @@ export class BasePad<DataType extends PadTriggeredValue> {
     protected channelTopic: string;
 
     constructor({ nodeId, padId, livekitRoom }: PadParams) {
+        console.debug("Creating new BasePad instance for node", nodeId, "pad", padId);
         this._nodeId = nodeId;
         this._padId = padId;
         this.livekitRoom = livekitRoom;
