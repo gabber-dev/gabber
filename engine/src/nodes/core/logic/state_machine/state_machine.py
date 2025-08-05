@@ -32,20 +32,16 @@ class StateMachine(node.Node):
         # Create a new request context so that call stack increases
         # to prevent infinite recursion in case of loops
         check_ctx = pad.RequestContext(parent=ctx)
-        self.active_state.check_transition(check_ctx)
+        self.active_state.check_transition(
+            check_ctx,
+            self._get_property_values(),
+            {name: False for name in self._get_trigger_names()},
+        )
         ctx.complete()
         logging.info(f"Active state set to: {state.get_name().get_value()}")
 
-    def get_property_value_by_name(self, name: str) -> Any:
-        pad_groups = self.get_all_parameters()
-        for i in range(len(pad_groups)):
-            name_pad = self.get_name_pad(i)
-            if not name_pad:
-                continue
-            if name_pad.get_value() == name:
-                value_pad = self.get_value_pad(i)
-                if value_pad:
-                    return value_pad.get_value()
+    def is_trigger_parameter(self, name: str) -> bool:
+        return False
 
     async def run(self):
         entry = cast(pad.StatelessSourcePad, self.get_pad_required("entry"))
@@ -56,17 +52,33 @@ class StateMachine(node.Node):
             )
             return
 
+        trigger_names = self._get_trigger_names()
+        triggers_set = {name: False for name in trigger_names}
+        req_parent: str = "UNSET"
+
         async def value_task(p: pad.SinkPad):
+            nonlocal triggers_set
             async for item in p:
                 if not self.active_state:
                     logging.error("No active state to process value task.")
                     item.ctx.complete()
                     continue
-                self.active_state.check_transition(item.ctx)
+                if item.ctx.original_request.id != req_parent:
+                    triggers_set = {name: False for name in trigger_names}
+
+                name_id = p.get_id().replace("parameter_value_", "parameter_name_")
+                name_pad = cast(pad.PropertySinkPad, self.get_pad(name_id))
+                name = cast(str, name_pad.get_value())
+                if name in trigger_names:
+                    triggers_set[name] = True
+
+                self.active_state.check_transition(
+                    item.ctx, self._get_property_values(), triggers_set
+                )
                 item.ctx.complete()
 
         all_pad_groups = self.get_all_parameters()
-        all_value_pads: list[pad.PropertySinkPad] = []
+        all_value_pads: list[pad.SinkPad] = []
         for pad_group in all_pad_groups:
             for p in pad_group:
                 if p.get_id().startswith("parameter_value"):
@@ -74,6 +86,40 @@ class StateMachine(node.Node):
 
         tasks = [value_task(p) for p in all_value_pads]
         await asyncio.gather(*tasks)
+
+    def _get_property_values(self) -> dict[str, Any]:
+        property_values: dict[str, Any] = {}
+        for p in self.pads:
+            if (
+                isinstance(p, pad.PropertySinkPad)
+                and p.get_id().startswith("parameter_value_")
+                and p.get_previous_pad() is not None
+            ):
+                name_id = p.get_id().replace("parameter_value_", "parameter_name_")
+                name = cast(
+                    str,
+                    cast(pad.PropertySinkPad, self.get_pad(name_id)).get_value(),
+                )
+                value = p.get_value()
+                property_values[name] = value
+        return property_values
+
+    def _get_trigger_names(self) -> list[str]:
+        trigger_names: list[str] = []
+        for p in self.pads:
+            if (
+                isinstance(p, pad.StatelessSinkPad)
+                and p.get_id().startswith("parameter_value_")
+                and p.get_previous_pad() is not None
+            ):
+                name_id = p.get_id().replace("parameter_value_", "parameter_name_")
+                name = cast(
+                    str,
+                    cast(pad.PropertySinkPad, self.get_pad(name_id)).get_value(),
+                )
+                if self.is_trigger_parameter(name):
+                    trigger_names.append(name)
+        return trigger_names
 
     async def resolve_pads(self):
         entry = cast(pad.StatelessSourcePad, self.get_pad("entry"))
@@ -86,6 +132,17 @@ class StateMachine(node.Node):
             )
             self.pads.append(entry)
 
+        num_parameters = cast(pad.PropertySinkPad, self.get_pad("num_parameters"))
+        if not num_parameters:
+            num_parameters = pad.PropertySinkPad(
+                id="num_parameters",
+                owner_node=self,
+                type_constraints=[pad.types.Integer()],
+                group="num_parameters",
+                value=1,
+            )
+            self.pads.append(num_parameters)
+
         current_state = cast(pad.PropertySourcePad, self.get_pad("current_state"))
         if not current_state:
             current_state = pad.PropertySourcePad(
@@ -96,7 +153,7 @@ class StateMachine(node.Node):
                 value="",
             )
             self.pads.append(current_state)
-        self.prune_pads()
+
         next_pads = entry.get_next_pads()
         if len(next_pads) > 1:
             logging.error("StateMachine must only have one entry pad.")
@@ -109,6 +166,47 @@ class StateMachine(node.Node):
                 logging.error("StateMachine entry pad must connect to a State node.")
                 np.disconnect()
                 await np.get_owner_node().resolve_pads()
+
+        all_parameters = self.get_all_parameters()
+        delta = num_parameters.get_value() - len(all_parameters)
+        # Need to remove parameters
+        pgs_to_remove: list[list[pad.SinkPad]] = []
+        pgs_to_add: list[list[pad.SinkPad]] = []
+        if delta < 0:
+            to_remove = delta * -1
+            while to_remove > 0:
+                for pg in all_parameters:
+                    # first try removing unconnected parameters
+                    for p in pg:
+                        if p.get_id().startswith("parameter_value_"):
+                            if p.get_previous_pad() is None:
+                                pgs_to_remove.append(pg)
+                                to_remove -= 1
+
+                    if to_remove <= 0:
+                        break
+
+                    # Next remove connected parameters
+                    for p in pg:
+                        if p.get_id().startswith("parameter_value_"):
+                            p.disconnect()
+                            to_remove -= 1
+                            if to_remove <= 0:
+                                break
+        else:
+            # Need to add parameters
+            for i in range(len(all_parameters), num_parameters.get_value()):
+                new_pads = self.create_parameter()
+                pgs_to_add.append(cast(list[pad.SinkPad], new_pads))
+
+        for pg in pgs_to_remove:
+            for p in pg:
+                p.disconnect()
+                self.pads.remove(p)
+
+        for pg in pgs_to_add:
+            for p in pg:
+                self.pads.append(p)
 
         states, state_transitions = self.get_all_states()
         if entry.get_next_pads():
@@ -146,7 +244,7 @@ class StateMachine(node.Node):
 
         return (states, state_transitions)
 
-    def get_all_parameters(self) -> list[list[pad.PropertySinkPad]]:
+    def get_all_parameters(self) -> list[list[pad.SinkPad]]:
         biggest_index = -1
         for p in self.pads:
             p_id = p.get_id()
@@ -155,7 +253,7 @@ class StateMachine(node.Node):
                 if index > biggest_index:
                     biggest_index = index
 
-        res: list[list[pad.PropertySinkPad]] = []
+        res: list[list[pad.SinkPad]] = []
         for i in range(biggest_index + 1):
             p_pads = self.get_parameter_pads_for_index(i)
             if p_pads:
@@ -163,14 +261,12 @@ class StateMachine(node.Node):
         return res
 
     def get_parameter_pads_for_index(self, index: int):
-        res: list[pad.PropertySinkPad] = []
+        res: list[pad.SinkPad] = []
         for p in self.pads:
             p_id = p.get_id()
             if p_id.startswith("parameter") and p_id.endswith(f"_{index}"):
-                if not isinstance(p, pad.PropertySinkPad):
-                    logging.warning(
-                        f"Pad {p_id} is not a PropertySinkPad, but it should be."
-                    )
+                if not isinstance(p, pad.SinkPad):
+                    logging.warning(f"Pad {p_id} is not a SinkPad, but it should be.")
                     continue
                 res.append(p)
         return res
@@ -190,42 +286,6 @@ class StateMachine(node.Node):
     def get_value_pad(self, index: int) -> pad.PropertySinkPad | None:
         value_pad = self.get_pad(f"parameter_value_{index}")
         return value_pad if isinstance(value_pad, pad.PropertySinkPad) else None
-
-    def prune_pads(self):
-        p_pads = self.get_all_parameters()
-        remove_p_pads: list[list[pad.PropertySinkPad]] = []
-        keep_p_pads: list[list[pad.PropertySinkPad]] = []
-        other_pads = self.get_other_pads()
-        for pad_group in p_pads:
-            p_v: pad.SinkPad | None = None
-            p_n: pad.SinkPad | None = None
-            for p in pad_group:
-                if p.get_id().startswith("parameter_value"):
-                    p_v = p
-                elif p.get_id().startswith("parameter_name"):
-                    p_n = p
-
-            if not p_v or not p_n:
-                remove_p_pads.append(pad_group)
-                continue
-
-            if not p_v.get_previous_pad():
-                remove_p_pads.append(pad_group)
-                continue
-
-            keep_p_pads.append(pad_group)
-
-        for pad_group in remove_p_pads:
-            for p in pad_group:
-                p.disconnect()
-
-        self.pads = other_pads + [p for group in keep_p_pads for p in group]
-
-        self.rename_pads()
-        self.update_type_constraints()
-        self.update_parameter_names()
-
-        self.pads.extend(self.create_parameter())
 
     def rename_pads(self):
         p_pads = self.get_all_parameters()
@@ -292,3 +352,58 @@ class StateMachine(node.Node):
                     name_pad.set_value(f"{current_name}_{short_uuid()}")
                 else:
                     existing_names.add(current_name)
+
+    def update_pad_types(self):
+        for p in self.pads:
+            if not p.get_id().startswith("parameter_value"):
+                continue
+            tcs = p.get_type_constraints()
+            if not tcs:
+                continue
+
+            if len(tcs) == 1:
+                if isinstance(p, pad.PropertySinkPad) and isinstance(
+                    tcs[0], pad.types.Trigger
+                ):
+                    prev_pad = p.get_previous_pad()
+                    p.disconnect()
+                    idx = self.pads.index(p)
+                    new_pad = pad.StatelessSinkPad(
+                        id=p.get_id(),
+                        owner_node=self,
+                        type_constraints=tcs,
+                        group=p.get_group(),
+                    )
+                    self.pads[idx] = new_pad
+                    if prev_pad:
+                        prev_pad.connect(new_pad)
+                elif isinstance(p, pad.StatelessSinkPad) and not isinstance(
+                    tcs[0], pad.types.Trigger
+                ):
+                    prev_pad = p.get_previous_pad()
+                    p.disconnect()
+                    idx = self.pads.index(p)
+                    new_pad = pad.PropertySinkPad(
+                        id=p.get_id(),
+                        owner_node=self,
+                        type_constraints=tcs,
+                        group=p.get_group(),
+                    )
+                    self.pads[idx] = new_pad
+                    if prev_pad:
+                        prev_pad.connect(new_pad)
+
+            else:
+                if isinstance(p, pad.StatelessSinkPad):
+                    prev_pad = p.get_previous_pad()
+                    p.disconnect()
+                    idx = self.pads.index(p)
+                    new_pad = pad.PropertySinkPad(
+                        id=p.get_id(),
+                        owner_node=self,
+                        type_constraints=tcs,
+                        group=p.get_group(),
+                    )
+                    self.pads[idx] = new_pad
+                    if prev_pad:
+                        prev_pad.connect(new_pad)

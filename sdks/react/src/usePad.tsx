@@ -27,6 +27,12 @@ export function usePad<DataType extends PadTriggeredValue>(nodeId: string, padId
         };
     }, [padRef]);
 
+    useEffect(() => {
+        return () => {
+            padRef.current!.destroy();
+        };
+    }, []);
+
     return {
         lastValue,
     }

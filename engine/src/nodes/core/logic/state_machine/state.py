@@ -41,7 +41,12 @@ class State(StateMachineMember):
             )
             self.pads.append(transition)
 
-    def check_transition(self, ctx: pad.RequestContext) -> None:
+    def check_transition(
+        self,
+        ctx: pad.RequestContext,
+        property_values: dict[str, Any],
+        triggers: dict[str, bool],
+    ) -> None:
         for np in self.get_transition().get_next_pads():
             transition_node = np.get_owner_node()
             if not isinstance(transition_node, StateTransition):
@@ -51,10 +56,10 @@ class State(StateMachineMember):
                 ctx.complete()
                 continue
 
-            if transition_node.check_condition_met(ctx):
+            if transition_node.check_condition_met(ctx, property_values, triggers):
                 state_pad = cast(
                     pad.StatelessSourcePad,
-                    transition_node.get_pad_required("next_state"),
+                    transition_node.get_pad_required("state"),
                 )
                 next_pads = state_pad.get_next_pads()
                 if not next_pads:
@@ -77,3 +82,9 @@ class State(StateMachineMember):
                     return
 
         ctx.complete()
+
+    def reset_all_transitions(self):
+        for np in self.get_transition().get_next_pads():
+            transition_node = np.get_owner_node()
+            if isinstance(transition_node, StateTransition):
+                pass
