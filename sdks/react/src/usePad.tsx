@@ -9,15 +9,21 @@ type UsePadType = {
 export function usePad<DataType extends PadTriggeredValue>(nodeId: string, padId: string): UsePadType {
     const [lastValue, setLastValue] = useState<DataType | undefined>(undefined);
     const { engineRef } = useEngineInternal();
-    const padRef = useRef<SourcePad<DataType>>(engineRef.current.getSourcePad<DataType>(nodeId, padId));
-    const padHandlerRef = useRef((value: DataType) => {
-        setLastValue(value);
-    });
+    const padRef = useRef<SourcePad<DataType> | undefined>(undefined);
+    if (!padRef.current) {
+        padRef.current = engineRef.current.getSourcePad<DataType>(nodeId, padId);
+    }
+    const padHandlerRef = useRef<(value: DataType) => void | undefined>(undefined);
+    if (!padHandlerRef.current) {
+        padHandlerRef.current = (value: DataType) => {
+            setLastValue(value);
+        };
+    }
 
     useEffect(() => {
-        padRef.current.on('value', padHandlerRef.current);
+        padRef.current!.on('value', padHandlerRef.current!);
         return () => {
-            padRef.current.off('value', padHandlerRef.current);
+            padRef.current!.off('value', padHandlerRef.current!);
         };
     }, [padRef]);
 

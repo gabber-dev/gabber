@@ -22,19 +22,13 @@ ALL_PARAMETER_TYPES: list[pad.types.BasePadType] = [
 
 
 class StateMachine(node.Node):
-    def initialize(self):
-        self.entry = cast(pad.StatelessSourcePad, self.get_pad_required("entry"))
-        self.current_state = cast(
+    def set_active_state(self, state: "State", ctx: pad.RequestContext):
+        current_state = cast(
             pad.PropertySourcePad, self.get_pad_required("current_state")
         )
-        self.states: list["State"] = []
-        self.state_transitions: list["StateTransition"] = []
-        self.active_state: "State | None" = None
-
-    def set_active_state(self, state: "State", ctx: pad.RequestContext):
         self.active_state = state
         push_ctx = pad.RequestContext(parent=ctx)
-        self.current_state.push_item(state.get_name().get_value(), push_ctx)
+        current_state.push_item(state.get_name().get_value(), push_ctx)
         # Create a new request context so that call stack increases
         # to prevent infinite recursion in case of loops
         check_ctx = pad.RequestContext(parent=ctx)
@@ -54,10 +48,9 @@ class StateMachine(node.Node):
                     return value_pad.get_value()
 
     async def run(self):
-        self.active_state = cast(
-            "State", self.entry.get_next_pads()[0].get_owner_node()
-        )
-        if not self.entry.get_next_pads():
+        entry = cast(pad.StatelessSourcePad, self.get_pad_required("entry"))
+        self.active_state = cast("State", entry.get_next_pads()[0].get_owner_node())
+        if not entry.get_next_pads():
             logging.error(
                 "StateMachine must have an entry pad connected to a State node."
             )
@@ -117,7 +110,7 @@ class StateMachine(node.Node):
                 np.disconnect()
                 await np.get_owner_node().resolve_pads()
 
-        self.states, self.state_transitions = self.get_all_states()
+        states, state_transitions = self.get_all_states()
         if entry.get_next_pads():
             self.active_state = cast(
                 "State",
@@ -125,7 +118,7 @@ class StateMachine(node.Node):
             )
             current_state.set_value(self.active_state.get_name().get_value())
         current_state.set_type_constraints(
-            [pad.types.Enum(options=[s.get_name().get_value() for s in self.states])]
+            [pad.types.Enum(options=[s.get_name().get_value() for s in states])]
         )
 
     # TODO: maybe there's a better way but likely not a big deal
