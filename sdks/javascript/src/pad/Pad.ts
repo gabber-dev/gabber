@@ -35,11 +35,13 @@ export class BasePad<DataType extends PadTriggeredValue> {
     protected channelTopic: string;
 
     constructor({ nodeId, padId, livekitRoom }: PadParams) {
+        console.debug("Creating new BasePad instance for node", nodeId, "pad", padId);
         this._nodeId = nodeId;
         this._padId = padId;
         this.livekitRoom = livekitRoom;
         this.get_request_id = this.get_request_id.bind(this);
         this.onData = this.onData.bind(this);
+        this.destroy = this.destroy.bind(this);
         this.livekitRoom.on('dataReceived', this.onData);
         this.channelTopic = "runtime:" + this._nodeId + ":" + this._padId;
     }
@@ -50,6 +52,13 @@ export class BasePad<DataType extends PadTriggeredValue> {
 
     public off(event: "value", handler: (data: DataType) => void): void {
         this.handlers = this.handlers.filter(h => h !== handler);
+    }
+
+    public destroy(): void {
+        console.debug("Destroying pad", this.nodeId, this.padId);
+        this.livekitRoom.off('dataReceived', this.onData);
+        this.handlers = [];
+        this.pendingRequests.clear();
     }
 
     public get nodeId(): string {

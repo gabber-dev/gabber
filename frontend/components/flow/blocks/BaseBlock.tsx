@@ -19,20 +19,16 @@ export interface BaseBlockProps {
 }
 
 export function BaseBlock({ data }: BaseBlockProps) {
-  const statelessSinkPad = useMemo(() => {
-    return data.pads.filter((p) => p.type === "StatelessSinkPad");
-  }, [data]);
-  const statelessSourcePad = useMemo(() => {
-    return data.pads.filter((p) => p.type === "StatelessSourcePad");
-  }, [data]);
-
-  const propertySinkPad = useMemo(() => {
-    return data.pads.filter((p) => p.type === "PropertySinkPad");
-  }, [data]);
-
-  const propertySourcePad = useMemo(() => {
+  const sinkPads = useMemo(() => {
     return data.pads.filter(
-      (p) => p.type === "PropertySourcePad" && p.id !== "self",
+      (p) => p.type === "StatelessSinkPad" || p.type === "PropertySinkPad",
+    );
+  }, [data]);
+  const sourcePads = useMemo(() => {
+    return data.pads.filter(
+      (p) =>
+        p.type === "StatelessSourcePad" ||
+        (p.type === "PropertySourcePad" && p.id !== "self"),
     );
   }, [data]);
 
@@ -75,33 +71,35 @@ export function BaseBlock({ data }: BaseBlockProps) {
       </div>
 
       <div className="flex flex-1 flex-col gap-2 p-4 nodrag cursor-default">
-        {statelessSourcePad.map((pad) => {
-          return (
-            <div key={pad.id}>
-              <StatelessPad data={pad} />
-            </div>
-          );
+        {sourcePads.map((pad) => {
+          if (pad.type === "StatelessSourcePad") {
+            return (
+              <div key={pad.id}>
+                <StatelessPad data={pad} />
+              </div>
+            );
+          } else if (pad.type === "PropertySourcePad") {
+            return (
+              <div key={pad.id}>
+                <PropertyPad nodeId={data.id} data={pad} />
+              </div>
+            );
+          }
         })}
-        {propertySourcePad.map((pad) => {
-          return (
-            <div key={pad.id}>
-              <PropertyPad nodeId={data.id} data={pad} />
-            </div>
-          );
-        })}
-        {statelessSinkPad.map((pad) => {
-          return (
-            <div key={pad.id}>
-              <StatelessPad data={pad} />
-            </div>
-          );
-        })}
-        {propertySinkPad.map((pad) => {
-          return (
-            <div key={pad.id}>
-              <PropertyPad nodeId={data.id} data={pad} />
-            </div>
-          );
+        {sinkPads.map((pad) => {
+          if (pad.type === "StatelessSinkPad") {
+            return (
+              <div key={pad.id}>
+                <StatelessPad data={pad} />
+              </div>
+            );
+          } else if (pad.type === "PropertySinkPad") {
+            return (
+              <div key={pad.id}>
+                <PropertyPad nodeId={data.id} data={pad} />
+              </div>
+            );
+          }
         })}
       </div>
     </div>
