@@ -69,7 +69,8 @@ export function BaseBlock({ data }: BaseBlockProps) {
       <div className="">
         <Inner data={data} />
       </div>
-      <div className="flex flex-1 flex-col gap-3 p-4 nodrag cursor-default">
+
+      <div className="flex flex-1 flex-col gap-2 p-4 nodrag cursor-default">
         {sourcePads.map((pad) => {
           if (pad.type === "StatelessSourcePad") {
             return (
