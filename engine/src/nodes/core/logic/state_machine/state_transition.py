@@ -37,7 +37,6 @@ class StateTransition(StateMachineMember):
         property_values: dict[str, Any],
         triggers: dict[str, bool],
     ) -> bool:
-        logging.debug("NEIL %s - %s", property_values, triggers)
         for name, value in property_values.items():
             if not self._check_single_condition(name, value):
                 return False

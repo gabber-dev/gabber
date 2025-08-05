@@ -68,9 +68,6 @@ class StateMachine(node.Node):
                 name = cast(str, name_pad.get_value())
                 triggers_set[name] = True
 
-                logging.debug(
-                    f"NEIL processed value task for {name} with value props: {self._get_property_values()} ts: {triggers_set} tns: {trigger_names}"
-                )
                 self.active_state.check_transition(
                     item.ctx, self._get_property_values(), triggers_set
                 )
