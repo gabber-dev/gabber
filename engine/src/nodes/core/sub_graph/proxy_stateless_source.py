@@ -16,7 +16,7 @@ class ProxyStatelessSource(node.Node):
     @classmethod
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(
-            primary="subgraph", secondary="proxy", tags=["source", "stateless"]
+            primary="subgraph", secondary="source", tags=["stateless", "proxy"]
         )
 
     async def resolve_pads(self):

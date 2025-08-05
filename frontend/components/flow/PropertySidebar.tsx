@@ -296,8 +296,8 @@ export function PropertySidebar({ onToggle }: PropertySidebarProps) {
 
   return (
     <div className="w-80 h-full flex flex-col bg-base-200">
-      <div className="bg-base-200 p-4 border-b border-base-300 flex justify-between items-center">
-        <div className="flex-1 group relative">
+      <div className="bg-base-200 p-4 border-b border-base-300">
+        <div className="flex-1 group relative mb-2">
           <input
             type="text"
             value={selectedNode.data.editor_name}
@@ -316,6 +316,11 @@ export function PropertySidebar({ onToggle }: PropertySidebarProps) {
           />
           <PencilIcon className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-base-content/30 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
         </div>
+        {selectedNode.data.description && (
+          <div className="text-sm text-base-content/70">
+            {selectedNode.data.description}
+          </div>
+        )}
       </div>
 
       <div className="flex-1 p-4 space-y-4 overflow-y-auto">
