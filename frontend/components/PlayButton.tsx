@@ -45,7 +45,7 @@ export function DebugControls() {
   };
 
   return (
-    <div className="flex flex-col gap-2 -mt-1">
+    <div className="flex items-center">
       <button
         onClick={() => {
           buttonAction();

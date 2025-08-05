@@ -10,13 +10,13 @@ export function BottomBar() {
   const { unsavedChanges, saveChanges, saving } = useEditor();
 
   return (
-    <div className="w-full h-full bg-base-200 border-t border-base-300 z-30 h-16">
-      <div className="h-full flex items-center justify-between px-4">
-        <div className="flex flex-1">
+    <div className="w-full h-16 bg-base-200 border-t border-base-300 z-30">
+      <div className="h-full grid grid-cols-3 items-center px-4">
+        <div>
           <DebugControls />
         </div>
 
-        <div className="flex-1 flex justify-center">
+        <div className="flex justify-center items-center">
           {unsavedChanges && (
             <div className="flex items-center gap-3 bg-warning/10 border border-warning/20 rounded-lg px-4 py-2">
               <div className="w-2 h-2 bg-warning rounded-full animate-pulse"></div>
@@ -37,6 +37,7 @@ export function BottomBar() {
             </div>
           )}
         </div>
+        <div></div>
       </div>
     </div>
   );
