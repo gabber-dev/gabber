@@ -26,7 +26,7 @@ export function ContextMessageRoleEdit({ nodeId, padId }: PropertyEditProps) {
     <select
       value={runtimeValue || ""}
       onChange={handleChange}
-      className="select select-bordered w-full bg-base-300 border-2 border-black border-b-4 border-r-4 rounded-lg text-base-content font-vt323 text-sm hover:bg-base-100 transition-colors duration-150 focus:outline-none"
+      className="select select-bordered select-sm w-full bg-base-300 border-2 border-black border-b-4 border-r-4 rounded-lg text-base-content font-vt323 text-xs hover:bg-base-100 transition-colors duration-150 focus:outline-none"
     >
       <option value="" disabled className="text-base-content/60">
         Select a role
