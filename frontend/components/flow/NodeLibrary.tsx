@@ -333,7 +333,7 @@ export function NodeLibrary({ setIsModalOpen }: NodeLibraryProps) {
                 setSelectedSubcategory1(e.target.value || null);
                 setSelectedTag(null);
               }}
-              className="border border-accent/30 bg-base-200 text-accent px-1.5 py-0.5 text-xs w-[77px] cursor-pointer rounded hover:border-accent/50 hover:bg-base-300 transition-colors"
+              className="border border-accent/30 bg-base-200 text-accent px-1.5 py-0.5 text-xs w-[85px] cursor-pointer rounded hover:border-accent/50 hover:bg-base-300 transition-colors"
             >
               <option value="">Sub</option>
               {secondaryOptions.map((sub) => (
@@ -353,7 +353,7 @@ export function NodeLibrary({ setIsModalOpen }: NodeLibraryProps) {
               onChange={(e) => {
                 setSelectedTag(e.target.value || null);
               }}
-              className="border border-secondary/30 bg-base-200 text-secondary px-1.5 py-0.5 text-xs w-[77px] cursor-pointer rounded hover:border-secondary/50 hover:bg-base-300 transition-colors"
+              className="border border-secondary/30 bg-base-200 text-secondary px-1.5 py-0.5 text-xs w-[85px] cursor-pointer rounded hover:border-secondary/50 hover:bg-base-300 transition-colors"
             >
               <option value="">Tags</option>
               {tagOptions.map((tag) => (
