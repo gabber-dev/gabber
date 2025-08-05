@@ -40,9 +40,6 @@ class StateMachine(node.Node):
         ctx.complete()
         logging.info(f"Active state set to: {state.get_name().get_value()}")
 
-    def is_trigger_parameter(self, name: str) -> bool:
-        return False
-
     async def run(self):
         entry = cast(pad.StatelessSourcePad, self.get_pad_required("entry"))
         self.active_state = cast("State", entry.get_next_pads()[0].get_owner_node())
@@ -69,9 +66,11 @@ class StateMachine(node.Node):
                 name_id = p.get_id().replace("parameter_value_", "parameter_name_")
                 name_pad = cast(pad.PropertySinkPad, self.get_pad(name_id))
                 name = cast(str, name_pad.get_value())
-                if name in trigger_names:
-                    triggers_set[name] = True
+                triggers_set[name] = True
 
+                logging.debug(
+                    f"NEIL processed value task for {name} with value props: {self._get_property_values()} ts: {triggers_set} tns: {trigger_names}"
+                )
                 self.active_state.check_transition(
                     item.ctx, self._get_property_values(), triggers_set
                 )
@@ -117,8 +116,7 @@ class StateMachine(node.Node):
                     str,
                     cast(pad.PropertySinkPad, self.get_pad(name_id)).get_value(),
                 )
-                if self.is_trigger_parameter(name):
-                    trigger_names.append(name)
+                trigger_names.append(name)
         return trigger_names
 
     async def resolve_pads(self):
@@ -207,6 +205,11 @@ class StateMachine(node.Node):
         for pg in pgs_to_add:
             for p in pg:
                 self.pads.append(p)
+
+        self.rename_pads()
+        self.update_type_constraints()
+        self.update_parameter_names()
+        self.update_pad_types()
 
         states, state_transitions = self.get_all_states()
         if entry.get_next_pads():
