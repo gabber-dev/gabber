@@ -2,13 +2,21 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import logging
+from typing import TYPE_CHECKING
 
 from core import node, pad
 
-from .state_machine import StateMachine
+if TYPE_CHECKING:
+    from .state_machine import StateMachine
 
 
 class StateMachineMember(node.Node):
+    @classmethod
+    def get_metadata(cls) -> node.NodeMetadata:
+        return node.NodeMetadata(
+            primary="core", secondary="logic", tags=["state_machine", "member"]
+        )
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.state_machine: StateMachine | None = None
@@ -27,6 +35,7 @@ class StateMachineMember(node.Node):
                     continue
 
                 owner_node = prev_pad.get_owner_node()
+                from .state_machine import StateMachine
                 if isinstance(owner_node, StateMachine):
                     if (
                         self.state_machine is not None

@@ -17,7 +17,7 @@ class ProxyStatelessSink(node.Node):
     @classmethod
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(
-            primary="subgraph", secondary="proxy", tags=["sink", "stateless"]
+            primary="subgraph", secondary="sink", tags=["stateless", "proxy"]
         )
 
     async def resolve_pads(self):
