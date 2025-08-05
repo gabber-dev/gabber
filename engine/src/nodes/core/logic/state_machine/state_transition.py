@@ -168,6 +168,7 @@ class StateTransition(StateMachineMember):
                     cond_pads.pop()
 
         self.resolve_condition_pads()
+        self.sort_pads()
 
     def get_all_condition_pads(self) -> list[list[pad.PropertySinkPad]]:
         res: list[list[pad.PropertySinkPad]] = []
@@ -385,3 +386,12 @@ class StateTransition(StateMachineMember):
                         c_v.disconnect()
                         self.pads.remove(c_v)
             i += 1
+
+    def sort_pads(self):
+        state = cast(pad.StatelessSourcePad, self.get_pad_required("state"))
+        num_conditions_pad = cast(
+            pad.PropertySinkPad, self.get_pad_required("num_conditions")
+        )
+        entry_pads = [p for p in self.pads if p.get_id().startswith("entry_")]
+        condition_pads = [p for p in self.pads if p.get_id().startswith("condition_")]
+        self.pads = [state, num_conditions_pad] + entry_pads + condition_pads
