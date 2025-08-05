@@ -41,6 +41,10 @@ export class RemoteAudioTrack extends RemoteTrack {
     attachToElement(element: HTMLMediaElement): void {
         this.lkTrack.attach(element);
     }
+
+    detachFromElement(element: HTMLMediaElement): void {
+        this.lkTrack.detach(element);
+    }
 }
 
 export class RemoteVideoTrack extends RemoteTrack {
@@ -57,5 +61,9 @@ export class RemoteVideoTrack extends RemoteTrack {
 
     attachToElement(element: HTMLVideoElement): void {
         this.lkTrack.attach(element);
+    }
+
+    detachFromElement(element: HTMLVideoElement): void {
+        this.lkTrack.detach(element);
     }
 }

@@ -19,11 +19,16 @@
 import { RemoteAudioTrack as LKRemoteAudioTrack, RemoteVideoTrack as LKRemoteVideoTrack, RemoteTrack as LKRemoteTrack, Room, RemoteTrackPublication } from "livekit-client";
 import { RemoteAudioTrack, RemoteVideoTrack } from "./RemoteTrack";
 
+type AudioResolve = (track: RemoteAudioTrack) => void;
+type VideoResolve = (track: RemoteVideoTrack) => void;
+type Reject = (error: string) => void;
+
 export class Subscription {
     private room: Room;
     private _nodeId: string;
-    private audioCallbacks: {[key: string]: ((track: RemoteAudioTrack) => void)[]} = {};
-    private videoCallbacks: {[key: string]: ((track: RemoteVideoTrack) => void)[]} = {};
+    private audioCallbacks: {resolve: AudioResolve, reject: Reject}[] = [];
+    private videoCallbacks: {resolve: VideoResolve, reject: Reject}[] = [];
+    private publications: RemoteTrackPublication[] = [];
 
     constructor(params: {nodeId: string, livekitRoom: Room}) {
         this.room = params.livekitRoom;
@@ -36,12 +41,28 @@ export class Subscription {
         this.subscribeToPublications = this.subscribeToPublications.bind(this);
         this.getExistingPublications = this.getExistingPublications.bind(this);
         this.onTrackPublished = this.onTrackPublished.bind(this);
+        this.onDisconnected = this.onDisconnected.bind(this);
+        this.cleanup = this.cleanup.bind(this);
         this.room.on('trackSubscribed', this.onTrackSubscribed);
         this.room.on('trackPublished', this.onTrackPublished);
+        this.room.on('disconnected', this.onDisconnected);
     }
 
     public get nodeId(): string {
         return this._nodeId;
+    }
+
+    cleanup(): void {
+        for(const publication of this.publications) {
+            publication.setSubscribed(false);
+        }
+        this.publications = [];
+        this.room.off('trackSubscribed', this.onTrackSubscribed);
+        this.room.off('trackPublished', this.onTrackPublished);
+        this.audioCallbacks.forEach(callback => callback.reject("Subscription cleaned up"));
+        this.videoCallbacks.forEach(callback => callback.reject("Subscription cleaned up"));
+        this.audioCallbacks = [];
+        this.videoCallbacks = [];
     }
 
     async waitForAudioTrack(): Promise<RemoteAudioTrack> {
@@ -51,10 +72,7 @@ export class Subscription {
             return new RemoteAudioTrack({track: existingTracks[0] as LKRemoteAudioTrack});
         }
         const prom = new Promise<RemoteAudioTrack>((resolve, reject) => {
-            if(!this.audioCallbacks[this._nodeId]) {
-                this.audioCallbacks[this._nodeId] = [];
-            }
-            this.audioCallbacks[this._nodeId].push(resolve);
+            this.audioCallbacks.push({resolve, reject});
         });
         return prom;
     }
@@ -66,16 +84,14 @@ export class Subscription {
             return new RemoteVideoTrack({track: existingTracks[0] as LKRemoteVideoTrack});
         }
         const prom = new Promise<RemoteVideoTrack>((resolve, reject) => {
-            if(!this.videoCallbacks[this._nodeId]) {
-                this.videoCallbacks[this._nodeId] = [];
-            }
-            this.videoCallbacks[this._nodeId].push(resolve);
+            this.videoCallbacks.push({resolve, reject});
         });
         return prom;
     }
 
     private onTrackPublished(track: RemoteTrackPublication): void {
         if(track.trackName.startsWith(this._nodeId)) {
+            this.publications.push(track);
             track.setSubscribed(true);
         }
     }
@@ -87,20 +103,20 @@ export class Subscription {
         if(track.kind === 'audio') {
             const lkAudioTrack = track as LKRemoteAudioTrack;
             const res = new RemoteAudioTrack({track: lkAudioTrack});
-            const callbacks = this.audioCallbacks[this._nodeId];
-            if(callbacks) {
-                callbacks.forEach(callback => callback(res));
-                delete this.audioCallbacks[this._nodeId];
-            }
+            this.audioCallbacks.forEach(callback => callback.resolve(res));
+            this.audioCallbacks = [];
         } else if(track.kind === 'video') {
             const lkVideoTrack = track as LKRemoteVideoTrack;
             const res = new RemoteVideoTrack({track: lkVideoTrack});
-            const callbacks = this.videoCallbacks[this._nodeId];
-            if(callbacks) {
-                callbacks.forEach(callback => callback(res));
-                delete this.videoCallbacks[this._nodeId];
-            }
+            this.videoCallbacks.forEach(callback => callback.resolve(res));
+            this.videoCallbacks = [];
+        } else {
+            console.warn("Received unsupported track type:", track.kind);
         }
+    }
+
+    private onDisconnected(): void {
+        this.cleanup();
     }
 
     private subscribeToPublications(): void {

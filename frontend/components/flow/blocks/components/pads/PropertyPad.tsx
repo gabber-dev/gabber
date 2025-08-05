@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { PadEditorRepresentation } from "../../../../../generated/editor_server";
-import { usePropertyPad } from "./hooks/usePropertyPad";
+import { PadEditorRepresentation } from "@/generated/editor";
 import { PadHandle } from "./PadHandle";
 import { PropertyEdit } from "./property_edit/PropertyEdit";
+import { usePropertyPad } from "./hooks/usePropertyPad";
 
 type Props = {
   nodeId: string;
@@ -14,8 +14,7 @@ type Props = {
 };
 export function PropertyPad({ data, nodeId }: Props) {
   const isSource = data.type.indexOf("Source") !== -1;
-
-  const { singleAllowedType } = usePropertyPad(nodeId, data.id);
+  const { runtimeChanged } = usePropertyPad(nodeId, data.id);
 
   return (
     <div className={`relative w-full flex items-center`}>
@@ -23,6 +22,11 @@ export function PropertyPad({ data, nodeId }: Props) {
         <div
           className={`relative w-full flex gap-2 items-center ${isSource ? "justify-end" : "justify-start"}`}
         >
+          {runtimeChanged && (
+            <div className="flex items-center justify-center bg-secondary text-base-content text-sm pt-1 w-3 h-3 font-bold rounded-full">
+              *
+            </div>
+          )}
           <div className="text-sm text-accent font-medium">{data.id}</div>
           <div className={`absolute ${isSource ? "-right-4" : "-left-4"}`}>
             <PadHandle data={data} />

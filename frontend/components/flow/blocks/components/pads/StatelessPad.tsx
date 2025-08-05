@@ -8,6 +8,7 @@ import { PadHandle } from "./PadHandle";
 import { useStatelessPad } from "./hooks/useStatelessPad";
 import { useRun } from "@/hooks/useRun";
 import { useNodeId } from "@xyflow/react";
+import { useSourcePad } from "@gabber/client-react";
 
 type Props = {
   data: PadEditorRepresentation;
@@ -17,6 +18,8 @@ export function StatelessPad({ data }: Props) {
   const isSource = data.type.indexOf("Source") !== -1;
   const { singleAllowedType } = useStatelessPad(data.id);
   const { connectionState } = useRun();
+  const nodeId = useNodeId();
+  const { pushValue } = useSourcePad(nodeId || "error", data.id);
 
   const isTrigger = singleAllowedType?.type === "trigger";
 
@@ -30,9 +33,8 @@ export function StatelessPad({ data }: Props) {
         {isTrigger && isSource && connectionState === "connected" && (
           <button
             className="btn btn-secondary btn-sm px-1 text-xs py-0 h-5 box-border"
-            onClick={() => {
-              // TODO
-              // debugTrigger();
+            onClick={async () => {
+              pushValue({ value: "trigger" });
             }}
           >
             Test
