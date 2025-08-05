@@ -37,104 +37,100 @@ class StateTransition(StateMachineMember):
     def get_state_pad(self) -> pad.StatelessSourcePad:
         return cast(pad.StatelessSourcePad, self.get_pad_required("state"))
 
-    def check_condition_met(self, ctx: pad.RequestContext) -> bool:
-        all_conds = self.get_all_condition_pads()
-        for c_group in all_conds:
-            if self._check_single_condition(c_group):
-                return True
+    def check_condition_met(
+        self,
+        ctx: pad.RequestContext,
+        property_values: dict[str, Any],
+        triggers: dict[str, bool],
+    ) -> bool:
+        for name, value in property_values.items():
+            if not self._check_single_condition(name, value):
+                return False
+
+        for name, value in triggers.items():
+            if self.get_index_for_name(name) < 0:
+                continue
+
+            if not value:
+                return False
+
         ctx.complete()
-        return False
+        return True
 
-    def check_triggers(self, ctx: pad.RequestContext) -> bool:
-        pass
-
-    def _check_single_condition(self, cond_pads: list[pad.PropertySinkPad]) -> bool:
-        name_pad = cond_pads[0]
-        name = name_pad.get_value()
+    def _check_single_condition(self, name: str, value: Any) -> bool:
+        idx = self.get_index_for_name(name)
+        if idx < 0:
+            return True
+        operator = self.get_condition_operator(idx)
         if not self.state_machine:
             logging.error("StateMachine is not set for StateTransition.")
             return False
-        input_value = self.state_machine.get_property_value_by_name(name)
-        cond_len = len(cond_pads)
-        if cond_len == 1:
-            # Trigger case: condition met if input_value is truthy
-            return bool(input_value)
-        if cond_len < 2:
-            logging.error(f"Invalid condition group size: {cond_len}")
-            return False
-        operator_pad = cond_pads[1]
-        operator = operator_pad.get_value()
-        if operator in ["NOT_EMPTY", "EMPTY"]:
-            if cond_len != 2:
-                logging.error(
-                    f"Unary operator {operator} but condition group size is {cond_len}"
-                )
-                return False
-            if operator == "NOT_EMPTY":
-                return bool(input_value)
+        if isinstance(value, str):
+            if operator == "==":
+                check_value = self.get_condition_value(idx)
+                return value == check_value
+            elif operator == "!=":
+                check_value = self.get_condition_value(idx)
+                return value != check_value
+            elif operator == "CONTAINS":
+                check_value = self.get_condition_value(idx)
+                return isinstance(value, str) and check_value in value
+            elif operator == "STARTS_WITH":
+                check_value = self.get_condition_value(idx)
+                return isinstance(value, str) and value.startswith(check_value)
+            elif operator == "ENDS_WITH":
+                check_value = self.get_condition_value(idx)
+                return isinstance(value, str) and value.endswith(check_value)
+            elif operator == "NOT_EMPTY":
+                return bool(value)
             elif operator == "EMPTY":
-                return not bool(input_value)
-        else:
-            if cond_len != 3:
-                logging.error(
-                    f"Binary operator {operator} but condition group size is {cond_len}"
-                )
-                return False
-            value_pad = cond_pads[2]
-            value = value_pad.get_value()
-            value_tcs = value_pad.get_type_constraints()
-            if not value_tcs or len(value_tcs) != 1:
-                logging.error(
-                    f"Condition value pad {value_pad.get_id()} has invalid type constraints."
-                )
-                return False
-            value_tc = value_tcs[0]
-            if isinstance(value_tc, pad.types.String):
-                if operator == "==":
-                    return input_value == value
-                elif operator == "!=":
-                    return input_value != value
-                elif operator == "CONTAINS":
-                    return isinstance(input_value, str) and value in input_value
-                elif operator == "STARTS_WITH":
-                    return isinstance(input_value, str) and input_value.startswith(
-                        value
-                    )
-                elif operator == "ENDS_WITH":
-                    return isinstance(input_value, str) and input_value.endswith(value)
-            elif isinstance(value_tc, pad.types.Integer):
-                if operator == "<":
-                    return input_value < value
-                elif operator == "<=":
-                    return input_value <= value
-                elif operator == "==":
-                    return input_value == value
-                elif operator == "!=":
-                    return input_value != value
-                elif operator == ">=":
-                    return input_value >= value
-                elif operator == ">":
-                    return input_value > value
-            elif isinstance(value_tc, pad.types.Float):
-                if operator == "<":
-                    return input_value < value
-                elif operator == "<=":
-                    return input_value <= value
-                elif operator == "==":
-                    return input_value == value
-                elif operator == "!=":
-                    return input_value != value
-                elif operator == ">=":
-                    return input_value >= value
-                elif operator == ">":
-                    return input_value > value
-            elif isinstance(value_tc, pad.types.Boolean):
-                if operator == "==":
-                    return input_value == value
-                elif operator == "!=":
-                    return input_value != value
+                return not bool(value)
+        elif isinstance(value, int):
+            if operator == "==":
+                check_value = self.get_condition_value(idx)
+                return value == check_value
+            elif operator == "!=":
+                check_value = self.get_condition_value(idx)
+                return value != check_value
+            elif operator == "<":
+                check_value = self.get_condition_value(idx)
+                return value < check_value
+            elif operator == "<=":
+                check_value = self.get_condition_value(idx)
+                return value <= check_value
+            elif operator == ">":
+                check_value = self.get_condition_value(idx)
+                return value > check_value
+            elif operator == ">=":
+                check_value = self.get_condition_value(idx)
+                return value >= check_value
+        elif isinstance(value, float):
+            if operator == "==":
+                check_value = self.get_condition_value(idx)
+                return value == check_value
+            elif operator == "!=":
+                check_value = self.get_condition_value(idx)
+                return value != check_value
+            elif operator == "<":
+                check_value = self.get_condition_value(idx)
+                return value < check_value
+            elif operator == "<=":
+                check_value = self.get_condition_value(idx)
+                return value <= check_value
+            elif operator == ">":
+                check_value = self.get_condition_value(idx)
+                return value > check_value
+            elif operator == ">=":
+                check_value = self.get_condition_value(idx)
+                return value >= check_value
+        elif isinstance(value, bool):
+            if operator == "==":
+                check_value = self.get_condition_value(idx)
+                return value == check_value
+            elif operator == "!=":
+                check_value = self.get_condition_value(idx)
+                return value != check_value
             return False
-        logging.error(f"Invalid condition group size: {cond_len}")
         return False
 
     async def resolve_pads(self):
@@ -178,6 +174,7 @@ class StateTransition(StateMachineMember):
                     cond_pads.pop()
 
         self.resolve_condition_pads()
+        self.sort_pads()
 
     def get_all_condition_pads(self) -> list[list[pad.PropertySinkPad]]:
         res: list[list[pad.PropertySinkPad]] = []
@@ -205,13 +202,11 @@ class StateTransition(StateMachineMember):
             i += 1
         return res
 
-    def get_condition_parameter(self, index: int) -> str:
-        p = self.get_pad(f"condition_parameter_{index}")
-        if not isinstance(p, pad.PropertySinkPad):
-            raise ValueError(
-                f"Pad condition_parameter_{index} is not a PropertySinkPad"
-            )
-        return p.get_value()
+    def get_index_for_name(self, name: str) -> int:
+        for i, p in enumerate(self.get_all_condition_pads()):
+            if p[0].get_value() == name:
+                return i
+        return -1
 
     def get_condition_operator(self, index: int) -> str:
         p = self.get_pad(f"condition_operator_{index}")
@@ -397,3 +392,12 @@ class StateTransition(StateMachineMember):
                         c_v.disconnect()
                         self.pads.remove(c_v)
             i += 1
+
+    def sort_pads(self):
+        state = cast(pad.StatelessSourcePad, self.get_pad_required("state"))
+        num_conditions_pad = cast(
+            pad.PropertySinkPad, self.get_pad_required("num_conditions")
+        )
+        entry_pads = [p for p in self.pads if p.get_id().startswith("entry_")]
+        condition_pads = [p for p in self.pads if p.get_id().startswith("condition_")]
+        self.pads = [state, num_conditions_pad] + entry_pads + condition_pads

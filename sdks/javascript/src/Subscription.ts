@@ -31,6 +31,7 @@ export class Subscription {
     private publications: RemoteTrackPublication[] = [];
 
     constructor(params: {nodeId: string, livekitRoom: Room}) {
+        console.debug("Creating new Subscription instance for node", params.nodeId);
         this.room = params.livekitRoom;
         this._nodeId = params.nodeId;
         this.checkTrackSid = this.checkTrackSid.bind(this);
@@ -59,6 +60,7 @@ export class Subscription {
         this.publications = [];
         this.room.off('trackSubscribed', this.onTrackSubscribed);
         this.room.off('trackPublished', this.onTrackPublished);
+        this.room.off('disconnected', this.onDisconnected);
         this.audioCallbacks.forEach(callback => callback.reject("Subscription cleaned up"));
         this.videoCallbacks.forEach(callback => callback.reject("Subscription cleaned up"));
         this.audioCallbacks = [];

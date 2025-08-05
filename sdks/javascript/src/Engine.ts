@@ -33,6 +33,7 @@ export class Engine  {
   private lastEmittedConnectionState: ConnectionState = "disconnected";
 
   constructor(params: {handler?: EngineHandler}) {
+    console.debug("Creating new Engine instance");
     this.livekitRoom = new Room();
     this.handler = params.handler;
     this.connect = this.connect.bind(this);
