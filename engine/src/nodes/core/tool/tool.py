@@ -18,7 +18,7 @@ class Tool(node.Node):
     @classmethod
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(
-            primary="ai", secondary="tools", tags=["function", "definition"]
+            primary="core", secondary="tools", tags=["function", "definition"]
         )
 
     async def resolve_pads(self):

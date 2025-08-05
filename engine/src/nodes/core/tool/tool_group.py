@@ -19,7 +19,7 @@ class ToolGroup(node.Node):
     @classmethod
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(
-            primary="ai", secondary="tools", tags=["collection", "group"]
+            primary="core", secondary="tools", tags=["collection", "group"]
         )
 
     @property

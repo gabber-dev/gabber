@@ -14,7 +14,7 @@ class SetToolResult(node.Node):
 
     @classmethod
     def get_metadata(cls) -> NodeMetadata:
-        return NodeMetadata(primary="ai", secondary="tools", tags=["result", "set"])
+        return NodeMetadata(primary="core", secondary="tools", tags=["result", "set"])
 
     async def resolve_pads(self):
         sink = cast(pad.StatelessSinkPad, self.get_pad("result"))

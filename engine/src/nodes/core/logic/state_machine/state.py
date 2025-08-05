@@ -4,13 +4,19 @@
 import logging
 from typing import Any, cast
 
-from core import pad
+from core import node, pad
 
 from .state_machine_member import StateMachineMember
 from .state_transition import StateTransition
 
 
 class State(StateMachineMember):
+    @classmethod
+    def get_metadata(cls) -> node.NodeMetadata:
+        return node.NodeMetadata(
+            primary="core", secondary="logic", tags=["state_machine", "state"]
+        )
+
     def get_name(self) -> pad.PropertySinkPad:
         res = self.get_pad_required("name")
         return cast(pad.PropertySinkPad, res)

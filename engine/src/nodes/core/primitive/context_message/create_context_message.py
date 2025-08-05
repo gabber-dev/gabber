@@ -16,7 +16,7 @@ class CreateContextMessage(Node):
     @classmethod
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(
-            primary="data", secondary="primitive", tags=["context", "message"]
+            primary="ai", secondary="llm", tags=["context", "message"]
         )
 
     async def resolve_pads(self):

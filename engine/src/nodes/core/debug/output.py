@@ -20,7 +20,7 @@ class Output(Node):
     @classmethod
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(
-            primary="core", secondary="debug", tags=["output", "display"]
+            primary="core", secondary="media", tags=["output", "display"]
         )
 
     async def resolve_pads(self):
