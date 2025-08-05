@@ -29,7 +29,9 @@ export function usePad<DataType extends PadTriggeredValue>(nodeId: string, padId
 
     useEffect(() => {
         return () => {
-            padRef.current!.destroy();
+            console.debug("Cleaning up pad", padRef.current);
+            padRef.current?.destroy();
+            padRef.current = undefined;
         };
     }, []);
 
