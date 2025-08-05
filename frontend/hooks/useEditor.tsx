@@ -13,6 +13,7 @@ import {
   GraphLibraryItem_SubGraph,
   InsertNodeEdit,
   InsertSubGraphEdit,
+  NodeEditorRepresentation,
   RemoveNodeEdit,
   Request,
   Response,
@@ -35,19 +36,20 @@ import React, {
   useEffect,
   useCallback,
   useMemo,
+  useRef,
 } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import toast from "react-hot-toast";
 
 type ReactFlowRepresentation = {
-  nodes: Node[];
+  nodes: Node<NodeEditorRepresentation>[];
   edges: Edge[];
 };
 
 type EditorContextType = {
   debug: boolean;
   editorRepresentation: GraphEditorRepresentation;
-  reactFlowRepresentation: Record<string, any>;
+  reactFlowRepresentation: ReactFlowRepresentation;
   isConnected: boolean;
   connectionStatus: "connecting" | "connected" | "disconnected" | "error";
   nodeLibrary?: (GraphLibraryItem_Node | GraphLibraryItem_SubGraph)[];
@@ -195,22 +197,24 @@ export function EditorProvider({
     [sendRequest],
   );
 
+  const pendingEdits = useRef<Map<string, UpdatePadEdit>>(new Map());
+  const debounceTimers = useRef<Map<string, number>>(new Map());
+
   const updatePad = useCallback(
     (edit: UpdatePadEdit) => {
-      sendRequest({
-        type: "edit",
-        edit,
-      });
+      const key = `${edit.node}-${edit.pad}`;
+
+      // Update local representation immediately
       setLocalRepresentation((prev) => {
         if (!prev) return prev;
-        let node = prev.nodes.find((n) => n.id === edit.node);
+        const node = prev.nodes.find((n) => n.id === edit.node);
         if (!node) {
           console.warn(
             `Node with id ${edit.node} not found in local representation`,
           );
           return prev;
         }
-        let pad = node.pads.find((p) => p.id === edit.pad);
+        const pad = node.pads.find((p) => p.id === edit.pad);
         if (!pad) {
           console.warn(
             `Pad with id ${edit.pad} not found in node ${edit.node}`,
@@ -218,11 +222,41 @@ export function EditorProvider({
           return prev;
         }
 
-        pad = { ...pad, value: edit.value };
-        node.pads = node.pads.map((p) => (p.id === edit.pad ? pad : p));
-        node = { ...node };
-        return { ...prev };
+        const updatedPad = { ...pad, value: edit.value };
+        const updatedPads = node.pads.map((p) =>
+          p.id === edit.pad ? updatedPad : p,
+        );
+        const updatedNode = { ...node, pads: updatedPads };
+        const updatedNodes = prev.nodes.map((n) =>
+          n.id === edit.node ? updatedNode : n,
+        );
+
+        return { ...prev, nodes: updatedNodes };
       });
+
+      // Set pending edit
+      pendingEdits.current.set(key, edit);
+
+      // Clear existing timer if any
+      const existingTimer = debounceTimers.current.get(key);
+      if (existingTimer) {
+        clearTimeout(existingTimer);
+      }
+
+      // Set new debounce timer
+      const timer = setTimeout(() => {
+        const pendingEdit = pendingEdits.current.get(key);
+        if (pendingEdit) {
+          sendRequest({
+            type: "edit",
+            edit: pendingEdit,
+          });
+          pendingEdits.current.delete(key);
+        }
+        debounceTimers.current.delete(key);
+      }, 250) as unknown as number;
+
+      debounceTimers.current.set(key, timer);
     },
     [sendRequest],
   );
