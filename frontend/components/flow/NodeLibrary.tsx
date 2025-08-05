@@ -162,9 +162,8 @@ export function NodeLibrary({ setIsModalOpen }: NodeLibraryProps) {
           editor_position: [0, 0],
         });
       }
-      setIsModalOpen(false);
     },
-    [insertNode, insertSubGraph, setIsModalOpen],
+    [insertNode, insertSubGraph],
   );
 
   const handleDragStart = useCallback(
@@ -243,14 +242,12 @@ export function NodeLibrary({ setIsModalOpen }: NodeLibraryProps) {
       }
 
       setDraggedItem(null);
-      setIsModalOpen(false);
     },
     [
       draggedItem,
       insertNode,
       insertSubGraph,
       screenToFlowPosition,
-      setIsModalOpen,
     ],
   );
 
@@ -274,19 +271,39 @@ export function NodeLibrary({ setIsModalOpen }: NodeLibraryProps) {
   }, [setupDropZone]);
 
   return (
-    <div className="w-full h-full p-4 bg-base-300 text-base-content overflow-hidden flex flex-col">
+    <div className="w-full h-full p-3 bg-base-300 text-base-content overflow-hidden flex flex-col">
       {/* Header */}
-      <div className="mb-6">
-        <h2 className="text-2xl font-vt323 uppercase tracking-wider text-primary">
+      <div className="mb-2 flex justify-between items-center">
+        <h2 className="text-lg font-vt323 uppercase tracking-wider text-primary">
           Node Library
         </h2>
-        <p className="text-sm text-base-content/70 font-medium mb-2">
-          Drag blocks onto the canvas or click to add at origin
-        </p>
+        <button
+          onClick={() => setIsModalOpen(false)}
+          className="text-xs font-medium bg-error/20 text-error border border-error/30 rounded hover:bg-error/30 transition-colors px-1.5 py-0.5"
+        >
+          Close
+        </button>
+      </div>
+
+      {/* Search input */}
+      <div className="relative mb-2">
+        <input
+          type="text"
+          placeholder="Search nodes..."
+          value={searchQuery}
+          onChange={handleSearchChange}
+          className="w-full py-1.5 px-2 bg-base-100 border border-primary/30 rounded 
+                     focus:outline-none focus:border-primary
+                     transition-all duration-300 text-sm text-base-content
+                     placeholder:text-base-content/50"
+        />
+        <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+          <MagnifyingGlassIcon className="h-4 w-4 text-primary/50" />
+        </div>
       </div>
 
       {/* Top Filters */}
-      <div className="flex flex-nowrap gap-2 mb-4 overflow-x-auto">
+      <div className="flex flex-nowrap gap-1.5 mb-2 overflow-x-auto">
         {/* Primary Category Select */}
         <div className="flex-shrink-0">
           <select
@@ -296,7 +313,7 @@ export function NodeLibrary({ setIsModalOpen }: NodeLibraryProps) {
               setSelectedSubcategory1(null);
               setSelectedTag(null);
             }}
-            className="border border-primary/30 bg-base-200 text-primary px-2 py-1 text-xs w-20 cursor-pointer rounded hover:border-primary/50 hover:bg-base-300 transition-colors"
+            className="border border-primary/30 bg-base-200 text-primary px-1.5 py-0.5 text-xs w-[85px] cursor-pointer rounded hover:border-primary/50 hover:bg-base-300 transition-colors"
           >
             <option value="">Primary</option>
             {primaryOptions.map((category) => (
@@ -316,7 +333,7 @@ export function NodeLibrary({ setIsModalOpen }: NodeLibraryProps) {
                 setSelectedSubcategory1(e.target.value || null);
                 setSelectedTag(null);
               }}
-              className="border border-accent/30 bg-base-200 text-accent px-2 py-1 text-xs w-20 cursor-pointer rounded hover:border-accent/50 hover:bg-base-300 transition-colors"
+              className="border border-accent/30 bg-base-200 text-accent px-1.5 py-0.5 text-xs w-[77px] cursor-pointer rounded hover:border-accent/50 hover:bg-base-300 transition-colors"
             >
               <option value="">Sub</option>
               {secondaryOptions.map((sub) => (
@@ -336,7 +353,7 @@ export function NodeLibrary({ setIsModalOpen }: NodeLibraryProps) {
               onChange={(e) => {
                 setSelectedTag(e.target.value || null);
               }}
-              className="border border-secondary/30 bg-base-200 text-secondary px-2 py-1 text-xs w-20 cursor-pointer rounded hover:border-secondary/50 hover:bg-base-300 transition-colors"
+              className="border border-secondary/30 bg-base-200 text-secondary px-1.5 py-0.5 text-xs w-[77px] cursor-pointer rounded hover:border-secondary/50 hover:bg-base-300 transition-colors"
             >
               <option value="">Tags</option>
               {tagOptions.map((tag) => (
@@ -352,39 +369,18 @@ export function NodeLibrary({ setIsModalOpen }: NodeLibraryProps) {
         {(selectedMainCategory || selectedSubcategory1 || selectedTag) && (
           <button
             onClick={clearAllFilters}
-            className="border border-base-content/30 bg-base-200 text-base-content/70 hover:text-base-content px-2 py-1 text-xs w-16 flex-shrink-0 cursor-pointer rounded hover:border-base-content/50 hover:bg-base-300 transition-colors"
+            className="border border-base-content/30 bg-base-200 text-base-content/70 hover:text-base-content px-1.5 py-0.5 text-xs w-12 flex-shrink-0 cursor-pointer rounded hover:border-base-content/50 hover:bg-base-300 transition-colors"
           >
-            <XMarkIcon className="h-3 w-3 mr-1 inline" />
-            Clear
+            <XMarkIcon className="h-3 w-3 inline" />
           </button>
         )}
       </div>
 
-      {/* Search input */}
-      <div className="relative mb-6">
-        <input
-          type="text"
-          placeholder="Search nodes by name, description, or tags..."
-          value={searchQuery}
-          onChange={handleSearchChange}
-          className="w-full p-3 bg-base-100 border-2 border-primary/30 rounded-lg 
-                     focus:outline-none focus:border-primary focus:shadow-[0_0_10px_rgba(252,211,77,0.3)]
-                     transition-all duration-300 font-medium text-base-content
-                     placeholder:text-base-content/50"
-        />
-        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-          <MagnifyingGlassIcon className="h-5 w-5 text-primary/50" />
-        </div>
-      </div>
-
       {/* Node List */}
-      <div className="flex-1 overflow-y-auto pr-1">
+      <div className="flex-1 overflow-y-auto">
         {filteredBlocks.length > 0 ? (
-          <div className="space-y-3 p-2">
+          <div className="space-y-2 px-2 pt-2 pb-4">
             {filteredBlocks.map((block) => {
-              const metadata = (block as any).metadata;
-              const tags = metadata?.tags || [];
-
               return (
                 <div
                   key={block.type === "subgraph" ? block.id : block.name}
@@ -393,66 +389,32 @@ export function NodeLibrary({ setIsModalOpen }: NodeLibraryProps) {
                   onDragEnd={handleDragEnd}
                   onClick={() => handleBlockSelect(block)}
                   className={`
-                    group relative p-4 rounded-lg cursor-grab active:cursor-grabbing
-                    border-2 border-primary bg-base-200
-                    hover:shadow-[2px_2px_0px_0px] hover:shadow-primary/60
+                    group relative p-2 rounded cursor-grab active:cursor-grabbing
+                    border border-primary bg-base-200
+                    hover:shadow-[1px_1px_0px_0px] hover:shadow-primary/60
                     hover:-translate-x-0.5 hover:-translate-y-0.5
-                    active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_0px]
+                    active:translate-x-0.5 active:translate-y-0.5
                     transition-all duration-150 ease-in-out
                     ${draggedItem?.type === block.type ? "opacity-50 scale-95" : ""}
-                    ambient-float-delay
                     flex flex-col
                   `}
                 >
-                  {/* Header with title */}
-                  <div className="flex items-start justify-between mb-2">
-                    <h3
-                      className={`
-                        font-bold text-primary group-hover:text-accent transition-colors
-                        ${block.name.length > 25 ? "text-sm" : "text-base"}
-                        flex-1
-                      `}
-                    >
-                      {block.name}
-                    </h3>
-                  </div>
-
-                  {/* Description */}
+                  <h3 className="font-medium text-sm text-primary group-hover:text-accent transition-colors">
+                    {block.name}
+                  </h3>
                   {(block as any).description && (
-                    <p className="text-sm text-base-content/70 leading-relaxed mb-3">
+                    <p className="text-xs text-base-content/70 mt-0.5">
                       {(block as any).description}
                     </p>
                   )}
-
-                  {/* Tags */}
-                  {tags.length > 0 && (
-                    <div className="flex items-center gap-1 mt-auto text-xs">
-                      {tags.slice(0, 3).map((tag: string) => (
-                        <span
-                          key={tag}
-                          className="px-1.5 py-0.5 rounded font-vt323 bg-accent/20 text-accent border border-accent/30"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                      {tags.length > 3 && (
-                        <span className="px-1.5 py-0.5 rounded font-vt323 bg-base-100 text-base-content border border-base-300">
-                          +{tags.length - 3}
-                        </span>
-                      )}
+                  <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-base-300 p-1 rounded-sm">
+                    <div className="text-[10px] text-accent font-vt323 bg-base-300 px-1 rounded-sm border border-accent/30">
+                      Click = Origin
                     </div>
-                  )}
-
-                  {/* Drag hint */}
-                  <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="text-xs text-primary font-vt323 uppercase bg-base-300 px-1 py-0.5 rounded border border-primary/30">
-                      Drag
+                    <div className="text-[10px] text-primary font-vt323 bg-base-300 px-1 rounded-sm border border-primary/30">
+                      Drag = Place
                     </div>
                   </div>
-
-                  {/* Arcade-style corner decorations */}
-                  <div className="absolute top-1 left-1 w-2 h-2 border-l-2 border-t-2 border-primary/30"></div>
-                  <div className="absolute bottom-1 right-1 w-2 h-2 border-r-2 border-b-2 border-primary/30"></div>
                 </div>
               );
             })}
@@ -477,19 +439,7 @@ export function NodeLibrary({ setIsModalOpen }: NodeLibraryProps) {
         )}
       </div>
 
-      {/* Footer with instructions */}
-      <div className="mt-4 pt-4 border-t border-primary/20">
-        <div className="text-xs text-base-content/60 font-medium space-y-1">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-accent rounded-full"></div>
-            <span>Click to add at origin</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-primary rounded-full"></div>
-            <span>Drag to position on canvas</span>
-          </div>
-        </div>
-      </div>
+
     </div>
   );
 }
