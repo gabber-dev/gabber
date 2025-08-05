@@ -23,9 +23,7 @@ import { PropertySidebar } from "./PropertySidebar";
 import { HybridEdge } from "./edges/HybridEdge";
 import { CustomConnectionLine } from "./edges/CustomConnectionLine";
 
-import {
-  getPrimaryDataType,
-} from "./blocks/components/pads/utils/dataTypeColors";
+import { getPrimaryDataType } from "./blocks/components/pads/utils/dataTypeColors";
 
 const edgeTypes = {
   hybrid: HybridEdge,
@@ -74,7 +72,7 @@ function FlowEditInner() {
         (node: Node) => node.id === edge.source,
       );
       const sourcePad = sourceNode?.data.pads.find(
-        (pad: any) => pad.id === edge.sourceHandle,
+        (pad) => pad.id === edge.sourceHandle,
       );
       const dataType = getPrimaryDataType(sourcePad?.allowed_types || []);
       return {
