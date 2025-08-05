@@ -4,7 +4,7 @@
 import logging
 from typing import Any, cast
 
-from core import pad
+from core import node, pad
 
 from .state_machine_member import StateMachineMember
 
@@ -28,6 +28,12 @@ ALL_TRIGGER_OPERATORS: list[str] = []
 
 
 class StateTransition(StateMachineMember):
+    @classmethod
+    def get_metadata(cls) -> node.NodeMetadata:
+        return node.NodeMetadata(
+            primary="core", secondary="logic", tags=["state_machine", "transition"]
+        )
+
     def get_state_pad(self) -> pad.StatelessSourcePad:
         return cast(pad.StatelessSourcePad, self.get_pad_required("state"))
 

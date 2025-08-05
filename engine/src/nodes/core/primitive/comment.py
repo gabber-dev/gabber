@@ -14,8 +14,8 @@ class Comment(node.Node):
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(
             primary="core",
-            secondary="primitive",
-            tags=["documentation", "comment", "note"],
+            secondary="utility",
+            tags=["documentation", "comment"],
         )
 
     async def resolve_pads(self):

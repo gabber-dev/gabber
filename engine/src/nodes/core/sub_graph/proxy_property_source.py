@@ -16,7 +16,7 @@ class ProxyPropertySource(node.Node):
     @classmethod
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(
-            primary="subgraph", secondary="proxy", tags=["property", "source"]
+            primary="subgraph", secondary="source", tags=["property", "source"]
         )
 
     async def resolve_pads(self):

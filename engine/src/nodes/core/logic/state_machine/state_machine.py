@@ -22,6 +22,12 @@ ALL_PARAMETER_TYPES: list[pad.types.BasePadType] = [
 
 
 class StateMachine(node.Node):
+    @classmethod
+    def get_metadata(cls) -> node.NodeMetadata:
+        return node.NodeMetadata(
+            primary="core", secondary="logic", tags=["state_machine", "container"]
+        )
+
     def set_active_state(self, state: "State", ctx: pad.RequestContext):
         current_state = cast(
             pad.PropertySourcePad, self.get_pad_required("current_state")

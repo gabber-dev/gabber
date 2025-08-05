@@ -13,7 +13,7 @@ class ButtonTrigger(node.Node):
     @classmethod
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(
-            primary="core", secondary="debug", tags=["trigger", "manual"]
+            primary="core", secondary="utility", tags=["trigger", "debug"]
         )
 
     async def resolve_pads(self):

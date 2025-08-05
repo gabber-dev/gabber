@@ -5,10 +5,16 @@ import logging
 from typing import cast
 
 from core import pad
-from core.node import Node
+from core.node import Node, NodeMetadata
 
 
 class EnumSwitch(Node):
+    @classmethod
+    def get_metadata(cls) -> NodeMetadata:
+        return NodeMetadata(
+            primary="core", secondary="utility", tags=["switch", "enum"]
+        )
+
     async def resolve_pads(self):
         sink = cast(pad.PropertySinkPad, self.get_pad("sink"))
         if not sink:

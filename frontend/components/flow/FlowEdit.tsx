@@ -23,6 +23,10 @@ import { PropertySidebar } from "./PropertySidebar";
 import { HybridEdge } from "./edges/HybridEdge";
 import { CustomConnectionLine } from "./edges/CustomConnectionLine";
 
+import {
+  getPrimaryDataType,
+} from "./blocks/components/pads/utils/dataTypeColors";
+
 const edgeTypes = {
   hybrid: HybridEdge,
 };
@@ -64,11 +68,24 @@ function FlowEditInner() {
   }, [selectedNode, isPropertyPanelOpen, handlePropertyPanelToggle]);
 
   const styledEdges = useMemo(() => {
-    return reactFlowRepresentation.edges.map((edge: Edge) => ({
-      ...edge,
-      type: "hybrid",
-    }));
-  }, [reactFlowRepresentation.edges]);
+    return reactFlowRepresentation.edges.map((edge: Edge) => {
+      const sourceNode = reactFlowRepresentation.nodes.find(
+        (node: Node) => node.id === edge.source,
+      );
+      const sourcePad = sourceNode?.data.pads.find(
+        (pad: any) => pad.id === edge.sourceHandle,
+      );
+      const dataType = getPrimaryDataType(sourcePad?.allowed_types || []);
+      return {
+        ...edge,
+        type: "hybrid",
+        data: {
+          ...edge.data,
+          dataType,
+        },
+      };
+    });
+  }, [reactFlowRepresentation.edges, reactFlowRepresentation.nodes]);
 
   return (
     <div className="relative w-full h-full flex flex-col">
@@ -95,6 +112,8 @@ function FlowEditInner() {
             connectionLineComponent={CustomConnectionLine}
             fitView
             nodeTypes={{ default: BaseBlock }}
+            snapGrid={[12, 12]}
+            snapToGrid={true}
             defaultEdgeOptions={{
               type: "hybrid",
               style: { strokeWidth: 2, stroke: "#FCD34D" },
