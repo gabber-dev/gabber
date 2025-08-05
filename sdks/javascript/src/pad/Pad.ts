@@ -54,6 +54,7 @@ export class BasePad<DataType extends PadTriggeredValue> {
     }
 
     public destroy(): void {
+        console.debug("Destroying pad", this.nodeId, this.padId);
         this.livekitRoom.off('dataReceived', this.onData);
         this.handlers = [];
         this.pendingRequests.clear();
