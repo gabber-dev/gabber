@@ -4,21 +4,21 @@
  */
 
 import { getBezierPath, BaseEdge, EdgeProps, Position } from "@xyflow/react";
+import { getDataTypeColor } from "../blocks/components/pads/utils/dataTypeColors";
 
 const HANDLE_OFFSET = 20;
 const BOTTOM_OFFSET = 80;
 
 export function HybridEdge({
-  id,
   sourceX,
   sourceY,
   targetX,
   targetY,
   sourcePosition,
   targetPosition,
-  source,
   style = {},
   markerEnd,
+  data,
 }: EdgeProps) {
   // Determine if we should use step edge logic
   const isBackward = sourceX > targetX;
@@ -55,10 +55,14 @@ export function HybridEdge({
     });
   }
 
+  const color = getDataTypeColor(
+    typeof data?.dataType === "string" ? data.dataType : "default",
+  );
+
   return (
     <BaseEdge
       path={edgePath}
-      style={{ ...style, strokeWidth: 2, stroke: "#FCD34D" }}
+      style={{ ...style, strokeWidth: 2, stroke: color.background }}
       markerEnd={markerEnd}
     />
   );
