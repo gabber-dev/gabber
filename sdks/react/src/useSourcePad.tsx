@@ -8,10 +8,13 @@ type UseSourcePadType<DataType extends PadTriggeredValue> = {
 
 export function useSourcePad<DataType extends PadTriggeredValue>(nodeId: string, padId: string): UseSourcePadType<DataType> {
     const { engineRef } = useEngineInternal();
-    const padRef = useRef<SourcePad<DataType>>(engineRef.current.getSourcePad<DataType>(nodeId, padId));
+    const padRef = useRef<SourcePad<DataType> | undefined>(undefined);
+    if (!padRef.current) {
+        padRef.current = engineRef.current.getSourcePad<DataType>(nodeId, padId);
+    }
 
     const pushValue = useCallback(async (v: DataType) => {
-        await padRef.current.pushValue(v);
+        await padRef.current!.pushValue(v);
     }, [engineRef, nodeId, padId]);
 
     return {
