@@ -60,7 +60,7 @@ class StateMachine(node.Node):
         req_parent: str = "UNSET"
 
         async def value_task(p: pad.SinkPad):
-            nonlocal triggers_set
+            nonlocal triggers_set, req_parent
             async for item in p:
                 if not self.active_state:
                     logging.error("No active state to process value task.")
@@ -68,6 +68,8 @@ class StateMachine(node.Node):
                     continue
                 if item.ctx.original_request.id != req_parent:
                     triggers_set = {name: False for name in trigger_names}
+
+                req_parent = item.ctx.original_request.id
 
                 name_id = p.get_id().replace("parameter_value_", "parameter_name_")
                 name_pad = cast(pad.PropertySinkPad, self.get_pad(name_id))
