@@ -134,6 +134,19 @@ class SileroVAD(node.Node):
             )
             self.pads.append(speech_duration_ms)
 
+        pre_speech_duration_ms = cast(
+            pad.PropertySinkPad, self.get_pad("pre_speech_duration_ms")
+        )
+        if not pre_speech_duration_ms:
+            pre_speech_duration_ms = pad.PropertySinkPad(
+                id="pre_speech_duration_ms",
+                group="pre_speech_duration_ms",
+                owner_node=self,
+                type_constraints=[pad.types.Float(minimum=0.0, maximum=1000.0)],
+                value=100.0,
+            )
+            self.pads.append(pre_speech_duration_ms)
+
     def _convert_audio_data_to_float(
         self, audio_data: NDArray[np.int16]
     ) -> NDArray[np.float32] | None:
@@ -152,6 +165,9 @@ class SileroVAD(node.Node):
         speech_duration_ms = cast(
             pad.PropertySinkPad, self.get_pad_required("speech_duration_ms")
         )
+        pre_speech_duration_ms = cast(
+            pad.PropertySinkPad, self.get_pad_required("pre_speech_duration_ms")
+        )
         audio_sink = cast(pad.StatelessSinkPad, self.get_pad_required("audio"))
         logger.info("VAD node starting...")
         self._vad_engine = vad.SileroVAD()
@@ -160,15 +176,16 @@ class SileroVAD(node.Node):
         self._silence_duration_ms_counter = 0.0
         self._speech_duration_ms_counter = 0.0
         self._continued_speech_emitted = False
-        self._audio_accumulator = NDArray[np.float32]([]).reshape(1, -1)
+        self._audio_accumulator: NDArray[np.float32] = np.array([], dtype=np.float32)
 
-        # Audio clip collection
         self._speech_audio_frames = deque[AudioFrame]()
+        self._pre_speech_buffer = deque[AudioFrame]()
+        self._pre_speech_duration_ms = 0.0
 
         self._frame_count = 0
 
         logger.info(
-            f"VAD node initialized - threshold: {vad_threshold.get_value()}, silence_duration: {silence_duration_ms.get_value()}ms, speech_duration: {speech_duration_ms.get_value()}ms"
+            f"VAD node initialized - threshold: {vad_threshold.get_value()}, silence_duration: {silence_duration_ms.get_value()}ms, speech_duration: {speech_duration_ms.get_value()}ms, pre_speech_duration: {pre_speech_duration_ms.get_value()}ms"
         )
 
         async def audio_processing_task():
@@ -188,9 +205,8 @@ class SileroVAD(node.Node):
         try:
             if frame.data_16000hz.sample_count == 0:
                 return
-            audio_data = frame.data_16000hz.fp32
-            sample_rate = frame.data_16000hz.sample_rate
-            await self._process_vad_analysis(sample_rate, audio_data, frame)
+            audio_data = frame.data_16000hz.fp32.reshape(1, -1).flatten()
+            await self._process_vad_analysis(audio_data, frame)
 
         except Exception as e:
             logger.error(f"VAD processing error: {e}", exc_info=True)
@@ -244,8 +260,13 @@ class SileroVAD(node.Node):
         if vad_prob > threshold:
             if self._speech_state == SpeechState.SILENT:
                 self._speech_state = SpeechState.SPEAKING
-                # Clear any existing speech frames and start collecting
-                self._speech_audio_frames.clear()
+                # Prepend the pre-speech buffer and start collecting
+                logging.debug(
+                    "NEIL prepending speech buffer %s", len(self._pre_speech_buffer)
+                )
+                self._speech_audio_frames = deque(self._pre_speech_buffer)
+                self._pre_speech_buffer.clear()
+                self._pre_speech_duration_ms = 0.0
                 # Reset speech duration counter and continued speech flag
                 self._speech_duration_ms_counter = 0.0
                 self._continued_speech_emitted = False
@@ -308,33 +329,45 @@ class SileroVAD(node.Node):
                     self._speech_audio_frames.clear()
 
     async def _process_vad_analysis(
-        self, sample_rate: int, data: NDArray[np.float32], frame: AudioFrame
+        self, data: NDArray[np.float32], frame: AudioFrame
     ) -> None:
         """Process VAD analysis and collect speech frames"""
-        vad_chunk_size, frame_duration_ms = self._calculate_chunk_sizes(sample_rate)
+        vad_chunk_size, frame_duration_ms = self._calculate_chunk_sizes(16000)
+
+        # Calculate incoming frame duration
+        incoming_frame_duration_ms = (len(data) / 16000) * 1000.0
+
+        # Manage pre-speech buffer if silent
+        if self._speech_state == SpeechState.SILENT:
+            self._pre_speech_buffer.append(frame)
+            self._pre_speech_duration_ms += incoming_frame_duration_ms
+            pre_speech_ms = cast(
+                pad.PropertySinkPad, self.get_pad_required("pre_speech_duration_ms")
+            ).get_value()
+            while (
+                self._pre_speech_duration_ms > pre_speech_ms
+                and len(self._pre_speech_buffer) > 1
+            ):
+                popped = self._pre_speech_buffer.popleft()
+                popped_duration = (
+                    popped.data_16000hz.sample_count / popped.data_16000hz.sample_rate
+                ) * 1000.0
+                self._pre_speech_duration_ms -= popped_duration
 
         # Append new audio data to accumulator
         if len(self._audio_accumulator) == 0:
-            self._audio_accumulator = data.reshape(1, -1).astype(np.float32)
+            self._audio_accumulator = data
         else:
-            self._audio_accumulator = np.concatenate(
-                [self._audio_accumulator, data.reshape(1, -1)], axis=1
-            ).astype(np.float32)
+            self._audio_accumulator = np.concatenate([self._audio_accumulator, data])
 
         # Collect audio frames during speech (including transition periods)
         if self._speech_state in [SpeechState.SPEAKING, SpeechState.ENDING]:
             self._speech_audio_frames.append(frame)
 
         vad_results = []
-        while len(self._audio_accumulator.flatten()) >= vad_chunk_size:
-            chunk = self._audio_accumulator.flatten()[:vad_chunk_size].astype(
-                np.float32
-            )
-            self._audio_accumulator = (
-                self._audio_accumulator.flatten()[vad_chunk_size:]
-                .reshape(1, -1)
-                .astype(np.float32)
-            )
+        while len(self._audio_accumulator) >= vad_chunk_size:
+            chunk = self._audio_accumulator[:vad_chunk_size].astype(np.float32)
+            self._audio_accumulator = self._audio_accumulator[vad_chunk_size:]
 
             vad_prob = self._vad_engine.inference(chunk)
             vad_results.append(vad_prob)
