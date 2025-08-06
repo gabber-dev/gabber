@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: SUL-1.0
 
 from core import secret
+import logging
 import os
 import aiofiles
 import datetime
@@ -31,6 +32,10 @@ class DefaultSecretProvider(secret.SecretProvider):
 
     async def _read_secrets(self) -> dict[str, str]:
         secrets = {}
+        if not os.path.exists(self.secret_file):
+            logging.warning(f"Secret file {self.secret_file} does not exist.")
+            return {}
+
         async with aiofiles.open(self.secret_file, mode="r") as f:
             async for line in f:
                 if line.strip() and not line.startswith("#"):
