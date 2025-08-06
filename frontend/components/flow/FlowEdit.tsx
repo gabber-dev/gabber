@@ -19,7 +19,7 @@ import { useEditor } from "@/hooks/useEditor";
 import { BaseBlock } from "./blocks/BaseBlock";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { NodeLibrary } from "./NodeLibrary";
-import { PropertySidebar } from "./PropertySidebar";
+
 import { HybridEdge } from "./edges/HybridEdge";
 import { CustomConnectionLine } from "./edges/CustomConnectionLine";
 
@@ -47,24 +47,8 @@ function FlowEditInner() {
     onReactFlowConnect,
   } = useEditor();
 
-  const [isPropertyPanelOpen, setIsPropertyPanelOpen] = useState(false);
   const [isNodeLibraryOpen, setIsNodeLibraryOpen] = useState(false);
   const { connectionStatus } = useEditor();
-
-  const handlePropertyPanelToggle = useCallback(() => {
-    setIsPropertyPanelOpen(!isPropertyPanelOpen);
-  }, [isPropertyPanelOpen]);
-
-  const selectedNode = reactFlowRepresentation.nodes.find(
-    (node: Node) => node.selected,
-  );
-  useEffect(() => {
-    if (selectedNode && !isPropertyPanelOpen) {
-      handlePropertyPanelToggle();
-    } else if (!selectedNode && isPropertyPanelOpen) {
-      setIsPropertyPanelOpen(false);
-    }
-  }, [selectedNode, isPropertyPanelOpen, handlePropertyPanelToggle]);
 
   const styledEdges = useMemo(() => {
     return reactFlowRepresentation.edges.map((edge: Edge) => {
@@ -149,11 +133,7 @@ function FlowEditInner() {
         </FlowErrorBoundary>
       </div>
 
-      {selectedNode && (
-        <div className="absolute top-16 right-2 bottom-2 z-10">
-          <PropertySidebar onToggle={handlePropertyPanelToggle} />
-        </div>
-      )}
+
     </div>
   );
 }
