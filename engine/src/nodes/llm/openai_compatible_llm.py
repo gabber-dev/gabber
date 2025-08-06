@@ -264,12 +264,16 @@ class OpenAICompatibleLLM(node.Node):
                     tg = cast(ToolGroup, tool_group_sink.get_value())
                     tool_task = asyncio.create_task(tg.call_tools(all_tool_calls, ctx))
 
+                full_content = get_full_content_from_deltas(all_deltas)
+                logging.info(
+                    f"NEIL LLM generation completed with content: {full_content}"
+                )
                 context_message_source.push_item(
                     runtime_types.ContextMessage(
                         role=runtime_types.ContextMessageRole.ASSISTANT,
                         content=[
                             runtime_types.ContextMessageContentItem_Text(
-                                content=get_full_content_from_deltas(all_deltas)
+                                content=full_content
                             )
                         ],
                         tool_calls=all_tool_calls,
@@ -335,6 +339,7 @@ class OpenAICompatibleLLM(node.Node):
                 logging.warning(
                     "LLM is already running a generation, skipping new request."
                 )
+                ctx.complete()
                 continue
 
             try:
