@@ -7,7 +7,7 @@ import { BaseEdge, Node, Position } from "@xyflow/react";
 import { useEditor } from "@/hooks/useEditor";
 
 const HANDLE_OFFSET = 20;
-const BOTTOM_OFFSET = 80;
+const BOTTOM_PADDING = 20;
 
 export function CustomStepEdge({
   sourceX,
@@ -38,10 +38,19 @@ export function CustomStepEdge({
     const sourceNode = reactFlowRepresentation.nodes.find(
       (n: Node) => n.id === source,
     );
-    let sourceBottomY = sourceY + BOTTOM_OFFSET;
+    // Default to using the source node's Y position plus its height from the DOM
+    const sourceNodeElement = document.querySelector(`[data-id="${source}"]`);
+    let sourceBottomY = sourceY;
 
     if (sourceNode && sourceNode.measured) {
-      sourceBottomY = sourceNode.position.y + sourceNode.measured.height + 20;
+      // Use the measured height if available
+      sourceBottomY = sourceNode.position.y + sourceNode.measured.height + BOTTOM_PADDING;
+    } else if (sourceNodeElement) {
+      // Fallback to DOM measurement
+      sourceBottomY = sourceY + sourceNodeElement.getBoundingClientRect().height + BOTTOM_PADDING;
+    } else {
+      // Last resort - use source Y plus a reasonable default
+      sourceBottomY = sourceY + 120 + BOTTOM_PADDING;
     }
 
     edgePath = `M ${sourceX},${sourceY}
