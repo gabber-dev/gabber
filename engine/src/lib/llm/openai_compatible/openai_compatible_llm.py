@@ -27,15 +27,12 @@ class OpenAICompatibleLLM:
 
     async def create_completion(self, *, request: LLMRequest) -> AsyncLLMResponseHandle:
         messages = request.to_openai_completion_input()
-        print("NEIL messages", messages)
         res = await self._client.chat.completions.create(
             model=self._model,
             messages=messages,
             tools=request.to_openai_completion_tools_input(),
             stream=True,
         )
-
-        print("NEIL tools", request.to_openai_completion_tools_input())
 
         handle = AsyncLLMResponseHandle()
 

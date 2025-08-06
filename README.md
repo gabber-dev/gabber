@@ -28,6 +28,13 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 make all
 ```
 
+### Secrets
+
+Some nodes need to make use of secrets. For example, the OpenAICompatibleLLM node would need your LLM provider's API key to make requests. Place your secrets in a file called `.secret`.
+Once your secrets are in place, you will be able to see them in a a dropdown for any node that needs them.
+
+Importantly, the actual secret values are not stored in the graph data. This ensures safe sharing of graphs with the community without risk of leaking your secrets.
+
 ## High-level Concepts
 
 ### App
