@@ -6,7 +6,7 @@
 import { NodeEditorRepresentation } from "@/generated/editor";
 import { useMemo, useState } from "react";
 import { StatelessPad } from "./components/pads/StatelessPad";
-import { FunnelIcon } from "@heroicons/react/24/outline";
+import { Cog6ToothIcon } from "@heroicons/react/24/outline";
 import { StateTransitionModal } from "./components/modals/StateTransitionModal";
 
 export interface StateTransitionNodeProps {
@@ -26,17 +26,19 @@ export function StateTransitionNode({ data }: StateTransitionNodeProps) {
   return (
     <>
       <div className="min-w-32 flex flex-col bg-base-200 border-2 border-black border-b-4 border-r-4 rounded-lg relative">
-        <div 
-          className="flex w-full items-center justify-center gap-2 bg-base-300 border-b-2 border-black p-3 rounded-t-lg drag-handle cursor-pointer"
-          onClick={() => setIsModalOpen(true)}
-        >
-          <FunnelIcon className="h-5 w-5 text-accent" />
-          <div className="text-xs text-base-content/60 font-mono">
-            {data.id}
-          </div>
+        <div className="relative px-3 pt-2 pb-1">
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="absolute top-1.5 right-2 p-1 hover:bg-base-300 rounded transition-colors"
+          >
+            <Cog6ToothIcon className="h-4 w-4 text-accent" />
+          </button>
+          
+          <div className="text-sm font-medium text-primary">State Transition</div>
+          <div className="text-[10px] font-mono text-base-content/60 -mt-0.5">{data.id}</div>
         </div>
 
-        <div className="flex flex-1 flex-col gap-2 p-4 nodrag cursor-default">
+        <div className="flex flex-1 flex-col gap-1.5 p-2 nodrag cursor-default">
           {pads.map((pad) => (
             <div key={pad.id}>
               <StatelessPad data={pad} />
