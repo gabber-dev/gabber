@@ -13,6 +13,7 @@ import { Output } from "./Output";
 import { AutoConvertNode } from "./AutoConvertNode";
 import { CommentNode } from "./CommentNode";
 import { StateTransitionNode } from "./StateTransitionNode";
+import { StateNode } from "./StateNode";
 import { SelfPad } from "./components/pads/SelfPad";
 
 export interface BaseBlockProps {
@@ -49,6 +50,10 @@ export function BaseBlock({ data }: BaseBlockProps) {
 
   if (data.type === "StateTransition") {
     return <StateTransitionNode data={data} />;
+  }
+
+  if (data.type === "State") {
+    return <StateNode data={data} />;
   }
 
   // Add ambient-float by default, but remove it if selected
@@ -95,7 +100,10 @@ export function BaseBlock({ data }: BaseBlockProps) {
           if (pad.type === "StatelessSinkPad") {
             return (
               <div key={pad.id}>
-                <StatelessPad data={pad} />
+                <StatelessPad 
+                  data={pad} 
+                  displayName={data.type === "StateMachine" && pad.id === "current_state" ? "Initial State" : undefined}
+                />
               </div>
             );
           } else if (pad.type === "PropertySinkPad") {

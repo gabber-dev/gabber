@@ -10,9 +10,11 @@ import { getDataTypeColor, getPrimaryDataType } from "./utils/dataTypeColors";
 
 type Props = {
   data: PadEditorRepresentation;
+  forceVisible?: boolean;
+  displayName?: string;
 };
 
-export function PadHandle({ data }: Props) {
+export function PadHandle({ data, forceVisible = false, displayName }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const direction = useMemo(() => {
@@ -79,9 +81,9 @@ export function PadHandle({ data }: Props) {
       width: "18px",
       height: "18px",
       borderRadius: "9999px",
-      border: hasConnections ? `2px solid ${dataTypeColor.border}` : "none",
+      border: (hasConnections || forceVisible) ? `2px solid ${dataTypeColor.border}` : "none",
       background: dataTypeColor.background,
-      opacity: hasConnections ? 0.9 : 0.7,
+      opacity: (hasConnections || forceVisible) ? 0.9 : 0.7,
       boxSizing: "border-box" as const,
     };
     return baseStyle;
@@ -131,7 +133,7 @@ export function PadHandle({ data }: Props) {
               <div className="flex justify-between items-start">
                 <span className="text-primary font-medium text-xs">ID:</span>
                 <span className="text-accent text-xs break-all ml-2">
-                  {data.id}
+                  {displayName || data.id}
                 </span>
               </div>
               <div className="flex justify-between items-start">

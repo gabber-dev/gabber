@@ -12,9 +12,11 @@ import { useSourcePad } from "@gabber/client-react";
 
 type Props = {
   data: PadEditorRepresentation;
+  forceVisible?: boolean;
+  displayName?: string;
 };
 
-export function StatelessPad({ data }: Props) {
+export function StatelessPad({ data, forceVisible = false, displayName }: Props) {
   const isSource = data.type.indexOf("Source") !== -1;
   const { singleAllowedType } = useStatelessPad(data.id);
   const { connectionState } = useRun();
@@ -40,10 +42,8 @@ export function StatelessPad({ data }: Props) {
             Test
           </button>
         )}
-        <div className="text-sm text-accent font-medium">{data.id}</div>
-
         <div className={`absolute ${isSource ? "-right-4" : "-left-4"}`}>
-          <PadHandle data={data} />
+          <PadHandle data={data} forceVisible={forceVisible} displayName={displayName} />
         </div>
       </div>
     </div>
