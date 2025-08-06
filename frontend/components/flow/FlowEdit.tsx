@@ -16,10 +16,11 @@ import {
 import "@xyflow/react/dist/base.css";
 import { FlowErrorBoundary } from "./ErrorBoundary";
 import { useEditor } from "@/hooks/useEditor";
+import { useRun } from "@/hooks/useRun";
 import { BaseBlock } from "./blocks/BaseBlock";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { NodeLibrary } from "./NodeLibrary";
-
+import { PropertySidebar } from "./PropertySidebar";
 import { HybridEdge } from "./edges/HybridEdge";
 import { CustomConnectionLine } from "./edges/CustomConnectionLine";
 
@@ -46,9 +47,27 @@ function FlowEditInner() {
     onReactFlowNodesChange,
     onReactFlowConnect,
   } = useEditor();
+  const { connectionState } = useRun();
+  const isRunning = connectionState === "connected" || connectionState === "connecting";
 
+  const [isPropertyPanelOpen, setIsPropertyPanelOpen] = useState(false);
   const [isNodeLibraryOpen, setIsNodeLibraryOpen] = useState(false);
   const { connectionStatus } = useEditor();
+
+  const handlePropertyPanelToggle = useCallback(() => {
+    setIsPropertyPanelOpen(!isPropertyPanelOpen);
+  }, [isPropertyPanelOpen]);
+
+  const selectedNode = reactFlowRepresentation.nodes.find(
+    (node: Node) => node.selected,
+  );
+  useEffect(() => {
+    if (selectedNode && !isPropertyPanelOpen) {
+      handlePropertyPanelToggle();
+    } else if (!selectedNode && isPropertyPanelOpen) {
+      setIsPropertyPanelOpen(false);
+    }
+  }, [selectedNode, isPropertyPanelOpen, handlePropertyPanelToggle]);
 
   const styledEdges = useMemo(() => {
     return reactFlowRepresentation.edges.map((edge: Edge) => {
@@ -127,13 +146,19 @@ function FlowEditInner() {
             proOptions={{
               hideAttribution: true,
             }}
+            nodesDraggable={!isRunning}
+            nodesConnectable={!isRunning}
           >
             <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
           </ReactFlow>
         </FlowErrorBoundary>
       </div>
 
-
+      {selectedNode && (
+        <div className="absolute top-16 right-2 bottom-2 z-10">
+          <PropertySidebar onToggle={handlePropertyPanelToggle} />
+        </div>
+      )}
     </div>
   );
 }
