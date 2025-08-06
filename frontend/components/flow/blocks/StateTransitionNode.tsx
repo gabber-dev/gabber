@@ -30,12 +30,10 @@ interface TypeConstraint {
 export function StateTransitionNode({ data }: StateTransitionNodeProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Get entry pad (sink) - this will be on the left
-  const entryPad = useMemo(() => {
+  // Get all entry pads (sinks) - these will be on the left
+  const entryPads = useMemo(() => {
     // Find all entry pads
-    const entryPads = data.pads.filter((p) => p.id.startsWith("entry_"));
-    // Find first unconnected pad or use the first pad
-    return entryPads.find(p => !p.previous_pad) || entryPads[0];
+    return data.pads.filter((p) => p.id.startsWith("entry_"));
   }, [data]);
 
   // Get state pad (source) - this will be on the right
@@ -107,15 +105,26 @@ export function StateTransitionNode({ data }: StateTransitionNodeProps) {
 
   return (
     <>
-      <div className="min-w-32 flex flex-col bg-base-200 border-2 border-black border-b-4 border-r-4 rounded-lg relative">
-        <div className="relative px-3 pt-2 pb-1 flex items-center justify-between">
-          {/* Left side - Entry pad (sink) */}
-          <div className="nodrag cursor-default">
-            {entryPad && <StatelessPad data={entryPad} />}
+      <div className="min-w-32 bg-base-200 border-2 border-black border-b-4 border-r-4 rounded-lg relative">
+        {/* Left side - Entry pads (sinks) */}
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2">
+          <div className="flex flex-col gap-5">
+            {entryPads.map((pad) => (
+              <StatelessPad key={pad.id} data={pad} />
+            ))}
           </div>
+        </div>
 
-          {/* Center - Title and icons */}
-          <div className="flex-1 text-center">
+        {/* Right side - State pad (source) */}
+        {statePad && (
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2">
+            <StatelessPad data={statePad} />
+          </div>
+        )}
+
+        {/* Center - Title and icons */}
+        <div className="px-3 py-2">
+          <div className="text-center">
             <div
               className="text-sm font-medium text-primary cursor-pointer hover:text-primary/80"
               onClick={() => {
@@ -142,11 +151,6 @@ export function StateTransitionNode({ data }: StateTransitionNodeProps) {
                 <div className="absolute left-1/2 -translate-x-1/2 top-full -mt-2 border-8 border-transparent border-t-base-300" />
               </div>
             </button>
-          </div>
-
-          {/* Right side - State pad (source) */}
-          <div className="nodrag cursor-default">
-            {statePad && <StatelessPad data={statePad} />}
           </div>
         </div>
       </div>

@@ -43,7 +43,7 @@ export function StatelessPad({ data, forceVisible = false, displayName }: Props)
           </button>
         )}
         <div className={`absolute ${isSource ? "-right-4" : "-left-4"}`}>
-          <PadHandle data={data} forceVisible={forceVisible} displayName={displayName} />
+          <PadHandle data={data} displayName={displayName} />
         </div>
       </div>
     </div>

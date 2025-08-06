@@ -36,6 +36,11 @@ export function PadHandle({ data, forceVisible = false, displayName }: Props) {
     return Position.Left;
   }, [direction]);
 
+  // Create a unique position ID to avoid conflicts
+  const uniquePositionId = useMemo(() => {
+    return `${data.id}_${direction}`;
+  }, [data.id, direction]);
+
   const hasConnections = useMemo(() => {
     if (direction === "source") {
       // For source pads, check if they have any next_pads
@@ -81,13 +86,13 @@ export function PadHandle({ data, forceVisible = false, displayName }: Props) {
       width: "18px",
       height: "18px",
       borderRadius: "9999px",
-      border: (hasConnections || forceVisible) ? `2px solid ${dataTypeColor.border}` : "none",
+      border: `2px solid ${dataTypeColor.border}`,
       background: dataTypeColor.background,
-      opacity: (hasConnections || forceVisible) ? 0.9 : 0.7,
+      opacity: 0.9,
       boxSizing: "border-box" as const,
     };
     return baseStyle;
-  }, [hasConnections, dataTypeColor]);
+  }, [dataTypeColor]);
 
   return (
     <div
@@ -100,7 +105,8 @@ export function PadHandle({ data, forceVisible = false, displayName }: Props) {
         style={handleStyle}
         type={direction}
         position={position}
-        id={data.id}
+        id={uniquePositionId}
+        isConnectable={true}
       />
       {hasConnections && (
         <div

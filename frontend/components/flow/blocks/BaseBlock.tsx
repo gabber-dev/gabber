@@ -102,7 +102,7 @@ export function BaseBlock({ data }: BaseBlockProps) {
               <div key={pad.id}>
                 <StatelessPad 
                   data={pad} 
-                  displayName={data.type === "StateMachine" && pad.id === "current_state" ? "Initial State" : undefined}
+                  displayName={data.type === "StateMachine" && pad.id === "current_state" ? "Initial State" : pad.id}
                 />
               </div>
             );
