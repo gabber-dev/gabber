@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import logging
+import os
 import threading
 from typing import Optional
 
@@ -9,7 +10,8 @@ import numpy as np
 import onnxruntime
 
 SUPPORTED_SAMPLE_RATE = 16000
-WEIGHTS_PATH = "./files/silero_vad.onnx"
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+WEIGHTS_PATH = os.path.join(SCRIPT_DIR, "files", "silero_vad.onnx")
 
 VAD_CHUNK_SIZE = 512
 VAD_STATE_SHAPE = (2, 1, 128)
@@ -19,7 +21,7 @@ PCM_16_NORMALIZATION_FACTOR = 32768.0
 onnxruntime.set_default_logger_severity(3)
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 
 
 class SileroVAD:

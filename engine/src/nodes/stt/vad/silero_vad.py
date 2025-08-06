@@ -57,6 +57,7 @@ class SileroVAD(node.Node):
                 id="audio_clip",
                 group="audio_clip",
                 owner_node=self,
+                type_constraints=[pad.types.AudioClip()],
             )
             self.pads.append(audio_clip_source)
 
