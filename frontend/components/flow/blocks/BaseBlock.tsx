@@ -12,6 +12,7 @@ import { Publish } from "./Publish";
 import { Output } from "./Output";
 import { AutoConvertNode } from "./AutoConvertNode";
 import { CommentNode } from "./CommentNode";
+import { StateTransitionNode } from "./StateTransitionNode";
 import { SelfPad } from "./components/pads/SelfPad";
 
 export interface BaseBlockProps {
@@ -44,6 +45,10 @@ export function BaseBlock({ data }: BaseBlockProps) {
 
   if (data.type === "Comment") {
     return <CommentNode data={data} />;
+  }
+
+  if (data.type === "StateTransition") {
+    return <StateTransitionNode data={data} />;
   }
 
   // Add ambient-float by default, but remove it if selected
