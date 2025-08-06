@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import {
   ReactFlow,
   Background,
@@ -16,6 +16,7 @@ import {
 import "@xyflow/react/dist/base.css";
 import { FlowErrorBoundary } from "./ErrorBoundary";
 import { useEditor } from "@/hooks/useEditor";
+import { useRun } from "@/hooks/useRun";
 import { BaseBlock } from "./blocks/BaseBlock";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { NodeLibrary } from "./NodeLibrary";
@@ -46,6 +47,9 @@ function FlowEditInner() {
     onReactFlowNodesChange,
     onReactFlowConnect,
   } = useEditor();
+  const { connectionState } = useRun();
+  const isRunning =
+    connectionState === "connected" || connectionState === "connecting";
 
   const [isNodeLibraryOpen, setIsNodeLibraryOpen] = useState(false);
   const { connectionStatus } = useEditor();
@@ -127,6 +131,8 @@ function FlowEditInner() {
             proOptions={{
               hideAttribution: true,
             }}
+            nodesDraggable={!isRunning}
+            nodesConnectable={!isRunning}
           >
             <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
           </ReactFlow>
