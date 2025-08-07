@@ -88,7 +88,7 @@ Transition nodes act as AND gates — all connected conditions must be satisfied
 You can create OR gates by running two transition nodes in parallel into the same target state.
 
 <p align="center">
-  <img src="frontend/public/state_machine_example" alt="Example State Machine Gabber" width="100%"/>
+  <img src="frontend/public/state_machine_example.png" alt="Example State Machine Gabber" width="100%"/>
 </p>
 
 #### Example Flow
