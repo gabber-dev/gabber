@@ -48,20 +48,7 @@ export function PadHandle({ data }: Props) {
             <div className="border-b border-primary/30 pb-2">
               <h3 className="text-accent font-medium">Pad Info</h3>
             </div>
-            <div className="space-y-1">
-              <div className="flex justify-between items-start">
-                <span className="text-primary font-medium text-xs">ID:</span>
-                <span className="text-accent text-xs break-all ml-2">
-                  {data.id}
-                </span>
-              </div>
-              <div className="flex justify-between items-start">
-                <span className="text-primary font-medium text-xs">Type:</span>
-                <span className="text-accent text-xs break-all ml-2">
-                  {data.type}
-                </span>
-              </div>
-            </div>
+            <div className="space-y-1">Self node_reference</div>
           </div>
         </div>
       )}
