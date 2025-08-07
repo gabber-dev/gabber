@@ -56,33 +56,23 @@ And two "modes":
 - Property: adjust the behavior of the containing node
 - Stateless: receive or emit data
 
-Pads are typed — for example, audio pads, control/event pads, and text pads — so only compatible nodes can be linked. This type-safe wiring ensures your graph behaves predictably and enforces valid data flows between components.
-
-Pads allow Gabber apps to function like reactive pipelines: when a node emits output on a pad, any downstream nodes connected to that pad can process the result in real time.
+Pads are typed, so only compatible typed pads can be linked. When a node emits output on a pad, any downstream nodes connected to that pad can process the result in real time.
 
 ### SubGraph
 
 A SubGraph is very similar to an App — it’s a collection of nodes and their pad connections. However, unlike an App, a SubGraph is designed to be embedded within other apps as a single node.
 
-By using Proxy nodes, you can expose specific pads from within the SubGraph so they appear in the parent app. This makes it easy to pass data in and out of the SubGraph just like any other node.
-
-The primary purpose of SubGraphs is to:
-- Create reusable logic and implementations
-- Abstract complex behaviors into simple, modular units
-
-Subgraphs help keep your main app graphs clean, composable, and easier to maintain.
+By using Proxy nodes, you can create entry and exit points from your subgraph that appear in your parent app. This makes it easy to pass data in and out of the SubGraph just like any other node.
 
 ### State Machine
 
-A State Machine controls the flow of your app by moving between defined states based on parameters.
+A State Machine defines how your app moves between states using branching and conditional logic.
 
 State Machines are made up of:
 - **Parameters** — variables that the state machine listens to
 - **States** — distinct phases in your application flow, starting from an initial state
 - **State Transitions** — nodes that determine when to move from one state to another based on Parameters
-- **Transition Logic** — transitions act as AND gates by default, and can be combined in parallel to create OR logic
-
-State Machines make it easy to design branching, conditional logic for AI-powered workflows.
+- **Transition Logic** — transitions act as AND gates, and can be combined in parallel to create OR logic
 
 ## Anatomy
 
@@ -95,7 +85,7 @@ can be accessed `http://localhost:3000`.
 
 ### Editor
 
-The editor is responsible for visually designing the experience. The editor consists of building blocks called nodes that can be configured to create apps that can ingest media streams from audio, video, and screen sources. Using these inputs, create state machines, tool calls, and text, voice, or soon video responses.
+The editor is a backend service. It's the server for the frontend.
 
 ### Engine
 
