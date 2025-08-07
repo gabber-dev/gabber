@@ -5,7 +5,6 @@ Each service has its own `start.sh` script to simplify building and running the 
 You must run the service as specified below for the corresponding Gabber node to work on your machine.
 
 > **TL;DR**
-> - `joycaption` → image captioning via vLLM (OpenAI-compatible API) on **:7002**
 > - `kitten-tts` → text-to-speech FastAPI that returns raw 24kHz 16‑bit PCM on **:7003**
 > - `kyutai-stt` → Moshi-based STT worker (GPU/CUDA required)
 
@@ -16,9 +15,8 @@ You must run the service as specified below for the corresponding Gabber node to
 - [Directory Layout](#directory-layout)
 - [Quick Start](#quick-start)
 - [Services](#services)
-  - [joycaption](#1-joycaption)
-  - [kitten-tts](#2-kitten-tts)
-  - [kyutai-stt](#3-kyutai-stt)
+  - [kitten-tts](#1-kitten-tts)
+  - [kyutai-stt](#2-kyutai-stt)
 - [Development Notes](#development-notes)
 - [Troubleshooting](#troubleshooting)
 - [License](#license)
@@ -28,7 +26,7 @@ You must run the service as specified below for the corresponding Gabber node to
 ## Prerequisites
 
 - **Docker** (and **NVIDIA Container Toolkit** for GPU services)
-- **NVIDIA GPU + CUDA drivers** (required for `joycaption` and `kyutai-stt`)
+- **NVIDIA GPU + CUDA drivers** (required for `kyutai-stt`)
 - Optional: `curl`, `ffmpeg` for quick testing
 
 ---
@@ -37,8 +35,6 @@ You must run the service as specified below for the corresponding Gabber node to
 
 ```
 services/
-├─ joycaption/
-│  └─ start.sh
 ├─ kitten-tts/
 │  ├─ start.sh
 │  └─ app.py               # FastAPI service (TTS)
@@ -54,9 +50,6 @@ All services mount the local Hugging Face cache at `~/.cache/huggingface` into t
 ## Quick Start
 
 ```bash
-# Joycaption (image captioning via vLLM)
-cd joycaption && ./start.sh
-
 # Kitten TTS (text-to-speech API)
 cd kitten-tts && ./start.sh
 
@@ -65,7 +58,6 @@ cd kyutai-stt && ./start.sh
 ```
 
 **Default ports**
-- joycaption → `http://127.0.0.1:7002`
 - kitten-tts → `http://127.0.0.1:7003`
 - kyutai-stt → configured by the worker config (see below)
 
@@ -73,44 +65,7 @@ cd kyutai-stt && ./start.sh
 
 ## Services
 
-### 1. joycaption
-
-**Description**  
-`joycaption` runs a multimodal LLaMA-based model for image captioning using **vLLM**’s OpenAI-compatible server. It uses GPU acceleration and mounts your Hugging Face cache.
-
-**Start Script**
-```bash
-docker stop joy-caption
-docker rm joy-caption
-
-docker run   --name joy-caption   --gpus all   -p 127.0.0.1:7002:80   -v ~/.cache/huggingface:/root/.cache/huggingface   vllm/vllm-openai:v0.8.5.post1   --model fancyfeast/llama-joycaption-beta-one-hf-llava   --port 80   --gpu-memory-utilization 0.95   --max-model-len 4096   --enforce-eager   --limit-mm-per-prompt image=2
-```
-
-**Run**
-```bash
-cd joycaption
-./start.sh
-```
-
-**Test with curl (OpenAI-compatible API)**  
-Set an arbitrary API key (vLLM accepts any value by default):
-```bash
-export OPENAI_API_KEY=dummy
-curl -s http://127.0.0.1:7002/v1/chat/completions   -H "Authorization: Bearer $OPENAI_API_KEY"   -H "Content-Type: application/json"   -d '{
-    "model": "fancyfeast/llama-joycaption-beta-one-hf-llava",
-    "messages": [{
-      "role": "user",
-      "content": [
-        {"type":"text","text":"Caption this image briefly."},
-        {"type":"image_url","image_url":{"url":"https://picsum.photos/seed/cat/512"}}
-      ]
-    }]
-  }' | jq -r '.choices[0].message.content'
-```
-
----
-
-### 2. kitten-tts
+### 1. kitten-tts
 
 **Description**  
 `kitten-tts` provides a TTS API using FastAPI. It wraps `KittenTTS` and outputs **16‑bit PCM** at **24 kHz** (media type `audio/l16;rate=24000`).
@@ -228,8 +183,8 @@ cd kyutai-stt
 ## Development Notes
 
 - **Hugging Face Cache**: Mounted at `~/.cache/huggingface:/root/.cache/huggingface` in the containers.
-- **GPU Acceleration**: `joycaption` and `kyutai-stt` require NVIDIA GPUs with drivers + `nvidia-container-toolkit` installed.
-- **Ports Recap**: `7002` (joycaption), `7003` (kitten-tts). Adjust in `start.sh` if needed.
+- **GPU Acceleration**: `kyutai-stt` requires NVIDIA GPUs with drivers + `nvidia-container-toolkit` installed.
+- **Ports Recap**: `7003` (kitten-tts). Adjust in `start.sh` if needed.
 
 ---
 
