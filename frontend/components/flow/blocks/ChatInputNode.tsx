@@ -20,18 +20,25 @@ export function ChatInputNode({ data }: ChatInputNodeProps) {
   // Only show the output pad
   const sourcePad = data.pads.find((p) => p.type === "StatelessSourcePad");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (inputText.trim()) {
-      pushValue({ value: inputText });
-      setInputText("");
+      console.log("[ChatInput] Attempting to send message:", inputText);
+      const ctx = { parent: null };
+      try {
+        await pushValue({ value: inputText, ctx });
+        console.log("[ChatInput] Successfully pushed value");
+        setInputText("");
+      } catch (error) {
+        console.error("[ChatInput] Error pushing value:", error);
+      }
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = async (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSubmit(e);
+      await handleSubmit(e);
     }
   };
 
