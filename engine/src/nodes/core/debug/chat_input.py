@@ -1,14 +1,3 @@
-"""
-Chat Input node (debug)
-Pure source node that exposes a single StatelessSourcePad("output") with
-string type. There is no backend run loop: values originate from the client
-SDK and are pushed into this source pad directly by the editor/runtime.
-
-We do not transform, re-wrap, or forward values in Python. This avoids
-double-pushing and mismatched shapes. Downstream nodes (e.g., TTS complete_text)
-will receive the exact value the client sent.
-"""
-
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
