@@ -146,7 +146,7 @@ afplay out.wav
 
 ---
 
-### 3. kyutai-stt
+### 2. kyutai-stt
 
 **Description**  
 `kyutai-stt` runs a speech-to-text worker using **moshi-server**. It supports multi‑language transcription via a TOML config.
