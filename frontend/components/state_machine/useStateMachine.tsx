@@ -10,6 +10,10 @@ import {
 import { createContext, useCallback, useContext, useMemo } from "react";
 import { usePropertyPad } from "../flow/blocks/components/pads/hooks/usePropertyPad";
 import { v4 } from "uuid";
+import {
+  StateMachineConfiguration,
+  StateMachineTransition,
+} from "@/generated/stateMachine";
 
 type StateMachineContextType = {
   handleNodeChanges: (changes: NodeChange[]) => void;
@@ -38,31 +42,6 @@ type StateMachineContextType = {
 const StateMachineContext = createContext<StateMachineContextType | undefined>(
   undefined,
 );
-
-type StateMachineTransition = {
-  id: string;
-  from: string;
-  to: string;
-  conditions: StateMachineTransitionCondition[];
-};
-
-type StateMachineTransitionCondition = {
-  parameter: string;
-  operator: string;
-  value: string | number | boolean;
-};
-
-type StateMachineConfigurationState = {
-  name: string;
-  position: { x: number; y: number };
-};
-
-type StateMachineConfiguration = {
-  states: StateMachineConfigurationState[];
-  entry_state: string;
-  entry_node_position?: { x: number; y: number };
-  transitions: StateMachineTransition[];
-};
 
 export function StateMachineProvider({
   children,
@@ -253,8 +232,8 @@ export function StateMachineProvider({
           ...(prevConfiguration.transitions || []),
           {
             id: v4(),
-            from: source,
-            to: "New State",
+            from_state: source,
+            to_state: "New State",
             conditions: [],
           },
         ],
