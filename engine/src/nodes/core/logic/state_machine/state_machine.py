@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: SUL-1.0
 
 from typing import Any, cast
+import logging
 
 from core import node, pad
 from pydantic import BaseModel
@@ -40,8 +41,8 @@ class StateMachineTransition(BaseModel):
 class StateMachineConfiguration(BaseModel):
     states: list[StateMachineState]
     transitions: list[StateMachineTransition]
-    entry_state: str
-    entry_node_position: StateMachineStatePosition
+    entry_state: str | None = None
+    entry_node_position: StateMachineStatePosition | None = None
 
 
 class StateMachine(node.Node):
@@ -87,6 +88,11 @@ class StateMachine(node.Node):
                 value="",
             )
             self.pads.append(current_state)
+
+        # Ensure configuration has necessary keys and set entry_state if needed
+        config_dict = configuration.get_value()
+        logging.debug(f"NEIL Initial configuration: {config_dict}")
+        config = StateMachineConfiguration.model_validate(config_dict)
 
         self._resolve_num_pads()
         self._sort_and_rename_pads()

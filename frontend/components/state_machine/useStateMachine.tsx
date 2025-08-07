@@ -268,10 +268,23 @@ export function StateMachineProvider({
         data: {},
       });
     }
-    return { nodes, edges: [] };
+
+    const edges: Edge[] = [];
+
+    if (configuration?.entry_state) {
+      edges.push({
+        id: `__ENTRY__-${configuration.entry_state}`,
+        source: "__ENTRY__",
+        target: configuration.entry_state,
+        type: "default",
+      });
+    }
+
+    return { nodes, edges };
   }, [
     configuration?.entry_node_position?.x,
     configuration?.entry_node_position?.y,
+    configuration?.entry_state,
     configuration?.states,
   ]);
 
