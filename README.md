@@ -127,9 +127,9 @@ All entities are stored in the `.gabber` directory. It runs on port `8001`.
 Gabber provides SDKs to help you integrate these services into your applications quickly. These SDKs handle authentication, API calls, and streaming where supported.
 
 Currently available SDKs include:
-- JavaScript/TypeScript — for Node.js and browser clients
-- Python — for backend integrations and quick prototyping
-- React- for 
+- **JavaScript/TypeScript SDK** — framework-agnostic client library for Node.js, browsers, Bun, and Deno. Ideal for backend services or non-React frontends.
+- **React SDK** — prebuilt hooks, providers, and UI components for building Gabber-powered apps in React or React Native with minimal setup.
+- **Python SDK** — for backend integrations, prototyping, and scripting.
 
 Refer to the SDK documentation in the main Gabber repo for installation and usage details.
 
