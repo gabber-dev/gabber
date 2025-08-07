@@ -69,6 +69,38 @@ The primary purpose of SubGraphs is to:
 
 This helps keep your main app graphs clean, composable, and easier to maintain.
 
+### State Machines
+The Gabber platform includes a State Machine system for orchestrating service workflows.
+
+#### Key Concepts
+Parameters
+State Machines have parameters that affect the behavior of states (e.g., voice style, model choice).
+
+**States**
+States define distinct phases of your application flow.
+You can chain states starting with an initial state connected directly from the State Machine block.
+
+**State Transitions**
+Transition nodes control movement between states based on conditions or events.
+
+**Transition Node Logic**
+Transition nodes act as AND gates — all connected conditions must be satisfied before transitioning.
+You can create OR gates by running two transition nodes in parallel into the same target state.
+
+<p align="center">
+  <img src="frontend/public/state_machine_example" alt="Example State Machine Gabber" width="100%"/>
+</p>
+
+#### Example Flow
+1. Start with an Initial State node *Greeting*.
+2. Add a second State called *Capture*.
+3. Add a State Transition Node between *Greeting* and *Capture* for a specific input (e.g., Parameter_0 triggered).
+4. When Parameter_0 is triggered, the state machine will transition to *Capture*.
+5. Using an EnumSwitch, I can trigger downstream changes based on the state.
+6. Optionally, add parallel transition nodes to allow multiple triggers for the same state.
+
+This setup makes it easy to design branching, conditional logic for your AI-powered workflows.
+
 ## Anatomy
 
 Gabber consists of a frontend and three backend services: engine, editor, repository.
@@ -90,6 +122,25 @@ The engine is the service responsible for running apps.
 
 The repository service is a very thin local http server reponsible for fetching and saving apps and subgraphs.
 All entities are stored in the `.gabber` directory. It runs on port `8001`.
+
+## SDKs
+Gabber provides SDKs to help you integrate these services into your applications quickly. These SDKs handle authentication, API calls, and streaming where supported.
+
+Currently available SDKs include:
+- JavaScript/TypeScript — for Node.js and browser clients
+- Python — for backend integrations and quick prototyping
+- React- for 
+
+Refer to the SDK documentation in the main Gabber repo for installation and usage details.
+
+## Example Apps
+This repository includes example applications demonstrating how to use Gabber services together.
+To explore them:
+1. Run the repository locally (`make all` or run each service individually).
+2. Navigate to the **Examples** tab in the dashboard.
+3. Choose a sample app and follow the instructions.
+
+These examples showcase real-world usage patterns for voice, text, and multimodal AI.
 
 ## Community
 Gabber is source-available and developer-first — we’d love for you to build with us.
