@@ -50,31 +50,29 @@ function Inner() {
     [addStateAndTransition, screenToFlowPosition],
   );
   return (
-    <ReactFlowProvider>
-      <ReactFlow
-        className="h-full w-full bg-base-300"
-        nodes={reactFlowRepresentation.nodes}
-        edges={reactFlowRepresentation.edges}
-        onNodesChange={(changes) => {
-          handleNodeChanges(changes);
-        }}
-        onEdgesChange={(changes) => {
-          handleEdgeChanges(changes);
-        }}
-        onDragEnd={(event) => {
-          console.log("Drag ended", event);
-        }}
-        onConnectEnd={onConnectEnd}
-        fitView
-        nodeTypes={{ default: StateMachineStateBlock }}
-        snapGrid={[12, 12]}
-        snapToGrid={true}
-        proOptions={{
-          hideAttribution: true,
-        }}
-      >
-        <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
-      </ReactFlow>
-    </ReactFlowProvider>
+    <ReactFlow
+      className="h-full w-full bg-base-300"
+      nodes={reactFlowRepresentation.nodes}
+      edges={reactFlowRepresentation.edges}
+      onNodesChange={(changes) => {
+        handleNodeChanges(changes);
+      }}
+      onEdgesChange={(changes) => {
+        handleEdgeChanges(changes);
+      }}
+      onDragEnd={(event) => {
+        console.log("Drag ended", event);
+      }}
+      onConnectEnd={onConnectEnd}
+      fitView
+      nodeTypes={{ default: StateMachineStateBlock }}
+      snapGrid={[12, 12]}
+      snapToGrid={true}
+      proOptions={{
+        hideAttribution: true,
+      }}
+    >
+      <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+    </ReactFlow>
   );
 }

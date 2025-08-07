@@ -1,9 +1,10 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-from typing import cast
+from typing import Any, cast
 
 from core import node, pad
+from pydantic import BaseModel
 
 ALL_PARAMETER_TYPES: list[pad.types.BasePadType] = [
     pad.types.Float(),
@@ -12,6 +13,35 @@ ALL_PARAMETER_TYPES: list[pad.types.BasePadType] = [
     pad.types.Trigger(),
     pad.types.String(),
 ]
+
+
+class StateMachineStatePosition(BaseModel):
+    x: float
+    y: float
+
+
+class StateMachineState(BaseModel):
+    name: str
+    position: StateMachineStatePosition
+
+
+class StateMachineTransitionCondition(BaseModel):
+    type: str
+    value: Any
+
+
+class StateMachineTransition(BaseModel):
+    id: str
+    from_state: str
+    to_state: str
+    conditions: list[str] = []
+
+
+class StateMachineConfiguration(BaseModel):
+    states: list[StateMachineState]
+    transitions: list[StateMachineTransition]
+    entry_state: str
+    entry_node_position: StateMachineStatePosition
 
 
 class StateMachine(node.Node):
