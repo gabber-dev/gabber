@@ -3,8 +3,10 @@
 
 from .fps import FPS
 from .publish import Publish
+from .chat_input import ChatInput
 
 ALL_NODES = [
     FPS,
     Publish,
+    ChatInput,
 ]
