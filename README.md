@@ -42,16 +42,19 @@ A Node is a functional building block within a Gabber app or subgraph. Each node
 
 Nodes have Inputs and Outputs called pads. Some pads have configurable properties that effect the behavior of the node.
 
-You can think of nodes like nodes in a media pipeline, but with AI logic, state transitions, and tool-calling built in.
-
 ### Pad
 
-A Pad is a connection point on a node that allows it to send or receive data. There are two types of pads:
+A Pad is a connection point on a node that allows it to send or receive data.
+
+There are two types of pads:
 
 - Sink Pads: Receive data from upstream nodes
 - Source Pads: Send data to downstream nodes
-- Property Pads: Dynamic pads that adjust the behavior of the containing node
-- Stateless Pads: Static nodes that simply receive or emit data
+
+And two "modes":
+
+- Property: adjust the behavior of the containing node
+- Stateless: receive or emit data
 
 Pads are typed — for example, audio pads, control/event pads, and text pads — so only compatible nodes can be linked. This type-safe wiring ensures your graph behaves predictably and enforces valid data flows between components.
 
@@ -67,40 +70,19 @@ The primary purpose of SubGraphs is to:
 - Create reusable logic and implementations
 - Abstract complex behaviors into simple, modular units
 
-This helps keep your main app graphs clean, composable, and easier to maintain.
+Subgraphs help keep your main app graphs clean, composable, and easier to maintain.
 
-### State Machines
-The Gabber platform includes a State Machine system for orchestrating service workflows.
+### State Machine
 
-#### Key Concepts
-**Parameters**
+A State Machine controls the flow of your app by moving between defined states based on parameters.
 
-State Machines have parameters that affect the behavior of states (e.g., voice style, model choice).
+State Machines are made up of:
+- **Parameters** — variables that the state machine listens to
+- **States** — distinct phases in your application flow, starting from an initial state
+- **State Transitions** — nodes that determine when to move from one state to another based on Parameters
+- **Transition Logic** — transitions act as AND gates by default, and can be combined in parallel to create OR logic
 
-**States**
-
-States define distinct phases of your application flow.
-You can chain states starting with an initial state connected directly from the State Machine block.
-
-**State Transitions**
-
-Transition nodes control movement between states based on conditions or events.
-
-**Transition Node Logic**
-
-Transition nodes act as AND gates — all connected conditions must be satisfied before transitioning.
-You can create OR gates by running two transition nodes in parallel into the same target state.
-
-#### Example Flow
-
-1. Start with an Initial State node *Greeting*.
-2. Add a second State called *Capture*.
-3. Add a State Transition Node between *Greeting* and *Capture* for a specific input (e.g., Parameter_0 triggered).
-4. When Parameter_0 is triggered, the state machine will transition to *Capture*.
-5. Using an EnumSwitch, I can trigger downstream changes based on the Current State.
-6. Optionally, add parallel transition nodes to allow multiple triggers for the same state.
-
-This setup makes it easy to design branching, conditional logic for your AI-powered workflows.
+State Machines make it easy to design branching, conditional logic for AI-powered workflows.
 
 ## Anatomy
 
@@ -125,7 +107,7 @@ The repository service is a very thin local http server reponsible for fetching 
 All entities are stored in the `.gabber` directory. It runs on port `8001`.
 
 ## SDKs
-Gabber provides SDKs to help you integrate these services into your applications quickly. These SDKs handle authentication, API calls, and streaming where supported.
+Gabber provides SDKs to help you integrate these services into your applications quickly.
 
 Currently available SDKs include:
 - **JavaScript/TypeScript SDK** — framework-agnostic client library for Node.js, browsers, Bun, and Deno. Ideal for backend services or non-React frontends.
