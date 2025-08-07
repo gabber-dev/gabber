@@ -22,16 +22,13 @@ export function ChatInputNode({ data }: ChatInputNodeProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputText.trim()) {
-      console.log("[ChatInput] Attempting to send message:", inputText);
-      const ctx = { parent: null };
-      try {
-        await pushValue({ value: inputText, ctx });
-        console.log("[ChatInput] Successfully pushed value");
-        setInputText("");
-      } catch (error) {
-        console.error("[ChatInput] Error pushing value:", error);
-      }
+    if (!inputText.trim()) return;
+    try {
+      // Push raw string. Backend expects plain primitives on source pads.
+      await pushValue(inputText as unknown as never);
+      setInputText("");
+    } catch {
+      // silent failure
     }
   };
 
@@ -52,6 +49,7 @@ export function ChatInputNode({ data }: ChatInputNodeProps) {
             {data.id}
           </div>
         </div>
+        {/* no debug UI */}
       </div>
 
       <div className="flex flex-1 flex-col gap-2 p-4 nodrag cursor-default">
