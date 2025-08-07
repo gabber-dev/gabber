@@ -91,16 +91,13 @@ Transition nodes control movement between states based on conditions or events.
 Transition nodes act as AND gates — all connected conditions must be satisfied before transitioning.
 You can create OR gates by running two transition nodes in parallel into the same target state.
 
-<p align="center">
-  <img src="frontend/public/state_machine_example.png" alt="Example State Machine Gabber" width="100%"/>
-</p>
-
 #### Example Flow
+
 1. Start with an Initial State node *Greeting*.
 2. Add a second State called *Capture*.
 3. Add a State Transition Node between *Greeting* and *Capture* for a specific input (e.g., Parameter_0 triggered).
 4. When Parameter_0 is triggered, the state machine will transition to *Capture*.
-5. Using an EnumSwitch, I can trigger downstream changes based on the state.
+5. Using an EnumSwitch, I can trigger downstream changes based on the Current State.
 6. Optionally, add parallel transition nodes to allow multiple triggers for the same state.
 
 This setup makes it easy to design branching, conditional logic for your AI-powered workflows.
