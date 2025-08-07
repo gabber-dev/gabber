@@ -53,8 +53,8 @@ There are two types of pads:
 
 And two "modes":
 
-- Property: adjust the behavior of the containing node
-- Stateless: receive or emit data
+- Property: Always has a value associated with it
+- Stateless: Stream of values
 
 Pads are typed, so only compatible typed pads can be linked. When a node emits output on a pad, any downstream nodes connected to that pad can process the result in real time.
 
