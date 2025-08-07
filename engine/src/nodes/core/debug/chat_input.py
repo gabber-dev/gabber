@@ -16,7 +16,7 @@ class ChatInput(node.Node):
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(
             primary="core",
-            secondary="media",
+            secondary="debug",
             tags=["input", "text"]
         )
 
