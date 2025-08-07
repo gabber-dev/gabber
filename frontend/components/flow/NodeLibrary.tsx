@@ -379,57 +379,79 @@ export function NodeLibrary({ setIsModalOpen }: NodeLibraryProps) {
       {/* Node List */}
       <div className="flex-1 overflow-y-auto">
         {filteredBlocks.length > 0 ? (
-          <div className="space-y-2 px-2 pt-2 pb-4">
-            {filteredBlocks.map((block) => {
-              return (
-                <div
-                  key={block.type === "subgraph" ? block.id : block.name}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, block)}
-                  onDragEnd={handleDragEnd}
-                  onClick={() => handleBlockSelect(block)}
-                  className={`
-                    group relative p-2 rounded cursor-grab active:cursor-grabbing
-                    border border-primary bg-base-200
-                    hover:shadow-[1px_1px_0px_0px] hover:shadow-primary/60
-                    hover:-translate-x-0.5 hover:-translate-y-0.5
-                    active:translate-x-0.5 active:translate-y-0.5
-                    transition-all duration-150 ease-in-out
-                    ${draggedItem?.type === block.type ? "opacity-50 scale-95" : ""}
-                    flex flex-col
-                  `}
-                >
-                  <div className="flex items-center gap-1.5">
-                    <h3 className="font-medium text-sm text-primary group-hover:text-accent transition-colors">
-                      {block.name}
+          <div className="px-2 pt-2 pb-4">
+            {(() => {
+              // Group blocks by primary category
+              const groupedBlocks = filteredBlocks.reduce((acc, block) => {
+                const primary = block.type === "subgraph" 
+                  ? "My Subgraphs" 
+                  : (block as any).metadata?.primary || "Other";
+                if (!acc[primary]) acc[primary] = [];
+                acc[primary].push(block);
+                return acc;
+              }, {} as Record<string, typeof filteredBlocks>);
+
+              // Sort categories alphabetically
+              const sortedCategories = Object.keys(groupedBlocks).sort();
+
+              return sortedCategories.map((category, categoryIndex) => (
+                <div key={category} className={categoryIndex > 0 ? "mt-6" : ""}>
+                  {/* Category Header */}
+                  <div className="mb-3">
+                    <h3 className="text-sm font-vt323 uppercase tracking-wider text-primary/70 border-b border-primary/30 pb-1">
+                      {category}
                     </h3>
-                    {(block as any).metadata?.primary && (
-                      <span className="text-[10px] text-base-content/50 font-mono">
-                        ·{(block as any).metadata.primary}
-                      </span>
-                    )}
-                    {(block as any).metadata?.secondary && (
-                      <span className="text-[10px] text-base-content/50 font-mono">
-                        ·{(block as any).metadata.secondary}
-                      </span>
-                    )}
                   </div>
-                  {(block as any).description && (
-                    <p className="text-xs text-base-content/70 mt-0.5">
-                      {(block as any).description}
-                    </p>
-                  )}
-                  <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-base-300 p-1 rounded-sm">
-                    <div className="text-[10px] text-accent font-vt323 bg-base-300 px-1 rounded-sm border border-accent/30">
-                      Click = Origin
-                    </div>
-                    <div className="text-[10px] text-primary font-vt323 bg-base-300 px-1 rounded-sm border border-primary/30">
-                      Drag = Place
-                    </div>
+
+                  {/* Category Blocks */}
+                  <div className="space-y-2">
+                    {groupedBlocks[category].map((block) => (
+                      <div
+                        key={block.type === "subgraph" ? block.id : block.name}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, block)}
+                        onDragEnd={handleDragEnd}
+                        onClick={() => handleBlockSelect(block)}
+                        className={`
+                          group relative p-2 rounded cursor-grab active:cursor-grabbing
+                          border border-primary bg-base-200
+                          hover:shadow-[1px_1px_0px_0px] hover:shadow-primary/60
+                          hover:-translate-x-0.5 hover:-translate-y-0.5
+                          active:translate-x-0.5 active:translate-y-0.5
+                          transition-all duration-150 ease-in-out
+                          ${draggedItem?.type === block.type ? "opacity-50 scale-95" : ""}
+                          flex flex-col
+                        `}
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <h3 className="font-medium text-sm text-primary group-hover:text-accent transition-colors">
+                            {block.name}
+                          </h3>
+                          {(block as any).metadata?.secondary && (
+                            <span className="text-[10px] text-base-content/50 font-mono">
+                              ·{(block as any).metadata.secondary}
+                            </span>
+                          )}
+                        </div>
+                        {(block as any).description && (
+                          <p className="text-xs text-base-content/70 mt-0.5">
+                            {(block as any).description}
+                          </p>
+                        )}
+                        <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-base-300 p-1 rounded-sm">
+                          <div className="text-[10px] text-accent font-vt323 bg-base-300 px-1 rounded-sm border border-accent/30">
+                            Click = Origin
+                          </div>
+                          <div className="text-[10px] text-primary font-vt323 bg-base-300 px-1 rounded-sm border border-primary/30">
+                            Drag = Place
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              );
-            })}
+              ));
+            })()}
           </div>
         ) : (
           <div className="text-center py-12">
