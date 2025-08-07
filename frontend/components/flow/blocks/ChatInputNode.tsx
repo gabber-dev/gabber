@@ -7,6 +7,7 @@ import { NodeEditorRepresentation } from "@/generated/editor";
 import { useState } from "react";
 import { StatelessPad } from "./components/pads/StatelessPad";
 import { ChatBubbleLeftIcon } from "@heroicons/react/24/outline";
+import toast from "react-hot-toast";
 import { useSourcePad } from "@gabber/client-react";
 
 export interface ChatInputNodeProps {
@@ -27,8 +28,9 @@ export function ChatInputNode({ data }: ChatInputNodeProps) {
       // Push raw string. Backend expects plain primitives on source pads.
       await pushValue(inputText as unknown as never);
       setInputText("");
-    } catch {
-      // silent failure
+    } catch (err) {
+      console.error("[ChatInput] Failed to send message:", err);
+      toast.error("Failed to send message. Please try again.");
     }
   };
 

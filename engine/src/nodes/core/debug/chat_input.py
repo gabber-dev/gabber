@@ -30,9 +30,4 @@ class ChatInput(node.Node):
             self.pads.append(output)
 
     async def run(self):
-        # Intentionally idle. Values are injected into this node's source pad
-        # by the runtime when the client pushes them. We keep the task alive
-        # without doing any processing here.
-        import asyncio
-        while True:
-            await asyncio.sleep(3600)
+        pass
