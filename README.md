@@ -73,17 +73,21 @@ This helps keep your main app graphs clean, composable, and easier to maintain.
 The Gabber platform includes a State Machine system for orchestrating service workflows.
 
 #### Key Concepts
-Parameters
+**Parameters**
+
 State Machines have parameters that affect the behavior of states (e.g., voice style, model choice).
 
 **States**
+
 States define distinct phases of your application flow.
 You can chain states starting with an initial state connected directly from the State Machine block.
 
 **State Transitions**
+
 Transition nodes control movement between states based on conditions or events.
 
 **Transition Node Logic**
+
 Transition nodes act as AND gates — all connected conditions must be satisfied before transitioning.
 You can create OR gates by running two transition nodes in parallel into the same target state.
 
