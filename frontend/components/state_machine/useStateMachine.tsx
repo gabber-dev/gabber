@@ -422,6 +422,7 @@ export function StateMachineProvider({ children, nodeId }: Props) {
         parameterPads,
         reactFlowRepresentation,
         editorNode,
+        setEditingTransition: setEditingTransitionId,
       }}
     >
       {children}

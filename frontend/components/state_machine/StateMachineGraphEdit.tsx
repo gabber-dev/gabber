@@ -11,6 +11,8 @@ import { StateMachineStateBlock } from "./StateMachineStateBlock";
 import { useCallback } from "react";
 import ReactModal from "react-modal";
 import { StateMachineTransitionEdit } from "./StateMachineTransitionEdit";
+import StateMachineEdge from "./StateMachineEdge";
+import StateMachineConnectionLine from "./StateMachineConnectionLine";
 
 export function StateMachineGraphEdit() {
   return (
@@ -66,6 +68,8 @@ function Inner() {
         className="h-full w-full bg-base-300"
         nodes={reactFlowRepresentation.nodes}
         edges={reactFlowRepresentation.edges}
+        edgeTypes={{ default: StateMachineEdge }}
+        connectionLineComponent={StateMachineConnectionLine}
         onNodesChange={(changes) => {
           handleNodeChanges(changes);
         }}
