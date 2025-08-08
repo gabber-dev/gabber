@@ -1,3 +1,6 @@
+# Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
+# SPDX-License-Identifier: SUL-1.0
+
 import asyncio
 from typing import Annotated, Any, Literal
 from pydantic import BaseModel, Field

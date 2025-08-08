@@ -2,5 +2,6 @@
 # SPDX-License-Identifier: SUL-1.0
 
 from . import kyutai
+from . import vad
 
-ALL_NODES = kyutai.ALL_NODES
+ALL_NODES = kyutai.ALL_NODES + vad.ALL_NODES
