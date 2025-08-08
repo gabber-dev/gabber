@@ -9,7 +9,11 @@ import {
   LocalVideoTrack,
   useEngine,
 } from "@gabber/client-react";
-import { MicrophoneIcon, VideoCameraIcon } from "@heroicons/react/24/solid";
+import {
+  ComputerDesktopIcon,
+  MicrophoneIcon,
+  VideoCameraIcon,
+} from "@heroicons/react/24/solid";
 import { useNodeId } from "@xyflow/react";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -21,6 +25,8 @@ export function Publish() {
     useState<LocalVideoTrack | null>(null);
   const [localMicrophoneTrack, setLocalMicrophoneTrack] =
     useState<LocalAudioTrack | null>(null);
+  const [localScreenShareTrack, setLocalScreenShareTrack] =
+    useState<LocalVideoTrack | null>(null);
   const nodeId = useNodeId();
   const videoElRef = useRef<HTMLVideoElement>(null);
 
@@ -28,6 +34,7 @@ export function Publish() {
     if (connectionState !== "disconnected") {
       setLocalMicrophoneTrack(null);
       setLocalWebcamTrack(null);
+      setLocalScreenShareTrack(null);
     }
   }, [connectionState]);
 
@@ -99,6 +106,56 @@ export function Publish() {
           }}
         >
           <MicrophoneIcon className="w-full h-full" />
+        </button>
+        <button
+          className={`rounded-full h-8 w-8 p-1.5 btn-primary btn text-primary-content relative ${
+            localScreenShareTrack
+              ? "border-2 border-primary border-opacity-50"
+              : ""
+          }`}
+          onClick={async () => {
+            if (!nodeId) {
+              toast.error("Node ID is not available.");
+              return;
+            }
+            if (localScreenShareTrack) {
+              setLocalScreenShareTrack(null);
+              return;
+            }
+            try {
+              const screenShareTrack = (await getLocalTrack({
+                type: "screen",
+                audio: false,
+              })) as LocalVideoTrack;
+              screenShareTrack.attachToElement(videoElRef.current!);
+              setLocalScreenShareTrack(screenShareTrack);
+              await publishToNode({
+                localTrack: screenShareTrack,
+                publishNodeId: nodeId,
+              });
+            } catch (error) {
+              if (error instanceof Error) {
+                if (
+                  error.name === "NotAllowedError" ||
+                  error.name === "PermissionDeniedError"
+                ) {
+                  toast.error(
+                    "Screen sharing permission was denied. Please allow screen sharing to continue.",
+                  );
+                } else {
+                  toast.error(
+                    "Failed to start screen sharing. Please try again.",
+                  );
+                }
+              } else {
+                toast.error(
+                  "An unexpected error occurred while starting screen sharing.",
+                );
+              }
+            }
+          }}
+        >
+          <ComputerDesktopIcon className="w-full h-full" />
         </button>
       </div>
     </div>
