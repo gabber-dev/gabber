@@ -22,6 +22,7 @@ class StateMachineStatePosition(BaseModel):
 
 
 class StateMachineState(BaseModel):
+    id: str
     name: str
     position: StateMachineStatePosition
 
@@ -91,8 +92,93 @@ class StateMachine(node.Node):
 
         # Ensure configuration has necessary keys and set entry_state if needed
         config_dict = configuration.get_value()
-        logging.debug(f"NEIL Initial configuration: {config_dict}")
-        config = StateMachineConfiguration.model_validate(config_dict)
+        cleaned_dict = {}
+
+        # Validate states
+        valid_states = []
+        state_ids = set()
+        if "states" in config_dict and isinstance(config_dict["states"], list):
+            for state_dict in config_dict["states"]:
+                try:
+                    sm = StateMachineState.model_validate(state_dict)
+                    if sm.id in state_ids:
+                        logging.warning(
+                            f"Duplicate state ID '{sm.id}' found. Skipping."
+                        )
+                        continue
+                    state_ids.add(sm.id)
+                    valid_states.append(state_dict)
+                except Exception:
+                    logging.warning(
+                        f"Invalid state configuration: {state_dict}. Skipping."
+                    )
+        cleaned_dict["states"] = valid_states
+
+        # Validate transitions
+        valid_transitions = []
+        if "transitions" in config_dict and isinstance(
+            config_dict["transitions"], list
+        ):
+            for trans_dict in config_dict["transitions"]:
+                try:
+                    tm = StateMachineTransition.model_validate(trans_dict)
+                    if tm.from_state not in state_ids or tm.to_state not in state_ids:
+                        logging.warning(
+                            f"Transition from '{tm.from_state}' to '{tm.to_state}' contains unknown states. Skipping."
+                        )
+                        continue
+
+                    valid_transitions.append(trans_dict)
+                except Exception:
+                    logging.warning(
+                        f"Invalid transition configuration: {trans_dict}. Skipping."
+                    )
+        cleaned_dict["transitions"] = valid_transitions
+        cleaned_dict["entry_state"] = config_dict.get("entry_state", None)
+
+        entry_node_position = config_dict.get("entry_node_position", None)
+        if entry_node_position and isinstance(entry_node_position, dict):
+            try:
+                cleaned_dict["entry_node_position"] = (
+                    StateMachineStatePosition.model_validate(entry_node_position)
+                )
+            except Exception:
+                logging.warning(
+                    f"Invalid entry node position configuration: {entry_node_position}. Setting to default."
+                )
+                cleaned_dict["entry_node_position"] = StateMachineStatePosition(
+                    x=0.0, y=0.0
+                )
+
+        config = StateMachineConfiguration.model_validate(cleaned_dict)
+        if not config.entry_node_position:
+            config.entry_node_position = StateMachineStatePosition(x=0.0, y=0.0)
+
+        if not config.entry_state and config.states:
+            config.entry_state = config.states[0].id
+
+        elif config.entry_state:
+            # Ensure entry state exists in states
+            if not any(state.id == config.entry_state for state in config.states):
+                logging.warning(
+                    f"Entry state '{config.entry_state}' not found in states. Setting to None."
+                )
+                if len(config.states) > 0:
+                    config.entry_state = config.states[0].id
+                else:
+                    config.entry_state = None
+
+        seen_states = set()
+        for state in config.states:
+            if state.name in seen_states:
+                logging.warning(
+                    f"Duplicate state name '{state.name}' found. Renaming to avoid conflicts."
+                )
+                while state.name in seen_states:
+                    state.name += "(1)"
+            seen_states.add(state.name)
+
+        configuration.set_value(config.model_dump())
 
         self._resolve_num_pads()
         self._sort_and_rename_pads()

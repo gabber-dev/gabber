@@ -5,25 +5,27 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
+export type Id = string;
 export type Name = string;
 export type X = number;
 export type Y = number;
 export type States = StateMachineState[];
-export type Id = string;
+export type Id1 = string;
 export type FromState = string;
 export type ToState = string;
 export type Conditions = string[];
 export type Transitions = StateMachineTransition[];
-export type EntryState = string;
+export type EntryState = string | null;
 
 export interface StateMachineConfiguration {
   states: States;
   transitions: Transitions;
-  entry_state: EntryState;
-  entry_node_position: StateMachineStatePosition;
+  entry_state?: EntryState;
+  entry_node_position?: StateMachineStatePosition | null;
   [k: string]: unknown;
 }
 export interface StateMachineState {
+  id: Id;
   name: Name;
   position: StateMachineStatePosition;
   [k: string]: unknown;
@@ -34,7 +36,7 @@ export interface StateMachineStatePosition {
   [k: string]: unknown;
 }
 export interface StateMachineTransition {
-  id: Id;
+  id: Id1;
   from_state: FromState;
   to_state: ToState;
   conditions?: Conditions;
