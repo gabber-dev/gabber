@@ -1,16 +1,11 @@
-import {
-  ArrowRightIcon,
-  MinusIcon,
-  PlusIcon,
-  XCircleIcon,
-} from "@heroicons/react/24/outline";
+import { ArrowRightIcon, XCircleIcon } from "@heroicons/react/24/outline";
 import { useStateMachine } from "./useStateMachine";
 import {
   Operator,
   StateMachineTransition,
   StateMachineTransitionCondition,
 } from "@/generated/stateMachine";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 
 export function StateMachineTransitionEdit() {
   const { editingTransition, updateTransition } = useStateMachine();
@@ -81,28 +76,40 @@ function Condition({
   const selectedPad = useMemo(() => {
     if (!condition.parameter_name) return undefined;
     return parameterPads.find(
-      (pad) => pad.nameValue === condition.parameter_name,
+      (pad) =>
+        pad.namePadId === condition.parameter_name ||
+        pad.nameValue === condition.parameter_name,
     );
   }, [condition.parameter_name, parameterPads]);
 
-  const valueType = (selectedPad?.valueType?.type || "unknown") as string;
-  console.log(
-    "NEIL Condition valueType:",
-    selectedPad,
-    valueType,
-    parameterPads,
-  );
-  const isTrigger = valueType === "Trigger";
+  // Default parameter on first render for better UX
+  useEffect(() => {
+    if (!condition.parameter_name && parameterPads.length > 0) {
+      const first = parameterPads[0].namePadId;
+      updateTransition(transition.id, {
+        ...transition,
+        conditions: transition.conditions?.map((cond, idx) =>
+          idx === conditionIdx ? { ...cond, parameter_name: first } : cond,
+        ),
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [condition.parameter_name, parameterPads.length]);
+
+  const valueType = (
+    (selectedPad?.valueType?.type || "unknown") as string
+  ).toLowerCase();
+  const isTrigger = valueType === "trigger";
   const selectedOperator = condition.operator || "";
   const isUnaryOperator = ["NON_EMPTY", "EMPTY"].includes(selectedOperator);
 
   const operatorOptions: { value: Operator; label: string }[] = [
-    { value: "<", label: "&lt;" },
-    { value: "<=", label: "&lt;=" },
+    { value: "<", label: "<" },
+    { value: "<=", label: "<=" },
     { value: "==", label: "==" },
     { value: "!=", label: "!=" },
-    { value: ">=", label: "&gt;=" },
-    { value: ">", label: "&gt;" },
+    { value: ">=", label: ">=" },
+    { value: ">", label: ">" },
     { value: "NON_EMPTY", label: "NON_EMPTY" },
     { value: "EMPTY", label: "EMPTY" },
     { value: "STARTS_WITH", label: "STARTS_WITH" },
@@ -112,8 +119,23 @@ function Condition({
 
   let availableOperators: { value: Operator; label: string }[] = [];
   if (valueType === "string") {
-    availableOperators = operatorOptions;
-  } else if (valueType === "number") {
+    const stringAllowed = new Set<Operator | "">([
+      "==",
+      "!=",
+      "STARTS_WITH",
+      "ENDS_WITH",
+      "CONTAINS",
+      "NON_EMPTY",
+      "EMPTY",
+    ]);
+    availableOperators = operatorOptions.filter((op) =>
+      stringAllowed.has(op.value || ""),
+    );
+  } else if (
+    valueType === "number" ||
+    valueType === "integer" ||
+    valueType === "float"
+  ) {
     availableOperators = operatorOptions.filter((op) =>
       ["<", "<=", "==", "!=", ">=", ">"].includes(op.value || ""),
     );
@@ -169,11 +191,42 @@ function Condition({
       )}
       {!isTrigger && !isUnaryOperator && (
         <input
-          type="text"
+          type={
+            valueType === "integer" ||
+            valueType === "float" ||
+            valueType === "number"
+              ? "number"
+              : "text"
+          }
           className="input input-bordered grow select-xs !outline-none"
-          value={(condition.value as unknown as string) || ""}
+          value={
+            valueType === "integer" ||
+            valueType === "float" ||
+            valueType === "number"
+              ? typeof condition.value === "number"
+                ? (condition.value as number)
+                : (condition.value as unknown as string) || ""
+              : (condition.value as unknown as string) || ""
+          }
           onChange={(e) => {
-            // Handle value change
+            const nextValue =
+              valueType === "integer" || valueType === "number"
+                ? e.target.value === ""
+                  ? null
+                  : parseInt(e.target.value, 10)
+                : valueType === "float"
+                  ? e.target.value === ""
+                    ? null
+                    : parseFloat(e.target.value)
+                  : e.target.value;
+            updateTransition(transition.id, {
+              ...transition,
+              conditions: transition.conditions?.map((cond, idx) =>
+                idx === conditionIdx
+                  ? { ...cond, value: nextValue as unknown }
+                  : cond,
+              ),
+            });
           }}
         />
       )}

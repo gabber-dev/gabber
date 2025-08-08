@@ -1,5 +1,6 @@
 import { Handle, Node, Position, useNodeId, useNodesData } from "@xyflow/react";
 import { ChangeEvent, useCallback, useMemo, useState } from "react";
+import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import { StateMachineState } from "@/generated/stateMachine";
 import { useStateMachine } from "./useStateMachine";
 
@@ -39,9 +40,9 @@ export function StateMachineStateBlock() {
   }, [selectedNodes, nodeId]);
 
   return (
-    <div className="relative min-w-14 h-8">
+    <div className="relative min-w-14 h-8 group">
       <div
-        className={`h-full relative z-10 flex flex-col items-center justify-center ${bgColor} rounded-full text-sm text-base-100 font-bold`}
+        className={`h-full relative z-10 flex flex-col items-center justify-center ${bgColor} rounded-full text-sm text-base-100 font-bold px-3 py-1`}
         onDoubleClick={handleDoubleClick}
       >
         {isEditing ? (
@@ -55,7 +56,22 @@ export function StateMachineStateBlock() {
             className="w-full text-center bg-transparent border-none outline-none text-base-100 nodrag"
           />
         ) : (
-          <p>{name}</p>
+          <div className="flex items-center gap-1">
+            <p className="px-1">{name}</p>
+            {!isEntry && (
+              <button
+                type="button"
+                className="nodrag p-0 m-0 bg-transparent border-none cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditing(true);
+                }}
+                title="Rename state"
+              >
+                <PencilSquareIcon className="w-3.5 h-3.5 opacity-0 group-hover:opacity-70 transition-opacity" />
+              </button>
+            )}
+          </div>
         )}
       </div>
       <Handle

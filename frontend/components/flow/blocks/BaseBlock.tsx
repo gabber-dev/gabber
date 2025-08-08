@@ -11,8 +11,8 @@ import { CubeIcon } from "@heroicons/react/24/outline";
 import { Publish } from "./Publish";
 import { Output } from "./Output";
 import { AutoConvertNode } from "./AutoConvertNode";
+import { ChatInputNode } from "./ChatInputNode";
 import { CommentNode } from "./CommentNode";
-import { StateTransitionNode } from "./StateTransitionNode";
 import { SelfPad } from "./components/pads/SelfPad";
 import { StateMachineNode } from "@/components/state_machine/StateMachineNode";
 
@@ -46,6 +46,10 @@ export function BaseBlock({ data }: BaseBlockProps) {
 
   if (data.type === "Comment") {
     return <CommentNode data={data} />;
+  }
+
+  if (data.type === "ChatInput") {
+    return <ChatInputNode data={data} />;
   }
 
   if (data.type === "StateMachine") {

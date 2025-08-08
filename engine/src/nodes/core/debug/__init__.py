@@ -2,9 +2,11 @@
 # SPDX-License-Identifier: SUL-1.0
 
 from .button_trigger import ButtonTrigger
+from .chat_input import ChatInput
 from .output import Output
 
 ALL_NODES = [
     ButtonTrigger,
+    ChatInput,
     Output,
 ]

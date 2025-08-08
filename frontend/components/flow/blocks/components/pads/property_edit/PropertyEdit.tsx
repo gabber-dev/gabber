@@ -13,6 +13,7 @@ import { JsonSchemaEdit } from "./JsonSchemaEdit";
 import { NodeReferenceEdit } from "./NodeReferenceEdit";
 import { SecretPropertyEdit } from "./SecretPropertyEdit";
 import { MultiLineTextPropertyEdit } from "./MultiLineTextPropertyEdit";
+
 import { EnumPropertyEdit } from "./EnumPropertyEdit";
 
 export type PropertyEditProps = {
@@ -35,10 +36,6 @@ export function PropertyEdit({ nodeId, padId }: PropertyEditProps) {
     singleAllowedType.type === "string" ||
     singleAllowedType.type === "text"
   ) {
-    // Use multi-line text editor for comment nodes
-    if (nodeId.includes("comment")) {
-      return <MultiLineTextPropertyEdit nodeId={nodeId} padId={padId} />;
-    }
     return <StringPropertyEdit nodeId={nodeId} padId={padId} />;
   }
 
