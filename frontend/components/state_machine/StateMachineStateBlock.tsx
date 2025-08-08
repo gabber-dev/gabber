@@ -51,7 +51,7 @@ export function StateMachineStateBlock() {
             onChange={handleNameChange}
             onBlur={handleBlur}
             autoFocus
-            className="w-full text-center bg-transparent border-none outline-none text-base-100"
+            className="w-full text-center bg-transparent border-none outline-none text-base-100 nodrag"
           />
         ) : (
           <p>{name}</p>
