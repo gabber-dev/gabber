@@ -40,6 +40,8 @@ type StateMachineContextType = {
     source: string,
     newPosition: { x: number; y: number },
   ) => void;
+  selectedNodes: string[];
+  selectedEdges: string[];
   parameterPads: StateMachineParameterPads[];
   editorNode?: NodeEditorRepresentation;
   reactFlowRepresentation: { nodes: Node[]; edges: Edge[] };
@@ -345,6 +347,8 @@ export function StateMachineProvider({
         handleNodeChanges,
         handleEdgeChanges,
         addStateAndTransition,
+        selectedEdges,
+        selectedNodes,
         parameterPads,
         reactFlowRepresentation,
         editorNode,
