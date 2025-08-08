@@ -51,12 +51,12 @@ const StateMachineContext = createContext<StateMachineContextType | undefined>(
   undefined,
 );
 
-export function StateMachineProvider({
-  children,
-}: {
+type Props = {
+  nodeId: string;
   children: React.ReactNode;
-}) {
-  const nodeId = useNodeId();
+};
+
+export function StateMachineProvider({ children, nodeId }: Props) {
   const node = useNodesData<Node<NodeEditorRepresentation>>(nodeId || "");
   const editorNode = node?.data;
   const { setEditorValue, editorValue } = usePropertyPad(
@@ -70,12 +70,13 @@ export function StateMachineProvider({
     usePropertyPad<StateMachineConfiguration>(nodeId || "", "configuration");
 
   const updateState = useCallback(
-    (oldName: string, newName: string) => {
+    (stateId: string, newName: string) => {
       if (!configuration) {
         return;
       }
+      console.log("NEIL Updating state name:", stateId, "to", newName);
       const updatedStates = configuration.states.map((state) =>
-        state.name === oldName ? { ...state, name: newName } : state,
+        state.id === stateId ? { ...state, name: newName } : state,
       );
       setConfiguration({ ...configuration, states: updatedStates });
     },
@@ -198,6 +199,18 @@ export function StateMachineProvider({
           } else {
             setSelectedNodes((prev) => prev.filter((id) => id !== change.id));
           }
+        } else if (change.type === "remove") {
+          if (change.id === "__ENTRY__") {
+            console.warn("Cannot remove entry node");
+            continue;
+          }
+          const updatedStates = prevConfiguration.states.filter(
+            (state) => state.id !== change.id,
+          );
+          setConfiguration({
+            ...prevConfiguration,
+            states: updatedStates,
+          });
         } else {
           console.warn("Unhandled node change type:", change.type);
         }
@@ -246,20 +259,41 @@ export function StateMachineProvider({
     [configuration, setConfiguration],
   );
 
-  const handleEdgeChanges = useCallback((changes: EdgeChange[]) => {
-    for (const change of changes) {
-      if (change.type === "remove") {
-      } else if (change.type === "select") {
-        if (change.selected) {
-          setSelectedEdges((prev) => [...prev, change.id]);
-        } else {
-          setSelectedEdges((prev) => prev.filter((id) => id !== change.id));
+  const handleEdgeChanges = useCallback(
+    (changes: EdgeChange[]) => {
+      for (const change of changes) {
+        if (change.type === "remove") {
+          if (change.id.startsWith("__ENTRY__-")) {
+            console.warn("Cannot remove entry state transition");
+            continue;
+          }
+          const prevConfiguration = configuration || {
+            states: [],
+            entry_state: "",
+            entry_node_position: { x: 0, y: 0 },
+            transitions: [],
+          };
+
+          const updatedTransitions = prevConfiguration.transitions.filter(
+            (t) => t.id !== change.id,
+          );
+          setConfiguration({
+            ...prevConfiguration,
+            transitions: updatedTransitions,
+          });
+        } else if (change.type === "select") {
+          if (change.selected) {
+            setSelectedEdges((prev) => [...prev, change.id]);
+          } else {
+            setSelectedEdges((prev) => prev.filter((id) => id !== change.id));
+          }
         }
       }
-    }
-    console.log("Edge changes:", changes);
-    // Handle edge changes here
-  }, []);
+      console.log("Edge changes:", changes);
+      // Handle edge changes here
+    },
+    [configuration, setConfiguration],
+  );
 
   const reactFlowRepresentation = useMemo(() => {
     const entryNode: Node = {
@@ -288,7 +322,7 @@ export function StateMachineProvider({
 
     if (configuration?.entry_state) {
       edges.push({
-        id: `__ENTRY__-${configuration.entry_state}`,
+        id: "entry_edge",
         source: "__ENTRY__",
         target: configuration.entry_state,
         type: "default",

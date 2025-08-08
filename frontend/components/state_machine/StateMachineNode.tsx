@@ -24,7 +24,7 @@ export function StateMachineNode({ data }: BaseBlockProps) {
         </div>
       </div>
       <div>
-        <StateMachineProvider>
+        <StateMachineProvider nodeId={data.id}>
           <CurrentState />
           <Parameters />
           <StateMachineGraphMini />

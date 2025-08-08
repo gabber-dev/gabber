@@ -56,6 +56,8 @@ type EditorContextType = {
 
   unsavedChanges: boolean;
   saving: boolean;
+  stateMachineEditing?: string;
+  setStateMachineEditing: (stateMachineId: string | undefined) => void;
   saveChanges: () => Promise<void>;
 
   onReactFlowConnect: (connection: Connection) => void;
@@ -68,6 +70,8 @@ type EditorContextType = {
   connectPad: (req: ConnectPadEdit) => void;
   updatePad: (req: UpdatePadEdit) => void;
   updateNode: (req: UpdateNodeEdit) => void;
+
+  clearAllSelection: () => void;
 };
 
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
@@ -100,6 +104,9 @@ export function EditorProvider({
     nodes: [],
     edges: [],
   });
+  const [stateMachineEditing, setStateMachineEditing] = useState<
+    string | undefined
+  >(undefined);
 
   const { sendMessage, lastJsonMessage, readyState } = useWebSocket(
     editor_url,
@@ -260,6 +267,27 @@ export function EditorProvider({
     },
     [sendRequest],
   );
+
+  const clearAllSelection = useCallback(() => {
+    setReactFlowRepresentation((prev) => {
+      console.log("NEIL Clearing all selection in editor", prev);
+      return {
+        ...prev,
+        nodes: prev.nodes.map((node) => ({
+          ...node,
+          selected: false,
+        })),
+        edges: prev.edges.map((edge) => ({
+          ...edge,
+          selected: false,
+        })),
+      };
+    });
+  }, []);
+
+  useEffect(() => {
+    console.log("NEIL Local representation updated", reactFlowRepresentation);
+  }, [reactFlowRepresentation]);
 
   const updateNode = useCallback(
     (edit: UpdateNodeEdit) => {
@@ -537,6 +565,7 @@ export function EditorProvider({
         unsavedChanges,
         saving,
         debug,
+        stateMachineEditing,
         saveChanges,
         onReactFlowConnect,
         onReactFlowNodesChange,
@@ -547,6 +576,8 @@ export function EditorProvider({
         connectPad,
         updatePad,
         updateNode,
+        clearAllSelection,
+        setStateMachineEditing,
       }}
     >
       {children}
