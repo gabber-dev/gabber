@@ -389,7 +389,6 @@ export function StateMachineProvider({ children, nodeId }: Props) {
 
     for (let i = 0; i < namePads.length; i += 1) {
       const tcs = valuePads[i]?.allowed_types;
-      console.log("NEIL Parameter pads:", namePads[i], valuePads[i], tcs);
       let valueType: BasePadType | undefined = undefined;
       if (tcs?.length === 1) {
         valueType = tcs[0];
