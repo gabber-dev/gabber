@@ -9,6 +9,8 @@ import {
 import { useStateMachine } from "./useStateMachine";
 import { StateMachineStateBlock } from "./StateMachineStateBlock";
 import { useCallback } from "react";
+import ReactModal from "react-modal";
+import { StateMachineTransitionEdit } from "./StateMachineTransitionEdit";
 
 export function StateMachineGraphEdit() {
   return (
@@ -25,6 +27,8 @@ function Inner() {
     handleNodeChanges,
     addStateAndTransition,
     addTransition,
+    editingTransition,
+    setEditingTransition,
   } = useStateMachine();
   const { screenToFlowPosition } = useReactFlow();
 
@@ -57,29 +61,38 @@ function Inner() {
     [addStateAndTransition, addTransition, screenToFlowPosition],
   );
   return (
-    <ReactFlow
-      className="h-full w-full bg-base-300"
-      nodes={reactFlowRepresentation.nodes}
-      edges={reactFlowRepresentation.edges}
-      onNodesChange={(changes) => {
-        handleNodeChanges(changes);
-      }}
-      onEdgesChange={(changes) => {
-        handleEdgeChanges(changes);
-      }}
-      onDragEnd={(event) => {
-        console.log("Drag ended", event);
-      }}
-      onConnectEnd={onConnectEnd}
-      fitView
-      nodeTypes={{ default: StateMachineStateBlock }}
-      snapGrid={[12, 12]}
-      snapToGrid={true}
-      proOptions={{
-        hideAttribution: true,
-      }}
-    >
-      <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
-    </ReactFlow>
+    <div className="relative h-full w-full">
+      <ReactFlow
+        className="h-full w-full bg-base-300"
+        nodes={reactFlowRepresentation.nodes}
+        edges={reactFlowRepresentation.edges}
+        onNodesChange={(changes) => {
+          handleNodeChanges(changes);
+        }}
+        onEdgesChange={(changes) => {
+          handleEdgeChanges(changes);
+        }}
+        onDragEnd={(event) => {
+          console.log("Drag ended", event);
+        }}
+        onConnectEnd={onConnectEnd}
+        fitView
+        nodeTypes={{ default: StateMachineStateBlock }}
+        snapGrid={[12, 12]}
+        snapToGrid={true}
+        proOptions={{
+          hideAttribution: true,
+        }}
+      >
+        <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+      </ReactFlow>
+      <div
+        className={`absolute top-0 right-0 h-full w-80 bg-base-200 shadow-lg transition-all duration-300 z-50 ${
+          editingTransition ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        <StateMachineTransitionEdit />
+      </div>
+    </div>
   );
 }

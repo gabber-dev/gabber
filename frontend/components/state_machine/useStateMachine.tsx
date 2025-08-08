@@ -1,10 +1,9 @@
-import { NodeEditorRepresentation } from "@/generated/editor";
+import { BasePadType, NodeEditorRepresentation } from "@/generated/editor";
 import {
   Edge,
   EdgeChange,
   Node,
   NodeChange,
-  useNodeId,
   useNodesData,
 } from "@xyflow/react";
 import {
@@ -28,10 +27,7 @@ type StateMachineContextType = {
   updateState: (id: string, name: string) => void;
   deleteState: (id: string) => void;
   addTransition: (source: string, target: string) => void;
-  updateTransition: (
-    oldTransition: StateMachineTransition,
-    newTransition: StateMachineTransition,
-  ) => void;
+  updateTransition: (id: string, newTransition: StateMachineTransition) => void;
   deleteTransition: (transitionId: string) => void;
   setEntryState: (state: string) => void;
   addParameter: () => void;
@@ -41,10 +37,15 @@ type StateMachineContextType = {
     newPosition: { x: number; y: number },
   ) => void;
   selectedNodes: string[];
-  selectedEdges: string[];
   parameterPads: StateMachineParameterPads[];
   editorNode?: NodeEditorRepresentation;
   reactFlowRepresentation: { nodes: Node[]; edges: Edge[] };
+  editingTransition?: {
+    transition: StateMachineTransition;
+    fromState: StateMachineState;
+    toState: StateMachineState;
+  };
+  setEditingTransition?: (transitionId: string) => void;
 };
 
 const StateMachineContext = createContext<StateMachineContextType | undefined>(
@@ -64,7 +65,9 @@ export function StateMachineProvider({ children, nodeId }: Props) {
     "num_parameters",
   );
   const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
-  const [selectedEdges, setSelectedEdges] = useState<string[]>([]);
+  const [editingTransitionId, setEditingTransitionId] = useState<
+    string | undefined
+  >(undefined);
 
   const { editorValue: configuration, setEditorValue: setConfiguration } =
     usePropertyPad<StateMachineConfiguration>(nodeId || "", "configuration");
@@ -114,15 +117,12 @@ export function StateMachineProvider({ children, nodeId }: Props) {
   );
 
   const updateTransition = useCallback(
-    (
-      oldTransition: StateMachineTransition,
-      newTransition: StateMachineTransition,
-    ) => {
+    (id: string, newTransition: StateMachineTransition) => {
       if (!configuration) {
         return;
       }
       const updatedTransitions = configuration.transitions.map((t) =>
-        t.id === oldTransition.id ? newTransition : t,
+        t.id === id ? newTransition : t,
       );
       setConfiguration({ ...configuration, transitions: updatedTransitions });
     },
@@ -287,9 +287,9 @@ export function StateMachineProvider({ children, nodeId }: Props) {
           });
         } else if (change.type === "select") {
           if (change.selected) {
-            setSelectedEdges((prev) => [...prev, change.id]);
+            setEditingTransitionId(change.id);
           } else {
-            setSelectedEdges((prev) => prev.filter((id) => id !== change.id));
+            setEditingTransitionId(undefined);
           }
         }
       }
@@ -298,6 +298,28 @@ export function StateMachineProvider({ children, nodeId }: Props) {
     },
     [configuration, setConfiguration],
   );
+
+  const editingTransition = useMemo(() => {
+    if (!editingTransitionId || !configuration) {
+      return undefined;
+    }
+    const transition = configuration.transitions.find(
+      (t) => t.id === editingTransitionId,
+    );
+    if (!transition) {
+      return undefined;
+    }
+    const fromState = configuration.states.find(
+      (s) => s.id === transition.from_state,
+    );
+    const toState = configuration.states.find(
+      (s) => s.id === transition.to_state,
+    );
+    if (!fromState || !toState) {
+      return undefined;
+    }
+    return { transition, fromState, toState };
+  }, [editingTransitionId, configuration]);
 
   const reactFlowRepresentation = useMemo(() => {
     const entryNode: Node = {
@@ -339,7 +361,7 @@ export function StateMachineProvider({ children, nodeId }: Props) {
         source: transition.from_state,
         target: transition.to_state,
         type: "default",
-        selected: selectedEdges.includes(transition.id),
+        selected: editingTransition?.transition.id === transition.id,
       });
     }
 
@@ -352,7 +374,7 @@ export function StateMachineProvider({ children, nodeId }: Props) {
     configuration?.entry_state,
     configuration?.states,
     configuration?.transitions,
-    selectedEdges,
+    editingTransition?.transition.id,
     selectedNodes,
   ]);
 
@@ -363,9 +385,16 @@ export function StateMachineProvider({ children, nodeId }: Props) {
     const res: StateMachineParameterPads[] = [];
 
     for (let i = 0; i < allParamPads.length; i += 2) {
+      const tcs = allParamPads[i + 1]?.allowed_types;
+      let valueType: BasePadType | undefined = undefined;
+      if (tcs?.length === 1) {
+        valueType = tcs[0];
+      }
       res.push({
         namePadId: allParamPads[i].id,
+        nameValue: allParamPads[i].value as string,
         valuePadId: allParamPads[i + 1]?.id,
+        valueType,
       });
     }
     return res;
@@ -385,7 +414,7 @@ export function StateMachineProvider({ children, nodeId }: Props) {
         handleNodeChanges,
         handleEdgeChanges,
         addStateAndTransition,
-        selectedEdges,
+        editingTransition,
         selectedNodes,
         parameterPads,
         reactFlowRepresentation,
@@ -409,5 +438,7 @@ export function useStateMachine() {
 
 export type StateMachineParameterPads = {
   namePadId: string;
+  nameValue: string;
   valuePadId: string;
+  valueType: BasePadType | undefined;
 };
