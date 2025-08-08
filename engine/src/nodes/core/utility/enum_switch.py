@@ -8,11 +8,11 @@ from core import pad
 from core.node import Node, NodeMetadata
 
 
-class EnumSwitch(Node):
+class PropertyEnumSwitch(Node):
     @classmethod
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(
-            primary="core", secondary="utility", tags=["switch", "enum"]
+            primary="core", secondary="utility", tags=["switch", "enum", "property"]
         )
 
     async def resolve_pads(self):
@@ -103,12 +103,13 @@ class EnumSwitch(Node):
         source = cast(pad.PropertySourcePad, self.get_pad_required("source"))
         value_lookup = self.get_value_lookup()
         async for item in sink:
-            print("NEIL EnumSwitch received item", item.value, item.ctx)
+            print("PropertyEnumSwitch received item", item.value, item.ctx)
             value_pad = value_lookup.get(item.value)
             if not value_pad:
                 logging.warning(
-                    f"EnumSwitch received unknown value: {item.value}. Skipping item."
+                    f"PropertyEnumSwitch received unknown value: {item.value}. Skipping item."
                 )
                 continue
             source.push_item(value_pad.get_value(), item.ctx)
             item.ctx.complete()
+
