@@ -7,6 +7,7 @@ import { NodeEditorRepresentation } from "@/generated/editor";
 import { useState } from "react";
 import { StatelessPad } from "./components/pads/StatelessPad";
 import { ChatBubbleLeftIcon } from "@heroicons/react/24/outline";
+import toast from "react-hot-toast";
 import { useSourcePad } from "@gabber/client-react";
 
 export interface ChatInputNodeProps {
@@ -20,18 +21,23 @@ export function ChatInputNode({ data }: ChatInputNodeProps) {
   // Only show the output pad
   const sourcePad = data.pads.find((p) => p.type === "StatelessSourcePad");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputText.trim()) {
-      pushValue({ value: inputText });
+    if (!inputText.trim()) return;
+    try {
+      // Push raw string. Backend expects plain primitives on source pads.
+      await pushValue(inputText as unknown as never);
       setInputText("");
+    } catch (err) {
+      console.error("[ChatInput] Failed to send message:", err);
+      toast.error("Failed to send message. Please try again.");
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = async (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSubmit(e);
+      await handleSubmit(e);
     }
   };
 
@@ -45,6 +51,7 @@ export function ChatInputNode({ data }: ChatInputNodeProps) {
             {data.id}
           </div>
         </div>
+        {/* no debug UI */}
       </div>
 
       <div className="flex flex-1 flex-col gap-2 p-4 nodrag cursor-default">

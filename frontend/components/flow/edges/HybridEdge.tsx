@@ -3,11 +3,13 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { getBezierPath, BaseEdge, EdgeProps, Position } from "@xyflow/react";
+import { getBezierPath, BaseEdge, EdgeProps, Position, Node } from "@xyflow/react";
 import { getDataTypeColor } from "../blocks/components/pads/utils/dataTypeColors";
+import { useEditor } from "@/hooks/useEditor";
 
 const HANDLE_OFFSET = 20;
 const BOTTOM_OFFSET = 80;
+const CLEARANCE_OFFSET = 20;
 
 export function HybridEdge({
   sourceX,
@@ -16,14 +18,16 @@ export function HybridEdge({
   targetY,
   sourcePosition,
   targetPosition,
+  source,
+  target,
   style = {},
   markerEnd,
   data,
 }: EdgeProps) {
+  const { reactFlowRepresentation } = useEditor();
   // Determine if we should use step edge logic
   const isBackward = sourceX > targetX;
-  const isSourceRight = sourcePosition === Position.Right;
-  const shouldUseStepEdge = isBackward && isSourceRight;
+  const shouldUseStepEdge = isBackward;
 
   let edgePath: string;
 
@@ -34,13 +38,40 @@ export function HybridEdge({
       targetPosition === Position.Left
         ? targetX - HANDLE_OFFSET
         : targetX + HANDLE_OFFSET;
+    // Compute clearance Y: 20px below the lower of the two nodes
+    const sourceNode = reactFlowRepresentation.nodes.find(
+      (n: Node) => n.id === source,
+    );
+    const targetNode = reactFlowRepresentation.nodes.find(
+      (n: Node) => n.id === target,
+    );
 
-    const sourceBottomY = sourceY + BOTTOM_OFFSET;
+    let clearanceY = Math.max(sourceY, targetY) + BOTTOM_OFFSET; // fallback
+
+    // Prefer live editor_dimensions from node data, fallback to measured
+    const sourceHeight =
+      (sourceNode?.data as any)?.editor_dimensions?.[1] ??
+      (sourceNode?.measured?.height ?? null);
+    const targetHeight =
+      (targetNode?.data as any)?.editor_dimensions?.[1] ??
+      (targetNode?.measured?.height ?? null);
+
+    const measuredSourceBottom =
+      sourceNode && sourceHeight ? sourceNode.position.y + sourceHeight : null;
+    const measuredTargetBottom =
+      targetNode && targetHeight ? targetNode.position.y + targetHeight : null;
+
+    if (measuredSourceBottom !== null || measuredTargetBottom !== null) {
+      const fallbackSource = measuredSourceBottom ?? sourceY;
+      const fallbackTarget = measuredTargetBottom ?? targetY;
+      const lowestBottom = Math.max(fallbackSource, fallbackTarget);
+      clearanceY = lowestBottom + CLEARANCE_OFFSET;
+    }
 
     edgePath = `M ${sourceX},${sourceY}
                 L ${sourceExitX},${sourceY}
-                L ${sourceExitX},${sourceBottomY}
-                L ${targetApproachX},${sourceBottomY}
+                L ${sourceExitX},${clearanceY}
+                L ${targetApproachX},${clearanceY}
                 L ${targetApproachX},${targetY}
                 L ${targetX},${targetY}`;
   } else {

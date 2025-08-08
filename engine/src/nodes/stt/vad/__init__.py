@@ -1,7 +1,6 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-from .resampler import Resampler
-from . import vad
+from .silero_vad import SileroVAD
 
-__all__ = ["Resampler", "vad"]
+ALL_NODES = [SileroVAD]
