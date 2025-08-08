@@ -27,7 +27,7 @@ type StateMachineContextType = {
   handleEdgeChanges: (changes: EdgeChange[]) => void;
   updateState: (id: string, name: string) => void;
   deleteState: (id: string) => void;
-  addTransition: (transition: StateMachineTransition) => void;
+  addTransition: (source: string, target: string) => void;
   updateTransition: (
     oldTransition: StateMachineTransition,
     newTransition: StateMachineTransition,
@@ -74,7 +74,6 @@ export function StateMachineProvider({ children, nodeId }: Props) {
       if (!configuration) {
         return;
       }
-      console.log("NEIL Updating state name:", stateId, "to", newName);
       const updatedStates = configuration.states.map((state) =>
         state.id === stateId ? { ...state, name: newName } : state,
       );
@@ -97,13 +96,18 @@ export function StateMachineProvider({ children, nodeId }: Props) {
   );
 
   const addTransition = useCallback(
-    (transition: StateMachineTransition) => {
+    (source: string, target: string) => {
       if (!configuration) {
         return;
       }
+      const newTransition: StateMachineTransition = {
+        id: v4(),
+        from_state: source,
+        to_state: target,
+      };
       setConfiguration({
         ...configuration,
-        transitions: [...(configuration.transitions || []), transition],
+        transitions: [...(configuration.transitions || []), newTransition],
       });
     },
     [configuration, setConfiguration],
@@ -339,7 +343,7 @@ export function StateMachineProvider({ children, nodeId }: Props) {
       });
     }
 
-    console.log("NEIL Configuration transitions:", nodes);
+    console.log("NEIL Configuration transitions:", edges);
 
     return { nodes, edges };
   }, [

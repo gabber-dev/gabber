@@ -24,6 +24,7 @@ function Inner() {
     handleEdgeChanges,
     handleNodeChanges,
     addStateAndTransition,
+    addTransition,
   } = useStateMachine();
   const { screenToFlowPosition } = useReactFlow();
 
@@ -45,9 +46,15 @@ function Inner() {
         }
 
         addStateAndTransition(connectionState.fromNode.id, position);
+      } else {
+        if (!connectionState.fromNode || !connectionState.toNode) {
+          console.warn("Invalid connection state, missing fromNode or toNode");
+          return;
+        }
+        addTransition(connectionState.fromNode.id, connectionState.toNode.id);
       }
     },
-    [addStateAndTransition, screenToFlowPosition],
+    [addStateAndTransition, addTransition, screenToFlowPosition],
   );
   return (
     <ReactFlow
