@@ -5,10 +5,11 @@ import {
 } from "@heroicons/react/24/outline";
 import { useStateMachine } from "./useStateMachine";
 import {
+  Operator,
   StateMachineTransition,
   StateMachineTransitionCondition,
 } from "@/generated/stateMachine";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 export function StateMachineTransitionEdit() {
   const { editingTransition, updateTransition } = useStateMachine();
@@ -67,8 +68,13 @@ export function StateMachineTransitionEdit() {
             </div>
           </div>
           {transition?.conditions ? (
-            transition.conditions.map((condition, index) => (
-              <Condition key={index} condition={condition} />
+            transition.conditions.map((condition, idx) => (
+              <Condition
+                key={idx}
+                condition={condition}
+                conditionIdx={idx}
+                transition={transition}
+              />
             ))
           ) : (
             <p className="text-gray-500 italic">No conditions available.</p>
@@ -81,20 +87,33 @@ export function StateMachineTransitionEdit() {
 
 function Condition({
   condition,
+  conditionIdx,
+  transition,
 }: {
   condition: StateMachineTransitionCondition;
+  conditionIdx: number;
+  transition: StateMachineTransition;
 }) {
-  const { parameterPads } = useStateMachine();
+  const { parameterPads, updateTransition } = useStateMachine();
+  const selectedPad = useMemo(() => {
+    if (!condition.parameter_name) return undefined;
+    return parameterPads.find(
+      (pad) => pad.nameValue === condition.parameter_name,
+    );
+  }, [condition.parameter_name, parameterPads]);
 
-  const selectedPad = parameterPads.find(
-    (pad) => pad.namePadId === condition.parameter_name,
-  );
   const valueType = (selectedPad?.valueType?.type || "unknown") as string;
+  console.log(
+    "NEIL Condition valueType:",
+    selectedPad,
+    valueType,
+    parameterPads,
+  );
   const isTrigger = valueType === "Trigger";
   const selectedOperator = condition.operator || "";
   const isUnaryOperator = ["NON_EMPTY", "EMPTY"].includes(selectedOperator);
 
-  const operatorOptions = [
+  const operatorOptions: { value: Operator; label: string }[] = [
     { value: "<", label: "&lt;" },
     { value: "<=", label: "&lt;=" },
     { value: "==", label: "==" },
@@ -108,23 +127,33 @@ function Condition({
     { value: "CONTAINS", label: "CONTAINS" },
   ];
 
-  let availableOperators: { value: string; label: string }[] = [];
+  let availableOperators: { value: Operator; label: string }[] = [];
   if (valueType === "string") {
     availableOperators = operatorOptions;
   } else if (valueType === "number") {
     availableOperators = operatorOptions.filter((op) =>
-      ["<", "<=", "==", "!=", ">=", ">"].includes(op.value),
+      ["<", "<=", "==", "!=", ">=", ">"].includes(op.value || ""),
     );
   }
   // For other types, default to empty or handle as needed
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 w-full">
       <select
         className="select select-bordered w-32"
         value={condition.parameter_name || ""}
         onChange={(e) => {
-          // Handle parameter name change
+          updateTransition(transition.id, {
+            ...transition,
+            conditions: transition.conditions?.map((cond, idx) =>
+              idx === conditionIdx
+                ? {
+                    ...cond,
+                    parameter_name: e.target.value,
+                  }
+                : cond,
+            ),
+          });
         }}
       >
         {parameterPads.map((pad) => (
@@ -138,11 +167,18 @@ function Condition({
           className="select select-bordered w-32"
           value={selectedOperator}
           onChange={(e) => {
-            // Handle operator change
+            updateTransition(transition.id, {
+              ...transition,
+              conditions: transition.conditions?.map((cond, idx) =>
+                idx === conditionIdx
+                  ? { ...cond, operator: e.target.value as Operator }
+                  : cond,
+              ),
+            });
           }}
         >
           {availableOperators.map((op) => (
-            <option key={op.value} value={op.value}>
+            <option key={op.value} value={op.value as string}>
               {op.label}
             </option>
           ))}

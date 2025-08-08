@@ -365,8 +365,6 @@ export function StateMachineProvider({ children, nodeId }: Props) {
       });
     }
 
-    console.log("NEIL Configuration transitions:", edges);
-
     return { nodes, edges };
   }, [
     configuration?.entry_node_position?.x,
