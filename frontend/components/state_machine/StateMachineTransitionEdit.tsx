@@ -2,6 +2,7 @@ import {
   ArrowRightIcon,
   MinusIcon,
   PlusIcon,
+  XCircleIcon,
 } from "@heroicons/react/24/outline";
 import { useStateMachine } from "./useStateMachine";
 import {
@@ -18,69 +19,51 @@ export function StateMachineTransitionEdit() {
     return null;
   }
   return (
-    <div className="max-w-md mx-auto">
-      <div className="w-full flex flex-col items-center">
-        <div className="border-b w-full flex flex-col gap-2 items-center">
-          <h2 className="text-lg font-bold">Editing Transition</h2>
-          <div className="flex items-center gap-2 mb-4">
-            <span className="badge badge-primary">{fromState?.name}</span>
-            <ArrowRightIcon className="w-5 h-5 text-base-content" />
-            <span className="badge badge-primary">{toState?.name}</span>
-          </div>
-        </div>
-
-        <div>
-          <div className="flex gap-2">
-            <h3 className="text-lg font-semibold mb-2">Conditions:</h3>
-            <div className="flex">
-              <button
-                onClick={() => {
-                  updateTransition(editingTransition.transition.id, {
-                    ...editingTransition.transition,
-                    conditions: [
-                      ...(editingTransition.transition.conditions || []),
-                      {
-                        parameter_name: null,
-                        operator: null,
-                        value: null,
-                      },
-                    ],
-                  });
-                }}
-                className="btn btn-sm btn-primary mr-2"
-              >
-                <PlusIcon className="w-full h-full" />
-              </button>
-              <button
-                onClick={() => {
-                  updateTransition(editingTransition.transition.id, {
-                    ...editingTransition.transition,
-                    conditions: editingTransition.transition.conditions?.slice(
-                      0,
-                      -1,
-                    ),
-                  });
-                }}
-                className="btn btn-sm btn-secondary"
-              >
-                <MinusIcon className="w-full h-full" />
-              </button>
-            </div>
-          </div>
-          {transition?.conditions ? (
-            transition.conditions.map((condition, idx) => (
-              <Condition
-                key={idx}
-                condition={condition}
-                conditionIdx={idx}
-                transition={transition}
-              />
-            ))
-          ) : (
-            <p className="text-gray-500 italic">No conditions available.</p>
-          )}
+    <div className="flex h-full w-full flex-col gap-2">
+      <div className="border-b w-full flex flex-col gap-2 items-center">
+        <h2 className="text-lg font-bold">Editing Transition</h2>
+        <div className="flex items-center gap-2 mb-4">
+          <span className="badge badge-primary">{fromState?.name}</span>
+          <ArrowRightIcon className="w-5 h-5 text-base-content" />
+          <span className="badge badge-primary">{toState?.name}</span>
         </div>
       </div>
+
+      <div className="flex gap-2">
+        <h3 className="text-lg font-semibold mb-2">Conditions:</h3>
+      </div>
+      <div className="flex flex-col gap-2 w-full overflow-y-auto overflow-x-hidden">
+        {transition?.conditions ? (
+          transition.conditions.map((condition, idx) => (
+            <Condition
+              key={idx}
+              condition={condition}
+              conditionIdx={idx}
+              transition={transition}
+            />
+          ))
+        ) : (
+          <p className="text-gray-500 italic">No conditions available.</p>
+        )}
+      </div>
+      <button
+        className="btn btn-sm btn-primary"
+        onClick={() => {
+          updateTransition(editingTransition.transition.id, {
+            ...editingTransition.transition,
+            conditions: [
+              ...(editingTransition.transition.conditions || []),
+              {
+                parameter_name: null,
+                operator: null,
+                value: null,
+              },
+            ],
+          });
+        }}
+      >
+        Add Condition
+      </button>
     </div>
   );
 }
@@ -138,9 +121,9 @@ function Condition({
   // For other types, default to empty or handle as needed
 
   return (
-    <div className="flex items-center gap-2 w-full">
+    <div className="flex items-center gap-1 w-full">
       <select
-        className="select select-bordered w-32"
+        className="select select-bordered select-xs grow !outline-none"
         value={condition.parameter_name || ""}
         onChange={(e) => {
           updateTransition(transition.id, {
@@ -164,7 +147,7 @@ function Condition({
       </select>
       {!isTrigger && (
         <select
-          className="select select-bordered w-32"
+          className="select select-bordered select-xs w-40 !outline-none"
           value={selectedOperator}
           onChange={(e) => {
             updateTransition(transition.id, {
@@ -187,7 +170,7 @@ function Condition({
       {!isTrigger && !isUnaryOperator && (
         <input
           type="text"
-          className="input input-bordered w-32"
+          className="input input-bordered grow select-xs !outline-none"
           value={(condition.value as unknown as string) || ""}
           onChange={(e) => {
             // Handle value change
@@ -195,12 +178,17 @@ function Condition({
         />
       )}
       <button
-        className="btn btn-sm btn-error"
+        className="btn btn-sm rounded-full bg-transparent aspect-square h-8 p-1"
         onClick={() => {
-          // Handle condition removal
+          updateTransition(transition.id, {
+            ...transition,
+            conditions: transition.conditions?.filter(
+              (_, idx) => idx !== conditionIdx,
+            ),
+          });
         }}
       >
-        Remove
+        <XCircleIcon className="w-full h-full text-error" />
       </button>
     </div>
   );
