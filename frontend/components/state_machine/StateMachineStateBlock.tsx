@@ -30,7 +30,7 @@ export function StateMachineStateBlock() {
   }, []);
 
   const name = useMemo(() => {
-    return isEntry ? "Entry" : nodeData?.data?.name || "ERROR";
+    return isEntry ? "Entry" : nodeData?.data?.name || "";
   }, [isEntry, nodeData?.data?.name]);
   const bgColor = isEntry ? "bg-success" : "bg-primary";
 
@@ -39,9 +39,9 @@ export function StateMachineStateBlock() {
   }, [selectedNodes, nodeId]);
 
   return (
-    <div className="relative">
+    <div className="relative min-w-14 h-8">
       <div
-        className={`relative z-10 flex flex-col items-center justify-center ${bgColor} p-2 rounded-full text-sm text-base-100 font-bold`}
+        className={`h-full relative z-10 flex flex-col items-center justify-center ${bgColor} rounded-full text-sm text-base-100 font-bold`}
         onDoubleClick={handleDoubleClick}
       >
         {isEditing ? (
@@ -50,6 +50,7 @@ export function StateMachineStateBlock() {
             value={name || ""}
             onChange={handleNameChange}
             onBlur={handleBlur}
+            onFocus={(e) => e.target.select()}
             autoFocus
             className="w-full text-center bg-transparent border-none outline-none text-base-100 nodrag"
           />
