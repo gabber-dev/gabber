@@ -87,7 +87,7 @@ function Inner() {
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
       </ReactFlow>
       <div
-        className={`absolute top-0 right-0 h-full w-80 bg-base-200 shadow-lg transition-all duration-300 z-50 ${
+        className={`absolute top-0 right-0 h-full w-100 bg-base-200 shadow-lg transition-all duration-300 z-50 p-2 ${
           editingTransition ? "translate-x-0" : "translate-x-full"
         }`}
       >

@@ -377,21 +377,27 @@ export function StateMachineProvider({ children, nodeId }: Props) {
   ]);
 
   const parameterPads = useMemo(() => {
-    const allParamPads =
-      editorNode?.pads.filter((pad) => pad.id.startsWith("parameter_")) || [];
+    const namePads =
+      editorNode?.pads.filter((pad) => pad.id.startsWith("parameter_name_")) ||
+      [];
+
+    const valuePads =
+      editorNode?.pads.filter((pad) => pad.id.startsWith("parameter_value_")) ||
+      [];
 
     const res: StateMachineParameterPads[] = [];
 
-    for (let i = 0; i < allParamPads.length; i += 2) {
-      const tcs = allParamPads[i + 1]?.allowed_types;
+    for (let i = 0; i < namePads.length; i += 1) {
+      const tcs = valuePads[i]?.allowed_types;
+      console.log("NEIL Parameter pads:", namePads[i], valuePads[i], tcs);
       let valueType: BasePadType | undefined = undefined;
       if (tcs?.length === 1) {
         valueType = tcs[0];
       }
       res.push({
-        namePadId: allParamPads[i].id,
-        nameValue: allParamPads[i].value as string,
-        valuePadId: allParamPads[i + 1]?.id,
+        namePadId: namePads[i].id,
+        nameValue: namePads[i].value as string,
+        valuePadId: valuePads[i]?.id,
         valueType,
       });
     }
