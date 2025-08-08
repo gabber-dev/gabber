@@ -7,20 +7,26 @@ import {
   useNodeId,
   useNodesData,
 } from "@xyflow/react";
-import { createContext, useCallback, useContext, useMemo } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 import { usePropertyPad } from "../flow/blocks/components/pads/hooks/usePropertyPad";
 import { v4 } from "uuid";
 import {
   StateMachineConfiguration,
+  StateMachineState,
   StateMachineTransition,
 } from "@/generated/stateMachine";
 
 type StateMachineContextType = {
   handleNodeChanges: (changes: NodeChange[]) => void;
   handleEdgeChanges: (changes: EdgeChange[]) => void;
-  addState: (name: string) => void;
-  updateState: (oldName: string, newName: string) => void;
-  deleteState: (name: string) => void;
+  updateState: (id: string, name: string) => void;
+  deleteState: (id: string) => void;
   addTransition: (transition: StateMachineTransition) => void;
   updateTransition: (
     oldTransition: StateMachineTransition,
@@ -55,25 +61,11 @@ export function StateMachineProvider({
     nodeId || "",
     "num_parameters",
   );
+  const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
+  const [selectedEdges, setSelectedEdges] = useState<string[]>([]);
 
   const { editorValue: configuration, setEditorValue: setConfiguration } =
     usePropertyPad<StateMachineConfiguration>(nodeId || "", "configuration");
-
-  const addState = useCallback(
-    (name: string) => {
-      if (!configuration) {
-        return;
-      }
-      setConfiguration({
-        ...configuration,
-        states: [
-          ...(configuration.states || []),
-          { name, position: { x: 0, y: 0 } },
-        ],
-      });
-    },
-    [configuration, setConfiguration],
-  );
 
   const updateState = useCallback(
     (oldName: string, newName: string) => {
@@ -189,7 +181,7 @@ export function StateMachineProvider({
             });
           } else {
             const updatedStates = prevConfiguration.states.map((state) =>
-              state.name === change.id
+              state.id === change.id
                 ? { ...state, position: change.position || { x: 0, y: 0 } }
                 : state,
             );
@@ -199,12 +191,11 @@ export function StateMachineProvider({
           if (change.id === "__ENTRY__") {
             continue;
           }
-          const updatedStates = prevConfiguration.states.map((state) =>
-            state.name === change.id
-              ? { ...state, name: change.selected ? change.id : state.name }
-              : state,
-          );
-          setConfiguration({ ...prevConfiguration, states: updatedStates });
+          if (change.selected) {
+            setSelectedNodes((prev) => [...prev, change.id]);
+          } else {
+            setSelectedNodes((prev) => prev.filter((id) => id !== change.id));
+          }
         } else {
           console.warn("Unhandled node change type:", change.type);
         }
@@ -221,10 +212,21 @@ export function StateMachineProvider({
         entry_node_position: { x: 0, y: 0 },
         transitions: [],
       };
-      prevConfiguration.states.push({
+      const newState: StateMachineState = {
+        id: v4(),
         name: "New State",
         position: newPosition,
-      });
+      };
+      prevConfiguration.states.push(newState);
+
+      if (source === "__ENTRY__") {
+        setConfiguration({
+          ...prevConfiguration,
+          entry_state: newState.id,
+        });
+        return;
+      }
+
       setConfiguration({
         ...prevConfiguration,
         states: prevConfiguration.states,
@@ -233,7 +235,7 @@ export function StateMachineProvider({
           {
             id: v4(),
             from_state: source,
-            to_state: "New State",
+            to_state: newState.id,
             conditions: [],
           },
         ],
@@ -243,6 +245,16 @@ export function StateMachineProvider({
   );
 
   const handleEdgeChanges = useCallback((changes: EdgeChange[]) => {
+    for (const change of changes) {
+      if (change.type === "remove") {
+      } else if (change.type === "select") {
+        if (change.selected) {
+          setSelectedEdges((prev) => [...prev, change.id]);
+        } else {
+          setSelectedEdges((prev) => prev.filter((id) => id !== change.id));
+        }
+      }
+    }
     console.log("Edge changes:", changes);
     // Handle edge changes here
   }, []);
@@ -261,11 +273,12 @@ export function StateMachineProvider({
     const nodes = [entryNode];
     for (const state of configuration?.states || []) {
       nodes.push({
-        id: state.name,
+        id: state.id,
         type: "default",
         position: state.position,
         measured: { width: 10, height: 10 },
-        data: {},
+        data: state,
+        selected: selectedNodes.includes(state.id),
       });
     }
 
@@ -280,12 +293,27 @@ export function StateMachineProvider({
       });
     }
 
+    for (const transition of configuration?.transitions || []) {
+      edges.push({
+        id: transition.id,
+        source: transition.from_state,
+        target: transition.to_state,
+        type: "default",
+        selected: selectedEdges.includes(transition.id),
+      });
+    }
+
+    console.log("NEIL Configuration transitions:", nodes);
+
     return { nodes, edges };
   }, [
     configuration?.entry_node_position?.x,
     configuration?.entry_node_position?.y,
     configuration?.entry_state,
     configuration?.states,
+    configuration?.transitions,
+    selectedEdges,
+    selectedNodes,
   ]);
 
   const parameterPads = useMemo(() => {
@@ -306,7 +334,6 @@ export function StateMachineProvider({
   return (
     <StateMachineContext.Provider
       value={{
-        addState,
         updateState,
         deleteState,
         addTransition,

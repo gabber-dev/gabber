@@ -1,16 +1,16 @@
-import { Handle, Position, useNodeId } from "@xyflow/react";
-import { ChangeEvent, useCallback, useState } from "react";
+import { Handle, Node, Position, useNodeId, useNodesData } from "@xyflow/react";
+import { ChangeEvent, useCallback, useMemo, useState } from "react";
+import { StateMachineState } from "@/generated/stateMachine";
 
 export function StateMachineStateBlock() {
   const nodeId = useNodeId();
+  const nodeData = useNodesData<Node<StateMachineState>>(nodeId || "");
   const isEntry = nodeId === "__ENTRY__";
-  const [name, setName] = useState(isEntry ? "Entry" : "State");
   const [isEditing, setIsEditing] = useState(false);
 
   const handleNameChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       if (!isEntry) {
-        setName(e.target.value);
       }
     },
     [isEntry],
@@ -26,6 +26,10 @@ export function StateMachineStateBlock() {
     setIsEditing(false);
   }, []);
 
+  const name = useMemo(() => {
+    return isEntry ? "Entry" : nodeData?.data?.name || "ERROR";
+  }, [isEntry, nodeData?.data?.name]);
+
   const bgColor = isEntry ? "bg-success" : "bg-primary";
 
   return (
@@ -37,7 +41,7 @@ export function StateMachineStateBlock() {
         {isEditing ? (
           <input
             type="text"
-            value={name}
+            value={name || ""}
             onChange={handleNameChange}
             onBlur={handleBlur}
             autoFocus
@@ -48,9 +52,14 @@ export function StateMachineStateBlock() {
         )}
       </div>
       <Handle
-        className="!absolute !inset-0 !-left-2 !-right-2 !-top-2 !-bottom-2 !border-4 !border-white !bg-transparent !rounded-full !z-0 !transform-none"
+        className="!absolute !inset-0 !-left-2 !-right-2 !-top-2 !-bottom-2 !border-4 !border-white !bg-transparent !rounded-full !z-5 !transform-none"
         type="source"
         position={Position.Right}
+      />
+      <Handle
+        className="!absolute !inset-0 !-left-2 !-right-2 !-top-2 !-bottom-2 !border-white !bg-transparent !rounded-full !z-5 !transform-none"
+        type="target"
+        position={Position.Left}
       />
     </div>
   );
