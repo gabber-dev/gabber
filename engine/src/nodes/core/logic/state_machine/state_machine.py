@@ -69,6 +69,10 @@ class StateMachine(node.Node):
             primary="core", secondary="logic", tags=["state_machine", "container"]
         )
 
+    @classmethod
+    def get_description(cls) -> str:
+        return "Create logic to control the flow of your application based on parameter conditions."
+
     async def resolve_pads(self):
         configuration = cast(pad.PropertySinkPad, self.get_pad("configuration"))
         if not configuration:
@@ -193,6 +197,20 @@ class StateMachine(node.Node):
                 while state.name in seen_states:
                     state.name += "(1)"
             seen_states.add(state.name)
+
+        # Update current_state enum options and default value from configuration
+        try:
+            enum_options = [s.name for s in config.states]
+            current_state.set_type_constraints([pad.types.Enum(options=enum_options)])
+
+            # Set current state value to entry state's name if present, else blank
+            if config.entry_state:
+                entry = next((s for s in config.states if s.id == config.entry_state), None)
+                current_state.set_value(entry.name if entry else "")
+            else:
+                current_state.set_value("")
+        except Exception as e:
+            logging.warning(f"Failed to update current_state pad: {e}")
 
         configuration.set_value(config.model_dump())
 
