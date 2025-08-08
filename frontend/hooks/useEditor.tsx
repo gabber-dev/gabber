@@ -270,7 +270,6 @@ export function EditorProvider({
 
   const clearAllSelection = useCallback(() => {
     setReactFlowRepresentation((prev) => {
-      console.log("NEIL Clearing all selection in editor", prev);
       return {
         ...prev,
         nodes: prev.nodes.map((node) => ({
@@ -284,10 +283,6 @@ export function EditorProvider({
       };
     });
   }, []);
-
-  useEffect(() => {
-    console.log("NEIL Local representation updated", reactFlowRepresentation);
-  }, [reactFlowRepresentation]);
 
   const updateNode = useCallback(
     (edit: UpdateNodeEdit) => {
