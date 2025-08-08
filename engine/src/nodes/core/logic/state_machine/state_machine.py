@@ -317,6 +317,9 @@ class StateMachine(node.Node):
                             prev_pad.connect(new_pad)
                         self.pads[idx] = new_pad
 
+    def _resolve_condition_operators(self):
+        pass
+
     def _sort_and_rename_pads(self):
         configuration_pad = cast(
             pad.PropertySinkPad, self.get_pad_required("configuration")
