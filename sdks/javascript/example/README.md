@@ -1,18 +1,19 @@
-# Gabber Javascript Client SDK Example
+# Gabber JS SDK Example
 
 ## Quickstart
 
-Make sure you have the engine running. In the top directory of the repo:
+From repo root, start services:
 
 ```bash
-make all 
+make all
 ```
 
-Build the SDK. In the javascript sdk directory:
+Build the SDK:
 
 ```bash
+cd sdks/javascript
 npm install && npm run build
 ```
 
-Then open `index.html` in your browser.
+Open `index.html` in this folder.
 
