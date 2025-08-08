@@ -1,7 +1,7 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-from typing import Any, cast
+from typing import Any, cast, Literal
 import logging
 
 from core import node, pad
@@ -28,15 +28,31 @@ class StateMachineState(BaseModel):
 
 
 class StateMachineTransitionCondition(BaseModel):
-    type: str
-    value: Any
+    parameter_name: str | None = None
+    operator: (
+        Literal[
+            "<",
+            "<=",
+            "==",
+            "!=",
+            ">=",
+            ">",
+            "NON_EMPTY",
+            "EMPTY",
+            "STARTS_WITH",
+            "ENDS_WITH",
+            "CONTAINS",
+        ]
+        | None
+    ) = None
+    value: Any | None = None
 
 
 class StateMachineTransition(BaseModel):
     id: str
     from_state: str
     to_state: str
-    conditions: list[str] = []
+    conditions: list[StateMachineTransitionCondition] = []
 
 
 class StateMachineConfiguration(BaseModel):

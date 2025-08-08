@@ -28,7 +28,6 @@ import { getPrimaryDataType } from "./blocks/components/pads/utils/dataTypeColor
 import ReactModal from "react-modal";
 import { StateMachineGraphEdit } from "../state_machine/StateMachineGraphEdit";
 import { StateMachineProvider } from "../state_machine/useStateMachine";
-import { stat } from "fs";
 
 const edgeTypes = {
   hybrid: HybridEdge,

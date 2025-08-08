@@ -13,7 +13,11 @@ export type States = StateMachineState[];
 export type Id1 = string;
 export type FromState = string;
 export type ToState = string;
-export type Conditions = string[];
+export type ParameterName = string | null;
+export type Operator =
+  | ("<" | "<=" | "==" | "!=" | ">=" | ">" | "NON_EMPTY" | "EMPTY" | "STARTS_WITH" | "ENDS_WITH" | "CONTAINS")
+  | null;
+export type Conditions = StateMachineTransitionCondition[];
 export type Transitions = StateMachineTransition[];
 export type EntryState = string | null;
 
@@ -40,5 +44,11 @@ export interface StateMachineTransition {
   from_state: FromState;
   to_state: ToState;
   conditions?: Conditions;
+  [k: string]: unknown;
+}
+export interface StateMachineTransitionCondition {
+  parameter_name?: ParameterName;
+  operator?: Operator;
+  value?: unknown;
   [k: string]: unknown;
 }
