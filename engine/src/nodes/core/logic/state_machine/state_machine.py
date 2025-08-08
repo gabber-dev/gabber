@@ -197,6 +197,8 @@ class StateMachine(node.Node):
         configuration.set_value(config.model_dump())
 
         self._resolve_num_pads()
+        self._resolve_value_types()
+        self._resolve_pad_mode()
         self._sort_and_rename_pads()
 
     async def run(self):
@@ -255,6 +257,65 @@ class StateMachine(node.Node):
         for p in pads_to_remove:
             p.disconnect()
             self.pads.remove(p)
+
+    def _resolve_value_types(self):
+        for p in self.pads:
+            if p.get_id().startswith("parameter_value_"):
+                p = cast(pad.SinkPad, p)
+                prev_pad = p.get_previous_pad()
+                if not prev_pad:
+                    p.set_type_constraints(ALL_PARAMETER_TYPES)
+                else:
+                    tcs = p.get_type_constraints()
+                    intersection = pad.types.INTERSECTION(
+                        tcs, prev_pad.get_type_constraints()
+                    )
+                    p.set_type_constraints(intersection)
+
+    def _resolve_pad_mode(self):
+        for idx, p in enumerate(self.pads):
+            if p.get_id().startswith("parameter_value_"):
+                p = cast(pad.SinkPad, p)
+                if isinstance(p, pad.PropertyPad):
+                    tcs = p.get_type_constraints()
+                    prev_pad = p.get_previous_pad()
+                    if (
+                        tcs
+                        and len(tcs) == 1
+                        and isinstance(tcs[0], pad.types.Trigger)
+                        and prev_pad
+                    ):
+                        new_pad = pad.StatelessSinkPad(
+                            id=p.get_id(),
+                            owner_node=self,
+                            type_constraints=tcs,
+                            group=p.get_group(),
+                        )
+                        prev_pad.disconnect(p)
+                        prev_pad.connect(new_pad)
+                        self.pads[idx] = new_pad
+                else:
+                    tcs = p.get_type_constraints()
+                    prev_pad = p.get_previous_pad()
+                    if (
+                        (
+                            tcs
+                            and len(tcs) == 1
+                            and not isinstance(tcs[0], pad.types.Trigger)
+                        )
+                        or (not tcs)
+                        or (len(tcs) > 1)
+                    ):
+                        new_pad = pad.PropertySinkPad(
+                            id=p.get_id(),
+                            owner_node=self,
+                            type_constraints=tcs,
+                            group=p.get_group(),
+                        )
+                        if prev_pad:
+                            prev_pad.disconnect(p)
+                            prev_pad.connect(new_pad)
+                        self.pads[idx] = new_pad
 
     def _sort_and_rename_pads(self):
         configuration_pad = cast(
