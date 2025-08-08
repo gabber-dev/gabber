@@ -11,6 +11,7 @@ import {
 } from "@xyflow/react";
 import { FunnelIcon } from "@heroicons/react/24/outline";
 import { useStateMachine } from "./useStateMachine";
+import { useEffect, useRef, useState } from "react";
 
 // no-op: kept for potential future custom arrow needs
 
@@ -40,6 +41,24 @@ export function StateMachineEdge({
 
   const markerId = `sm-arrow-${id}`;
 
+  const measurePathRef = useRef<SVGPathElement | null>(null);
+  const [thirdPos, setThirdPos] = useState<{ x: number; y: number } | null>(
+    null,
+  );
+
+  useEffect(() => {
+    const p = measurePathRef.current;
+    if (!p) return;
+    try {
+      const total = p.getTotalLength();
+      const point = p.getPointAtLength(total * (1 / 3));
+      setThirdPos({ x: point.x, y: point.y });
+    } catch {
+      // fallback gracefully; keep midpoint
+      setThirdPos(null);
+    }
+  }, [edgePath]);
+
   return (
     <>
       <svg style={{ position: "absolute", width: 0, height: 0 }}>
@@ -50,8 +69,8 @@ export function StateMachineEdge({
             refX="9"
             refY="5"
             markerUnits="strokeWidth"
-            markerWidth="6"
-            markerHeight="6"
+            markerWidth="3"
+            markerHeight="3"
             orient="auto"
           >
             <path d="M 0 0 L 10 5 L 0 10 z" fill="#F59E0B" />
@@ -63,12 +82,20 @@ export function StateMachineEdge({
         style={{ stroke: "#F59E0B", strokeWidth: 2.5, ...(style || {}) }}
         markerEnd={`url(#${markerId})`}
       />
+      {/* invisible path for measuring 1/3 position */}
+      <path
+        ref={measurePathRef}
+        d={edgePath}
+        stroke="transparent"
+        fill="none"
+        pointerEvents="none"
+      />
       {!isEntryEdge && (
         <EdgeLabelRenderer>
           <div
             style={{
               position: "absolute",
-              transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
+              transform: `translate(-50%, -50%) translate(${thirdPos?.x ?? labelX}px, ${thirdPos?.y ?? labelY}px)`,
               pointerEvents: "all",
             }}
           >

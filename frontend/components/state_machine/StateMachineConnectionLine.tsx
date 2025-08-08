@@ -37,7 +37,7 @@ export const StateMachineConnectionLine: ConnectionLineComponent = ({
 
   // Simple arrowhead at the current tip
   const arrowPoints = (() => {
-    const size = 6;
+    const size = 2;
     switch (toPosition) {
       case Position.Left:
         return `${toX},${toY} ${toX + size},${toY - size / 2} ${toX + size},${toY + size / 2}`;
