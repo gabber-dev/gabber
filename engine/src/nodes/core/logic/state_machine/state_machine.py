@@ -235,7 +235,8 @@ class StateMachine(node.Node):
 
         def get_current_state() -> StateMachineState:
             state_name = cast(str, current_state_pad.get_value())
-            config = cast(StateMachineConfiguration, configuration_pad.get_value())
+            config_dict = configuration_pad.get_value()
+            config = StateMachineConfiguration.model_validate(config_dict)
             for state in config.states:
                 if state.name == state_name:
                     return state
@@ -246,17 +247,19 @@ class StateMachine(node.Node):
         def get_outgoing_transitions(
             state: StateMachineState,
         ) -> list[StateMachineTransition]:
-            config = configuration_pad.get_value()
+            config_dict = configuration_pad.get_value()
+            config = StateMachineConfiguration.model_validate(config_dict)
             return [
                 transition
                 for transition in config.transitions
-                if transition.source == state.id
+                if transition.from_state == state.id
             ]
 
         def check_transitions(ctx: pad.RequestContext):
             current_state = get_current_state()
             transitions = get_outgoing_transitions(current_state)
-            config = cast(StateMachineConfiguration, configuration_pad.get_value())
+            config_dict = configuration_pad.get_value()
+            config = StateMachineConfiguration.model_validate(config_dict)
 
             parameter_name_value: dict[str, Any] = {}
             trigger_params = set[str]()
@@ -280,15 +283,21 @@ class StateMachine(node.Node):
 
                 if res:
                     next_state_id = transition.to_state
+
                     next_state = next(
                         (s for s in config.states if s.id == next_state_id),
                         None,
                     )
+
                     if not next_state:
                         logging.error(
                             f"Next state '{next_state_id}' not found in configuration."
                         )
                         continue
+
+                    logging.info(
+                        f"Transitioning from state '{current_state.name}' to '{next_state.name}'"
+                    )
 
                     current_state_pad.push_item(next_state.name, ctx)
 
@@ -508,8 +517,13 @@ class StateMachine(node.Node):
 
         parameter_pads: list[pad.Pad] = []
 
+        pad_groups: list[tuple[pad.Pad, pad.Pad]] = []
+
         for order_idx, pad_name_idx in enumerate(indices):
             name_pad, value_pad = self._get_pads(pad_name_idx)
+            pad_groups.append((name_pad, value_pad))
+
+        for order_idx, (name_pad, value_pad) in enumerate(pad_groups):
             name_pad.set_id(f"parameter_name_{order_idx}")
             value_pad.set_id(f"parameter_value_{order_idx}")
             parameter_pads.append(name_pad)
@@ -528,7 +542,10 @@ class StateMachine(node.Node):
             if p.get_id().startswith("parameter_name_")
         ]
 
-        return [int(name) for name in p_names if name.isdigit()]
+        indices = [int(name) for name in p_names if name.isdigit()]
+        sorted_indices = sorted(indices)
+
+        return sorted_indices
 
     def _get_pads(self, index: int) -> tuple[pad.PropertySinkPad, pad.SinkPad]:
         name_pad = cast(
