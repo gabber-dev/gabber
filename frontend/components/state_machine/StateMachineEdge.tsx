@@ -18,36 +18,111 @@ import { useEffect, useRef, useState } from "react";
 
 import { getEdgeParams } from "./floating";
 
-export function StateMachineEdge({ id, source, target, style }: EdgeProps) {
-  const { setEditingTransition } = useStateMachine();
+export function StateMachineEdge(props: EdgeProps) {
+  const {
+    id,
+    source,
+    target,
+    style,
+    sourceX,
+    sourceY,
+    targetX,
+    targetY,
+    sourcePosition,
+    targetPosition,
+  } = props;
+  const { setEditingTransition, reactFlowRepresentation } = useStateMachine();
 
   const sourceNode = useInternalNode(source);
   const targetNode = useInternalNode(target);
-  if (!sourceNode || !targetNode) return null;
 
-  const { sx, sy, tx, ty, sourcePos, targetPos } = getEdgeParams(
-    sourceNode as any,
-    targetNode as any,
-  );
+  let edgePath = "";
+  let labelX = 0;
+  let labelY = 0;
+  if (sourceNode && targetNode) {
+    const { sx, sy, tx, ty, sourcePos, targetPos } = getEdgeParams(
+      sourceNode as any,
+      targetNode as any,
+    );
+    // determine how many edges connect this pair (both directions)
+    const pairKey = ([a, b]: [string, string]) =>
+      a < b ? `${a}|${b}` : `${b}|${a}`;
+    const currentPair = pairKey([source, target]);
+    const pairEdges = (reactFlowRepresentation?.edges || []).filter((e) =>
+      pairKey([e.source as string, e.target as string]) === currentPair,
+    );
+    const sortedPairEdges = [...pairEdges].sort((a, b) =>
+      (a.id || "").localeCompare(b.id || ""),
+    );
+    const pairIndex = sortedPairEdges.findIndex((e) => e.id === id);
+    const pairCount = sortedPairEdges.length || 1;
 
-  const [edgePath, labelX, labelY] = getBezierPath({
-    sourceX: sx,
-    sourceY: sy,
-    sourcePosition: sourcePos,
-    targetX: tx,
-    targetY: ty,
-    targetPosition: targetPos,
-  });
+    // offset along the normal to reduce overlap
+    const OFFSET_STEP = 28; // px between parallel curves
+    // actual path vector
+    const dx = tx - sx;
+    const dy = ty - sy;
+    // canonical vector (consistent for both directions)
+    const canonicalFromIsSource = (source as string) < (target as string);
+    const ax = canonicalFromIsSource ? sx : tx;
+    const ay = canonicalFromIsSource ? sy : ty;
+    const bx = canonicalFromIsSource ? tx : sx;
+    const by = canonicalFromIsSource ? ty : sy;
+    const cdx = bx - ax;
+    const cdy = by - ay;
+    const clen = Math.max(1, Math.hypot(cdx, cdy));
+    const nx = -cdy / clen;
+    const ny = cdx / clen;
+    // symmetric distribution; for even counts use half-step to avoid stacking near center
+    const unitIndex = pairIndex - (pairCount - 1) / 2;
+    const evenHalfStep = pairCount % 2 === 0 ? 0.5 : 0;
+    const adjustedIndex = unitIndex + (unitIndex >= 0 ? evenHalfStep : -evenHalfStep);
+    const offset = adjustedIndex * OFFSET_STEP;
+
+    // control points along the line, pushed out by the offset normal
+    const c1x = sx + dx * 0.25 + nx * offset;
+    const c1y = sy + dy * 0.25 + ny * offset;
+    const c2x = sx + dx * 0.75 + nx * offset;
+    const c2y = sy + dy * 0.75 + ny * offset;
+
+    // Straight-line rule:
+    // - when exactly 2 edges exist, make the later-sorted one straight (pairIndex === 1)
+    // - when odd counts (>=3), middle edge straight (unitIndex === 0)
+    const makeStraight =
+      (pairCount === 2 && pairIndex === 1) ||
+      (pairCount >= 3 && pairCount % 2 === 1 && Math.abs(unitIndex) < 1e-6);
+
+    if (makeStraight) {
+      edgePath = `M ${sx},${sy} L ${tx},${ty}`;
+      labelX = (sx + tx) / 2;
+      labelY = (sy + ty) / 2;
+    } else {
+      edgePath = `M ${sx},${sy} C ${c1x},${c1y} ${c2x},${c2y} ${tx},${ty}`;
+      // fallback midpoint for label; precise 1/3 will be measured via ref
+      labelX = sx + dx * 0.5 + nx * offset * 0.25;
+      labelY = sy + dy * 0.5 + ny * offset * 0.25;
+    }
+  } else {
+    // Fallback during transient re-measure/re-render while dragging
+    [edgePath, labelX, labelY] = getBezierPath({
+      sourceX: sourceX!,
+      sourceY: sourceY!,
+      sourcePosition: sourcePosition!,
+      targetX: targetX!,
+      targetY: targetY!,
+      targetPosition: targetPosition!,
+    });
+  }
 
   // Entry edge should not have a filter icon
   const isEntryEdge = id === "entry_edge";
-
-  const markerId = `sm-arrow-${id}`;
 
   const measurePathRef = useRef<SVGPathElement | null>(null);
   const [thirdPos, setThirdPos] = useState<{ x: number; y: number } | null>(
     null,
   );
+  const [midPos, setMidPos] = useState<{ x: number; y: number } | null>(null);
+  const [midAngle, setMidAngle] = useState<number>(0);
 
   useEffect(() => {
     const p = measurePathRef.current;
@@ -56,34 +131,27 @@ export function StateMachineEdge({ id, source, target, style }: EdgeProps) {
       const total = p.getTotalLength();
       const point = p.getPointAtLength(total * (1 / 3));
       setThirdPos({ x: point.x, y: point.y });
+      const mid = p.getPointAtLength(total * 0.5);
+      const ahead = p.getPointAtLength(Math.min(total, total * 0.5 + 1));
+      setMidPos({ x: mid.x, y: mid.y });
+      const angle = Math.atan2(ahead.y - mid.y, ahead.x - mid.x);
+      setMidAngle(angle);
     } catch {
       // fallback gracefully; keep midpoint
       setThirdPos(null);
+      setMidPos(null);
     }
   }, [edgePath]);
 
   return (
     <>
-      <svg style={{ position: "absolute", width: 0, height: 0 }}>
-        <defs>
-          <marker
-            id={markerId}
-            viewBox="0 0 10 10"
-            refX="9"
-            refY="5"
-            markerUnits="strokeWidth"
-            markerWidth="3"
-            markerHeight="3"
-            orient="auto"
-          >
-            <path d="M 0 0 L 10 5 L 0 10 z" fill="#F59E0B" />
-          </marker>
-        </defs>
-      </svg>
       <BaseEdge
         path={edgePath}
         style={{ stroke: "#F59E0B", strokeWidth: 2.5, ...(style || {}) }}
-        markerEnd={`url(#${markerId})`}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (id !== "entry_edge") setEditingTransition?.(id);
+        }}
       />
       {/* invisible path for measuring 1/3 position */}
       <path
@@ -93,26 +161,20 @@ export function StateMachineEdge({ id, source, target, style }: EdgeProps) {
         fill="none"
         pointerEvents="none"
       />
-      {!isEntryEdge && (
+      {/* middle arrow indicator instead of end marker; filter icon removed */}
+      {!isEntryEdge && midPos && (
         <EdgeLabelRenderer>
-          <div
+          <svg
             style={{
               position: "absolute",
-              transform: `translate(-50%, -50%) translate(${thirdPos?.x ?? labelX}px, ${thirdPos?.y ?? labelY}px)`,
-              pointerEvents: "all",
+              overflow: "visible",
+              transform: `translate(${midPos.x}px, ${midPos.y}px)`,
             }}
           >
-            <button
-              className="btn btn-ghost btn-xs bg-base-100 border border-base-300 shadow"
-              title="Edit transition conditions"
-              onClick={(e) => {
-                e.stopPropagation();
-                setEditingTransition?.(id);
-              }}
-            >
-              <FunnelIcon className="w-4 h-4 text-base-content" />
-            </button>
-          </div>
+            <g transform={`rotate(${(midAngle * 180) / Math.PI})`}>
+              <polygon points="0,0 -6,-3 -6,3" fill="#F59E0B" />
+            </g>
+          </svg>
         </EdgeLabelRenderer>
       )}
     </>
