@@ -150,7 +150,6 @@ class RepositoryServer:
             response = messages.SaveAppResponse(
                 app=models.RepositoryApp.model_validate(app)
             )
-            logging.info(f"App saved: {app.graph}")
             return aiohttp.web.Response(
                 body=response.model_dump_json(), content_type="application/json"
             )
