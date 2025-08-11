@@ -58,7 +58,9 @@ export function StateMachineEdge(props: EdgeProps) {
     const pairCount = sortedPairEdges.length || 1;
 
     // offset along the normal to reduce overlap
-    const OFFSET_STEP = 28; // px between parallel curves
+    // visual tuning
+    const SEPARATION_STEP = 22; // distance between neighboring curves
+    const CURVE_FACTOR = 0.6; // how bowed the curves are (0..1)
     // actual path vector
     const dx = tx - sx;
     const dy = ty - sy;
@@ -77,13 +79,16 @@ export function StateMachineEdge(props: EdgeProps) {
     const unitIndex = pairIndex - (pairCount - 1) / 2;
     const evenHalfStep = pairCount % 2 === 0 ? 0.5 : 0;
     const adjustedIndex = unitIndex + (unitIndex >= 0 ? evenHalfStep : -evenHalfStep);
-    const offset = adjustedIndex * OFFSET_STEP;
+    const offset = adjustedIndex * SEPARATION_STEP;
 
     // control points along the line, pushed out by the offset normal
-    const c1x = sx + dx * 0.25 + nx * offset;
-    const c1y = sy + dy * 0.25 + ny * offset;
-    const c2x = sx + dx * 0.75 + nx * offset;
-    const c2y = sy + dy * 0.75 + ny * offset;
+    const t1 = 0.2;
+    const t2 = 0.8;
+    const offsetForCurve = offset * CURVE_FACTOR;
+    const c1x = sx + dx * t1 + nx * offsetForCurve;
+    const c1y = sy + dy * t1 + ny * offsetForCurve;
+    const c2x = sx + dx * t2 + nx * offsetForCurve;
+    const c2y = sy + dy * t2 + ny * offsetForCurve;
 
     // Straight-line rule:
     // - when exactly 2 edges exist, make the later-sorted one straight (pairIndex === 1)
@@ -99,8 +104,8 @@ export function StateMachineEdge(props: EdgeProps) {
     } else {
       edgePath = `M ${sx},${sy} C ${c1x},${c1y} ${c2x},${c2y} ${tx},${ty}`;
       // fallback midpoint for label; precise 1/3 will be measured via ref
-      labelX = sx + dx * 0.5 + nx * offset * 0.25;
-      labelY = sy + dy * 0.5 + ny * offset * 0.25;
+      labelX = sx + dx * 0.5 + nx * offsetForCurve * 0.25;
+      labelY = sy + dy * 0.5 + ny * offsetForCurve * 0.25;
     }
   } else {
     // Fallback during transient re-measure/re-render while dragging
@@ -123,6 +128,7 @@ export function StateMachineEdge(props: EdgeProps) {
   );
   const [midPos, setMidPos] = useState<{ x: number; y: number } | null>(null);
   const [midAngle, setMidAngle] = useState<number>(0);
+  const [isHovered, setIsHovered] = useState<boolean>(false);
 
   useEffect(() => {
     const p = measurePathRef.current;
@@ -148,6 +154,16 @@ export function StateMachineEdge(props: EdgeProps) {
       <BaseEdge
         path={edgePath}
         style={{ stroke: "#F59E0B", strokeWidth: 2.5, ...(style || {}) }}
+      />
+      {/* interactive overlay for hover/click, with generous hit area */}
+      <path
+        d={edgePath}
+        fill="none"
+        stroke="transparent"
+        strokeWidth={16}
+        pointerEvents="stroke"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
         onClick={(e) => {
           e.stopPropagation();
           if (id !== "entry_edge") setEditingTransition?.(id);
@@ -161,8 +177,8 @@ export function StateMachineEdge(props: EdgeProps) {
         fill="none"
         pointerEvents="none"
       />
-      {/* middle arrow indicator instead of end marker; filter icon removed */}
-      {!isEntryEdge && midPos && (
+      {/* Show arrow by default; on hover, show filter icon in its place */}
+      {!isEntryEdge && midPos && !isHovered && (
         <EdgeLabelRenderer>
           <svg
             style={{
@@ -177,8 +193,34 @@ export function StateMachineEdge(props: EdgeProps) {
           </svg>
         </EdgeLabelRenderer>
       )}
+      {!isEntryEdge && midPos && isHovered && (
+        <EdgeLabelRenderer>
+          <div
+            style={{
+              position: "absolute",
+              transform: `translate(-50%, -50%) translate(${midPos.x}px, ${midPos.y}px)`,
+              pointerEvents: "all",
+            }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
+            <div
+              title="Edit transition conditions"
+              onClick={(e) => {
+                e.stopPropagation();
+                setEditingTransition?.(id);
+              }}
+              className="bg-base-100 border border-base-300 shadow rounded"
+              style={{ padding: 1, lineHeight: 0, cursor: "pointer" }}
+            >
+              <FunnelIcon className="w-2 h-2 text-base-content" />
+            </div>
+          </div>
+        </EdgeLabelRenderer>
+      )}
     </>
   );
 }
 
 export default StateMachineEdge;
+
