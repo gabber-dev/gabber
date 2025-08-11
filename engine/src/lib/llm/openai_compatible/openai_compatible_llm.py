@@ -26,7 +26,7 @@ class OpenAICompatibleLLM:
         self._tasks = set[asyncio.Task]()
 
     async def create_completion(self, *, request: LLMRequest) -> AsyncLLMResponseHandle:
-        messages = request.to_openai_completion_input()
+        messages = await request.to_openai_completion_input()
         res = await self._client.chat.completions.create(
             model=self._model,
             messages=messages,
