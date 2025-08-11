@@ -5,6 +5,7 @@ import {
   Node,
   NodeChange,
   useNodesData,
+  applyNodeChanges,
 } from "@xyflow/react";
 import {
   createContext,
@@ -12,6 +13,7 @@ import {
   useContext,
   useMemo,
   useState,
+  useEffect,
 } from "react";
 import { usePropertyPad } from "../flow/blocks/components/pads/hooks/usePropertyPad";
 import { v4 } from "uuid";
@@ -76,6 +78,8 @@ export function StateMachineProvider({ children, nodeId }: Props) {
   const [transientEntryPosition, setTransientEntryPosition] = useState<
     { x: number; y: number } | undefined
   >(undefined);
+  // Local RF nodes buffer for smooth drag visual updates
+  const [rfNodes, setRfNodes] = useState<Node[]>([]);
 
   const { editorValue: configuration, setEditorValue: setConfiguration } =
     usePropertyPad<StateMachineConfiguration>(nodeId || "", "configuration");
@@ -184,6 +188,8 @@ export function StateMachineProvider({ children, nodeId }: Props) {
 
   const handleNodeChanges = useCallback(
     (changes: NodeChange[]) => {
+      // Apply drag changes to local RF nodes immediately for smooth visuals
+      setRfNodes((prev) => applyNodeChanges(changes, prev));
       const prevConfiguration = configuration || {
         states: [],
         entry_state: "",
@@ -369,9 +375,9 @@ export function StateMachineProvider({ children, nodeId }: Props) {
       },
       data: {},
     };
-    const nodes = [entryNode];
+    const builtNodes = [entryNode];
     for (const state of configuration?.states || []) {
-      nodes.push({
+      builtNodes.push({
         id: state.id,
         type: "default",
         position: transientPositions[state.id] ?? state.position,
@@ -401,6 +407,7 @@ export function StateMachineProvider({ children, nodeId }: Props) {
       });
     }
 
+    const nodes = rfNodes.length > 0 ? rfNodes : builtNodes;
     return { nodes, edges };
   }, [
     configuration?.entry_node_position?.x,
@@ -412,7 +419,32 @@ export function StateMachineProvider({ children, nodeId }: Props) {
     selectedNodes,
     transientPositions,
     transientEntryPosition,
+    rfNodes,
   ]);
+
+  // Initialize or rebuild local RF nodes when node ids change or selection/entry pos changes
+  useEffect(() => {
+    const entryNode: Node = {
+      id: "__ENTRY__",
+      type: "default",
+      position: {
+        x: configuration?.entry_node_position?.x || 0,
+        y: configuration?.entry_node_position?.y || 0,
+      },
+      data: {},
+    };
+    const nodes: Node[] = [entryNode];
+    for (const state of configuration?.states || []) {
+      nodes.push({
+        id: state.id,
+        type: "default",
+        position: state.position,
+        data: state,
+        selected: selectedNodes.includes(state.id),
+      });
+    }
+    setRfNodes(nodes);
+  }, [configuration?.states, configuration?.entry_node_position?.x, configuration?.entry_node_position?.y, selectedNodes]);
 
   const parameterPads = useMemo(() => {
     const namePads =
