@@ -3,8 +3,6 @@
 
 from .fps import FPS
 from .publish import Publish
+from .sliding_window import SlidingWindow
 
-ALL_NODES = [
-    FPS,
-    Publish,
-]
+ALL_NODES = [FPS, Publish, SlidingWindow]
