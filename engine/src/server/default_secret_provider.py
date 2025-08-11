@@ -25,6 +25,9 @@ class DefaultSecretProvider(secret.SecretProvider):
         ]
 
     async def resolve_secret(self, id: str) -> str:
+        if not id:
+            return ""
+
         secrets = await self._read_secrets()
         if id in secrets:
             return secrets[id]
