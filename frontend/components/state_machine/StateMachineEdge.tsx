@@ -30,6 +30,7 @@ export function StateMachineEdge(props: EdgeProps) {
     targetY,
     sourcePosition,
     targetPosition,
+    selected,
   } = props;
   const { setEditingTransition, reactFlowRepresentation } = useStateMachine();
 
@@ -153,7 +154,11 @@ export function StateMachineEdge(props: EdgeProps) {
     <>
       <BaseEdge
         path={edgePath}
-        style={{ stroke: "#F59E0B", strokeWidth: 2.5, ...(style || {}) }}
+        style={{
+          stroke: selected ? "#FFFFFF" : "#F59E0B",
+          strokeWidth: 2.5,
+          ...(style || {}),
+        }}
       />
       {/* interactive overlay for hover/click, with generous hit area */}
       <path
@@ -188,7 +193,10 @@ export function StateMachineEdge(props: EdgeProps) {
             }}
           >
             <g transform={`rotate(${(midAngle * 180) / Math.PI})`}>
-              <polygon points="0,0 -6,-3 -6,3" fill="#F59E0B" />
+              <polygon
+                points="0,0 -6,-3 -6,3"
+                fill={selected ? "#FFFFFF" : "#F59E0B"}
+              />
             </g>
           </svg>
         </EdgeLabelRenderer>
