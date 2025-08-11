@@ -76,6 +76,7 @@ function Condition({
   const selectedPad = useMemo(() => {
     if (!condition.parameter_name) return undefined;
     return parameterPads.find(
+<<<<<<< HEAD
       (pad) =>
         pad.namePadId === condition.parameter_name ||
         pad.nameValue === condition.parameter_name,
@@ -100,16 +101,39 @@ function Condition({
     (selectedPad?.valueType?.type || "unknown") as string
   ).toLowerCase();
   const isTrigger = valueType === "trigger";
+=======
+      (pad) => pad.nameValue === condition.parameter_name,
+    );
+  }, [condition.parameter_name, parameterPads]);
+
+  const valueType = (selectedPad?.valueType?.type || "unknown") as string;
+  console.log(
+    "NEIL Condition valueType:",
+    selectedPad,
+    valueType,
+    parameterPads,
+  );
+  const isTrigger = valueType === "Trigger";
+>>>>>>> neil/sm
   const selectedOperator = condition.operator || "";
   const isUnaryOperator = ["NON_EMPTY", "EMPTY"].includes(selectedOperator);
 
   const operatorOptions: { value: Operator; label: string }[] = [
+<<<<<<< HEAD
     { value: "<", label: "<" },
     { value: "<=", label: "<=" },
     { value: "==", label: "==" },
     { value: "!=", label: "!=" },
     { value: ">=", label: ">=" },
     { value: ">", label: ">" },
+=======
+    { value: "<", label: "&lt;" },
+    { value: "<=", label: "&lt;=" },
+    { value: "==", label: "==" },
+    { value: "!=", label: "!=" },
+    { value: ">=", label: "&gt;=" },
+    { value: ">", label: "&gt;" },
+>>>>>>> neil/sm
     { value: "NON_EMPTY", label: "NON_EMPTY" },
     { value: "EMPTY", label: "EMPTY" },
     { value: "STARTS_WITH", label: "STARTS_WITH" },
@@ -119,6 +143,7 @@ function Condition({
 
   let availableOperators: { value: Operator; label: string }[] = [];
   if (valueType === "string") {
+<<<<<<< HEAD
     const stringAllowed = new Set<Operator | "">([
       "==",
       "!=",
@@ -136,6 +161,10 @@ function Condition({
     valueType === "integer" ||
     valueType === "float"
   ) {
+=======
+    availableOperators = operatorOptions;
+  } else if (valueType === "number") {
+>>>>>>> neil/sm
     availableOperators = operatorOptions.filter((op) =>
       ["<", "<=", "==", "!=", ">=", ">"].includes(op.value || ""),
     );
@@ -191,6 +220,7 @@ function Condition({
       )}
       {!isTrigger && !isUnaryOperator && (
         <input
+<<<<<<< HEAD
           type={
             valueType === "integer" ||
             valueType === "float" ||
@@ -227,6 +257,13 @@ function Condition({
                   : cond,
               ),
             });
+=======
+          type="text"
+          className="input input-bordered grow select-xs !outline-none"
+          value={(condition.value as unknown as string) || ""}
+          onChange={(e) => {
+            // Handle value change
+>>>>>>> neil/sm
           }}
         />
       )}
