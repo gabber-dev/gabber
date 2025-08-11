@@ -1,11 +1,13 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-from typing import Any, cast, Literal
+import asyncio
 import logging
+from typing import Any, Literal, cast
 
-from core import node, pad
 from pydantic import BaseModel
+
+from core import node, pad, runtime_types
 
 ALL_PARAMETER_TYPES: list[pad.types.BasePadType] = [
     pad.types.Float(),
@@ -220,12 +222,95 @@ class StateMachine(node.Node):
         self._resolve_value_types()
         self._resolve_pad_mode()
         self._sort_and_rename_pads()
+        self._resolve_condition_operators()
 
     async def run(self):
         configuration_pad = cast(pad.PropertySinkPad, self.get_pad("configuration"))
         current_state_pad = cast(
             pad.PropertySourcePad, self.get_pad_required("current_state")
         )
+
+        triggers: dict[str, bool] = {}
+        trigger_ctx_originator: str | None = None
+
+        def get_current_state() -> StateMachineState:
+            state_name = cast(str, current_state_pad.get_value())
+            config = cast(StateMachineConfiguration, configuration_pad.get_value())
+            for state in config.states:
+                if state.name == state_name:
+                    return state
+            raise ValueError(
+                f"Current state '{state_name}' not found in configuration."
+            )
+
+        def get_outgoing_transitions(
+            state: StateMachineState,
+        ) -> list[StateMachineTransition]:
+            config = configuration_pad.get_value()
+            return [
+                transition
+                for transition in config.transitions
+                if transition.source == state.id
+            ]
+
+        def check_transitions(ctx: pad.RequestContext):
+            current_state = get_current_state()
+            transitions = get_outgoing_transitions(current_state)
+            config = cast(StateMachineConfiguration, configuration_pad.get_value())
+
+            parameter_name_value: dict[str, Any] = {}
+            trigger_params = set[str]()
+            for idx in self._get_parameter_indices():
+                name_pad, value_pad = self._get_pads(idx)
+                name = cast(str, name_pad.get_value())
+                if isinstance(value_pad, pad.PropertyPad):
+                    parameter_name_value[name] = value_pad.get_value()
+                else:
+                    trigger_params.add(name)
+
+            for transition in transitions:
+                res = True
+                for c in transition.conditions:
+                    if c.parameter_name in trigger_params:
+                        pass
+                    elif c.parameter_name in parameter_name_value:
+                        pass
+                    else:
+                        res = False
+
+                if res:
+                    next_state_id = transition.to_state
+                    next_state = next(
+                        (s for s in config.states if s.id == next_state_id),
+                        None,
+                    )
+                    if not next_state:
+                        logging.error(
+                            f"Next state '{next_state_id}' not found in configuration."
+                        )
+                        continue
+
+                    current_state_pad.push_item(next_state.name, ctx)
+
+        async def pad_task(idx: int):
+            nonlocal trigger_ctx_originator
+            name_pad, value_pad = self._get_pads(idx)
+            async for item in value_pad:
+                name = cast(str, name_pad.get_value())
+                if isinstance(item.value, runtime_types.Trigger):
+                    if item.ctx.originator != trigger_ctx_originator:
+                        triggers.clear()
+                        trigger_ctx_originator = item.ctx.originator
+                    triggers[name] = True
+
+                check_transitions(item.ctx)
+
+                item.ctx.complete()
+
+        all_idxes = self._get_parameter_indices()
+        tasks = [pad_task(idx) for idx in all_idxes if idx is not None and idx >= 0]
+
+        await asyncio.gather(*tasks)
 
     def _resolve_num_pads(self):
         current_num = len(self._get_parameter_indices())
@@ -338,7 +423,75 @@ class StateMachine(node.Node):
                         self.pads[idx] = new_pad
 
     def _resolve_condition_operators(self):
-        pass
+        configuration_pad = cast(pad.PropertySinkPad, self.get_pad("configuration"))
+        config_dict = configuration_pad.get_value()
+
+        if "transitions" not in config_dict or not isinstance(
+            config_dict["transitions"], list
+        ):
+            return
+
+        allowed_operators = {
+            pad.types.Float: ["<", "<=", "==", "!=", ">=", ">"],
+            pad.types.Integer: ["<", "<=", "==", "!=", ">=", ">"],
+            pad.types.Boolean: ["==", "!="],
+            pad.types.String: [
+                "==",
+                "!=",
+                "NON_EMPTY",
+                "EMPTY",
+                "STARTS_WITH",
+                "ENDS_WITH",
+                "CONTAINS",
+            ],
+            pad.types.Trigger: [],
+        }
+
+        for trans in config_dict["transitions"]:
+            if "conditions" in trans and isinstance(trans["conditions"], list):
+                for cond in trans["conditions"]:
+                    if not isinstance(cond, dict):
+                        continue
+                    param_name = cond.get("parameter_name")
+                    if param_name is None:
+                        if cond.get("operator") is not None:
+                            logging.warning(
+                                "Condition without parameter_name, setting operator to None."
+                            )
+                            cond["operator"] = None
+                        continue
+
+                    found = False
+                    tcs = []
+                    for idx in self._get_parameter_indices():
+                        name_pad, value_pad = self._get_pads(idx)
+                        if name_pad.get_value() == param_name:
+                            tcs = value_pad.get_type_constraints()
+                            found = True
+                            break
+
+                    if not found:
+                        logging.warning(
+                            f"Parameter '{param_name}' not found. Setting operator to None."
+                        )
+                        cond["operator"] = None
+                        continue
+
+                    if not tcs:
+                        cond["operator"] = None
+                        continue
+
+                    allowed_sets = [
+                        set(allowed_operators.get(type(type_), [])) for type_ in tcs
+                    ]
+                    allowed = set.intersection(*allowed_sets) if allowed_sets else set()
+
+                    operator = cond.get("operator")
+                    if operator is not None and operator not in allowed:
+                        logging.warning(
+                            f"Invalid operator '{operator}' for parameter '{param_name}' with types {[type_.__class__.__name__ for type_ in tcs]}. Setting to None."
+                        )
+                        cond["operator"] = None
 
     def _sort_and_rename_pads(self):
         configuration_pad = cast(
@@ -377,11 +530,9 @@ class StateMachine(node.Node):
 
         return [int(name) for name in p_names if name.isdigit()]
 
-    def _get_pads(self, index: int) -> tuple[pad.SinkPad, pad.SinkPad]:
+    def _get_pads(self, index: int) -> tuple[pad.PropertySinkPad, pad.SinkPad]:
         name_pad = cast(
             pad.PropertySinkPad, self.get_pad_required(f"parameter_name_{index}")
         )
-        value_pad = cast(
-            pad.PropertySinkPad, self.get_pad_required(f"parameter_value_{index}")
-        )
+        value_pad = cast(pad.SinkPad, self.get_pad_required(f"parameter_value_{index}"))
         return name_pad, value_pad
