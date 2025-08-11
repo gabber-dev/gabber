@@ -1,9 +1,9 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
+import asyncio
 import json
 from typing import cast
-import logging
 
 from core import pad, runtime_types
 from core.node import Node, NodeMetadata
@@ -93,9 +93,8 @@ class AutoConvert(Node):
                             break
                     if txt is not None:
                         source.push_item(txt, item.ctx)
-                elif isinstance(source_type, bool):
-                    if isinstance(item.value, bool):
-                        source.push_item(str(item.value), item.ctx)
+                elif isinstance(item.value, bool):
+                    source.push_item(str(item.value), item.ctx)
                 elif isinstance(item.value, dict):
                     try:
                         json_str = json.dumps(item.value)
@@ -104,5 +103,20 @@ class AutoConvert(Node):
                         source.push_item(
                             f"Cannot convert {item.value} to string", item.ctx
                         )
+            elif isinstance(source_type, pad.types.Video):
+                if isinstance(item.value, runtime_types.VideoFrame):
+                    source.push_item(item.value, item.ctx)
+                elif isinstance(item.value, runtime_types.VideoClip):
+                    prev_timestamp: float | None = None
+                    for vf in item.value.video:
+                        if prev_timestamp is None:
+                            source.push_item(vf, item.ctx)
+                            prev_timestamp = vf.timestamp
+                        else:
+                            delta = vf.timestamp - prev_timestamp
+                            if delta > 0:
+                                await asyncio.sleep(delta)
+                            source.push_item(vf, item.ctx)
+                            prev_timestamp = vf.timestamp
 
             item.ctx.complete()
