@@ -56,6 +56,8 @@ type EditorContextType = {
 
   unsavedChanges: boolean;
   saving: boolean;
+  stateMachineEditing?: string;
+  setStateMachineEditing: (stateMachineId: string | undefined) => void;
   saveChanges: () => Promise<void>;
 
   onReactFlowConnect: (connection: Connection) => void;
@@ -68,6 +70,8 @@ type EditorContextType = {
   connectPad: (req: ConnectPadEdit) => void;
   updatePad: (req: UpdatePadEdit) => void;
   updateNode: (req: UpdateNodeEdit) => void;
+
+  clearAllSelection: () => void;
 };
 
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
@@ -100,6 +104,9 @@ export function EditorProvider({
     nodes: [],
     edges: [],
   });
+  const [stateMachineEditing, setStateMachineEditing] = useState<
+    string | undefined
+  >(undefined);
 
   const { sendMessage, lastJsonMessage, readyState } = useWebSocket(
     editor_url,
@@ -254,12 +261,28 @@ export function EditorProvider({
           pendingEdits.current.delete(key);
         }
         debounceTimers.current.delete(key);
-      }, 250) as unknown as number;
+      }, 175) as unknown as number;
 
       debounceTimers.current.set(key, timer);
     },
     [sendRequest],
   );
+
+  const clearAllSelection = useCallback(() => {
+    setReactFlowRepresentation((prev) => {
+      return {
+        ...prev,
+        nodes: prev.nodes.map((node) => ({
+          ...node,
+          selected: false,
+        })),
+        edges: prev.edges.map((edge) => ({
+          ...edge,
+          selected: false,
+        })),
+      };
+    });
+  }, []);
 
   const updateNode = useCallback(
     (edit: UpdateNodeEdit) => {
@@ -537,6 +560,7 @@ export function EditorProvider({
         unsavedChanges,
         saving,
         debug,
+        stateMachineEditing,
         saveChanges,
         onReactFlowConnect,
         onReactFlowNodesChange,
@@ -547,6 +571,8 @@ export function EditorProvider({
         connectPad,
         updatePad,
         updateNode,
+        clearAllSelection,
+        setStateMachineEditing,
       }}
     >
       {children}
@@ -565,19 +591,21 @@ export function useEditor() {
 function graphToReact(
   representation: GraphEditorRepresentation,
 ): ReactFlowRepresentation {
-  const nodes: Node[] = representation.nodes.map((node) => ({
-    id: node.id,
-    type: "default",
-    position: {
-      x: (node.editor_position?.[0] || 0) as number,
-      y: (node.editor_position?.[1] || 0) as number,
-    },
-    measured: {
-      width: (node.editor_dimensions?.[0] || 10) as number,
-      height: (node.editor_dimensions?.[1] || 10) as number,
-    },
-    data: node,
-  }));
+  const nodes: Node<NodeEditorRepresentation>[] = representation.nodes.map(
+    (node) => ({
+      id: node.id,
+      type: "default",
+      position: {
+        x: (node.editor_position?.[0] || 0) as number,
+        y: (node.editor_position?.[1] || 0) as number,
+      },
+      measured: {
+        width: (node.editor_dimensions?.[0] || 10) as number,
+        height: (node.editor_dimensions?.[1] || 10) as number,
+      },
+      data: node,
+    }),
+  );
 
   const edges: Edge[] = [];
   for (const node of representation.nodes) {

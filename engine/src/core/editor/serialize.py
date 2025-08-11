@@ -27,36 +27,9 @@ def serialize_pad_value(v: Any | None):
 
 
 def deserialize_pad_value(
-    nodes: list[node.Node],
-    p: pad.Pad,
+    tc: pad.types.BasePadType,
     v: Any | None,
 ):
-    type_constraints = p.get_type_constraints()
-    if v is not None and (type_constraints is None or len(type_constraints) != 1):
-        raise ValueError(
-            f"Expected exactly one type constraint for deserialization, got {type_constraints}, value: {v}, pad: {p.get_id()}"
-        )
-    if type_constraints is None:
-        return None
-    tc = type_constraints[0]
-
-    if isinstance(tc, pad.types.NodeReference):
-        if isinstance(p, pad.ProxyPad):
-            other = p.get_other()
-            if not isinstance(other, pad.PropertyPad):
-                logging.error(f"Expected PropertyPad for other pad, got {type(other)}")
-                return None
-            return other.get_value()
-        else:
-            if not isinstance(v, str):
-                return None
-            for node in nodes:
-                if node.id == v:
-                    return node
-            raise ValueError(
-                f"Node with id {v} not found in nodes list. Available nodes: {[n.id for n in nodes]}"
-            )
-
     if isinstance(v, str | float | int):
         return v
     elif isinstance(v, BaseModel):
@@ -81,11 +54,11 @@ def deserialize_pad_value(
         list_types = tc.item_type_constraints
         if not list_types or len(list_types) != 1:
             logging.error(
-                f"List type constraints: {list_types}, value: {v}, type_constraints: {type_constraints}"
+                f"List type constraints: {list_types}, value: {v}, type_constraints: {tc}"
             )
             return None
 
-        items = [deserialize_pad_value(nodes, p, item) for item in v]
+        items = [deserialize_pad_value(list_types[0], item) for item in v]
         return items
 
 
