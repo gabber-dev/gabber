@@ -198,7 +198,6 @@ class StateMachine(node.Node):
                     state.name += "(1)"
             seen_states.add(state.name)
 
-<<<<<<< HEAD
         # Update current_state enum options and default value from configuration
         try:
             enum_options = [s.name for s in config.states]
@@ -206,15 +205,15 @@ class StateMachine(node.Node):
 
             # Set current state value to entry state's name if present, else blank
             if config.entry_state:
-                entry = next((s for s in config.states if s.id == config.entry_state), None)
+                entry = next(
+                    (s for s in config.states if s.id == config.entry_state), None
+                )
                 current_state.set_value(entry.name if entry else "")
             else:
                 current_state.set_value("")
         except Exception as e:
             logging.warning(f"Failed to update current_state pad: {e}")
 
-=======
->>>>>>> neil/sm
         configuration.set_value(config.model_dump())
 
         self._resolve_num_pads()
@@ -338,12 +337,9 @@ class StateMachine(node.Node):
                             prev_pad.connect(new_pad)
                         self.pads[idx] = new_pad
 
-<<<<<<< HEAD
-=======
     def _resolve_condition_operators(self):
         pass
 
->>>>>>> neil/sm
     def _sort_and_rename_pads(self):
         configuration_pad = cast(
             pad.PropertySinkPad, self.get_pad_required("configuration")
