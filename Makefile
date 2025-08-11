@@ -22,8 +22,10 @@ repository:
 	make repository 
 
 generate:
-	engine/.venv/bin/python engine/src/main.py generate-editor-schema | json2ts -o frontend/generated/editor.ts && \
+	engine/.venv/bin/python engine/src/main.py generate-editor-schema | json2ts -o frontend/generated/editor.ts
 	engine/.venv/bin/python engine/src/main.py generate-repository-schema | json2ts -o frontend/generated/repository.ts
+	engine/.venv/bin/python engine/src/main.py generate-state-machine-schema | json2ts -o frontend/generated/stateMachine.ts
+
 	engine/.venv/bin/python engine/src/main.py generate-runtime-schema | json2ts -o sdks/javascript/src/generated/runtime.ts
 	engine/.venv/bin/python engine/src/main.py generate-runtime-schema | json2ts -o sdks/react/src/generated/runtime.ts
 

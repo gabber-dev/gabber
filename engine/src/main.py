@@ -235,5 +235,24 @@ def generate_runtime_schema():
     print(json.dumps(merged_schema, indent=2))
 
 
+@main_cli.command("generate-state-machine-schema")
+def generate_statemachine_schema():
+    """Generate JSON schema for StateMachine"""
+
+    from nodes.core.logic.state_machine.state_machine import StateMachineConfiguration
+
+    config_schema = TypeAdapter(StateMachineConfiguration).json_schema()
+
+    # Convert $defs to definitions for older tools if needed
+    if config_schema.get("$defs"):
+        config_schema["definitions"] = config_schema.pop("$defs")
+        # Update all $ref pointers
+        schema_str = json.dumps(config_schema)
+        schema_str = schema_str.replace("#/$defs/", "#/definitions/")
+        config_schema = json.loads(schema_str)
+
+    print(json.dumps(config_schema, indent=2))
+
+
 if __name__ == "__main__":
     main_cli()
