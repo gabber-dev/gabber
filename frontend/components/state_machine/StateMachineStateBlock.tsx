@@ -1,9 +1,6 @@
 import { Handle, Node, Position, useNodeId, useNodesData } from "@xyflow/react";
 import { ChangeEvent, useCallback, useMemo, useState } from "react";
-<<<<<<< HEAD
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
-=======
->>>>>>> neil/sm
 import { StateMachineState } from "@/generated/stateMachine";
 import { useStateMachine } from "./useStateMachine";
 
@@ -43,15 +40,9 @@ export function StateMachineStateBlock() {
   }, [selectedNodes, nodeId]);
 
   return (
-<<<<<<< HEAD
     <div className="relative min-w-14 h-8 group">
       <div
         className={`h-full relative z-10 flex flex-col items-center justify-center ${bgColor} rounded-full text-sm text-base-100 font-bold px-3 py-1`}
-=======
-    <div className="relative min-w-14 h-8">
-      <div
-        className={`h-full relative z-10 flex flex-col items-center justify-center ${bgColor} rounded-full text-sm text-base-100 font-bold`}
->>>>>>> neil/sm
         onDoubleClick={handleDoubleClick}
       >
         {isEditing ? (
@@ -65,7 +56,6 @@ export function StateMachineStateBlock() {
             className="w-full text-center bg-transparent border-none outline-none text-base-100 nodrag"
           />
         ) : (
-<<<<<<< HEAD
           <div className="flex items-center gap-1">
             <p className="px-1">{name}</p>
             {!isEntry && (
@@ -82,9 +72,6 @@ export function StateMachineStateBlock() {
               </button>
             )}
           </div>
-=======
-          <p>{name}</p>
->>>>>>> neil/sm
         )}
       </div>
       <Handle
