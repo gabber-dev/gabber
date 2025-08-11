@@ -103,6 +103,13 @@ export function StateMachineProvider({ children, nodeId }: Props) {
       if (!configuration) {
         return;
       }
+      if (source === "__ENTRY__") {
+        setConfiguration({
+          ...configuration,
+          entry_state: target,
+        });
+        return;
+      }
       const newTransition: StateMachineTransition = {
         id: v4(),
         from_state: source,
