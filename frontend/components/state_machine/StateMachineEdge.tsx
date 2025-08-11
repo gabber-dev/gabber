@@ -8,6 +8,7 @@ import {
   EdgeLabelRenderer,
   EdgeProps,
   getBezierPath,
+  useInternalNode,
 } from "@xyflow/react";
 import { FunnelIcon } from "@heroicons/react/24/outline";
 import { useStateMachine } from "./useStateMachine";
@@ -15,25 +16,27 @@ import { useEffect, useRef, useState } from "react";
 
 // no-op: kept for potential future custom arrow needs
 
-export function StateMachineEdge({
-  id,
-  sourceX,
-  sourceY,
-  targetX,
-  targetY,
-  sourcePosition,
-  targetPosition,
-  style,
-}: EdgeProps) {
+import { getEdgeParams } from "./floating";
+
+export function StateMachineEdge({ id, source, target, style }: EdgeProps) {
   const { setEditingTransition } = useStateMachine();
 
+  const sourceNode = useInternalNode(source);
+  const targetNode = useInternalNode(target);
+  if (!sourceNode || !targetNode) return null;
+
+  const { sx, sy, tx, ty, sourcePos, targetPos } = getEdgeParams(
+    sourceNode as any,
+    targetNode as any,
+  );
+
   const [edgePath, labelX, labelY] = getBezierPath({
-    sourceX,
-    sourceY,
-    sourcePosition,
-    targetX,
-    targetY,
-    targetPosition,
+    sourceX: sx,
+    sourceY: sy,
+    sourcePosition: sourcePos,
+    targetX: tx,
+    targetY: ty,
+    targetPosition: targetPos,
   });
 
   // Entry edge should not have a filter icon

@@ -336,7 +336,6 @@ export function StateMachineProvider({ children, nodeId }: Props) {
         x: configuration?.entry_node_position?.x || 0,
         y: configuration?.entry_node_position?.y || 0,
       },
-      measured: { width: 10, height: 10 },
       data: {},
     };
     const nodes = [entryNode];
@@ -345,7 +344,6 @@ export function StateMachineProvider({ children, nodeId }: Props) {
         id: state.id,
         type: "default",
         position: state.position,
-        measured: { width: 10, height: 10 },
         data: state,
         selected: selectedNodes.includes(state.id),
       });
