@@ -18,6 +18,7 @@ class EditType(str, Enum):
     CONNECT_PAD = "connect_pad"
     DISCONNECT_PAD = "disconnect_pad"
     UPDATE_PAD = "update_pad"
+    INSERT_INLINE_SUBGRAPH = "insert_inline_sub_graph"
 
 
 class InsertNodeEdit(BaseModel):
@@ -36,6 +37,42 @@ class InsertSubGraphEdit(BaseModel):
     editor_position: tuple[float, float]
     editor_dimensions: tuple[float, float] | None = None
     editor_name: str
+
+
+class InlineSubGraphConnectionIn(BaseModel):
+    from_node: str = Field(..., description="ID of the external source node")
+    from_pad: str = Field(..., description="Handle ID of the external source pad")
+    to_subgraph_pad: str = Field(..., description="ID of the subgraph sink pad to connect to")
+
+
+class InlineSubGraphConnectionOut(BaseModel):
+    from_subgraph_pad: str = Field(..., description="ID of the subgraph source pad to connect from")
+    to_node: str = Field(..., description="ID of the external target node")
+    to_pad: str = Field(..., description="Handle ID of the external target pad")
+
+
+class InsertInlineSubGraphEdit(BaseModel):
+    type: Literal[EditType.INSERT_INLINE_SUBGRAPH] = EditType.INSERT_INLINE_SUBGRAPH
+    id: str | None = None
+    subgraph_id: str | None = Field(
+        default=None, description="Repository ID for this subgraph, if saved"
+    )
+    subgraph_name: str
+    graph: "GraphEditorRepresentation"
+    editor_position: tuple[float, float]
+    editor_dimensions: tuple[float, float] | None = None
+    editor_name: str
+    inbound_connections: list[InlineSubGraphConnectionIn] = Field(
+        default_factory=list,
+        description="External sources to connect to subgraph sink pads at insert time",
+    )
+    outbound_connections: list[InlineSubGraphConnectionOut] = Field(
+        default_factory=list,
+        description="Subgraph source pads to connect to external sinks at insert time",
+    )
+    remove_node_ids: list[str] = Field(
+        default_factory=list, description="Node IDs to remove after insertion"
+    )
 
 
 class RemoveNodeEdit(BaseModel):
@@ -78,6 +115,7 @@ class UpdatePadEdit(BaseModel):
 Edit = Annotated[
     InsertNodeEdit
     | InsertSubGraphEdit
+    | InsertInlineSubGraphEdit
     | UpdateNodeEdit
     | RemoveNodeEdit
     | ConnectPadEdit

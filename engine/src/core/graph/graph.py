@@ -16,6 +16,7 @@ from core.editor.models import (
     GraphLibraryItem,
     GraphLibraryItem_Node,
     GraphLibraryItem_SubGraph,
+    InsertInlineSubGraphEdit,
     InsertNodeEdit,
     InsertSubGraphEdit,
     RemoveNodeEdit,
@@ -82,6 +83,8 @@ class Graph:
                 await self._handle_insert_node(request)
             elif request.type == EditType.INSERT_SUBGRAPH:
                 await self._handle_insert_subgraph(request)
+            elif request.type == EditType.INSERT_INLINE_SUBGRAPH:
+                await self._handle_insert_inline_subgraph(request)
             elif request.type == EditType.UPDATE_NODE:
                 await self._handle_update_node(request)
             elif request.type == EditType.REMOVE_NODE:
@@ -140,6 +143,71 @@ class Graph:
         node.editor_dimensions = edit.editor_dimensions
         await self._propagate_update([node])
         self.nodes.append(node)
+
+    async def _handle_insert_inline_subgraph(self, edit: InsertInlineSubGraphEdit):
+        # Build a subgraph instance from provided snapshot
+        inner_graph = Graph(
+            id=edit.subgraph_id or "inline",
+            secret_provider=self.secret_provider,
+            secrets=self.secrets,
+            library_items=self.library_items,
+        )
+        await inner_graph.load_from_snapshot(edit.graph)
+
+        sg_node = SubGraph(
+            secrets=self.secrets, secret_provider=self.secret_provider, graph=inner_graph
+        )
+        if edit.subgraph_id:
+            sg_node.set_subgraph_id(edit.subgraph_id)
+        sg_node.id = edit.id or f"subgraph_{short_uuid()}".lower()
+        sg_node.editor_position = edit.editor_position
+        sg_node.editor_name = edit.editor_name
+        sg_node.editor_dimensions = edit.editor_dimensions
+        await self._propagate_update([sg_node])
+        self.nodes.append(sg_node)
+
+        # Apply rewiring if specified
+        for inbound in edit.inbound_connections:
+            source_node = self.get_node(inbound.from_node)
+            target_pad = sg_node.get_pad(inbound.to_subgraph_pad)
+            if not source_node or not target_pad:
+                logging.error(
+                    f"InlineSubGraph inbound: source or pad not found: {inbound}"
+                )
+                continue
+            source_pad = source_node.get_pad(inbound.from_pad)
+            if not source_pad or not isinstance(source_pad, pad.SourcePad):
+                logging.error(
+                    f"InlineSubGraph inbound: invalid source pad for {inbound}"
+                )
+                continue
+            source_pad.connect(cast(Any, target_pad))
+            await self._propagate_update([source_node, sg_node])
+
+        for outbound in edit.outbound_connections:
+            source_pad = sg_node.get_pad(outbound.from_subgraph_pad)
+            target_node = self.get_node(outbound.to_node)
+            if not source_pad or not target_node:
+                logging.error(
+                    f"InlineSubGraph outbound: source or target not found: {outbound}"
+                )
+                continue
+            target_pad = target_node.get_pad(outbound.to_pad)
+            if not target_pad or not isinstance(source_pad, pad.SourcePad):
+                logging.error(
+                    f"InlineSubGraph outbound: invalid pads for {outbound}"
+                )
+                continue
+            cast(pad.SourcePad, source_pad).connect(cast(Any, target_pad))
+            await self._propagate_update([sg_node, target_node])
+
+        # Optionally remove nodes that were replaced by the subgraph
+        if edit.remove_node_ids:
+            to_remove = [n for n in self.nodes if n.id in edit.remove_node_ids]
+            for n in to_remove:
+                n.disconnect_all()
+            await self._propagate_update([sg_node])
+            self.nodes = [n for n in self.nodes if n.id not in edit.remove_node_ids]
 
     async def _handle_update_node(self, edit: UpdateNodeEdit):
         node: Node | None = next((n for n in self.nodes if n.id == edit.id), None)

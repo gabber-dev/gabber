@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import {
   ReactFlow,
   Background,
@@ -28,6 +28,9 @@ import { getPrimaryDataType } from "./blocks/components/pads/utils/dataTypeColor
 import ReactModal from "react-modal";
 import { StateMachineGraphEdit } from "../state_machine/StateMachineGraphEdit";
 import { StateMachineProvider } from "../state_machine/useStateMachine";
+import { GraphEditorRepresentation } from "@/generated/editor";
+import { useRepository } from "@/hooks/useRepository";
+import toast from "react-hot-toast";
 
 const edgeTypes = {
   hybrid: HybridEdge,
@@ -46,13 +49,16 @@ export function FlowEdit() {
 function FlowEditInner() {
   const {
     reactFlowRepresentation,
+    editorRepresentation,
     stateMachineEditing,
     connectionStatus,
     setStateMachineEditing,
     onReactFlowEdgesChange,
     onReactFlowNodesChange,
     onReactFlowConnect,
+    // no inline insertion for now
   } = useEditor();
+  const { saveSubGraph } = useRepository();
   const { connectionState } = useRun();
   const isRunning =
     connectionState === "connected" || connectionState === "connecting";
@@ -79,12 +85,65 @@ function FlowEditInner() {
     });
   }, [reactFlowRepresentation.edges, reactFlowRepresentation.nodes]);
 
+  const selectedNodeIds = useMemo(() => {
+    return new Set(
+      (reactFlowRepresentation.nodes as Node[])
+        .filter((n) => Boolean((n as any).selected))
+        .map((n) => n.id),
+    );
+  }, [reactFlowRepresentation.nodes]);
+
+  const onCreateSubgraphFromSelection = useCallback(async () => {
+    if (selectedNodeIds.size === 0) return;
+
+    // Ask for a name for the new subgraph
+    const name = window.prompt("Name your new subgraph:", "New SubGraph");
+    if (!name) return;
+
+    const snapshot = buildSubgraphSnapshot(
+      editorRepresentation,
+      selectedNodeIds,
+    );
+
+    // Save to repository only (no graph mutation for now)
+    const saved = await saveSubGraph({ name, graph: snapshot } as any);
+
+    toast.custom((t) => (
+      <div className="flex items-start gap-3 bg-base-200 border border-base-300 rounded-lg px-4 py-3 shadow-xl">
+        <div className="text-sm">
+          <div className="font-semibold">Subgraph saved</div>
+          <a
+            href={`/graph/${saved.id}`}
+            className="link link-primary underline"
+            onClick={() => toast.dismiss(t.id)}
+          >
+            Open subgraph
+          </a>
+        </div>
+        <button
+          className="btn btn-xs btn-ghost ml-2"
+          onClick={() => toast.dismiss(t.id)}
+        >
+          Close
+        </button>
+      </div>
+    ));
+  }, [editorRepresentation, saveSubGraph, selectedNodeIds]);
+
   return (
     <div className="relative w-full h-full flex flex-col">
       <div className="absolute top-2 right-2 flex z-10">
         <AddBlockButton
           onClick={() => setIsNodeLibraryOpen(!isNodeLibraryOpen)}
         />
+        {selectedNodeIds.size > 0 && (
+          <button
+            className="btn btn-sm ml-2 font-vt323 tracking-wider btn-accent"
+            onClick={onCreateSubgraphFromSelection}
+          >
+            Save as Subgraph
+          </button>
+        )}
       </div>
 
       {/* Node Library Panel */}
@@ -130,6 +189,7 @@ function FlowEditInner() {
             nodeTypes={{ default: BaseBlock }}
             snapGrid={[12, 12]}
             snapToGrid={true}
+            selectionOnDrag={true}
             defaultEdgeOptions={{
               type: "hybrid",
               style: { strokeWidth: 2, stroke: "#FCD34D" },
@@ -144,6 +204,7 @@ function FlowEditInner() {
           </ReactFlow>
         </FlowErrorBoundary>
       </div>
+      
       <ReactModal
         isOpen={Boolean(stateMachineEditing)}
         onRequestClose={() => setStateMachineEditing(undefined)}
@@ -176,4 +237,25 @@ function AddBlockButton({ onClick }: { onClick: () => void }) {
       Add Node
     </button>
   );
+}
+
+function buildSubgraphSnapshot(
+  graph: GraphEditorRepresentation,
+  selected: Set<string>,
+): GraphEditorRepresentation {
+  const selectedSet = new Set<string>(selected);
+  const nodes = graph.nodes
+    .filter((n) => selectedSet.has(n.id))
+    .map((orig) => ({
+      ...orig,
+      pads: orig.pads.map((p) => ({
+        ...p,
+        next_pads: (p.next_pads || []).filter((np) => selectedSet.has(np.node)),
+        previous_pad:
+          p.previous_pad && selectedSet.has(p.previous_pad.node)
+            ? p.previous_pad
+            : undefined,
+      })),
+    }));
+  return { nodes };
 }
