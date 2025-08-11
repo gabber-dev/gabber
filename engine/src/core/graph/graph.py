@@ -220,9 +220,13 @@ class Graph:
         if not p:
             raise ValueError(f"Pad with ID {edit.pad} not found in node {edit.node}.")
 
-        v = serialize.deserialize_pad_value(self.nodes, p, edit.value)
-        if isinstance(p, pad.PropertyPad):
-            p.set_value(v)
+        tcs = p.get_type_constraints()
+        if tcs and len(tcs) == 1 and isinstance(p, pad.PropertyPad):
+            if isinstance(tcs[0], pad.types.NodeReference):
+                pass
+            else:
+                v = serialize.deserialize_pad_value(tcs[0], edit.value)
+                p.set_value(v)
 
         await self._propagate_update([node])
 
@@ -244,6 +248,8 @@ class Graph:
 
     async def load_from_snapshot(self, snapshot: messages.GraphEditorRepresentation):
         self.nodes = []
+        node_reference_pads: list[pad.PropertyPad] = []
+
         for node_data in snapshot.nodes:
             node: Node
             node_cls = self._node_cls_lookup.get(node_data.type)
@@ -288,6 +294,7 @@ class Graph:
                     secrets=self.secrets,
                     graph=subgraph,
                 )
+                await node.resolve_pads()
             else:
                 raise ValueError(f"Node type {node_data.type} not found in library.")
 
@@ -300,24 +307,47 @@ class Graph:
                 casted_allowed_types = cast(
                     list[pad.types.BasePadType] | None, pad_data.allowed_types
                 )
+
+                deserialized_value: Any | None = None
+                if pad_data.type.startswith("Property"):
+                    if not casted_allowed_types or len(casted_allowed_types) != 1:
+                        logging.error(
+                            f"Expected exactly one type constraint for pad {pad_data.id}, got {casted_allowed_types}"
+                        )
+                        continue
+                    tc = casted_allowed_types[0]
+                    if not isinstance(tc, pad.types.NodeReference):
+                        deserialized_value = serialize.deserialize_pad_value(
+                            tc, pad_data.value
+                        )
+                    else:
+                        # Keep the node reference id, it will be resolved later in this function
+                        deserialized_value = pad_data.value
+
                 if pad_data.type == "PropertySinkPad":
                     pad_instance = pad.PropertySinkPad(
                         id=pad_data.id,
                         owner_node=node,
                         group=pad_data.group,
                         type_constraints=casted_allowed_types,
-                        value=pad_data.value,
+                        value=deserialized_value,
                     )
                     node.pads.append(pad_instance)
+                    if casted_allowed_types and len(casted_allowed_types) == 1:
+                        if isinstance(casted_allowed_types[0], pad.types.NodeReference):
+                            node_reference_pads.append(pad_instance)
                 elif pad_data.type == "PropertySourcePad":
                     pad_instance = pad.PropertySourcePad(
                         id=pad_data.id,
                         owner_node=node,
                         group=pad_data.group,
                         type_constraints=casted_allowed_types,
-                        value=pad_data.value,
+                        value=deserialized_value,
                     )
                     node.pads.append(pad_instance)
+                    if casted_allowed_types and len(casted_allowed_types) == 1:
+                        if isinstance(casted_allowed_types[0], pad.types.NodeReference):
+                            node_reference_pads.append(pad_instance)
                 elif pad_data.type == "StatelessSinkPad":
                     pad_instance = pad.StatelessSinkPad(
                         id=pad_data.id,
@@ -337,6 +367,7 @@ class Graph:
             self.nodes.append(node)
 
         node_lookup: dict[str, Node] = {n.id: n for n in self.nodes}
+
         for node_data in snapshot.nodes:
             for pad_data in node_data.pads:
                 prev_pad = pad_data.previous_pad
@@ -372,6 +403,23 @@ class Graph:
                     continue
                 source_pad.connect(target_pad)
                 await self._propagate_update([source_node, target_node])
+
+        # Resolve node reference pads
+        for p in node_reference_pads:
+            self._resolve_node_reference_property(p, p.get_value(), node_lookup)
+            await self._propagate_update([p.get_owner_node()])
+
+    def _resolve_node_reference_property(
+        self, p: pad.PropertyPad, v: str, nodes: dict[str, Node]
+    ):
+        if not isinstance(p, pad.SourcePad):
+            return
+
+        # Proxy pads would already be handled by the subgraph
+        if not isinstance(p, pad.ProxyPad):
+            node = next((n for n in nodes.values() if n.id == v), None)
+            p.set_value(node)
+            return
 
     async def run(self, room: rtc.Room):
         # Only top level graph gets events

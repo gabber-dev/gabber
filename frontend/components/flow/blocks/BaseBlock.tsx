@@ -13,8 +13,8 @@ import { Output } from "./Output";
 import { AutoConvertNode } from "./AutoConvertNode";
 import { ChatInputNode } from "./ChatInputNode";
 import { CommentNode } from "./CommentNode";
-import { StateTransitionNode } from "./StateTransitionNode";
 import { SelfPad } from "./components/pads/SelfPad";
+import { StateMachineNode } from "@/components/state_machine/StateMachineNode";
 
 export interface BaseBlockProps {
   data: NodeEditorRepresentation;
@@ -52,8 +52,8 @@ export function BaseBlock({ data }: BaseBlockProps) {
     return <ChatInputNode data={data} />;
   }
 
-  if (data.type === "StateTransition") {
-    return <StateTransitionNode data={data} />;
+  if (data.type === "StateMachine") {
+    return <StateMachineNode data={data} />;
   }
 
   // Add ambient-float by default, but remove it if selected

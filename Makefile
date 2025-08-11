@@ -1,7 +1,18 @@
-.PHONY: engine editor repository frontend
+.PHONY: engine editor repository frontend all generate frontend-https add-license livekit --https
 
 GABBER_REPOSITORY_DIR ?= $(shell pwd)/.gabber
 GABBER_SECRET_FILE ?= $(shell pwd)/.secret
+
+HTTPS ?= no
+ifneq ($(filter --https,$(MAKECMDGOALS)),)
+HTTPS = yes
+endif
+
+ifeq ($(HTTPS),yes)
+FRONTEND_TARGET = frontend-https
+else
+FRONTEND_TARGET = frontend
+endif
 
 engine:
 	export GABBER_REPOSITORY_DIR=$(GABBER_REPOSITORY_DIR) && \
@@ -22,8 +33,10 @@ repository:
 	make repository 
 
 generate:
-	engine/.venv/bin/python engine/src/main.py generate-editor-schema | json2ts -o frontend/generated/editor.ts && \
+	engine/.venv/bin/python engine/src/main.py generate-editor-schema | json2ts -o frontend/generated/editor.ts
 	engine/.venv/bin/python engine/src/main.py generate-repository-schema | json2ts -o frontend/generated/repository.ts
+	engine/.venv/bin/python engine/src/main.py generate-state-machine-schema | json2ts -o frontend/generated/stateMachine.ts
+
 	engine/.venv/bin/python engine/src/main.py generate-runtime-schema | json2ts -o sdks/javascript/src/generated/runtime.ts
 	engine/.venv/bin/python engine/src/main.py generate-runtime-schema | json2ts -o sdks/react/src/generated/runtime.ts
 
@@ -31,6 +44,11 @@ frontend:
 	cd frontend && \
 	npm install && \
 	npm run dev
+
+frontend-https:
+	cd frontend && \
+	npm install && \
+	npm run dev-https
 
 add-license:
 	addlicense -c "Fluently AI, Inc. DBA Gabber. All rights reserved." -l "SUL-1.0" -s -ignore frontend/node_modules -ignore frontend/.next -ignore engine/.venv engine frontend services
@@ -43,10 +61,10 @@ all:
 	make engine 2>&1 | while IFS= read -r line; do printf "\033[0;34m[ENGINE]\033[0m %s\n" "$$line"; done & ENGINE_PID=$$!; \
 	make editor 2>&1 | while IFS= read -r line; do printf "\033[0;32m[EDITOR]\033[0m %s\n" "$$line"; done & EDITOR_PID=$$!; \
 	make repository 2>&1 | while IFS= read -r line; do printf "\033[0;35m[REPOSITORY]\033[0m %s\n" "$$line"; done & REPOSITORY_PID=$$!; \
-	make frontend 2>&1 | while IFS= read -r line; do printf "\033[0;36m[FRONTEND]\033[0m %s\n" "$$line"; done & FRONTEND_PID=$$!; \
+	make $(FRONTEND_TARGET) 2>&1 | while IFS= read -r line; do printf "\033[0;36m[FRONTEND]\033[0m %s\n" "$$line"; done & FRONTEND_PID=$$!; \
 	make livekit 2>&1 | while IFS= read -r line; do printf "\033[0;37m[LIVEKIT]\033[0m %s\n" "$$line"; done & LIVEKIT_PID=$$!; \
 	trap 'echo "Stopping all processes..."; kill 0' INT;\
 	wait
 
-make service-kyutai-stt:
-	./services/kyutai-stt/start.sh
+--https:
+	@:

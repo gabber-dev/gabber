@@ -8,6 +8,7 @@ import { useEditor } from "@/hooks/useEditor";
 
 const HANDLE_OFFSET = 20;
 const BOTTOM_OFFSET = 80;
+const CLEARANCE_OFFSET = 20;
 
 export function CustomStepEdge({
   sourceX,
@@ -17,6 +18,7 @@ export function CustomStepEdge({
   sourcePosition,
   targetPosition,
   source,
+  target,
   style = {},
   markerEnd,
 }: any) {
@@ -38,16 +40,37 @@ export function CustomStepEdge({
     const sourceNode = reactFlowRepresentation.nodes.find(
       (n: Node) => n.id === source,
     );
-    let sourceBottomY = sourceY + BOTTOM_OFFSET;
+    const targetNode = reactFlowRepresentation.nodes.find(
+      (n: Node) => n.id === target,
+    );
 
-    if (sourceNode && sourceNode.measured) {
-      sourceBottomY = sourceNode.position.y + sourceNode.measured.height + 20;
+    // Default to a safe clearance if we don't have measurements
+    let clearanceY = Math.max(sourceY, targetY) + BOTTOM_OFFSET;
+
+    // Prefer editor_dimensions from node data, fallback to measured
+    const sourceHeight =
+      (sourceNode?.data as any)?.editor_dimensions?.[1] ??
+      (sourceNode?.measured?.height ?? null);
+    const targetHeight =
+      (targetNode?.data as any)?.editor_dimensions?.[1] ??
+      (targetNode?.measured?.height ?? null);
+
+    const measuredSourceBottom =
+      sourceNode && sourceHeight ? sourceNode.position.y + sourceHeight : null;
+    const measuredTargetBottom =
+      targetNode && targetHeight ? targetNode.position.y + targetHeight : null;
+
+    if (measuredSourceBottom !== null || measuredTargetBottom !== null) {
+      const fallbackSource = measuredSourceBottom ?? sourceY;
+      const fallbackTarget = measuredTargetBottom ?? targetY;
+      const lowestBottom = Math.max(fallbackSource, fallbackTarget);
+      clearanceY = lowestBottom + CLEARANCE_OFFSET;
     }
 
     edgePath = `M ${sourceX},${sourceY}
                 L ${sourceExitX},${sourceY}
-                L ${sourceExitX},${sourceBottomY}
-                L ${targetApproachX},${sourceBottomY}
+                L ${sourceExitX},${clearanceY}
+                L ${targetApproachX},${clearanceY}
                 L ${targetApproachX},${targetY}
                 L ${targetX},${targetY}`;
   } else {
