@@ -1,3 +1,6 @@
+# Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
+# SPDX-License-Identifier: SUL-1.0
+
 import asyncio
 from core import runtime_types
 import av

@@ -1,3 +1,8 @@
+/**
+ * Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
+ * SPDX-License-Identifier: SUL-1.0
+ */
+
 import { Handle, Node, Position, useNodeId, useNodesData } from "@xyflow/react";
 import { ChangeEvent, useCallback, useMemo, useState } from "react";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";

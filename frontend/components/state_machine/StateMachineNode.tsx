@@ -1,3 +1,8 @@
+/**
+ * Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
+ * SPDX-License-Identifier: SUL-1.0
+ */
+
 import { MinusIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { BaseBlockProps } from "../flow/blocks/BaseBlock";
 import { useEditor } from "@/hooks/useEditor";
