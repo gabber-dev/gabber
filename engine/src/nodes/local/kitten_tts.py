@@ -181,7 +181,6 @@ class KittenTTS(node.Node):
                     120.0
                 )  # Speech playout can take a while so we snooze the timeout. TODO: make this tied to the actual audio playout duration
                 async for bytes_24000 in new_job:
-                    logging.debug("NEIL received TTS audio chunk: %s", len(bytes_24000))
                     frame_data_24000 = runtime_types.AudioFrameData(
                         data=np.frombuffer(bytes_24000, dtype=np.int16).reshape(1, -1),
                         sample_rate=24000,
