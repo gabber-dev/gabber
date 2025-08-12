@@ -79,7 +79,6 @@ class CreateContextMessage(Node):
                     runtime_types.ContextMessageContentItem_Audio(clip=item.value)
                 )
             elif isinstance(item.value, runtime_types.VideoClip):
-                logging.info("NEIL adding video clip")
                 content.append(
                     runtime_types.ContextMessageContentItem_Video(clip=item.value)
                 )

@@ -137,7 +137,10 @@ class LLMRequest:
                     "This is not supported in Qwen Omni compatible LLMs."
                 )
                 continue
-            new_msg: chat.ChatCompletionMessageParam | None = None
+            new_msg: Any = {
+                "role": role,
+                "content": [],
+            }
             for cnt in msg.content:
                 if isinstance(cnt, ContextMessageContentItem_Audio):
                     wav_buffer = io.BytesIO()
@@ -149,20 +152,17 @@ class LLMRequest:
 
                     wav_bytes = wav_buffer.getvalue()
                     base64_audio = base64.b64encode(wav_bytes).decode("utf-8")
-                    new_msg = {
-                        "role": role,
-                        "content": [
-                            cast(
-                                Any,
-                                {
-                                    "type": "audio_url",
-                                    "audio_url": {
-                                        "url": f"data:audio/wav;base64,{base64_audio}"
-                                    },
+                    new_msg["content"].append(
+                        cast(
+                            Any,
+                            {
+                                "type": "audio_url",
+                                "audio_url": {
+                                    "url": f"data:audio/wav;base64,{base64_audio}"
                                 },
-                            )
-                        ],
-                    }
+                            },
+                        )
+                    )
 
                 elif isinstance(cnt, ContextMessageContentItem_Video):
                     if not cnt.clip.mp4_bytes:
@@ -176,10 +176,7 @@ class LLMRequest:
                         "type": "video_url",
                         "video_url": {"url": f"data:video/mp4;base64,{b64_video}"},
                     }
-                    new_msg = {
-                        "role": role,
-                        "content": [cast(Any, video_cnt)],
-                    }
+                    new_msg["content"].append(cast(Any, video_cnt))
                 elif isinstance(cnt, ContextMessageContentItem_Image):
                     oai_cnt: chat.ChatCompletionContentPartImageParam = {
                         "type": "image_url",
@@ -187,15 +184,13 @@ class LLMRequest:
                             "url": f"data:image/png;base64,{cnt.frame.to_base64_png()}"
                         },
                     }
-                    new_msg = {
-                        "role": role,
-                        "content": [oai_cnt],
-                    }
+                    new_msg["content"].append(cast(Any, oai_cnt))
                 elif isinstance(cnt, ContextMessageContentItem_Text):
-                    new_msg = {
-                        "role": role,
-                        "content": cnt.content,
+                    new_cnt = {
+                        "type": "text",
+                        "text": cnt.content,
                     }
+                    new_msg["content"].append(cast(Any, new_cnt))
                 else:
                     raise ValueError(f"Unsupported content type: {type(cnt)}")
 
