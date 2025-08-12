@@ -3,7 +3,7 @@
 
 from .auto_convert import AutoConvert
 from .entry import Entry
-from .enum_switch import PropertyEnumSwitch
+from .property_enum_switch import PropertyEnumSwitch
 from .stateless_enum_switch import StatelessEnumSwitch
 from .merge import Merge
 from .type_constraint import TypeConstraint
