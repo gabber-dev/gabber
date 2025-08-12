@@ -79,7 +79,8 @@ export function StateMachineEdge(props: EdgeProps) {
     // symmetric distribution; for even counts use half-step to avoid stacking near center
     const unitIndex = pairIndex - (pairCount - 1) / 2;
     const evenHalfStep = pairCount % 2 === 0 ? 0.5 : 0;
-    const adjustedIndex = unitIndex + (unitIndex >= 0 ? evenHalfStep : -evenHalfStep);
+    const adjustedIndex =
+      unitIndex + (unitIndex >= 0 ? evenHalfStep : -evenHalfStep);
     const offset = adjustedIndex * SEPARATION_STEP;
 
     // control points along the line, pushed out by the offset normal

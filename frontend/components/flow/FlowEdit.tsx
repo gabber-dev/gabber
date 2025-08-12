@@ -28,7 +28,12 @@ import { getPrimaryDataType } from "./blocks/components/pads/utils/dataTypeColor
 import ReactModal from "react-modal";
 import { StateMachineGraphEdit } from "../state_machine/StateMachineGraphEdit";
 import { StateMachineProvider } from "../state_machine/useStateMachine";
-import { GraphEditorRepresentation } from "@/generated/editor";
+import {
+  GraphEditorRepresentation,
+  NodeEditorRepresentation,
+  PadEditorRepresentation,
+  PadReference,
+} from "@/generated/editor";
 import { useRepository } from "@/hooks/useRepository";
 import toast from "react-hot-toast";
 
@@ -244,18 +249,186 @@ function buildSubgraphSnapshot(
   selected: Set<string>,
 ): GraphEditorRepresentation {
   const selectedSet = new Set<string>(selected);
-  const nodes = graph.nodes
+
+  // Start with a deep-ish copy of selected nodes
+  const innerNodes: NodeEditorRepresentation[] = graph.nodes
     .filter((n) => selectedSet.has(n.id))
     .map((orig) => ({
       ...orig,
       pads: orig.pads.map((p) => ({
         ...p,
-        next_pads: (p.next_pads || []).filter((np) => selectedSet.has(np.node)),
-        previous_pad:
-          p.previous_pad && selectedSet.has(p.previous_pad.node)
-            ? p.previous_pad
-            : undefined,
+        next_pads: [...(p.next_pads || [])],
+        previous_pad: p.previous_pad ? { ...p.previous_pad } : undefined,
       })),
     }));
-  return { nodes };
+
+  // Container for proxy nodes we add inside the subgraph snapshot
+  const proxyNodes: NodeEditorRepresentation[] = [];
+
+  function ensureInboundProxy(
+    targetNode: NodeEditorRepresentation,
+    targetPadId: string,
+    padType: string,
+    allowedTypes?: any[] | null,
+  ): NodeEditorRepresentation {
+    const proxyId = `proxy_in_${targetNode.id}_${targetPadId}`;
+    let n = proxyNodes.find((x) => x.id === proxyId);
+    if (n) return n;
+
+    const isProperty = padType === "PropertySinkPad";
+    n = {
+      id: proxyId,
+      type: isProperty ? "ProxyPropertySink" : "ProxyStatelessSink",
+      editor_name: proxyId,
+      editor_position: [
+        ((targetNode.editor_position?.[0] || 0) as number) - 200,
+        (targetNode.editor_position?.[1] || 0) as number,
+      ],
+      editor_dimensions: null,
+      metadata: { primary: "subgraph", secondary: "proxy", tags: [] },
+      description: "",
+      pads: [
+        {
+          id: "proxy",
+          group: "proxy",
+          type: isProperty ? "PropertySourcePad" : "StatelessSourcePad",
+          next_pads: [],
+          ...(allowedTypes ? { allowed_types: allowedTypes as any } : {}),
+        } as unknown as PadEditorRepresentation,
+        {
+          id: "pad_id",
+          group: "pad_id",
+          type: "PropertySinkPad",
+          value: `proxy_${proxyId}`,
+          next_pads: [],
+          allowed_types: [{ type: "string" }] as any,
+        } as unknown as PadEditorRepresentation,
+      ],
+    };
+    proxyNodes.push(n);
+    return n;
+  }
+
+  function ensureOutboundProxy(
+    sourceNode: NodeEditorRepresentation,
+    sourcePadId: string,
+    padType: string,
+    allowedTypes?: any[] | null,
+  ): NodeEditorRepresentation {
+    const proxyId = `proxy_out_${sourceNode.id}_${sourcePadId}`;
+    let n = proxyNodes.find((x) => x.id === proxyId);
+    if (n) return n;
+
+    const isProperty = padType === "PropertySourcePad";
+    const width = ((sourceNode.editor_dimensions?.[0] || 160) as number);
+    n = {
+      id: proxyId,
+      type: isProperty ? "ProxyPropertySource" : "ProxyStatelessSource",
+      editor_name: proxyId,
+      editor_position: [
+        ((sourceNode.editor_position?.[0] || 0) as number) + width + 40,
+        (sourceNode.editor_position?.[1] || 0) as number,
+      ],
+      editor_dimensions: null,
+      metadata: { primary: "subgraph", secondary: "proxy", tags: [] },
+      description: "",
+      pads: [
+        {
+          id: "proxy",
+          group: "proxy",
+          type: isProperty ? "PropertySinkPad" : "StatelessSinkPad",
+          next_pads: [],
+          ...(allowedTypes ? { allowed_types: allowedTypes as any } : {}),
+        } as unknown as PadEditorRepresentation,
+        {
+          id: "pad_id",
+          group: "pad_id",
+          type: "PropertySinkPad",
+          value: `proxy_${proxyId}`,
+          next_pads: [],
+          allowed_types: [{ type: "string" }] as any,
+        } as unknown as PadEditorRepresentation,
+      ],
+    };
+    proxyNodes.push(n);
+    return n;
+  }
+
+  // Traverse all edges using next_pads (source side)
+  for (const node of graph.nodes) {
+    for (const pad of node.pads) {
+      const nexts = pad.next_pads || [];
+      for (const np of nexts) {
+        const srcNodeId = node.id;
+        const srcPadId = pad.id;
+        const dstNodeId = np.node;
+        const dstPadId = np.pad;
+
+        const srcInSel = selectedSet.has(srcNodeId);
+        const dstInSel = selectedSet.has(dstNodeId);
+
+        if (srcInSel && dstInSel) {
+          // Internal edge – nothing to do
+          continue;
+        }
+
+        if (!srcInSel && dstInSel) {
+          // Inbound edge (external -> selected sink). Add Proxy*Sink and hook it to target sink.
+          const targetNode = innerNodes.find((n) => n.id === dstNodeId)!;
+          const targetPad = targetNode.pads.find((p) => p.id === dstPadId)!;
+          // Clear external previous_pad (will be fed by proxy source)
+          (targetPad as any).previous_pad = undefined;
+
+          const proxy = ensureInboundProxy(
+            targetNode,
+            dstPadId,
+            (targetPad as any).type,
+            (targetPad as any).allowed_types || null,
+          );
+          const proxySource = proxy.pads.find(
+            (p) => p.type === "StatelessSourcePad" || p.type === "PropertySourcePad",
+          )! as PadEditorRepresentation;
+          proxySource.next_pads = [
+            { node: targetNode.id, pad: targetPad.id } as unknown as PadReference,
+          ];
+          // Also mark target's previous to point to proxy so UI engines that read both sides show edge
+          (targetPad as any).previous_pad = {
+            node: proxy.id,
+            pad: proxySource.id,
+          } as unknown as PadReference;
+        } else if (srcInSel && !dstInSel) {
+          // Outbound edge (selected source -> external). Add Proxy*Source and hook it to source.
+          const sourceNode = innerNodes.find((n) => n.id === srcNodeId)!;
+          const sourcePad = sourceNode.pads.find((p) => p.id === srcPadId)!;
+
+          // Remove external next reference in snapshot
+          sourcePad.next_pads = (sourcePad.next_pads || []).filter(
+            (p) => !(p.node === dstNodeId && p.pad === dstPadId),
+          );
+
+          const proxy = ensureOutboundProxy(
+            sourceNode,
+            srcPadId,
+            (sourcePad as any).type,
+            (sourcePad as any).allowed_types || null,
+          );
+          const proxySink = proxy.pads.find(
+            (p) => p.type === "StatelessSinkPad" || p.type === "PropertySinkPad",
+          )! as PadEditorRepresentation;
+          (proxySink as any).previous_pad = {
+            node: sourceNode.id,
+            pad: sourcePad.id,
+          } as unknown as PadReference;
+
+          // Also add a forward edge from source to proxy so the editor renders the connection
+          sourcePad.next_pads = [
+            ...(sourcePad.next_pads || []),
+            { node: proxy.id, pad: proxySink.id } as unknown as PadReference,
+          ];
+        }
+      }
+    }
+  }
+
+  return { nodes: [...innerNodes, ...proxyNodes] };
 }
