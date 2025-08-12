@@ -1,6 +1,7 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
+import logging
 from typing import cast
 
 from core import pad, runtime_types
@@ -15,9 +16,7 @@ class CreateContextMessage(Node):
 
     @classmethod
     def get_metadata(cls) -> NodeMetadata:
-        return NodeMetadata(
-            primary="ai", secondary="llm", tags=["context", "message"]
-        )
+        return NodeMetadata(primary="ai", secondary="llm", tags=["context", "message"])
 
     async def resolve_pads(self):
         sink_default: list[pad.types.BasePadType] | None = [
@@ -80,6 +79,7 @@ class CreateContextMessage(Node):
                     runtime_types.ContextMessageContentItem_Audio(clip=item.value)
                 )
             elif isinstance(item.value, runtime_types.VideoClip):
+                logging.info("NEIL adding video clip")
                 content.append(
                     runtime_types.ContextMessageContentItem_Video(clip=item.value)
                 )

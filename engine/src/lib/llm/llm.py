@@ -3,8 +3,11 @@
 
 import asyncio
 import base64
+import time
+import io
 import json
 import logging
+import wave
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Callable, cast
@@ -69,6 +72,96 @@ class LLMRequest:
                     new_msg = {
                         "role": role,
                         "content": cnt.clip.transcription,
+                    }
+
+                elif isinstance(cnt, ContextMessageContentItem_Video):
+                    logging.warning(
+                        "Video content is not supported in OpenAI compatible LLMs."
+                    )
+                elif isinstance(cnt, ContextMessageContentItem_Image):
+                    oai_cnt: chat.ChatCompletionContentPartImageParam = {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/png;base64,{cnt.frame.to_base64_png()}"
+                        },
+                    }
+                    new_msg = {
+                        "role": role,
+                        "content": [oai_cnt],
+                    }
+                elif isinstance(cnt, ContextMessageContentItem_Text):
+                    new_msg = {
+                        "role": role,
+                        "content": cnt.content,
+                    }
+                else:
+                    raise ValueError(f"Unsupported content type: {type(cnt)}")
+
+            if new_msg is None:
+                logging.warning(
+                    "Message with no content found in context. "
+                    "This is not supported in OpenAI compatible LLMs."
+                )
+                continue
+
+            if msg.role == ContextMessageRole.ASSISTANT:
+                if msg.tool_calls:
+                    tcs: list[chat.ChatCompletionMessageToolCallParam] = []
+                    for call in msg.tool_calls:
+                        args = json.dumps(call.arguments) if call.arguments else ""
+                        tcs.append(
+                            chat.ChatCompletionMessageToolCallParam(
+                                id=call.call_id,
+                                function=chat.chat_completion_message_tool_call_param.Function(
+                                    name=call.name,
+                                    arguments=args,
+                                ),
+                                type="function",
+                            )
+                        )
+                    cast(chat.ChatCompletionAssistantMessageParam, new_msg)[
+                        "tool_calls"
+                    ] = tcs
+
+            res.append(new_msg)
+
+        return res
+
+    async def to_qwen_omni_input(self) -> list[chat.ChatCompletionMessageParam]:
+        res: list[chat.ChatCompletionMessageParam] = []
+        for msg in self.context:
+            role = cast(Any, msg.role.value)
+            if msg.role == ContextMessageRole.TOOL:
+                logging.warning(
+                    "Tool message found in context. "
+                    "This is not supported in Qwen Omni compatible LLMs."
+                )
+                continue
+            new_msg: chat.ChatCompletionMessageParam | None = None
+            for cnt in msg.content:
+                if isinstance(cnt, ContextMessageContentItem_Audio):
+                    wav_buffer = io.BytesIO()
+                    with wave.open(wav_buffer, "wb") as wav_file:
+                        wav_file.setnchannels(1)
+                        wav_file.setsampwidth(2)
+                        wav_file.setframerate(24000)
+                        wav_file.writeframes(cnt.clip.concatted_24000hz)
+
+                    wav_bytes = wav_buffer.getvalue()
+                    base64_audio = base64.b64encode(wav_bytes).decode("utf-8")
+                    new_msg = {
+                        "role": role,
+                        "content": [
+                            cast(
+                                Any,
+                                {
+                                    "type": "audio_url",
+                                    "audio_url": {
+                                        "url": f"data:audio/wav;base64,{base64_audio}"
+                                    },
+                                },
+                            )
+                        ],
                     }
 
                 elif isinstance(cnt, ContextMessageContentItem_Video):
@@ -160,51 +253,6 @@ class LLMRequest:
                 }
             )
         return tools
-
-    def _qwen_2_5_omni_vllm_prompt(self) -> str:
-        prompt = ""
-
-        for msg in self.context:
-            prompt += f"<|im_start|>{msg.role}\n"
-
-            for cnt in msg.content:
-                if isinstance(cnt, ContextMessageContentItem_Audio):
-                    prompt += "<|audio_bos|><|AUDIO|><|audio_eos|>\n"
-                elif isinstance(cnt, ContextMessageContentItem_Video):
-                    prompt += "<|vision_bos|><|VIDEO|><|vision_eos|>\n"
-                elif isinstance(cnt, ContextMessageContentItem_Text):
-                    text_content = cnt.content
-                    prompt += f"{text_content}\n"
-                else:
-                    raise ValueError(f"Unsupported content type: {type(cnt)}")
-            prompt += "<|im_end|>\n"
-
-        prompt += "<|im_start|>assistant\n"
-        return prompt
-
-    def to_qwen_2_5_omni_input(self):
-        input: dict = {
-            "prompt": self._qwen_2_5_omni_vllm_prompt(),
-        }
-        audios = []
-        videos = []
-        for msg in self.context:
-            for cnt in msg.content:
-                if isinstance(cnt, ContextMessageContentItem_Audio):
-                    audios.append((cnt.clip.fp32_44100, 44100))
-                elif isinstance(cnt, ContextMessageContentItem_Video):
-                    videos.append(cnt.clip.stacked_bgr_frames)
-
-        if len(audios) > 0 or len(videos) > 0:
-            input["multi_modal_data"] = {}
-
-        if len(audios) > 0:
-            input["multi_modal_data"]["audio"] = audios
-
-        if len(videos) > 0:
-            input["multi_modal_data"]["video"] = videos
-
-        return input
 
 
 class AsyncLLMResponseHandle:
