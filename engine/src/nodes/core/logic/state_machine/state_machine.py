@@ -231,7 +231,7 @@ class StateMachine(node.Node):
         )
 
         triggers: dict[str, bool] = {}
-        trigger_ctx_originator: str | None = None
+        original_trigger_ctx: pad.RequestContext | None = None
 
         def get_current_state() -> StateMachineState:
             state_name = cast(str, current_state_pad.get_value())
@@ -275,9 +275,71 @@ class StateMachine(node.Node):
                 res = True
                 for c in transition.conditions:
                     if c.parameter_name in trigger_params:
-                        pass
+                        res = res and triggers.get(c.parameter_name, False)
                     elif c.parameter_name in parameter_name_value:
-                        pass
+                        param_value = parameter_name_value[c.parameter_name]
+                        c_value = c.value
+                        if isinstance(param_value, bool):
+                            if not isinstance(c_value, bool):
+                                res = False
+                                break
+
+                            if c.operator == "==":
+                                res = res and (param_value == c_value)
+                            elif c.operator == "!=":
+                                res = res and (param_value != c_value)
+                            else:
+                                logging.warning(
+                                    f"Invalid operator '{c.operator}' for boolean parameter '{c.parameter_name}'."
+                                )
+                                res = False
+                        elif isinstance(param_value, (int, float)):
+                            if not isinstance(c_value, (int, float)):
+                                logging.warning(
+                                    f"Condition value for numeric parameter '{c.parameter_name}' must be a number."
+                                )
+                                res = False
+                                break
+
+                            if c.operator == "<":
+                                res = res and (param_value < c_value)
+                            elif c.operator == "<=":
+                                res = res and (param_value <= c_value)
+                            elif c.operator == "==":
+                                res = res and (param_value == c_value)
+                            elif c.operator == "!=":
+                                res = res and (param_value != c_value)
+                            elif c.operator == ">=":
+                                res = res and (param_value >= c_value)
+                            elif c.operator == ">":
+                                res = res and (param_value > c_value)
+                        elif isinstance(param_value, str):
+                            if not isinstance(c_value, str):
+                                logging.warning(
+                                    f"Condition value for string parameter '{c.parameter_name}' must be a string."
+                                )
+                                res = False
+                                break
+
+                            if c.operator == "==":
+                                res = res and (param_value == c_value)
+                            elif c.operator == "!=":
+                                res = res and (param_value != c_value)
+                            elif c.operator == "NON_EMPTY":
+                                res = res and bool(param_value)
+                            elif c.operator == "EMPTY":
+                                res = res and not bool(param_value)
+                            elif c.operator == "STARTS_WITH":
+                                res = res and param_value.startswith(c_value)
+                            elif c.operator == "ENDS_WITH":
+                                res = res and param_value.endswith(c_value)
+                            elif c.operator == "CONTAINS":
+                                res = res and (c_value in param_value)
+                            else:
+                                logging.warning(
+                                    f"Invalid operator '{c.operator}' for string parameter '{c.parameter_name}'."
+                                )
+                                res = False
                     else:
                         res = False
 
@@ -302,14 +364,14 @@ class StateMachine(node.Node):
                     current_state_pad.push_item(next_state.name, ctx)
 
         async def pad_task(idx: int):
-            nonlocal trigger_ctx_originator
+            nonlocal original_trigger_ctx
             name_pad, value_pad = self._get_pads(idx)
             async for item in value_pad:
                 name = cast(str, name_pad.get_value())
                 if isinstance(item.value, runtime_types.Trigger):
-                    if item.ctx.originator != trigger_ctx_originator:
+                    if item.ctx.original_request != original_trigger_ctx:
                         triggers.clear()
-                        trigger_ctx_originator = item.ctx.originator
+                        original_trigger_ctx = item.ctx.original_request
                     triggers[name] = True
 
                 check_transitions(item.ctx)
