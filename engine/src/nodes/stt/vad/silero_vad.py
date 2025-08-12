@@ -260,17 +260,11 @@ class SileroVAD(node.Node):
         if vad_prob > threshold:
             if self._speech_state == SpeechState.SILENT:
                 self._speech_state = SpeechState.SPEAKING
-                # Prepend the pre-speech buffer and start collecting
-                logging.debug(
-                    "NEIL prepending speech buffer %s", len(self._pre_speech_buffer)
-                )
                 self._speech_audio_frames = deque(self._pre_speech_buffer)
                 self._pre_speech_buffer.clear()
                 self._pre_speech_duration_ms = 0.0
-                # Reset speech duration counter and continued speech flag
                 self._speech_duration_ms_counter = 0.0
                 self._continued_speech_emitted = False
-                # Emit speech started trigger
                 speech_started_trigger.push_item(
                     runtime_types.Trigger(), pad.RequestContext(parent=None)
                 )

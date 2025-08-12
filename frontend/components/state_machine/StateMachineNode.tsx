@@ -76,7 +76,7 @@ function CurrentState() {
       <div className="relative flex flex-col items-center gap-1 grow-5 basis-0 pb-4">
         {runtimeValue !== "" ? (
           <div className="text-sm border border-base-300 bg-base-100 px-2 py-1 rounded">
-            {editorValue ?? runtimeValue ?? ""}
+            {runtimeValue ?? ""}
           </div>
         ) : (
           <div className="text-sm text-base-content/60">⚠️ no states</div>
