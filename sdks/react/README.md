@@ -1,11 +1,11 @@
 # Gabber React SDK
 
-Hooks and provider for React apps. Built on `@gabber/client`.
+Hooks and provider for React apps.
 
 ## Install
 
 ```bash
-npm install @gabber/client-react @gabber/client
+npm install @gabber/client-react
 ```
 
 ## Quickstart
