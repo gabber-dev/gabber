@@ -246,4 +246,3 @@ export function StateMachineEdge(props: EdgeProps) {
 }
 
 export default StateMachineEdge;
-
