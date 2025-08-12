@@ -6,6 +6,7 @@ from typing import cast
 
 from core import pad
 from core.node import Node, NodeMetadata
+import logging
 
 
 class WaitForRequest(Node):
@@ -65,7 +66,7 @@ class WaitForRequest(Node):
         source = cast(pad.StatelessSourcePad, self.get_pad_required("source"))
         async for item in sink:
             done_fut = asyncio.Future()
-            item.ctx.add_done_callback(done_fut.set_result)
+            item.ctx.original_request.add_done_callback(done_fut.set_result)
             item.ctx.complete()
             await done_fut
             source.push_item(
