@@ -5,6 +5,7 @@ import {
   Node,
   NodeChange,
   useNodesData,
+  applyNodeChanges,
 } from "@xyflow/react";
 import {
   createContext,
@@ -12,6 +13,7 @@ import {
   useContext,
   useMemo,
   useState,
+  useEffect,
 } from "react";
 import { usePropertyPad } from "../flow/blocks/components/pads/hooks/usePropertyPad";
 import { v4 } from "uuid";
@@ -68,6 +70,16 @@ export function StateMachineProvider({ children, nodeId }: Props) {
   const [editingTransitionId, setEditingTransitionId] = useState<
     string | undefined
   >(undefined);
+  // Transient positions used while dragging for smooth updates without
+  // rewriting the persisted configuration on every mouse move
+  const [transientPositions, setTransientPositions] = useState<
+    Record<string, { x: number; y: number }>
+  >({});
+  const [transientEntryPosition, setTransientEntryPosition] = useState<
+    { x: number; y: number } | undefined
+  >(undefined);
+  // Local RF nodes buffer for smooth drag visual updates
+  const [rfNodes, setRfNodes] = useState<Node[]>([]);
 
   const { editorValue: configuration, setEditorValue: setConfiguration } =
     usePropertyPad<StateMachineConfiguration>(nodeId || "", "configuration");
@@ -176,6 +188,8 @@ export function StateMachineProvider({ children, nodeId }: Props) {
 
   const handleNodeChanges = useCallback(
     (changes: NodeChange[]) => {
+      // Apply drag changes to local RF nodes immediately for smooth visuals
+      setRfNodes((prev) => applyNodeChanges(changes, prev));
       const prevConfiguration = configuration || {
         states: [],
         entry_state: "",
@@ -185,21 +199,42 @@ export function StateMachineProvider({ children, nodeId }: Props) {
 
       for (const change of changes) {
         if (change.type === "position") {
-          if (change.id === "__ENTRY__") {
-            setConfiguration({
-              ...prevConfiguration,
-              entry_node_position: {
+          if (change.dragging) {
+            // Update transient positions during drag only
+            if (change.id === "__ENTRY__") {
+              setTransientEntryPosition({
                 x: change.position?.x || 0,
                 y: change.position?.y || 0,
-              },
-            });
+              });
+            } else {
+              setTransientPositions((prev) => ({
+                ...prev,
+                [change.id]: change.position || { x: 0, y: 0 },
+              }));
+            }
           } else {
-            const updatedStates = prevConfiguration.states.map((state) =>
-              state.id === change.id
-                ? { ...state, position: change.position || { x: 0, y: 0 } }
-                : state,
-            );
-            setConfiguration({ ...prevConfiguration, states: updatedStates });
+            // Commit final position to configuration on drop
+            if (change.id === "__ENTRY__") {
+              setConfiguration({
+                ...prevConfiguration,
+                entry_node_position: {
+                  x: change.position?.x || 0,
+                  y: change.position?.y || 0,
+                },
+              });
+              setTransientEntryPosition(undefined);
+            } else {
+              const updatedStates = prevConfiguration.states.map((state) =>
+                state.id === change.id
+                  ? { ...state, position: change.position || { x: 0, y: 0 } }
+                  : state,
+              );
+              setConfiguration({ ...prevConfiguration, states: updatedStates });
+              setTransientPositions((prev) => {
+                const { [change.id]: _omit, ...rest } = prev;
+                return rest;
+              });
+            }
           }
         } else if (change.type === "select") {
           if (change.id === "__ENTRY__") {
@@ -333,19 +368,19 @@ export function StateMachineProvider({ children, nodeId }: Props) {
       id: "__ENTRY__",
       type: "default",
       position: {
-        x: configuration?.entry_node_position?.x || 0,
-        y: configuration?.entry_node_position?.y || 0,
+        x:
+          transientEntryPosition?.x ?? configuration?.entry_node_position?.x ?? 0,
+        y:
+          transientEntryPosition?.y ?? configuration?.entry_node_position?.y ?? 0,
       },
-      measured: { width: 10, height: 10 },
       data: {},
     };
-    const nodes = [entryNode];
+    const builtNodes = [entryNode];
     for (const state of configuration?.states || []) {
-      nodes.push({
+      builtNodes.push({
         id: state.id,
         type: "default",
-        position: state.position,
-        measured: { width: 10, height: 10 },
+        position: transientPositions[state.id] ?? state.position,
         data: state,
         selected: selectedNodes.includes(state.id),
       });
@@ -372,6 +407,7 @@ export function StateMachineProvider({ children, nodeId }: Props) {
       });
     }
 
+    const nodes = rfNodes.length > 0 ? rfNodes : builtNodes;
     return { nodes, edges };
   }, [
     configuration?.entry_node_position?.x,
@@ -381,7 +417,34 @@ export function StateMachineProvider({ children, nodeId }: Props) {
     configuration?.transitions,
     editingTransition?.transition.id,
     selectedNodes,
+    transientPositions,
+    transientEntryPosition,
+    rfNodes,
   ]);
+
+  // Initialize or rebuild local RF nodes when node ids change or selection/entry pos changes
+  useEffect(() => {
+    const entryNode: Node = {
+      id: "__ENTRY__",
+      type: "default",
+      position: {
+        x: configuration?.entry_node_position?.x || 0,
+        y: configuration?.entry_node_position?.y || 0,
+      },
+      data: {},
+    };
+    const nodes: Node[] = [entryNode];
+    for (const state of configuration?.states || []) {
+      nodes.push({
+        id: state.id,
+        type: "default",
+        position: state.position,
+        data: state,
+        selected: selectedNodes.includes(state.id),
+      });
+    }
+    setRfNodes(nodes);
+  }, [configuration?.states, configuration?.entry_node_position?.x, configuration?.entry_node_position?.y, selectedNodes]);
 
   const parameterPads = useMemo(() => {
     const namePads =

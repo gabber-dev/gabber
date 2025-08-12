@@ -2,11 +2,14 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
+import base64
 import json
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Callable, cast
+
+from openai.types import chat
 
 from core.runtime_types import (
     ContextMessage,
@@ -18,7 +21,7 @@ from core.runtime_types import (
     ContextMessageRole,
     ToolDefinition,
 )
-from openai.types import chat
+from lib.video.mp4_encoder import MP4_Encoder
 
 
 class BaseLLM(ABC):
@@ -32,7 +35,7 @@ class LLMRequest:
     context: list[ContextMessage]
     tool_definitions: list[ToolDefinition]
 
-    def to_openai_completion_input(self) -> list[chat.ChatCompletionMessageParam]:
+    async def to_openai_completion_input(self) -> list[chat.ChatCompletionMessageParam]:
         res: list[chat.ChatCompletionMessageParam] = []
         for msg in self.context:
             role = cast(Any, msg.role.value)
@@ -69,9 +72,21 @@ class LLMRequest:
                     }
 
                 elif isinstance(cnt, ContextMessageContentItem_Video):
-                    logging.warning(
-                        "Video content is not supported in OpenAI compatible LLMs. "
-                    )
+                    if not cnt.clip.mp4_bytes:
+                        encoder = MP4_Encoder()
+                        encoder.push_frames(cnt.clip.video)
+                        cnt.clip.mp4_bytes = await encoder.eos()
+
+                    b64_video = base64.b64encode(cnt.clip.mp4_bytes).decode("utf-8")
+
+                    video_cnt: dict[str, Any] = {
+                        "type": "video_url",
+                        "video_url": {"url": f"data:video/mp4;base64,{b64_video}"},
+                    }
+                    new_msg = {
+                        "role": role,
+                        "content": [cast(Any, video_cnt)],
+                    }
                 elif isinstance(cnt, ContextMessageContentItem_Image):
                     oai_cnt: chat.ChatCompletionContentPartImageParam = {
                         "type": "image_url",

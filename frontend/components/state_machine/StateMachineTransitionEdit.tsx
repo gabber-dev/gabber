@@ -76,16 +76,14 @@ function Condition({
   const selectedPad = useMemo(() => {
     if (!condition.parameter_name) return undefined;
     return parameterPads.find(
-      (pad) =>
-        pad.namePadId === condition.parameter_name ||
-        pad.nameValue === condition.parameter_name,
+      (pad) => pad.nameValue === condition.parameter_name,
     );
   }, [condition.parameter_name, parameterPads]);
 
   // Default parameter on first render for better UX
   useEffect(() => {
     if (!condition.parameter_name && parameterPads.length > 0) {
-      const first = parameterPads[0].namePadId;
+      const first = parameterPads[0].nameValue;
       updateTransition(transition.id, {
         ...transition,
         conditions: transition.conditions?.map((cond, idx) =>
@@ -162,8 +160,8 @@ function Condition({
         }}
       >
         {parameterPads.map((pad) => (
-          <option key={pad.namePadId} value={pad.namePadId}>
-            {pad.nameValue || pad.namePadId}
+          <option key={pad.nameValue} value={pad.nameValue}>
+            {pad.nameValue || ""}
           </option>
         ))}
       </select>

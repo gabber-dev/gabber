@@ -6,7 +6,6 @@ import logging
 import time
 from typing import (
     Any,
-    TypeVar,
     cast,
 )
 
@@ -208,9 +207,6 @@ def short_uuid():
     import uuid
 
     return str(uuid.uuid4())[:8]
-
-
-T = TypeVar("T")
 
 
 __all__ = ["audio_stream_provider", "noop_task"]

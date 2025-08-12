@@ -131,6 +131,7 @@ class AudioClip:
 @dataclass
 class VideoClip:
     video: list[VideoFrame]
+    mp4_bytes: bytes
 
     @property
     def stacked_bgr_frames(self) -> np.ndarray:
