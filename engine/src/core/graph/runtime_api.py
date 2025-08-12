@@ -120,9 +120,25 @@ class RuntimeApi:
                     )
                     return
 
-                value = serialize.deserialize_pad_value(
-                    self.nodes, pad_obj, payload.value
-                )
+                tcs = pad_obj.get_type_constraints()
+                if not tcs or len(tcs) != 1:
+                    logging.error(
+                        f"Pad {pad_id} in node {node_id} has no type constraints."
+                    )
+                    complete_resp.error = (
+                        f"Pad {pad_id} in node {node_id} has no type constraints."
+                    )
+                    dc_queue.put_nowait(
+                        QueueItem(
+                            payload=complete_resp,
+                            participant=packet.participant,
+                            node_id=node_id,
+                            pad_id=pad_id,
+                        )
+                    )
+                    return
+
+                value = serialize.deserialize_pad_value(tcs[0], pad_obj)
                 ctx = pad.RequestContext(parent=None)
                 complete_resp.payload = RuntimeResponsePayload_PushValue(
                     type="push_value"
