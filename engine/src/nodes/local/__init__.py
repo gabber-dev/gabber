@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: SUL-1.0
 
 from .kitten_tts import KittenTTS
+from .qwen_omni_llm import QwenOmniLLM
 
 ALL_NODES = [
     KittenTTS,
+    QwenOmniLLM,
 ]

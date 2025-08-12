@@ -1,3 +1,8 @@
+/**
+ * Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
+ * SPDX-License-Identifier: SUL-1.0
+ */
+
 import { useState } from "react";
 import ReactModal from "react-modal";
 import { StateMachineGraphEdit } from "./StateMachineGraphEdit";

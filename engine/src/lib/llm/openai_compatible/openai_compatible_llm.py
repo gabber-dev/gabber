@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
-from typing import Any, cast
+import logging
+from typing import Any, cast, Literal
 
 import openai
 from core.runtime_types import (
@@ -25,8 +26,16 @@ class OpenAICompatibleLLM:
         )
         self._tasks = set[asyncio.Task]()
 
-    async def create_completion(self, *, request: LLMRequest) -> AsyncLLMResponseHandle:
-        messages = await request.to_openai_completion_input()
+    async def create_completion(
+        self, *, request: LLMRequest, mode: Literal["openai", "qwen_omni"] = "openai"
+    ) -> AsyncLLMResponseHandle:
+        if mode == "openai":
+            messages = await request.to_openai_completion_input()
+        elif mode == "qwen_omni":
+            messages = await request.to_qwen_omni_input()
+        else:
+            raise ValueError(f"Unsupported mode: {mode}")
+
         res = await self._client.chat.completions.create(
             model=self._model,
             messages=messages,

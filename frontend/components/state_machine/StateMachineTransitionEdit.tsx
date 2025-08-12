@@ -1,3 +1,8 @@
+/**
+ * Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
+ * SPDX-License-Identifier: SUL-1.0
+ */
+
 import { ArrowRightIcon, XCircleIcon } from "@heroicons/react/24/outline";
 import { useStateMachine } from "./useStateMachine";
 import {

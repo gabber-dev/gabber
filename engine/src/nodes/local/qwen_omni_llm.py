@@ -8,20 +8,18 @@ from typing import cast
 from core import node, pad, runtime_types
 from core.node import NodeMetadata
 from lib.llm import AsyncLLMResponseHandle, LLMRequest, openai_compatible
-from utils import get_full_content_from_deltas, get_tool_calls_from_choice_deltas
-
-from nodes.core.tool import Tool, ToolGroup
+from utils import get_full_content_from_deltas
 
 
-class OpenAICompatibleLLM(node.Node):
+class QwenOmniLLM(node.Node):
     @classmethod
     def get_description(cls) -> str:
-        return "Send and receive responses from any OpenAI-compatible language model"
+        return "Send and receive responses from any Qwen-omni language model"
 
     @classmethod
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(
-            primary="ai", secondary="llm", tags=["completion", "text", "openai"]
+            primary="ai", secondary="local", tags=["completion", "text", "qwen-omni"]
         )
 
     async def resolve_pads(self):
@@ -44,30 +42,6 @@ class OpenAICompatibleLLM(node.Node):
                 type_constraints=[pad.types.Trigger()],
             )
             self.pads.append(started_source)
-
-        tool_calls_started_source = cast(
-            pad.StatelessSourcePad, self.get_pad("tool_calls_started")
-        )
-        if not tool_calls_started_source:
-            tool_calls_started_source = pad.StatelessSourcePad(
-                id="tool_calls_started",
-                group="tool_calls_started",
-                owner_node=self,
-                type_constraints=[pad.types.Trigger()],
-            )
-            self.pads.append(tool_calls_started_source)
-
-        tool_calls_finished_source = cast(
-            pad.StatelessSourcePad, self.get_pad("tool_calls_finished")
-        )
-        if not tool_calls_finished_source:
-            tool_calls_finished_source = pad.StatelessSourcePad(
-                id="tool_calls_finished",
-                group="tool_calls_finished",
-                owner_node=self,
-                type_constraints=[pad.types.Trigger()],
-            )
-            self.pads.append(tool_calls_finished_source)
 
         first_token_source = cast(pad.StatelessSourcePad, self.get_pad("first_token"))
         if not first_token_source:
@@ -128,31 +102,9 @@ class OpenAICompatibleLLM(node.Node):
                 group="base_url",
                 owner_node=self,
                 type_constraints=[pad.types.String()],
-                value="https://api.openai.com/v1",
+                value="http://localhost:7002/v1",
             )
             self.pads.append(base_url_sink)
-
-        api_key_sink = cast(pad.PropertySinkPad, self.get_pad("api_key"))
-        if not api_key_sink:
-            api_key_sink = pad.PropertySinkPad(
-                id="api_key",
-                group="api_key",
-                owner_node=self,
-                type_constraints=[pad.types.Secret(options=[])],
-                value="",
-            )
-            self.pads.append(api_key_sink)
-
-        model_sink = cast(pad.PropertySinkPad, self.get_pad("model"))
-        if not model_sink:
-            model_sink = pad.PropertySinkPad(
-                id="model",
-                group="model",
-                owner_node=self,
-                type_constraints=[pad.types.String()],
-                value="gpt-4.1-mini",
-            )
-            self.pads.append(model_sink)
 
         context_sink = cast(pad.PropertySinkPad, self.get_pad("context"))
         if not context_sink:
@@ -177,25 +129,8 @@ class OpenAICompatibleLLM(node.Node):
             )
             self.pads.append(context_sink)
 
-        tool_group_sink = cast(pad.PropertySinkPad, self.get_pad("tool_group"))
-        if not tool_group_sink:
-            tool_group_sink = pad.PropertySinkPad(
-                id="tool_group",
-                group="tool_group",
-                owner_node=self,
-                type_constraints=[pad.types.NodeReference(node_types=["ToolGroup"])],
-                value=None,
-            )
-            self.pads.append(tool_group_sink)
-
-        cast(list[pad.types.Secret], api_key_sink.get_type_constraints())[
-            0
-        ].options = self.secrets
-
     async def run(self):
-        api_key_sink = cast(pad.PropertySinkPad, self.get_pad_required("api_key"))
         base_url_sink = cast(pad.PropertySinkPad, self.get_pad_required("base_url"))
-        model_sink = cast(pad.PropertySinkPad, self.get_pad_required("model"))
         cancel_trigger = cast(
             pad.StatelessSinkPad, self.get_pad_required("cancel_trigger")
         )
@@ -206,28 +141,17 @@ class OpenAICompatibleLLM(node.Node):
         finished_source = cast(
             pad.StatelessSourcePad, self.get_pad_required("finished")
         )
-        tool_calls_started_source = cast(
-            pad.StatelessSourcePad, self.get_pad_required("tool_calls_started")
-        )
-        tool_calls_finished_source = cast(
-            pad.StatelessSourcePad, self.get_pad_required("tool_calls_finished")
-        )
         context_sink = cast(pad.PropertySinkPad, self.get_pad_required("context"))
         context_message_source = cast(
             pad.StatelessSourcePad, self.get_pad_required("context_message")
         )
-        tool_group_sink = cast(pad.PropertySinkPad, self.get_pad_required("tool_group"))
         run_trigger = cast(pad.StatelessSinkPad, self.get_pad_required("run_trigger"))
-        api_key_secret_id = api_key_sink.get_value()
-        if not self.secret_provider:
-            raise RuntimeError("Secret provider is not set for OpenAICompatibleLLM.")
 
-        self.api_key = await self.secret_provider.resolve_secret(api_key_secret_id)
         self.llm = openai_compatible.OpenAICompatibleLLM(
             base_url=base_url_sink.get_value(),
-            api_key=self.api_key,
+            api_key="",
             headers={},
-            model=model_sink.get_value(),
+            model="",
         )
 
         running_handle: AsyncLLMResponseHandle | None = None
@@ -244,7 +168,6 @@ class OpenAICompatibleLLM(node.Node):
         async def generation_task(
             handle: AsyncLLMResponseHandle, ctx: pad.RequestContext
         ):
-            tool_task: asyncio.Task[list[str]] | None = None
             all_deltas: list[runtime_types.ContextMessageContent_ChoiceDelta] = []
             text_stream = runtime_types.TextStream()
             text_stream_source.push_item(text_stream, ctx)
@@ -258,12 +181,6 @@ class OpenAICompatibleLLM(node.Node):
 
                 text_stream.eos()
 
-                all_tool_calls = get_tool_calls_from_choice_deltas(all_deltas)
-                if len(all_tool_calls) > 0:
-                    tool_calls_started_source.push_item(runtime_types.Trigger(), ctx)
-                    tg = cast(ToolGroup, tool_group_sink.get_value())
-                    tool_task = asyncio.create_task(tg.call_tools(all_tool_calls, ctx))
-
                 full_content = get_full_content_from_deltas(all_deltas)
                 context_message_source.push_item(
                     runtime_types.ContextMessage(
@@ -273,37 +190,17 @@ class OpenAICompatibleLLM(node.Node):
                                 content=full_content
                             )
                         ],
-                        tool_calls=all_tool_calls,
+                        tool_calls=[],
                     ),
                     ctx,
                 )
 
-                if tool_task is not None:
-                    tool_results = await tool_task
-                    for i in range(len(all_tool_calls)):
-                        context_message_source.push_item(
-                            runtime_types.ContextMessage(
-                                role=runtime_types.ContextMessageRole.TOOL,
-                                content=[
-                                    runtime_types.ContextMessageContentItem_Text(
-                                        content=tool_results[i]
-                                    )
-                                ],
-                                tool_call_id=all_tool_calls[i].call_id,
-                                tool_calls=[],
-                            ),
-                            ctx,
-                        )
-                    tool_calls_finished_source.push_item(runtime_types.Trigger(), ctx)
             # TODO look at the finished/ctx.complete() logic here
             except asyncio.CancelledError:
                 finished_source.push_item(runtime_types.Trigger(), ctx)
                 ctx.complete()
             except Exception as e:
                 logging.error(f"Error during LLM generation: {e}", exc_info=e)
-                if tool_task is not None:
-                    tool_calls_finished_source.push_item(runtime_types.Trigger(), ctx)
-
                 finished_source.push_item(runtime_types.Trigger(), ctx)
                 ctx.complete()
             finally:
@@ -322,16 +219,7 @@ class OpenAICompatibleLLM(node.Node):
         async for item in run_trigger:
             ctx = item.ctx
             messages = context_sink.get_value()
-            tool_definitions: list[runtime_types.ToolDefinition] = []
-            if tool_group_sink.get_value() is not None:
-                tool_nodes = cast(ToolGroup, tool_group_sink.get_value()).tool_nodes
-                for tn in tool_nodes:
-                    if not isinstance(tn, Tool):
-                        logging.warning(f"Node {tn.id} is not a Tool, skipping.")
-                        continue
-                    td = tn.get_tool_definition()
-                    tool_definitions.append(td)
-            request = LLMRequest(context=messages, tool_definitions=tool_definitions)
+            request = LLMRequest(context=messages, tool_definitions=[])
             if running_handle is not None:
                 logging.warning(
                     "LLM is already running a generation, skipping new request."
@@ -340,7 +228,9 @@ class OpenAICompatibleLLM(node.Node):
                 continue
 
             try:
-                running_handle = await self.llm.create_completion(request=request)
+                running_handle = await self.llm.create_completion(
+                    request=request, mode="qwen_omni"
+                )
                 t = asyncio.create_task(generation_task(running_handle, ctx))
                 tasks.add(t)
                 t.add_done_callback(done_callback)

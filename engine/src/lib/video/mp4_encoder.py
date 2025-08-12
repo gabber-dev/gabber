@@ -1,3 +1,6 @@
+# Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
+# SPDX-License-Identifier: SUL-1.0
+
 import asyncio
 from core import runtime_types
 import av
@@ -5,15 +8,18 @@ import numpy as np  # Assuming f.data is a numpy array; import if needed
 import fractions
 from queue import Queue
 import threading
+import io
 
 
 class MP4_Encoder:
     def __init__(self):
-        self.encoder = av.CodecContext.create("libx264")
+        self.output = io.BytesIO()
+        self.container = av.open(self.output, mode="w", format="mp4")
+        self.video_stream = self.container.add_stream("libx264")
+        self.encoder = self.video_stream.codec_context
         self.encoder.options = {"preset": "ultrafast", "crf": "0"}
         self.encoder.pix_fmt = "yuv444p"  # For minimal loss, preserving full chroma
         self.encoder.time_base = fractions.Fraction(1, 1000000)  # 1 microsecond units
-        self.packets: list[av.Packet] = []
         self.input_queue: Queue[runtime_types.VideoFrame | None] = Queue()
         self.encode_thread: threading.Thread = threading.Thread(
             target=self._encode_thread, daemon=True
@@ -31,7 +37,7 @@ class MP4_Encoder:
             if f is None:
                 packets = self.encoder.encode(None)
                 for packet in packets:
-                    self.packets.append(packet)
+                    self.container.mux(packet)
                 break
 
             if self.encoder.width == 0 or self.encoder.height == 0:
@@ -43,18 +49,14 @@ class MP4_Encoder:
             av_frame.pts = int(round(f.timestamp / float(self.encoder.time_base)))
             packets = self.encoder.encode(av_frame)
             for p in packets:
-                self.packets.append(p)
+                self.container.mux(p)
 
     async def eos(self):
         def wait_for_encode():
             self.input_queue.put(None)
             self.encode_thread.join()
+            self.container.close()
 
         await asyncio.to_thread(wait_for_encode)
 
-        res = b""
-
-        for packet in self.packets:
-            res += bytes(packet)
-
-        return res
+        return self.output.getvalue()
