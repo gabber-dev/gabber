@@ -38,23 +38,36 @@ export function StateMachineEdge(props: EdgeProps) {
   const targetNode = useInternalNode(target);
 
   let edgePath = "";
-  let labelX = 0;
+  let labelX = 0; // kept for potential future label features
   let labelY = 0;
   if (sourceNode && targetNode) {
-    const { sx, sy, tx, ty, sourcePos, targetPos } = getEdgeParams(
-      sourceNode as any,
-      targetNode as any,
+    const { sx, sy, tx, ty } = getEdgeParams(
+      sourceNode as unknown as {
+        measured: { width: number; height: number };
+        internals: { positionAbsolute: { x: number; y: number } };
+      },
+      targetNode as unknown as {
+        measured: { width: number; height: number };
+        internals: { positionAbsolute: { x: number; y: number } };
+      },
     );
     // determine how many edges connect this pair (both directions)
     const pairKey = ([a, b]: [string, string]) =>
       a < b ? `${a}|${b}` : `${b}|${a}`;
     const currentPair = pairKey([source, target]);
-    const pairEdges = (reactFlowRepresentation?.edges || []).filter((e) =>
-      pairKey([e.source as string, e.target as string]) === currentPair,
+    const pairEdges = (reactFlowRepresentation?.edges || []).filter(
+      (e) => pairKey([e.source as string, e.target as string]) === currentPair,
     );
-    const sortedPairEdges = [...pairEdges].sort((a, b) =>
-      (a.id || "").localeCompare(b.id || ""),
-    );
+    const directionThenId = (
+      a: { id?: string; source: string; target: string },
+      b: { id?: string; source: string; target: string },
+    ) => {
+      const aForward = a.source < a.target;
+      const bForward = b.source < b.target;
+      if (aForward !== bForward) return aForward ? -1 : 1;
+      return (a.id || "").localeCompare(b.id || "");
+    };
+    const sortedPairEdges = [...pairEdges].sort(directionThenId);
     const pairIndex = sortedPairEdges.findIndex((e) => e.id === id);
     const pairCount = sortedPairEdges.length || 1;
 
@@ -79,7 +92,8 @@ export function StateMachineEdge(props: EdgeProps) {
     // symmetric distribution; for even counts use half-step to avoid stacking near center
     const unitIndex = pairIndex - (pairCount - 1) / 2;
     const evenHalfStep = pairCount % 2 === 0 ? 0.5 : 0;
-    const adjustedIndex = unitIndex + (unitIndex >= 0 ? evenHalfStep : -evenHalfStep);
+    const adjustedIndex =
+      unitIndex + (unitIndex >= 0 ? evenHalfStep : -evenHalfStep);
     const offset = adjustedIndex * SEPARATION_STEP;
 
     // control points along the line, pushed out by the offset normal
@@ -124,6 +138,7 @@ export function StateMachineEdge(props: EdgeProps) {
   const isEntryEdge = id === "entry_edge";
 
   const measurePathRef = useRef<SVGPathElement | null>(null);
+  // We compute midPos for arrow/filter placement
   const [thirdPos, setThirdPos] = useState<{ x: number; y: number } | null>(
     null,
   );
@@ -231,4 +246,3 @@ export function StateMachineEdge(props: EdgeProps) {
 }
 
 export default StateMachineEdge;
-
