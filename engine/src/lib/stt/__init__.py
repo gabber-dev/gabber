@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: SUL-1.0
 
 from .kyutai import Kyutai
+from .assembly import Assembly
 from .stt import (
+    STT,
     STTEvent,
     STTEvent_EndOfTurn,
     STTEvent_SpeechStarted,
@@ -11,6 +13,8 @@ from .stt import (
 
 __all__ = [
     "Kyutai",
+    "Assembly",
+    "STT",
     "STTEvent",
     "STTEvent_EndOfTurn",
     "STTEvent_SpeechStarted",
