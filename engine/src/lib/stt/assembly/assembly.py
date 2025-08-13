@@ -4,10 +4,9 @@
 import asyncio
 import json
 import logging
-from typing import Any, cast
+from typing import Any
 
 import aiohttp
-import msgpack
 
 from core.runtime_types import AudioClip, AudioFrame
 from utils import short_uuid
@@ -19,14 +18,6 @@ from ..stt import (
     STTEvent_SpeechStarted,
     STTEvent_Transcription,
 )
-
-STEPS_PER_SECOND = 12.5
-FLUSH_ZEROS_SECONDS = 1
-COOLDOWN_SECONDS = 0.5
-DRIFT_THRESHOLD = 3
-PRE_BUFFER_SECONDS = 5.0
-
-FLUSH_FRAME = AudioFrame.silence(FLUSH_ZEROS_SECONDS)
 
 
 class Assembly(STT):
@@ -49,7 +40,15 @@ class Assembly(STT):
             await asyncio.sleep(1)
 
     async def _run_ws(self) -> None:
+        trans_id: str = short_uuid()
+        offset_samples: int = 0
+        frames: list[AudioFrame] = []
+        start_ms: float = -1
+        end_ms: float = -1
+        running_words: list[str] = []
+
         async def rec_task(ws: aiohttp.ClientWebSocketResponse) -> None:
+            nonlocal start_ms, end_ms, trans_id, running_words, frames, offset_samples
             while not self._closed:
                 if ws.closed:
                     break
@@ -63,6 +62,7 @@ class Assembly(STT):
                 elif msg.type == aiohttp.WSMsgType.BINARY:
                     pass
 
+                logging.debug("NEIL Received message: %s %s", msg, self._api_key)
                 data = json.loads(msg.data)
                 msg_type = data.get("type")
                 if msg_type == "Begin":
@@ -70,20 +70,99 @@ class Assembly(STT):
                 elif msg_type == "Turn":
                     transcript = data.get("transcript", "")
                     end_of_turn = data.get("end_of_turn", False)
+                    formatted = data.get("turn_is_formatted", False)
                     words: list[dict[str, Any]] = data.get("words", [])
+                    first_word = words[0] if words else None
                     last_word = words[-1] if words else None
-                    last_ms = last_word["end"] if last_word else -1
-                    if last_ms > 0:
-                        pass
-                    if transcript:
+
+                    if last_word:
+                        end_ms = last_word["end"]
+
+                    if start_ms < 0 and first_word:
+                        start_ms = first_word["start"]
                         self._output_queue.put_nowait(
-                            STTEvent_Transcription(transcript)
+                            STTEvent_SpeechStarted(id=trans_id)
                         )
+
+                    new_word_cnt = len(words) - len(running_words)
+                    new_words: list[str] = []
+                    if new_word_cnt > 0:
+                        new_words = [w["text"] for w in words[:new_word_cnt]]
+                        running_words.extend(new_words)
+
+                    self._output_queue.put_nowait(
+                        STTEvent_Transcription(
+                            trans_id,
+                            delta_text=" ".join(new_words),
+                            running_text=transcript,
+                        )
+                    )
+
+                    if end_of_turn and formatted:
+                        offset_time_ms = offset_samples * 1000.0 / 24000.0
+                        if not frames:
+                            logging.warning(
+                                "No frames available for end of turn processing"
+                            )
+                            continue
+
+                        logging.info(
+                            "NEIL End of turn: %s, start: %s, end: %s, offset: %s",
+                            trans_id,
+                            start_ms,
+                            end_ms,
+                            offset_time_ms,
+                        )
+
+                        # Remove frames that are before the start of the turn
+                        while (
+                            frames
+                            and (
+                                offset_time_ms
+                                + frames[0].data_24000hz.duration * 1000.0
+                            )
+                            < start_ms
+                        ):
+                            f = frames.pop(0)
+                            offset_samples += f.data_24000hz.sample_count
+                            offset_time_ms = (offset_samples * 1000.0) / 24000.0
+
+                        # Only include frames that are within the turn
+                        clip_frames: list[AudioFrame] = []
+                        while (
+                            frames
+                            and (
+                                offset_time_ms
+                                + frames[0].data_24000hz.duration * 1000.0
+                            )
+                            < end_ms
+                        ):
+                            clip_frames.append(frames.pop(0))
+
+                        clip = AudioClip(
+                            audio=clip_frames,
+                            transcription=transcript,
+                        )
+                        logging.info(
+                            "NEIL End of turn clip created: %s, frames: %d, trans_id: %s",
+                            clip.transcription,
+                            len(clip_frames),
+                            trans_id,
+                        )
+                        self._output_queue.put_nowait(
+                            STTEvent_EndOfTurn(id=trans_id, clip=clip)
+                        )
+                        trans_id = short_uuid()
+                        running_words = []
+                        start_ms = -1
+                        end_ms = -1
+
                 elif msg_type == "Termination":
                     pass
 
         async def send_task(ws: aiohttp.ClientWebSocketResponse) -> None:
             audio_bytes = b""
+            running_frames: list[AudioFrame] = []
             dur = 0
             while True:
                 if ws.closed:
@@ -93,8 +172,13 @@ class Assembly(STT):
                     return
 
                 audio_bytes += item.data_24000hz.data.tobytes()
+                running_frames.append(item)
                 dur += item.data_24000hz.duration
+                # Send in 100ms chunks
                 if dur > 0.1:
+                    for f in running_frames:
+                        frames.append(f)
+                    running_frames.clear()
                     await ws.send_bytes(audio_bytes)
                     audio_bytes = b""
                     dur = 0
@@ -113,6 +197,8 @@ class Assembly(STT):
                 params={
                     "sample_rate": 24000,
                     "encoding": "pcm_s16le",
+                    "format_turns": "true",
+                    "min_end_of_turn_silence_when_confident": 600,
                 },
             ) as ws:  # Adjust port as needed
                 await asyncio.gather(

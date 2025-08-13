@@ -122,8 +122,10 @@ class STT(node.Node):
 
         stt_impl: stt.STT
         if service.get_value() == "assembly_ai":
-            api_key = cast(pad.PropertySinkPad, self.get_pad_required("api_key"))
-            stt_impl = stt.Assembly(token=api_key.get_value())
+            api_key_pad = cast(pad.PropertySinkPad, self.get_pad_required("api_key"))
+            api_key_name = api_key_pad.get_value()
+            api_key = await self.secret_provider.resolve_secret(api_key_name)
+            stt_impl = stt.Assembly(api_key=api_key)
         elif service.get_value() == "kyutai":
             stt_impl = stt.Kyutai(port=8080)
         else:
@@ -139,7 +141,7 @@ class STT(node.Node):
                 stt_impl.push_audio(audio.value)
                 audio.ctx.complete()
 
-        async def kyutai_event_task() -> None:
+        async def stt_event_task() -> None:
             ctx: pad.RequestContext | None = None
             async for event in stt_impl:
                 if isinstance(event, stt.STTEvent_SpeechStarted):
@@ -164,7 +166,7 @@ class STT(node.Node):
                     ctx.complete()
 
         audio_sink_t = asyncio.create_task(audio_sink_task())
-        kyutai_event_t = asyncio.create_task(kyutai_event_task())
+        kyutai_event_t = asyncio.create_task(stt_event_task())
 
         try:
             await asyncio.gather(stt_run_t, audio_sink_t, kyutai_event_t)
