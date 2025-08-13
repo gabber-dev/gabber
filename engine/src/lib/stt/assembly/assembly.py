@@ -215,9 +215,3 @@ class Assembly(STT):
         if event is None:
             raise StopAsyncIteration
         return event
-
-    def endpoint_cooldown(self, prob, last_word) -> None:
-        """
-        Signal the end of the audio stream.
-        """
-        self._process_queue.put_nowait(None)
