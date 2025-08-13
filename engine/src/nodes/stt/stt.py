@@ -30,7 +30,9 @@ class STT(node.Node):
                 id="service",
                 group="service",
                 owner_node=self,
-                type_constraints=[pad.types.Enum(options=["assembly_ai", "kyutai"])],
+                type_constraints=[
+                    pad.types.Enum(options=["assembly_ai", "local_kyutai"])
+                ],
                 value="assembly_ai",
             )
             self.pads.append(service)
@@ -89,20 +91,15 @@ class STT(node.Node):
             )
             self.pads.append(final_transcription_source)
 
-        if service.get_value() == "assembly_ai":
-            api_key = cast(pad.PropertySinkPad, self.get_pad("api_key"))
-            if api_key is None:
-                api_key = pad.PropertySinkPad(
-                    id="api_key",
-                    group="api_key",
-                    owner_node=self,
-                    type_constraints=[pad.types.Secret(options=self.secrets)],
-                )
-                self.pads.append(api_key)
-        elif service.get_value() == "kyutai":
-            api_key = cast(pad.PropertySinkPad, self.get_pad("api_key"))
-            if api_key is not None:
-                self.pads.remove(api_key)
+        api_key = cast(pad.PropertySinkPad, self.get_pad("api_key"))
+        if api_key is None:
+            api_key = pad.PropertySinkPad(
+                id="api_key",
+                group="api_key",
+                owner_node=self,
+                type_constraints=[pad.types.Secret(options=self.secrets)],
+            )
+            self.pads.append(api_key)
 
     async def run(self):
         audio_sink = cast(pad.StatelessSinkPad, self.get_pad_required("audio"))
@@ -126,7 +123,7 @@ class STT(node.Node):
             api_key_name = api_key_pad.get_value()
             api_key = await self.secret_provider.resolve_secret(api_key_name)
             stt_impl = stt.Assembly(api_key=api_key)
-        elif service.get_value() == "kyutai":
+        elif service.get_value() == "local_kyutai":
             stt_impl = stt.Kyutai(port=8080)
         else:
             logging.error("Unsupported STT service: %s", service.get_value())

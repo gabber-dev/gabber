@@ -294,7 +294,6 @@ class Graph:
                     secrets=self.secrets,
                     graph=subgraph,
                 )
-                await node.resolve_pads()
             else:
                 raise ValueError(f"Node type {node_data.type} not found in library.")
 
