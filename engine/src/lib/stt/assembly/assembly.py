@@ -62,7 +62,6 @@ class Assembly(STT):
                 elif msg.type == aiohttp.WSMsgType.BINARY:
                     pass
 
-                logging.debug("NEIL Received message: %s %s", msg, self._api_key)
                 data = json.loads(msg.data)
                 msg_type = data.get("type")
                 if msg_type == "Begin":
@@ -79,7 +78,9 @@ class Assembly(STT):
                         end_ms = last_word["end"]
 
                     if start_ms < 0 and first_word:
-                        start_ms = first_word["start"]
+                        start_ms = first_word["start"] - 600  # Adjust
+                        if start_ms < 0:
+                            start_ms = 0
                         self._output_queue.put_nowait(
                             STTEvent_SpeechStarted(id=trans_id)
                         )
@@ -106,14 +107,6 @@ class Assembly(STT):
                             )
                             continue
 
-                        logging.info(
-                            "NEIL End of turn: %s, start: %s, end: %s, offset: %s",
-                            trans_id,
-                            start_ms,
-                            end_ms,
-                            offset_time_ms,
-                        )
-
                         # Remove frames that are before the start of the turn
                         while (
                             frames
@@ -137,17 +130,14 @@ class Assembly(STT):
                             )
                             < end_ms
                         ):
-                            clip_frames.append(frames.pop(0))
+                            f = frames.pop(0)
+                            clip_frames.append(f)
+                            offset_samples += f.data_24000hz.sample_count
+                            offset_time_ms = offset_samples * 1000.0 / 24000.0
 
                         clip = AudioClip(
                             audio=clip_frames,
                             transcription=transcript,
-                        )
-                        logging.info(
-                            "NEIL End of turn clip created: %s, frames: %d, trans_id: %s",
-                            clip.transcription,
-                            len(clip_frames),
-                            trans_id,
                         )
                         self._output_queue.put_nowait(
                             STTEvent_EndOfTurn(id=trans_id, clip=clip)
