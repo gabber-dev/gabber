@@ -10,9 +10,10 @@ import { getDataTypeColor, getPrimaryDataType } from "./utils/dataTypeColors";
 
 type Props = {
   data: PadEditorRepresentation;
+  isActive?: boolean;
 };
 
-export function PadHandle({ data }: Props) {
+export function PadHandle({ data, isActive = false }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const direction = useMemo(() => {
@@ -83,9 +84,12 @@ export function PadHandle({ data }: Props) {
       background: dataTypeColor.background,
       opacity: hasConnections ? 0.9 : 0.7,
       boxSizing: "border-box" as const,
+      transition: "all 300ms ease-in-out",
+      transform: isActive ? "scale(1.2)" : "scale(1)",
+      boxShadow: isActive ? `0 0 8px ${dataTypeColor.border}` : "none",
     };
     return baseStyle;
-  }, [hasConnections, dataTypeColor]);
+  }, [hasConnections, dataTypeColor, isActive]);
 
   return (
     <div
