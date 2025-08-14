@@ -164,6 +164,7 @@ NOTIFIABLE_TYPES = (
     int,
     float,
     bool,
+    runtime_types.Trigger,
     runtime_types.AudioFrame,
     runtime_types.AudioClip,
     runtime_types.VideoClip,
