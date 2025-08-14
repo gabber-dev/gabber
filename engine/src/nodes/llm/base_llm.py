@@ -95,6 +95,18 @@ class BaseLLM(node.Node, ABC):
             )
             self.pads.append(text_stream_source)
 
+        thinking_stream_source = cast(
+            pad.StatelessSourcePad, self.get_pad("thinking_stream")
+        )
+        if not thinking_stream_source:
+            thinking_stream_source = pad.StatelessSourcePad(
+                id="thinking_stream",
+                group="thinking_stream",
+                owner_node=self,
+                type_constraints=[pad.types.TextStream()],
+            )
+            self.pads.append(thinking_stream_source)
+
         context_message_source = cast(
             pad.StatelessSourcePad, self.get_pad("context_message")
         )
@@ -168,6 +180,9 @@ class BaseLLM(node.Node, ABC):
         cancel_trigger = cast(
             pad.StatelessSinkPad, self.get_pad_required("cancel_trigger")
         )
+        thinking_stream_source = cast(
+            pad.StatelessSourcePad, self.get_pad_required("thinking_stream")
+        )
         text_stream_source = cast(
             pad.StatelessSourcePad, self.get_pad_required("text_stream")
         )
@@ -217,15 +232,40 @@ class BaseLLM(node.Node, ABC):
             tool_task: asyncio.Task[list[str]] | None = None
             all_deltas: list[runtime_types.ContextMessageContent_ChoiceDelta] = []
             text_stream = runtime_types.TextStream()
+            thinking_stream = runtime_types.TextStream()
+            thinking_stream_source.push_item(thinking_stream, ctx)
             text_stream_source.push_item(text_stream, ctx)
             try:
                 started_source.push_item(runtime_types.Trigger(), ctx)
+                thinking = False
                 async for item in handle:
-                    if item.content:
-                        text_stream.push_text(item.content)
+                    cnt = item.content
+                    if not cnt:
+                        continue
+                    if thinking:
+                        split = cnt.split("</think>")
+                        if len(split) == 2:
+                            thinking_cnt = split[0]
+                            normal_cnt = split[1]
+                            thinking_stream.push_text(thinking_cnt)
+                            text_stream.push_text(normal_cnt)
+                            thinking = False
+                        else:
+                            thinking_stream.push_text(cnt)
+                    else:
+                        split = cnt.split("<think>")
+                        if len(split) == 2:
+                            normal_cnt = split[0]
+                            thinking_cnt = split[1]
+                            thinking_stream.push_text(thinking_cnt)
+                            text_stream.push_text(normal_cnt)
+                            thinking = True
+                        else:
+                            text_stream.push_text(cnt)
 
                     all_deltas.append(item)
 
+                thinking_stream.eos()
                 text_stream.eos()
 
                 all_tool_calls: list[runtime_types.ToolCall] = []
@@ -241,6 +281,9 @@ class BaseLLM(node.Node, ABC):
                         )
 
                 full_content = get_full_content_from_deltas(all_deltas)
+                logging.info(
+                    f"NEIL LLM generation completed with content: {full_content}"
+                )
                 context_message_source.push_item(
                     runtime_types.ContextMessage(
                         role=runtime_types.ContextMessageRole.ASSISTANT,
