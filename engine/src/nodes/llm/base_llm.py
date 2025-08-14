@@ -281,9 +281,6 @@ class BaseLLM(node.Node, ABC):
                         )
 
                 full_content = get_full_content_from_deltas(all_deltas)
-                logging.info(
-                    f"NEIL LLM generation completed with content: {full_content}"
-                )
                 context_message_source.push_item(
                     runtime_types.ContextMessage(
                         role=runtime_types.ContextMessageRole.ASSISTANT,
