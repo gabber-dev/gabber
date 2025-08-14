@@ -24,14 +24,20 @@ class LocalOpenAICompatibleLLM(BaseLLM):
         )
 
     def supports_tool_calls(self) -> bool:
-        return False
+        return True
 
     def base_url(self) -> str:
         port_pad = cast(pad.PropertySinkPad, self.get_pad_required("port"))
         port_value = port_pad.get_value()
         if not isinstance(port_value, int):
             port_value = 7002
-        return f"http://localhost:{port_value}"
+        return f"http://localhost:{port_value}/v1"
+
+    def model(self) -> str:
+        return ""
+
+    async def api_key(self) -> str:
+        return ""
 
     async def create_completion(
         self, llm: openai_compatible.OpenAICompatibleLLM, request: LLMRequest

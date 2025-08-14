@@ -24,6 +24,12 @@ class BaseLLM(node.Node, ABC):
     @abstractmethod
     def base_url(self) -> str: ...
 
+    @abstractmethod
+    def model(self) -> str: ...
+
+    @abstractmethod
+    async def api_key(self) -> str: ...
+
     async def resolve_pads(self):
         run_trigger = cast(pad.StatelessSinkPad, self.get_pad("run_trigger"))
         if not run_trigger:
@@ -159,9 +165,7 @@ class BaseLLM(node.Node, ABC):
                 self.pads.append(tool_group_sink)
 
     async def run(self):
-        api_key_sink = cast(pad.PropertySinkPad, self.get_pad_required("api_key"))
         base_url_sink = cast(pad.PropertySinkPad, self.get_pad_required("base_url"))
-        model_sink = cast(pad.PropertySinkPad, self.get_pad_required("model"))
         cancel_trigger = cast(
             pad.StatelessSinkPad, self.get_pad_required("cancel_trigger")
         )
@@ -191,9 +195,9 @@ class BaseLLM(node.Node, ABC):
 
         self.llm = openai_compatible.OpenAICompatibleLLM(
             base_url=base_url_sink.get_value(),
-            api_key="",
+            api_key=self.api_key(),
             headers={},
-            model=model_sink.get_value(),
+            model=self.model(),
         )
 
         running_handle: AsyncLLMResponseHandle | None = None

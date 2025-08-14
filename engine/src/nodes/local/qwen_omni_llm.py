@@ -1,14 +1,11 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-import asyncio
-import logging
 from typing import cast
 
-from core import node, pad, runtime_types
+from core import pad
 from core.node import NodeMetadata
 from lib.llm import AsyncLLMResponseHandle, LLMRequest, openai_compatible
-from utils import get_full_content_from_deltas
 from nodes.llm import BaseLLM
 
 
@@ -31,7 +28,13 @@ class QwenOmniLLM(BaseLLM):
         port_value = port_pad.get_value()
         if not isinstance(port_value, int):
             port_value = 7002
-        return f"http://localhost:{port_value}"
+        return f"http://localhost:{port_value}/v1"
+
+    def model(self) -> str:
+        return ""
+
+    async def api_key(self) -> str:
+        return ""
 
     async def create_completion(
         self, llm: openai_compatible.OpenAICompatibleLLM, request: LLMRequest
