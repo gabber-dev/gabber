@@ -72,6 +72,7 @@ class CreateContextMessage(Node):
             StatelessSourcePad, self.get_pad_required("context_message")
         )
         async for item in content_sink:
+            logging.info("NEIL creating context message %s", item)
             role = role_pad.get_value()
             content: list[runtime_types.ContextMessageContentItem] = []
             if isinstance(item.value, runtime_types.AudioClip):

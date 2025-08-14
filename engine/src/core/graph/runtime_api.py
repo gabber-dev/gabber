@@ -92,6 +92,9 @@ class RuntimeApi:
             complete_resp = RuntimeResponse(req_id=req_id)
             if request.payload.type == "push_value":
                 payload = request.payload
+                logging.info(
+                    f"NEIL Received push_value request for node {node_id}, pad {pad_id}. Payload: {payload}"
+                )
                 pad_obj = node_pad_lookup.get((node_id, pad_id))
                 if not pad_obj:
                     logging.error(f"Pad {pad_id} in node {node_id} not found.")
@@ -138,7 +141,7 @@ class RuntimeApi:
                     )
                     return
 
-                value = serialize.deserialize_pad_value(tcs[0], pad_obj)
+                value = serialize.deserialize_pad_value(tcs[0], payload.value)
                 ctx = pad.RequestContext(parent=None)
                 complete_resp.payload = RuntimeResponsePayload_PushValue(
                     type="push_value"

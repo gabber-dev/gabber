@@ -18,6 +18,7 @@ docker run \
   vllm/vllm-openai:v0.10.0 \
   --model "$MODEL" \
   --port 80 \
-  --gpu-memory-utilization 0.95 \
+  --gpu-memory-utilization 0.9 \
   --max-model-len 1024 \
-  --enforce-eager
+  --enable-auto-tool-choice \
+  --tool-call-parser hermes
