@@ -113,7 +113,7 @@ class AudioClip:
         if not self.audio:
             return np.array([], dtype=np.int16)
 
-        return np.concatenate([frame.data_24000hz.data for frame in self.audio])
+        return np.concatenate([frame.data_24000hz.data for frame in self.audio], axis=1)
 
     @property
     def fp32_44100(self) -> NDArray[np.float32]:
