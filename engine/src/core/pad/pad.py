@@ -160,11 +160,15 @@ class Item:
 
 
 NOTIFIABLE_TYPES = (
+    # Primitives
     str,
     int,
     float,
     bool,
+    list,  # Lists like LLMContext `source` (list[ContextMessage])
+    # Runtime eventful types
     runtime_types.Trigger,
+    runtime_types.ContextMessage,
     runtime_types.AudioFrame,
     runtime_types.AudioClip,
     runtime_types.VideoClip,
