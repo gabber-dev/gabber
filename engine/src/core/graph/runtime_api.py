@@ -42,11 +42,6 @@ class RuntimeApi:
                 ev_value = PadTriggeredValue_String(value=v)
             elif isinstance(v, bool):
                 ev_value = PadTriggeredValue_Boolean(value=v)
-            elif isinstance(value, runtime_types.AudioFrame):
-                ev_value = PadTriggeredValue_AudioClip(
-                    transcript="",
-                    duration=value.original_data.duration,
-                )
             elif isinstance(value, runtime_types.AudioClip):
                 trans = value.transcription if value.transcription else ""
                 ev_value = PadTriggeredValue_AudioClip(
