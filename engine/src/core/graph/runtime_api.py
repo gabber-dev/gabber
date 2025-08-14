@@ -32,10 +32,8 @@ class RuntimeApi:
         dc_queue = asyncio.Queue[QueueItem | None]()
 
         def on_pad(p: pad.Pad, value: Any):
-            # Keep both raw value (for dataclasses) and serialized value (for primitives/BaseModels)
             v = serialize.serialize_pad_value(value)
             ev_value: PadTriggeredValue | None = None
-            # Primitive types are serialized directly
             if isinstance(v, int):
                 ev_value = PadTriggeredValue_Integer(value=v)
             elif isinstance(v, float):
@@ -44,9 +42,7 @@ class RuntimeApi:
                 ev_value = PadTriggeredValue_String(value=v)
             elif isinstance(v, bool):
                 ev_value = PadTriggeredValue_Boolean(value=v)
-            # Dataclasses from runtime_types are not BaseModels, so check against the raw value
             elif isinstance(value, runtime_types.AudioFrame):
-                # Single frame: surface as audio_clip with the frame duration so UIs can pulse
                 ev_value = PadTriggeredValue_AudioClip(
                     transcript="",
                     duration=value.original_data.duration,
