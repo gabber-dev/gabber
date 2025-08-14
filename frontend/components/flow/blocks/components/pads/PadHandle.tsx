@@ -76,20 +76,24 @@ export function PadHandle({ data, isActive = false }: Props) {
 
   // Create dynamic styles for the handle
   const handleStyle = useMemo(() => {
+    const translateX = direction === "source" ? "translateX(50%)" : "translateX(-50%)";
     const baseStyle = {
       width: "18px",
       height: "18px",
       borderRadius: "9999px",
       border: hasConnections ? `2px solid ${dataTypeColor.border}` : "none",
       background: dataTypeColor.background,
+      backgroundImage: hasConnections
+        ? `radial-gradient(circle at center, #000 22%, ${dataTypeColor.background} 24%)`
+        : "none",
       opacity: hasConnections ? 0.9 : 0.7,
       boxSizing: "border-box" as const,
-      transition: "all 300ms ease-in-out",
-      transform: isActive ? "scale(1.2)" : "scale(1)",
+      transition: "transform 300ms ease-in-out, box-shadow 300ms ease-in-out, opacity 150ms ease-in-out",
+      transform: `${translateX} ${isActive ? "scale(1.2)" : "scale(1)"}`,
       boxShadow: isActive ? `0 0 8px ${dataTypeColor.border}` : "none",
-    };
+    } as const;
     return baseStyle;
-  }, [hasConnections, dataTypeColor, isActive]);
+  }, [hasConnections, dataTypeColor, isActive, direction]);
 
   return (
     <div
@@ -104,25 +108,7 @@ export function PadHandle({ data, isActive = false }: Props) {
         position={position}
         id={data.id}
       />
-      {hasConnections && (
-        <div
-          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-          style={{
-            width: "18px",
-            height: "18px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <div
-            className="w-1 h-1 rounded-full bg-base-100"
-            style={{
-              opacity: 0.8,
-            }}
-          />
-        </div>
-      )}
+      {/* inner dot rendered via backgroundImage when connected */}
       {isModalOpen && (
         <div
           className={`absolute z-20 ${direction === "source" ? "-left-56" : "left-4"} -top-2 w-52 bg-base-200 border-2 border-primary rounded-lg shadow-lg p-3 text-sm`}
