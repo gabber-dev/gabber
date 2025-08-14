@@ -10,14 +10,16 @@ from core import node, pad
 from core.node import NodeMetadata
 
 
-class Delay(node.Node):
+class StartRequest(node.Node):
     @classmethod
     def get_description(cls) -> str:
-        return "Delays a stateless stream"
+        return "Starts a request"
 
     @classmethod
     def get_metadata(cls) -> NodeMetadata:
-        return NodeMetadata(primary="core", secondary="timing", tags=["delay"])
+        return NodeMetadata(
+            primary="core", secondary="synchronization", tags=["request"]
+        )
 
     async def resolve_pads(self):
         sink = cast(pad.StatelessSinkPad, self.get_pad("sink"))
@@ -40,17 +42,6 @@ class Delay(node.Node):
             )
             self.pads.append(source)
 
-        delay_ms = cast(pad.PropertySinkPad, self.get_pad("delay_ms"))
-        if not delay_ms:
-            delay_ms = pad.PropertySinkPad(
-                id="delay_ms",
-                group="delay_ms",
-                owner_node=self,
-                type_constraints=[pad.types.Integer(minimum=0)],
-                value=1000,
-            )
-            self.pads.append(delay_ms)
-
         next_pads = source.get_next_pads()
         tcs: list[pad.types.BasePadType] | None = None
         for next_pad in next_pads:
@@ -71,6 +62,7 @@ class Delay(node.Node):
 
         async def sink_task():
             async for item in sink_pad:
+                logging.info("NEIL got item %s", item)
                 delay = cast(int, delay_pad.get_value())
                 current_time = time.time()
                 delay_queue.put_nowait(

@@ -1,7 +1,18 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-from . import debug, logic, media, primitive, sub_graph, timing, tool, utility, web
+from . import (
+    debug,
+    logic,
+    media,
+    primitive,
+    sub_graph,
+    synchronization,
+    timing,
+    tool,
+    utility,
+    web,
+)
 
 ALL_NODES = (
     debug.ALL_NODES
@@ -13,4 +24,5 @@ ALL_NODES = (
     + sub_graph.ALL_NODES
     + web.ALL_NODES
     + timing.ALL_NODES
+    + synchronization.ALL_NODES
 )
