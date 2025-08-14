@@ -25,22 +25,18 @@ export function StatelessPad({ data }: Props) {
   const { lastValue } = usePad(nodeId || "error", data.id);
 
   const isTrigger = singleAllowedType?.type === "trigger";
-  const isStatelessPad = data.type === "StatelessSourcePad" || data.type === "StatelessSinkPad";
-  const hasConnections = isSource ? 
-    (data.next_pads && data.next_pads.length > 0) : 
-    data.previous_pad !== null;
+  const isStatelessPad =
+    data.type === "StatelessSourcePad" || data.type === "StatelessSinkPad";
+  const hasConnections = isSource
+    ? data.next_pads && data.next_pads.length > 0
+    : data.previous_pad !== null;
 
   useEffect(() => {
-    // Only animate if:
-    // 1. For stateless pads (both source and sink): when they have values AND connections
-    // 2. For property pads: don't animate
-    if (lastValue && isStatelessPad && hasConnections) {
-      setIsActive(true);
-      const timer = setTimeout(() => {
-        setIsActive(false);
-      }, 300); // 300ms animation duration
-      return () => clearTimeout(timer);
-    }
+    if (!lastValue) return;
+    if (!isStatelessPad || !hasConnections) return;
+    setIsActive(true);
+    const timer = setTimeout(() => setIsActive(false), 300);
+    return () => clearTimeout(timer);
   }, [lastValue, isStatelessPad, hasConnections]);
 
   return (
@@ -60,9 +56,7 @@ export function StatelessPad({ data }: Props) {
             Test
           </button>
         )}
-        <div className={`text-sm text-accent font-medium transition-all duration-300 ${isActive ? 'opacity-100 scale-110' : 'opacity-75 scale-100'}`}>
-          {data.id}
-        </div>
+        <div className={`text-sm text-accent font-medium`}>{data.id}</div>
 
         <div className={`absolute ${isSource ? "-right-4" : "-left-4"}`}>
           <PadHandle data={data} isActive={isActive} />
