@@ -7,7 +7,6 @@ from . import (
     media,
     primitive,
     sub_graph,
-    synchronization,
     timing,
     tool,
     utility,
@@ -24,5 +23,4 @@ ALL_NODES = (
     + sub_graph.ALL_NODES
     + web.ALL_NODES
     + timing.ALL_NODES
-    + synchronization.ALL_NODES
 )

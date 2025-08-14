@@ -6,13 +6,12 @@ from typing import cast
 
 from core import pad
 from core.node import Node, NodeMetadata
-import logging
 
 
-class WaitForRequest(Node):
+class WaitForConsumption(Node):
     @classmethod
     def get_description(cls) -> str:
-        return "Waits for a specific trigger before proceeding"
+        return "Waits until a request has been consumed by the immediate next node."
 
     @classmethod
     def get_metadata(cls) -> NodeMetadata:
@@ -21,6 +20,16 @@ class WaitForRequest(Node):
         )
 
     async def resolve_pads(self):
+        consumed = cast(pad.StatelessSinkPad, self.get_pad("consumed"))
+        if not consumed:
+            consumed = pad.StatelessSinkPad(
+                id="consumed",
+                owner_node=self,
+                group="consumed",
+                type_constraints=None,
+            )
+            self.pads.append(consumed)
+
         sink = cast(pad.StatelessSinkPad, self.get_pad("sink"))
         if not sink:
             sink = pad.StatelessSinkPad(
