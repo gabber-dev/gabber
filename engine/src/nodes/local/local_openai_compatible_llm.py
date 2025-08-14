@@ -39,7 +39,7 @@ class LocalOpenAICompatibleLLM(BaseLLM):
     async def create_completion(
         self, llm: openai_compatible.OpenAICompatibleLLM, request: LLMRequest
     ) -> AsyncLLMResponseHandle:
-        handle = await llm.create_completion(request=request, mode="qwen_omni")
+        handle = await llm.create_completion(request=request, mode="openai")
         return handle
 
     async def resolve_pads(self):
