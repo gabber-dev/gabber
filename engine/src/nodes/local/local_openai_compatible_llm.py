@@ -12,7 +12,7 @@ from utils import get_full_content_from_deltas
 from nodes.llm import BaseLLM
 
 
-class QwenOmniLLM(BaseLLM):
+class LocalOpenAICompatibleLLM(BaseLLM):
     @classmethod
     def get_description(cls) -> str:
         return "Send and receive responses from any Qwen-omni language model"
