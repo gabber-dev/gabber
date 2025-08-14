@@ -4,7 +4,7 @@
 import base64
 from typing import Any
 
-from utils import ItalicRemover, ParenthesisRemover
+from utils import ItalicRemover, ParenthesisRemover, EmojiRemover
 
 from .tts import MultiplexWebSocketTTS
 
@@ -19,6 +19,7 @@ class CartesiaTTS(MultiplexWebSocketTTS):
         self._api_key = api_key
         self._italic_remover = ItalicRemover()
         self._parenthesis_remover = ParenthesisRemover()
+        self._emoji_remover = EmojiRemover()
 
     def start_session_payload(
         self, *, context_id: str, voice: str
@@ -28,6 +29,7 @@ class CartesiaTTS(MultiplexWebSocketTTS):
     def push_text_payload(
         self, *, text: str, context_id: str, voice: str
     ) -> dict[str, Any]:
+        text = self._emoji_remover.push_text(text)
         text = self._parenthesis_remover.push_text(text)
         text = self._italic_remover.push_text(text)
         if not text.endswith(" "):

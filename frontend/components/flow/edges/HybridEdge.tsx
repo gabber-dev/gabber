@@ -3,7 +3,13 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { getBezierPath, BaseEdge, EdgeProps, Position, Node } from "@xyflow/react";
+import {
+  getBezierPath,
+  BaseEdge,
+  EdgeProps,
+  Position,
+  Node,
+} from "@xyflow/react";
 import { getDataTypeColor } from "../blocks/components/pads/utils/dataTypeColors";
 import { useEditor } from "@/hooks/useEditor";
 
@@ -51,10 +57,12 @@ export function HybridEdge({
     // Prefer live editor_dimensions from node data, fallback to measured
     const sourceHeight =
       (sourceNode?.data as any)?.editor_dimensions?.[1] ??
-      (sourceNode?.measured?.height ?? null);
+      sourceNode?.measured?.height ??
+      null;
     const targetHeight =
       (targetNode?.data as any)?.editor_dimensions?.[1] ??
-      (targetNode?.measured?.height ?? null);
+      targetNode?.measured?.height ??
+      null;
 
     const measuredSourceBottom =
       sourceNode && sourceHeight ? sourceNode.position.y + sourceHeight : null;
