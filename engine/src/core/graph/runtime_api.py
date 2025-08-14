@@ -42,13 +42,13 @@ class RuntimeApi:
                 ev_value = PadTriggeredValue_String(value=v)
             elif isinstance(v, bool):
                 ev_value = PadTriggeredValue_Boolean(value=v)
-            elif isinstance(v, runtime_types.AudioClip):
-                trans = v.transcription if v.transcription else ""
+            elif isinstance(value, runtime_types.AudioClip):
+                trans = value.transcription if value.transcription else ""
                 ev_value = PadTriggeredValue_AudioClip(
-                    transcript=trans, duration=v.duration
+                    transcript=trans, duration=value.duration
                 )
-            elif isinstance(v, runtime_types.VideoClip):
-                ev_value = PadTriggeredValue_VideoClip(duration=v.duration)
+            elif isinstance(value, runtime_types.VideoClip):
+                ev_value = PadTriggeredValue_VideoClip(duration=value.duration)
             else:
                 ev_value = PadTriggeredValue_Trigger()
             dc_queue.put_nowait(
