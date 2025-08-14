@@ -138,7 +138,7 @@ class RuntimeApi:
                     )
                     return
 
-                value = serialize.deserialize_pad_value(tcs[0], pad_obj)
+                value = serialize.deserialize_pad_value(tcs[0], payload.value)
                 ctx = pad.RequestContext(parent=None)
                 complete_resp.payload = RuntimeResponsePayload_PushValue(
                     type="push_value"

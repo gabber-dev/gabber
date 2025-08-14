@@ -9,7 +9,7 @@ from lib.llm import AsyncLLMResponseHandle, LLMRequest, openai_compatible
 from nodes.llm import BaseLLM
 
 
-class QwenOmniLLM(BaseLLM):
+class LocalOpenAICompatibleLLM(BaseLLM):
     @classmethod
     def get_description(cls) -> str:
         return "Send and receive responses from any Qwen-omni language model"
@@ -21,7 +21,7 @@ class QwenOmniLLM(BaseLLM):
         )
 
     def supports_tool_calls(self) -> bool:
-        return False
+        return True
 
     def base_url(self) -> str:
         port_pad = cast(pad.PropertySinkPad, self.get_pad_required("port"))
