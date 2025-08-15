@@ -76,20 +76,20 @@ export function PadHandle({ data, isActive = false }: Props) {
 
   // Create dynamic styles for the handle
   const handleStyle = useMemo(() => {
-    const translateX = direction === "source" ? "translateX(50%)" : "translateX(-50%)";
+    const baseTranslate = direction === "source" ? "translate(50%, -50%)" : "translate(-50%, -50%)";
     const baseStyle = {
-      width: "18px",
-      height: "18px",
+      width: "12px",
+      height: "12px",
       borderRadius: "9999px",
       border: hasConnections ? `2px solid ${dataTypeColor.border}` : "none",
       background: dataTypeColor.background,
       backgroundImage: hasConnections
-        ? `radial-gradient(circle at center, #000 22%, ${dataTypeColor.background} 24%)`
+        ? `radial-gradient(circle at center, #000 30%, ${dataTypeColor.background} 32%)`
         : "none",
       opacity: hasConnections ? 0.9 : 0.7,
       boxSizing: "border-box" as const,
       transition: "transform 300ms ease-in-out, box-shadow 300ms ease-in-out, opacity 150ms ease-in-out",
-      transform: `${translateX} ${isActive ? "scale(1.2)" : "scale(1)"}`,
+      transform: `${baseTranslate} ${isActive ? "scale(1.2)" : "scale(1)"}`,
       boxShadow: isActive ? `0 0 8px ${dataTypeColor.border}` : "none",
     } as const;
     return baseStyle;
@@ -101,13 +101,9 @@ export function PadHandle({ data, isActive = false }: Props) {
       onMouseEnter={() => setIsModalOpen(true)}
       onMouseLeave={() => setIsModalOpen(false)}
     >
-      <Handle
-        className="!w-3 !h-3"
-        style={handleStyle}
-        type={direction}
-        position={position}
-        id={data.id}
-      />
+      <div className="absolute" style={{ top: "50%", [position === Position.Right ? "right" : "left"]: 0 }}>
+        <Handle style={handleStyle} type={direction} position={position} id={data.id} />
+      </div>
       {/* inner dot rendered via backgroundImage when connected */}
       {isModalOpen && (
         <div
