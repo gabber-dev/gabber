@@ -39,6 +39,19 @@ class LLMContext(node.Node):
         new_user_message = cast(
             pad.StatelessSourcePad, self.get_pad_required("new_user_message")
         )
+        max_videos_pad = cast(
+            pad.PropertySourcePad, self.get_pad_required("max_videos")
+        )
+        max_audios_pad = cast(
+            pad.PropertySourcePad, self.get_pad_required("max_audios")
+        )
+        max_images_pad = cast(
+            pad.PropertySourcePad, self.get_pad_required("max_images")
+        )
+        max_videos = cast(int, max_videos_pad.get_value())
+        max_audios = cast(int, max_audios_pad.get_value())
+        max_images = cast(int, max_images_pad.get_value())
+
         source = cast(pad.PropertySourcePad, self.get_pad_required("source"))
         tasks: list[asyncio.Task] = []
 
@@ -62,13 +75,69 @@ class LLMContext(node.Node):
                     for tool_call in msg.tool_calls:
                         tool_call_ids.add(tool_call.call_id)
 
-            final_pruned = []
+            final_pruned: list[runtime_types.ContextMessage] = []
             for msg in pruned:
                 if msg.role == runtime_types.ContextMessageRole.TOOL:
                     if msg.tool_call_id in tool_call_ids:
                         final_pruned.append(msg)
                 else:
                     final_pruned.append(msg)
+
+            audio_count = 0
+            video_count = 0
+            image_count = 0
+            for msg in final_pruned[::-1]:
+                for content in msg.content:
+                    if isinstance(
+                        content, runtime_types.ContextMessageContentItem_Audio
+                    ):
+                        audio_count += 1
+                    elif isinstance(
+                        content, runtime_types.ContextMessageContentItem_Video
+                    ):
+                        video_count += 1
+                    elif isinstance(
+                        content, runtime_types.ContextMessageContentItem_Image
+                    ):
+                        image_count += 1
+
+                if audio_count > max_audios:
+                    text_converted: list[runtime_types.ContextMessageContentItem] = [
+                        runtime_types.ContextMessageContentItem_Text(
+                            content=cast(
+                                str,
+                                cast(
+                                    runtime_types.ContextMessageContentItem_Audio, c
+                                ).clip.transcription,
+                            )
+                        )
+                        for c in msg.content
+                        if isinstance(c, runtime_types.ContextMessageContentItem_Audio)
+                        and c.clip.transcription is not None
+                    ]
+                    msg.content = text_converted + [
+                        c
+                        for c in msg.content
+                        if not isinstance(
+                            c, runtime_types.ContextMessageContentItem_Audio
+                        )
+                    ]
+                if video_count > max_videos:
+                    msg.content = [
+                        content
+                        for content in msg.content
+                        if not isinstance(
+                            content, runtime_types.ContextMessageContentItem_Video
+                        )
+                    ]
+                if image_count > max_images:
+                    msg.content = [
+                        content
+                        for content in msg.content
+                        if not isinstance(
+                            content, runtime_types.ContextMessageContentItem_Image
+                        )
+                    ]
 
             new_values.extend(final_pruned)
             return new_values
@@ -121,6 +190,39 @@ class LLMContext(node.Node):
                 value=64,
             )
             self.pads.append(max_non_system_messages)
+
+        max_videos = cast(pad.PropertySinkPad, self.get_pad("max_videos"))
+        if not max_videos:
+            max_videos = pad.PropertySinkPad(
+                id="max_videos",
+                group="max_videos",
+                owner_node=self,
+                type_constraints=[pad.types.Integer(minimum=0)],
+                value=2,
+            )
+            self.pads.append(max_videos)
+
+        max_audios = cast(pad.PropertySinkPad, self.get_pad("max_audios"))
+        if not max_audios:
+            max_audios = pad.PropertySinkPad(
+                id="max_audios",
+                group="max_audios",
+                owner_node=self,
+                type_constraints=[pad.types.Integer(minimum=0)],
+                value=2,
+            )
+            self.pads.append(max_audios)
+
+        max_images = cast(pad.PropertySinkPad, self.get_pad("max_images"))
+        if not max_images:
+            max_images = pad.PropertySinkPad(
+                id="max_images",
+                group="max_images",
+                owner_node=self,
+                type_constraints=[pad.types.Integer(minimum=0)],
+                value=2,
+            )
+            self.pads.append(max_images)
 
         system_message = cast(pad.PropertySinkPad, self.get_pad("system_message"))
         if not system_message:
@@ -177,6 +279,9 @@ class LLMContext(node.Node):
             system_message,
             new_user_message,
             max_non_system_messages,
+            max_images,
+            max_audios,
+            max_videos,
         ]
         for i in range(max_index + 2):  # +2 to include next ID and one extra
             pad_id = f"insert_{i}"
