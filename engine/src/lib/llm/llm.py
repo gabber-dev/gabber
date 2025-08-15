@@ -62,22 +62,34 @@ class LLMRequest:
                 }
                 res.append(tool_msg)
                 continue
-            new_msg: chat.ChatCompletionMessageParam | None = None
+            new_msg: Any = {
+                "role": role,
+                "content": [],
+            }
             for cnt in msg.content:
                 if isinstance(cnt, ContextMessageContentItem_Audio):
                     if not cnt.clip.transcription:
                         logging.warning(
                             "Audio content is not supported in OpenAI compatible LLMs and no transcription to fall back on."
                         )
-                    new_msg = {
-                        "role": role,
-                        "content": cnt.clip.transcription,
+                    new_cnt = {
+                        "type": "text",
+                        "text": cnt.clip.transcription,
                     }
-
+                    new_msg["content"].append(new_cnt)
                 elif isinstance(cnt, ContextMessageContentItem_Video):
-                    logging.warning(
-                        "Video content is not supported in OpenAI compatible LLMs."
-                    )
+                    if not cnt.clip.mp4_bytes:
+                        encoder = MP4_Encoder()
+                        encoder.push_frames(cnt.clip.video)
+                        cnt.clip.mp4_bytes = await encoder.eos()
+
+                    b64_video = base64.b64encode(cnt.clip.mp4_bytes).decode("utf-8")
+
+                    video_cnt: dict[str, Any] = {
+                        "type": "video_url",
+                        "video_url": {"url": f"data:video/mp4;base64,{b64_video}"},
+                    }
+                    new_msg["content"].append(cast(Any, video_cnt))
                 elif isinstance(cnt, ContextMessageContentItem_Image):
                     oai_cnt: chat.ChatCompletionContentPartImageParam = {
                         "type": "image_url",
@@ -85,15 +97,13 @@ class LLMRequest:
                             "url": f"data:image/png;base64,{cnt.frame.to_base64_png()}"
                         },
                     }
-                    new_msg = {
-                        "role": role,
-                        "content": [oai_cnt],
-                    }
+                    new_msg["content"].append(oai_cnt)
                 elif isinstance(cnt, ContextMessageContentItem_Text):
-                    new_msg = {
-                        "role": role,
-                        "content": cnt.content,
+                    new_cnt = {
+                        "type": "text",
+                        "text": cnt.content,
                     }
+                    new_msg["content"].append(new_cnt)
                 else:
                     raise ValueError(f"Unsupported content type: {type(cnt)}")
 
@@ -163,7 +173,6 @@ class LLMRequest:
                             },
                         )
                     )
-
                 elif isinstance(cnt, ContextMessageContentItem_Video):
                     if not cnt.clip.mp4_bytes:
                         encoder = MP4_Encoder()
