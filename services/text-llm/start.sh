@@ -19,6 +19,7 @@ docker run \
   --model "$MODEL" \
   --port 80 \
   --gpu-memory-utilization 0.9 \
-  --max-model-len 1024 \
+  --max-model-len 32000 \
+  --limit-mm-per-prompt '{"image":8,"video":8,"audio":8}' \
   --enable-auto-tool-choice \
   --tool-call-parser hermes
