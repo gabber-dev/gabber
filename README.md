@@ -118,8 +118,22 @@ Currently available SDKs include:
 
 Refer to the SDK documentation in the main Gabber repo for installation and usage details.
 
+## Roadmap
+
+Help us develop our roadmap! Right now the Gabber foundation is more-or-less solidified and we will move towards
+creating more nodes and examples. Here is a non-ordered list of things we find interesting:
+- Computer Use Nodes
+- Unity SDK + Robotics Simulation
+- SIP Nodes
+- Discord, Zoom, Telegram, Google Meet nodes
+- Faster Computer Vision Stuff (yolo, mediapipe, CLIP, etc)
+- Multi-participant turn taking
+- More sophisticated examples with our state-machine system to flex its capabilities
+
 ## Example Apps 
-After starting Gabber using `make all`, you can navigate to the examples tab to play around with different pre-made apps. SDK minimal examples are located within the corresponding SDK directories when appropriate. More elaborate examples (for example a Unity app) will be in their own dedicated repos.
+After starting Gabber using `make all`, you can navigate to the examples tab to play around with different pre-made apps. SDK minimal examples are located within the corresponding SDK directories when appropriate. 
+
+More elaborate examples (for example a Unity app) will be in their own dedicated repos.
 
 ## Community
 Gabber is source-available and developer-first — we’d love for you to build with us.
