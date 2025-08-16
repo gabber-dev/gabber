@@ -108,19 +108,32 @@ Gabber provides SDKs to help you integrate these services into your applications
 
 Currently available SDKs include:
 - **JavaScript/TypeScript SDK** — framework-agnostic client library for Node.js, browsers, Bun, and Deno. Ideal for backend services or non-React frontends.
-- **React SDK** — prebuilt hooks, providers, and UI components for building Gabber-powered apps in React or React Native with minimal setup.
-- **Python SDK** — for backend integrations, prototyping, and scripting.
+- **React SDK**: prebuilt hooks, providers, and UI components for building Gabber-powered apps in React or React Native with minimal setup. Wraps the Typescript SDK.
+- **Python SDK**: for backend integrations, prototyping, scripting, Rasberry Pi, etc. (Coming Soon)
+- **Unity SDK**: for giving eyes, ears, and a voice to your Unity games & simulations. (Coming Soon)
+- **iOS SDK**: (Coming Soon, let us know if this is a priority for you.)
+- **Android SDK**: (Coming Soon, let us know if this is a priority for you.)
+- **React Native SDK**: (Coming Soon, let us know if this is a priority for you.)
+- **Flutter SDK**: (Coming Soon, let us know if this is a priority for you.)
 
 Refer to the SDK documentation in the main Gabber repo for installation and usage details.
 
-## Example Apps
-This repository includes example applications demonstrating how to use Gabber services together.
-To explore them:
-1. Run the repository locally (`make all` or run each service individually).
-2. Navigate to the **Examples** tab in the dashboard.
-3. Choose a sample app and follow the instructions.
+## Roadmap
 
-These examples showcase real-world usage patterns for voice, text, and multimodal AI.
+Help us develop our roadmap! Right now the Gabber foundation is more-or-less solidified and we will move towards
+creating more nodes and examples. Here is a non-ordered list of things we find interesting:
+- Computer Use Nodes
+- Unity SDK + Robotics Simulation
+- SIP Nodes
+- Discord, Zoom, Telegram, Google Meet nodes
+- Faster Computer Vision Stuff (yolo, mediapipe, CLIP, etc)
+- Multi-participant turn taking
+- More sophisticated examples with our state-machine system to flex its capabilities
+
+## Example Apps 
+After starting Gabber using `make all`, you can navigate to the examples tab to play around with different pre-made apps. SDK minimal examples are located within the corresponding SDK directories when appropriate. 
+
+More elaborate examples (for example a Unity app) will be in their own dedicated repos.
 
 ## Community
 Gabber is source-available and developer-first — we’d love for you to build with us.
