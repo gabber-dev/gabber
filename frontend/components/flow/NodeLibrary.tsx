@@ -51,6 +51,8 @@ export function NodeLibrary({ setIsModalOpen }: NodeLibraryProps) {
       options.push("My Subgraphs");
     }
 
+    options.push("Official Subgraphs");
+
     return options.sort();
   }, [nodeLibrary]);
 
@@ -96,10 +98,15 @@ export function NodeLibrary({ setIsModalOpen }: NodeLibraryProps) {
         const { metadata } = node as any;
 
         // Treat subgraph nodes as having a special "My Subgraphs" category
-        const effectivePrimary =
-          node.type === "subgraph" ? "My Subgraphs" : metadata?.primary;
+        let effectivePrimary = metadata?.primary;
+        if (node.type === "subgraph") {
+          if (node.editable) {
+            effectivePrimary = "My Subgraphs";
+          } else {
+            effectivePrimary = "Official Subgraphs";
+          }
+        }
 
-        // Apply filters only if metadata exists or it's a subgraph
         if (metadata || node.type === "subgraph") {
           if (selectedMainCategory && effectivePrimary !== selectedMainCategory)
             return false;
@@ -243,12 +250,7 @@ export function NodeLibrary({ setIsModalOpen }: NodeLibraryProps) {
 
       setDraggedItem(null);
     },
-    [
-      draggedItem,
-      insertNode,
-      insertSubGraph,
-      screenToFlowPosition,
-    ],
+    [draggedItem, insertNode, insertSubGraph, screenToFlowPosition],
   );
 
   // Attach global listeners for drop anywhere on canvas
@@ -382,14 +384,27 @@ export function NodeLibrary({ setIsModalOpen }: NodeLibraryProps) {
           <div className="px-2 pt-2 pb-4">
             {(() => {
               // Group blocks by primary category
-              const groupedBlocks = filteredBlocks.reduce((acc, block) => {
-                const primary = block.type === "subgraph" 
-                  ? "My Subgraphs" 
-                  : (block as any).metadata?.primary || "Other";
-                if (!acc[primary]) acc[primary] = [];
-                acc[primary].push(block);
-                return acc;
-              }, {} as Record<string, typeof filteredBlocks>);
+              const groupedBlocks: Record<
+                string,
+                (GraphLibraryItem_Node | GraphLibraryItem_SubGraph)[]
+              > = {};
+              for (const block of filteredBlocks) {
+                let primary = "Other";
+                if (block.type === "node") {
+                  primary = block.metadata?.primary || primary;
+                } else if (block.type === "subgraph") {
+                  if (block.editable) {
+                    primary = "My Subgraphs";
+                  } else {
+                    primary = "Official Subgraphs";
+                  }
+                }
+                if (!groupedBlocks[primary]) {
+                  groupedBlocks[primary] = [];
+                }
+
+                groupedBlocks[primary].push(block);
+              }
 
               // Sort categories alphabetically
               const sortedCategories = Object.keys(groupedBlocks).sort();
@@ -472,8 +487,6 @@ export function NodeLibrary({ setIsModalOpen }: NodeLibraryProps) {
           </div>
         )}
       </div>
-
-
     </div>
   );
 }
