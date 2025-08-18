@@ -297,7 +297,6 @@ class TTSJob:
                     input_text = (
                         input_text + " ...."
                     )  # Adding these dots helps the early cutoff issue that kitten tts has
-                    logging.debug(f"NEIL Processing text: '{input_text}'")
                     try:
                         async with session.post(
                             url, json={"text": input_text, "voice": self._voice}

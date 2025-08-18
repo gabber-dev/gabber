@@ -10,3 +10,4 @@ LLAMA_SERVER_PATH=${LLAMA_SERVER_PATH:-llama-server}
   -np 4 \
   -c 8192 \
   --port 7002 \
+  --host 0.0.0.0

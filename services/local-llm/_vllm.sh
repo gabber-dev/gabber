@@ -15,12 +15,12 @@ docker build --tag local-llm:latest "$BASEDIR"
 docker run \
   --name local-llm \
   --gpus all \
-  -p 127.0.0.1:7002:80 \
   -v ~/.cache/huggingface:/root/.cache/huggingface \
   -v ~/.cache/vllm:/root/.cache/vllm \
+  --network host \
   local-llm:latest \
   --model "$MODEL" \
-  --port 80 \
+  --port 7002 \
   --gpu-memory-utilization 0.9 \
   --max-model-len 32000 \
   --limit-mm-per-prompt '{"image":8,"video":8,"audio":8}' \

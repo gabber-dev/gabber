@@ -12,9 +12,6 @@ services:
     environment:
       - GABBER_SECRET_FILE=.secret
       - GABBER_REPOSITORY_DIR=.gabber
-      - LIVEKIT_URL=ws://livekit:7880
-      - LOCAL_LLM_HOST=hub.docker.internal
-      - KITTEN_TTS_HOST=hub.docker.internal
 
   repository:
     build:
@@ -30,8 +27,6 @@ services:
       - GABBER_SECRET_FILE=.secret
       - GABBER_REPOSITORY_DIR=.gabber
       - LIVEKIT_URL=ws://livekit:7880
-      - LOCAL_LLM_HOST=hub.docker.internal
-      - KITTEN_TTS_HOST=hub.docker.internal
 
   engine:
     depends_on:
@@ -47,8 +42,10 @@ services:
       - GABBER_SECRET_FILE=.secret
       - GABBER_REPOSITORY_DIR=.gabber
       - LIVEKIT_URL=ws://livekit:7880
-      - LOCAL_LLM_HOST=hub.docker.internal
-      - KITTEN_TTS_HOST=hub.docker.internal
+      - LOCAL_LLM_HOST=host.docker.internal
+      - KITTEN_TTS_HOST=host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   livekit:
     image: livekit/livekit-server:latest

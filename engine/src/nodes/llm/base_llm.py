@@ -255,7 +255,6 @@ class BaseLLM(node.Node, ABC):
                 started_source.push_item(runtime_types.Trigger(), ctx)
                 thinking = False
                 async for item in handle:
-                    logging.debug(f"NEIL Received item: {item}")
                     cnt = item.content
                     if not cnt:
                         continue
@@ -298,7 +297,6 @@ class BaseLLM(node.Node, ABC):
                         )
 
                 full_content = get_full_content_from_deltas(all_deltas)
-                logging.debug(f"NEIL Full content: {full_content}")
                 context_message_source.push_item(
                     runtime_types.ContextMessage(
                         role=runtime_types.ContextMessageRole.ASSISTANT,
