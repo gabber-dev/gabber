@@ -13,16 +13,14 @@ If you found this interesting, please consider leaving a star ⭐️. We will be
 
 ### Start Gabber Using Make 
 
-#### Dependencies
+#### Install Dependencies
 
-__LiveKit__:
-The frontend sends/receives media to/from the backend services via a local WebRTC session.
+LiveKit is a WebRTC server that the frontend uses to send/receive media to/from the Gabber Engine.
 ```bash
 brew install livekit
 ```
 
-__uv__:
-For python dependency management.
+UV for python dependency management.
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
