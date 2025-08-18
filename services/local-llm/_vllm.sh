@@ -2,22 +2,25 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-MODEL="${MODEL:-Qwen/Qwen3-14B-AWQ}"
+BASEDIR="$(dirname "$(realpath "$0")")"
+MODEL="${MODEL:-Qwen/Qwen2.5-Omni-7B-AWQ}"
 
 # Stop and remove any existing container named qwen-omni
-docker stop text-llm 
-docker rm text-llm 
+docker stop local-llm 
+docker rm local-llm 
+
+docker build --tag local-llm:latest "$BASEDIR"
 
 # Run the new container
 docker run \
-  --name text-llm \
+  --name local-llm \
   --gpus all \
-  -p 127.0.0.1:7002:80 \
   -v ~/.cache/huggingface:/root/.cache/huggingface \
   -v ~/.cache/vllm:/root/.cache/vllm \
-  vllm/vllm-openai:v0.10.0 \
+  --network host \
+  local-llm:latest \
   --model "$MODEL" \
-  --port 80 \
+  --port 7002 \
   --gpu-memory-utilization 0.9 \
   --max-model-len 32000 \
   --limit-mm-per-prompt '{"image":8,"video":8,"audio":8}' \

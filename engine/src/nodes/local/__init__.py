@@ -3,10 +3,8 @@
 
 from .kitten_tts import KittenTTS
 from .local_openai_compatible_llm import LocalOpenAICompatibleLLM
-from .qwen_omni_llm import QwenOmniLLM
 
 ALL_NODES = [
     KittenTTS,
-    QwenOmniLLM,
     LocalOpenAICompatibleLLM,
 ]

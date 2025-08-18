@@ -38,7 +38,9 @@ class LLMRequest:
     context: list[ContextMessage]
     tool_definitions: list[ToolDefinition]
 
-    async def to_openai_completion_input(self) -> list[chat.ChatCompletionMessageParam]:
+    async def to_openai_completion_input(
+        self, *, audio_support: bool, video_support: bool
+    ) -> list[chat.ChatCompletionMessageParam]:
         res: list[chat.ChatCompletionMessageParam] = []
         for msg in self.context:
             role = cast(Any, msg.role.value)
@@ -68,28 +70,61 @@ class LLMRequest:
             }
             for cnt in msg.content:
                 if isinstance(cnt, ContextMessageContentItem_Audio):
-                    if not cnt.clip.transcription:
-                        logging.warning(
-                            "Audio content is not supported in OpenAI compatible LLMs and no transcription to fall back on."
+                    if audio_support:
+                        wav_buffer = io.BytesIO()
+                        with wave.open(wav_buffer, "wb") as wav_file:
+                            wav_file.setnchannels(1)
+                            wav_file.setsampwidth(2)
+                            wav_file.setframerate(24000)
+                            wav_file.writeframes(cnt.clip.concatted_24000hz)
+
+                        wav_bytes = wav_buffer.getvalue()
+                        base64_audio = base64.b64encode(wav_bytes).decode("utf-8")
+                        new_msg["content"].append(
+                            cast(
+                                Any,
+                                {
+                                    "type": "input_audio",
+                                    "input_audio": {
+                                        "data": base64_audio,
+                                        "format": "wav",
+                                    },
+                                },
+                            )
                         )
-                    new_cnt = {
-                        "type": "text",
-                        "text": cnt.clip.transcription,
-                    }
-                    new_msg["content"].append(new_cnt)
+                    else:
+                        if not cnt.clip.transcription:
+                            logging.warning(
+                                "Audio content is not supported in OpenAI compatible LLMs and no transcription to fall back on."
+                            )
+                        new_cnt = {
+                            "type": "text",
+                            "text": cnt.clip.transcription,
+                        }
+                        new_msg["content"].append(new_cnt)
                 elif isinstance(cnt, ContextMessageContentItem_Video):
-                    if not cnt.clip.mp4_bytes:
-                        encoder = MP4_Encoder()
-                        encoder.push_frames(cnt.clip.video)
-                        cnt.clip.mp4_bytes = await encoder.eos()
+                    if video_support:
+                        if not cnt.clip.mp4_bytes:
+                            encoder = MP4_Encoder()
+                            encoder.push_frames(cnt.clip.video)
+                            cnt.clip.mp4_bytes = await encoder.eos()
 
-                    b64_video = base64.b64encode(cnt.clip.mp4_bytes).decode("utf-8")
+                        b64_video = base64.b64encode(cnt.clip.mp4_bytes).decode("utf-8")
 
-                    video_cnt: dict[str, Any] = {
-                        "type": "video_url",
-                        "video_url": {"url": f"data:video/mp4;base64,{b64_video}"},
-                    }
-                    new_msg["content"].append(cast(Any, video_cnt))
+                        video_cnt: dict[str, Any] = {
+                            "type": "video_url",
+                            "video_url": {"url": f"data:video/mp4;base64,{b64_video}"},
+                        }
+                        new_msg["content"].append(cast(Any, video_cnt))
+                    else:
+                        for frame in cnt.clip.video:
+                            oai_cnt: chat.ChatCompletionContentPartImageParam = {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/png;base64,{frame.to_base64_png()}"
+                                },
+                            }
+                            new_msg["content"].append(oai_cnt)
                 elif isinstance(cnt, ContextMessageContentItem_Image):
                     oai_cnt: chat.ChatCompletionContentPartImageParam = {
                         "type": "image_url",
@@ -104,102 +139,6 @@ class LLMRequest:
                         "text": cnt.content,
                     }
                     new_msg["content"].append(new_cnt)
-                else:
-                    raise ValueError(f"Unsupported content type: {type(cnt)}")
-
-            if new_msg is None:
-                logging.warning(
-                    "Message with no content found in context. "
-                    "This is not supported in OpenAI compatible LLMs."
-                )
-                continue
-
-            if msg.role == ContextMessageRole.ASSISTANT:
-                if msg.tool_calls:
-                    tcs: list[chat.ChatCompletionMessageToolCallParam] = []
-                    for call in msg.tool_calls:
-                        args = json.dumps(call.arguments) if call.arguments else ""
-                        tcs.append(
-                            chat.ChatCompletionMessageToolCallParam(
-                                id=call.call_id,
-                                function=chat.chat_completion_message_tool_call_param.Function(
-                                    name=call.name,
-                                    arguments=args,
-                                ),
-                                type="function",
-                            )
-                        )
-                    cast(chat.ChatCompletionAssistantMessageParam, new_msg)[
-                        "tool_calls"
-                    ] = tcs
-
-            res.append(new_msg)
-
-        return res
-
-    async def to_qwen_omni_input(self) -> list[chat.ChatCompletionMessageParam]:
-        res: list[chat.ChatCompletionMessageParam] = []
-        for msg in self.context:
-            role = cast(Any, msg.role.value)
-            if msg.role == ContextMessageRole.TOOL:
-                logging.warning(
-                    "Tool message found in context. "
-                    "This is not supported in Qwen Omni compatible LLMs."
-                )
-                continue
-            new_msg: Any = {
-                "role": role,
-                "content": [],
-            }
-            for cnt in msg.content:
-                if isinstance(cnt, ContextMessageContentItem_Audio):
-                    wav_buffer = io.BytesIO()
-                    with wave.open(wav_buffer, "wb") as wav_file:
-                        wav_file.setnchannels(1)
-                        wav_file.setsampwidth(2)
-                        wav_file.setframerate(24000)
-                        wav_file.writeframes(cnt.clip.concatted_24000hz)
-
-                    wav_bytes = wav_buffer.getvalue()
-                    base64_audio = base64.b64encode(wav_bytes).decode("utf-8")
-                    new_msg["content"].append(
-                        cast(
-                            Any,
-                            {
-                                "type": "audio_url",
-                                "audio_url": {
-                                    "url": f"data:audio/wav;base64,{base64_audio}"
-                                },
-                            },
-                        )
-                    )
-                elif isinstance(cnt, ContextMessageContentItem_Video):
-                    if not cnt.clip.mp4_bytes:
-                        encoder = MP4_Encoder()
-                        encoder.push_frames(cnt.clip.video)
-                        cnt.clip.mp4_bytes = await encoder.eos()
-
-                    b64_video = base64.b64encode(cnt.clip.mp4_bytes).decode("utf-8")
-
-                    video_cnt: dict[str, Any] = {
-                        "type": "video_url",
-                        "video_url": {"url": f"data:video/mp4;base64,{b64_video}"},
-                    }
-                    new_msg["content"].append(cast(Any, video_cnt))
-                elif isinstance(cnt, ContextMessageContentItem_Image):
-                    oai_cnt: chat.ChatCompletionContentPartImageParam = {
-                        "type": "image_url",
-                        "image_url": {
-                            "url": f"data:image/png;base64,{cnt.frame.to_base64_png()}"
-                        },
-                    }
-                    new_msg["content"].append(cast(Any, oai_cnt))
-                elif isinstance(cnt, ContextMessageContentItem_Text):
-                    new_cnt = {
-                        "type": "text",
-                        "text": cnt.content,
-                    }
-                    new_msg["content"].append(cast(Any, new_cnt))
                 else:
                     raise ValueError(f"Unsupported content type: {type(cnt)}")
 

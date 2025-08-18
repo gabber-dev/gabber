@@ -1,0 +1,71 @@
+services:
+  editor:
+    build:
+      context: ./engine
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./.gabber:/app/.gabber
+      - ./.secret:/app/.secret
+    command: ["uv", "run", "src/main.py", "editor"]
+    environment:
+      - GABBER_SECRET_FILE=.secret
+      - GABBER_REPOSITORY_DIR=.gabber
+
+  repository:
+    build:
+      context: ./engine
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./.gabber:/app/.gabber
+      - ./.secret:/app/.secret
+    command: ["uv", "run", "src/main.py", "repository"]
+    environment:
+      - GABBER_SECRET_FILE=.secret
+      - GABBER_REPOSITORY_DIR=.gabber
+      - LIVEKIT_URL=ws://livekit:7880
+
+  engine:
+    depends_on:
+      - livekit
+    build:
+      context: ./engine
+      dockerfile: Dockerfile
+    volumes:
+      - ./.gabber:/app/.gabber
+      - ./.secret:/app/.secret
+    command: ["uv", "run", "src/main.py", "engine"]
+    environment:
+      - GABBER_SECRET_FILE=.secret
+      - GABBER_REPOSITORY_DIR=.gabber
+      - LIVEKIT_URL=ws://livekit:7880
+      - LOCAL_LLM_HOST=host.docker.internal
+      - KITTEN_TTS_HOST=host.docker.internal
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  livekit:
+    image: livekit/livekit-server:latest
+    ports:
+      - "7880:7880"
+      - "60000-60100:60000-60100/udp"
+    command: ["--dev", "--bind", "0.0.0.0"]
+    environment:
+      - LIVEKIT_LOG_LEVEL=INFO
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - REPOSITORY_HOST=repository:8001
+
+  kitten_tts:
+    build:
+      context: services/kitten-tts
+      dockerfile: Dockerfile
