@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: SUL-1.0
 
 from .kitten_tts import KittenTTS
-from .local_openai_compatible_llm import LocalOpenAICompatibleLLM
+from .local_llm import LocalLLM
 
 ALL_NODES = [
     KittenTTS,
-    LocalOpenAICompatibleLLM,
+    LocalLLM,
 ]

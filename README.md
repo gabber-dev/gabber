@@ -11,7 +11,9 @@ If you found this interesting, please consider leaving a star ⭐️. We will be
 
 ## Quickstart 
 
-### Install dependencies
+### Start Gabber Using Make 
+
+#### Dependencies
 
 __LiveKit__:
 The frontend sends/receives media to/from the backend services via a local WebRTC session.
@@ -25,10 +27,38 @@ For python dependency management.
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-### Run Everything
+#### Run Everything
 ```bash
 make all
 ```
+
+### Start Gabber Using Docker Compose
+
+```bash
+docker compose up
+```
+
+### Running a Local LLM
+
+If you are using the `LocalLLM` node, you'll need to start an LLM server. LLM scripts are provided for convenience in the `services/local-llm` directory.
+
+On MacOS, make sure [llama.cpp](https://https://github.com/ggml-org/llama.cpp) is installed and use llama.cpp scripts. On Linux or WSL you can use the vllm scripts.
+
+```bash
+cd services/local-llm
+```
+
+#### e.g. MacOS:
+
+```bash
+./qwen-omni-7b-q4km_llamacpp.sh
+```
+
+#### e.g. Linux:
+```bash
+./qwen-omni-7b-awq_vllm.sh
+```
+
 
 ### Secrets
 

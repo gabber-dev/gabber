@@ -9,7 +9,7 @@ from core.node import NodeMetadata
 from nodes.llm import BaseLLM
 
 
-class LocalOpenAICompatibleLLM(BaseLLM):
+class LocalLLM(BaseLLM):
     @classmethod
     def get_description(cls) -> str:
         return "Send and receive responses from any Qwen-omni language model"
