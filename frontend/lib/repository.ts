@@ -20,7 +20,10 @@ import {
 } from "@/generated/repository";
 import axios from "axios";
 
-const BASE_URL = "http://localhost:8001";
+let BASE_URL = process.env.REPOSITORY_INTERNAL_HOST;
+if (typeof window !== "undefined") {
+  BASE_URL = "http://localhost:8001";
+}
 export async function getApp(appId: string) {
   const resp = await axios.get(`${BASE_URL}/app/${appId}`);
   return (resp.data as GetAppResponse).app;

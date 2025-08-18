@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
+import os
 import aiohttp
 import logging
 import time
@@ -282,7 +283,8 @@ class TTSJob:
         self._inference_queue.put_nowait(None)
 
     async def run(self):
-        url = "http://localhost:7003/tts"
+        host = os.environ.get("KITTEN_TTS_HOST", "localhost")
+        url = f"http://{host}:7003/tts"
 
         try:
             async with aiohttp.ClientSession() as session:

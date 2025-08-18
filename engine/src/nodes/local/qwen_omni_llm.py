@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: SUL-1.0
 
 from typing import cast
+import os
 
 from core import pad
 from core.node import NodeMetadata
@@ -28,7 +29,9 @@ class QwenOmniLLM(BaseLLM):
         port_value = port_pad.get_value()
         if not isinstance(port_value, int):
             port_value = 7002
-        return f"http://localhost:{port_value}/v1"
+
+        qwen_omni_host = os.environ.get("QWEN_OMNI_HOST", "localhost")
+        return f"http://{qwen_omni_host}:{port_value}/v1"
 
     def model(self) -> str:
         return ""

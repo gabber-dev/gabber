@@ -379,7 +379,7 @@ class RepositoryServer:
             )
 
     async def app_run(self, request: aiohttp.web.Request):
-        livekit_url = "ws://localhost:7880"
+        livekit_url = os.environ.get("LIVEKIT_URL", "ws://localhost:7880")
         livekit_api_key = "devkey"
         livekit_api_secret = "secret"
         room_name = str(uuid4())
@@ -418,7 +418,7 @@ class RepositoryServer:
         )
 
     async def debug_connection(self, request: aiohttp.web.Request):
-        livekit_url = "ws://localhost:7880"
+        livekit_url = os.environ.get("LIVEKIT_URL", "ws://localhost:7880")
         livekit_api_key = "devkey"
         livekit_api_secret = "secret"
         req = messages.DebugConnectionRequest.model_validate(await request.json())

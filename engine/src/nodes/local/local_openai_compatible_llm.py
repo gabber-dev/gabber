@@ -4,6 +4,7 @@
 from typing import cast
 
 from core import pad
+import os
 from core.node import NodeMetadata
 from lib.llm import AsyncLLMResponseHandle, LLMRequest, openai_compatible
 from nodes.llm import BaseLLM
@@ -28,7 +29,10 @@ class LocalOpenAICompatibleLLM(BaseLLM):
         port_value = port_pad.get_value()
         if not isinstance(port_value, int):
             port_value = 7002
-        return f"http://localhost:{port_value}/v1"
+
+        host = os.environ.get("LOCAL_LLM_HOST", "localhost")
+
+        return f"http://{host}:{port_value}/v1"
 
     def model(self) -> str:
         return ""
