@@ -209,8 +209,26 @@ class BaseLLM(node.Node, ABC):
             headers={},
             model=self.model(),
         )
-        video_supported = await self._supports_video(llm)
+
+        # Retry loop in case the LLM is still starting up
+        video_supported = False
+        RETRY_LIMIT = 20
+        for i in range(RETRY_LIMIT):
+            if i == RETRY_LIMIT - 1:
+                logging.error("Failed to check video support after 20 attempts.")
+                video_supported = False
+                break
+
+            try:
+                video_supported = await self._supports_video(llm)
+                break
+            except Exception:
+                logging.error("Failed to check video support, trying again in 5s")
+
+            await asyncio.sleep(5)
+
         audio_supported = await self._supports_audio(llm)
+
         logging.info(f"LLM supports video: {video_supported} audio: {audio_supported}")
 
         running_handle: AsyncLLMResponseHandle | None = None

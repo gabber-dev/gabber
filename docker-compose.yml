@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   editor:
     build:
@@ -16,7 +14,6 @@ services:
       - GABBER_REPOSITORY_DIR=.gabber
       - LIVEKIT_URL=ws://livekit:7880
       - LOCAL_LLM_HOST=hub.docker.internal
-      - OMNI_LLM_HOST=hub.docker.internal
       - KITTEN_TTS_HOST=hub.docker.internal
 
   repository:
@@ -34,7 +31,6 @@ services:
       - GABBER_REPOSITORY_DIR=.gabber
       - LIVEKIT_URL=ws://livekit:7880
       - LOCAL_LLM_HOST=hub.docker.internal
-      - OMNI_LLM_HOST=hub.docker.internal
       - KITTEN_TTS_HOST=hub.docker.internal
 
   engine:
@@ -52,7 +48,6 @@ services:
       - GABBER_REPOSITORY_DIR=.gabber
       - LIVEKIT_URL=ws://livekit:7880
       - LOCAL_LLM_HOST=hub.docker.internal
-      - OMNI_LLM_HOST=hub.docker.internal
       - KITTEN_TTS_HOST=hub.docker.internal
 
   livekit:
