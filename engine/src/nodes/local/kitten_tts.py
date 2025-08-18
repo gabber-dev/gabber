@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
+import os
 import aiohttp
 import logging
 import time
@@ -266,6 +267,7 @@ class TTSJob:
                 break
             if next_end + 1 == len(text) or text[next_end + 1].isspace():
                 sentence = text[pos : next_end + 1]
+                sentence += " "
                 sentences.append(sentence)
                 pos = next_end + 1
                 while pos < len(text) and text[pos].isspace():
@@ -282,14 +284,19 @@ class TTSJob:
         self._inference_queue.put_nowait(None)
 
     async def run(self):
-        url = "http://localhost:7003/tts"
+        host = os.environ.get("KITTEN_TTS_HOST", "localhost")
+        url = f"http://{host}:7003/tts"
 
         try:
             async with aiohttp.ClientSession() as session:
                 while True:
                     input_text = await self._inference_queue.get()
+
                     if input_text is None:
                         break
+                    input_text = (
+                        input_text + " ...."
+                    )  # Adding these dots helps the early cutoff issue that kitten tts has
                     try:
                         async with session.post(
                             url, json={"text": input_text, "voice": self._voice}

@@ -380,6 +380,7 @@ class RepositoryServer:
 
     async def app_run(self, request: aiohttp.web.Request):
         livekit_url = "ws://localhost:7880"
+        internal_livekit_url = os.environ.get("LIVEKIT_URL", livekit_url)
         livekit_api_key = "devkey"
         livekit_api_secret = "secret"
         room_name = str(uuid4())
@@ -395,7 +396,9 @@ class RepositoryServer:
             )
         ).with_identity("human")
         lkapi = api.LiveKitAPI(
-            url=livekit_url, api_key=livekit_api_key, api_secret=livekit_api_secret
+            url=internal_livekit_url,
+            api_key=livekit_api_key,
+            api_secret=livekit_api_secret,
         )
         await lkapi.room.create_room(create=api.CreateRoomRequest(name=room_name))
         await lkapi.agent_dispatch.create_dispatch(
@@ -419,6 +422,7 @@ class RepositoryServer:
 
     async def debug_connection(self, request: aiohttp.web.Request):
         livekit_url = "ws://localhost:7880"
+        internal_livekit_url = os.environ.get("LIVEKIT_URL", livekit_url)
         livekit_api_key = "devkey"
         livekit_api_secret = "secret"
         req = messages.DebugConnectionRequest.model_validate(await request.json())
@@ -439,7 +443,9 @@ class RepositoryServer:
         )
 
         lkapi = api.LiveKitAPI(
-            url=livekit_url, api_key=livekit_api_key, api_secret=livekit_api_secret
+            url=internal_livekit_url,
+            api_key=livekit_api_key,
+            api_secret=livekit_api_secret,
         )
         dispatches = await lkapi.agent_dispatch.list_dispatch(room_name=req.app_run)
         if not dispatches:

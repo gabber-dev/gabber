@@ -102,6 +102,12 @@ class VideoFrame:
         b64 = base64.b64encode(buffer.tobytes()).decode("utf-8")
         return b64
 
+    @classmethod
+    def black_frame(cls, width: int, height: int, timestamp: float) -> "VideoFrame":
+        """Create a black video frame of the given width and height."""
+        data = np.zeros((height, width, 4), dtype=np.uint8)
+        return cls(data=data, width=width, height=height, timestamp=timestamp)
+
 
 @dataclass
 class AudioClip:

@@ -14,11 +14,6 @@ from nodes.core.tool import Tool, ToolGroup
 
 class BaseLLM(node.Node, ABC):
     @abstractmethod
-    async def create_completion(
-        self, llm: openai_compatible.OpenAICompatibleLLM, request: LLMRequest
-    ) -> AsyncLLMResponseHandle: ...
-
-    @abstractmethod
     def supports_tool_calls(self) -> bool: ...
 
     @abstractmethod
@@ -208,12 +203,33 @@ class BaseLLM(node.Node, ABC):
         run_trigger = cast(pad.StatelessSinkPad, self.get_pad_required("run_trigger"))
 
         api_key = await self.api_key()
-        self.llm = openai_compatible.OpenAICompatibleLLM(
+        llm = openai_compatible.OpenAICompatibleLLM(
             base_url=self.base_url(),
             api_key=api_key,
             headers={},
             model=self.model(),
         )
+
+        # Retry loop in case the LLM is still starting up
+        video_supported = False
+        RETRY_LIMIT = 20
+        for i in range(RETRY_LIMIT):
+            if i == RETRY_LIMIT - 1:
+                logging.error("Failed to check video support after 20 attempts.")
+                video_supported = False
+                break
+
+            try:
+                video_supported = await self._supports_video(llm)
+                break
+            except Exception:
+                logging.error("Failed to check video support, trying again in 5s")
+
+            await asyncio.sleep(5)
+
+        audio_supported = await self._supports_audio(llm)
+
+        logging.info(f"LLM supports video: {video_supported} audio: {audio_supported}")
 
         running_handle: AsyncLLMResponseHandle | None = None
         tasks: set[asyncio.Task] = set()
@@ -356,7 +372,11 @@ class BaseLLM(node.Node, ABC):
                 continue
 
             try:
-                running_handle = await self.llm.create_completion(request=request)
+                running_handle = await llm.create_completion(
+                    request=request,
+                    video_support=video_supported,
+                    audio_support=audio_supported,
+                )
                 t = asyncio.create_task(generation_task(running_handle, ctx))
                 tasks.add(t)
                 t.add_done_callback(done_callback)
@@ -364,3 +384,73 @@ class BaseLLM(node.Node, ABC):
                 logging.error(f"Failed to start LLM generation: {e}", exc_info=e)
                 finished_source.push_item(runtime_types.Trigger(), ctx)
         await cancel_task_t
+
+    async def _supports_video(self, llm: openai_compatible.OpenAICompatibleLLM) -> bool:
+        dummy_request = LLMRequest(
+            context=[
+                runtime_types.ContextMessage(
+                    role=runtime_types.ContextMessageRole.SYSTEM,
+                    content=[
+                        runtime_types.ContextMessageContentItem_Text(content="."),
+                        runtime_types.ContextMessageContentItem_Video(
+                            clip=runtime_types.VideoClip(
+                                video=[
+                                    runtime_types.VideoFrame.black_frame(16, 16, 0.0)
+                                ]
+                            )
+                        ),
+                    ],
+                    tool_calls=[],
+                )
+            ],
+            tool_definitions=[],
+        )
+        try:
+            handle = await llm.create_completion(
+                request=dummy_request, video_support=True, audio_support=False
+            )
+            async for _ in handle:
+                pass
+        except openai_compatible.OpenAICompatibleLLMError as e:
+            if e.code == 500 or e.code == 400:
+                return False
+
+            raise e
+        except Exception as e:
+            raise e
+
+        return True
+
+    async def _supports_audio(self, llm: openai_compatible.OpenAICompatibleLLM) -> bool:
+        dummy_request = LLMRequest(
+            context=[
+                runtime_types.ContextMessage(
+                    role=runtime_types.ContextMessageRole.SYSTEM,
+                    content=[
+                        runtime_types.ContextMessageContentItem_Text(content="."),
+                        runtime_types.ContextMessageContentItem_Audio(
+                            clip=runtime_types.AudioClip(
+                                audio=[runtime_types.AudioFrame.silence(0.1)]
+                            )
+                        ),
+                    ],
+                    tool_calls=[],
+                )
+            ],
+            tool_definitions=[],
+        )
+        try:
+            handle = await llm.create_completion(
+                request=dummy_request, video_support=False, audio_support=True
+            )
+            async for _ in handle:
+                pass
+        except openai_compatible.OpenAICompatibleLLMError as e:
+            if e.code == 500 or e.code == 400:
+                return False
+
+            raise e
+        except Exception as e:
+            raise e
+
+        return True
