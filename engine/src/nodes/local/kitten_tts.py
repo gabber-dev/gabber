@@ -267,6 +267,7 @@ class TTSJob:
                 break
             if next_end + 1 == len(text) or text[next_end + 1].isspace():
                 sentence = text[pos : next_end + 1]
+                sentence += " "
                 sentences.append(sentence)
                 pos = next_end + 1
                 while pos < len(text) and text[pos].isspace():
@@ -290,8 +291,13 @@ class TTSJob:
             async with aiohttp.ClientSession() as session:
                 while True:
                     input_text = await self._inference_queue.get()
+
                     if input_text is None:
                         break
+                    input_text = (
+                        input_text + " ...."
+                    )  # Adding these dots helps the early cutoff issue that kitten tts has
+                    logging.debug(f"NEIL Processing text: '{input_text}'")
                     try:
                         async with session.post(
                             url, json={"text": input_text, "voice": self._voice}

@@ -15,8 +15,9 @@ services:
       - GABBER_SECRET_FILE=.secret
       - GABBER_REPOSITORY_DIR=.gabber
       - LIVEKIT_URL=ws://livekit:7880
-      - LOCAL_LLM_HOST=local_llm
-      - KITTEN_TTS_HOST=kitten_tts
+      - LOCAL_LLM_HOST=hub.docker.internal
+      - OMNI_LLM_HOST=hub.docker.internal
+      - KITTEN_TTS_HOST=hub.docker.internal
 
   repository:
     build:
@@ -32,8 +33,9 @@ services:
       - GABBER_SECRET_FILE=.secret
       - GABBER_REPOSITORY_DIR=.gabber
       - LIVEKIT_URL=ws://livekit:7880
-      - LOCAL_LLM_HOST=local_llm
-      - KITTEN_TTS_HOST=kitten_tts
+      - LOCAL_LLM_HOST=hub.docker.internal
+      - OMNI_LLM_HOST=hub.docker.internal
+      - KITTEN_TTS_HOST=hub.docker.internal
 
   engine:
     depends_on:
@@ -49,8 +51,9 @@ services:
       - GABBER_SECRET_FILE=.secret
       - GABBER_REPOSITORY_DIR=.gabber
       - LIVEKIT_URL=ws://livekit:7880
-      - LOCAL_LLM_HOST=local_llm
-      - KITTEN_TTS_HOST=kitten_tts
+      - LOCAL_LLM_HOST=hub.docker.internal
+      - OMNI_LLM_HOST=hub.docker.internal
+      - KITTEN_TTS_HOST=hub.docker.internal
 
   livekit:
     image: livekit/livekit-server:latest
@@ -67,38 +70,10 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
+    environment:
+      - REPOSITORY_HOST=repository:8001
 
   kitten_tts:
     build:
       context: services/kitten-tts
       dockerfile: Dockerfile
-
-  text-llm:
-    build:
-      context: ./services/local-llm
-      dockerfile: Dockerfile
-    container_name: local-llm
-    volumes:
-      - ~/.cache/huggingface:/root/.cache/huggingface
-      - ~/.cache/vllm:/root/.cache/vllm
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-    command:
-      - --model
-      - Qwen/Qwen2.5-VL-7B-Instruct-AWQ
-      - --port
-      - "80"
-      - --gpu-memory-utilization
-      - "0.9"
-      - --max-model-len
-      - "32000"
-      - --limit-mm-per-prompt
-      - '{"image":8,"video":8,"audio":8}'
-      - --enable-auto-tool-choice
-      - --tool-call-parser
-      - hermes

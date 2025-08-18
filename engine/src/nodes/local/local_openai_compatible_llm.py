@@ -6,7 +6,6 @@ from typing import cast
 from core import pad
 import os
 from core.node import NodeMetadata
-from lib.llm import AsyncLLMResponseHandle, LLMRequest, openai_compatible
 from nodes.llm import BaseLLM
 
 
@@ -39,12 +38,6 @@ class LocalOpenAICompatibleLLM(BaseLLM):
 
     async def api_key(self) -> str:
         return ""
-
-    async def create_completion(
-        self, llm: openai_compatible.OpenAICompatibleLLM, request: LLMRequest
-    ) -> AsyncLLMResponseHandle:
-        handle = await llm.create_completion(request=request, mode="openai")
-        return handle
 
     async def resolve_pads(self):
         await super().resolve_pads()

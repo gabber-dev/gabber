@@ -2,8 +2,7 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
-import logging
-from typing import Any, cast, Literal
+from typing import Any, cast
 
 import openai
 from core.runtime_types import (
@@ -12,6 +11,16 @@ from core.runtime_types import (
 )
 
 from ..llm import AsyncLLMResponseHandle, LLMRequest
+
+
+class OpenAICompatibleLLMError(Exception):
+    code: int | None
+    msg: str
+
+    def __init__(self, code: int | None, msg: str):
+        super().__init__(msg)
+        self.code = code
+        self.msg = msg
 
 
 class OpenAICompatibleLLM:
@@ -27,21 +36,24 @@ class OpenAICompatibleLLM:
         self._tasks = set[asyncio.Task]()
 
     async def create_completion(
-        self, *, request: LLMRequest, mode: Literal["openai", "qwen_omni"] = "openai"
+        self, *, request: LLMRequest, audio_support: bool, video_support: bool
     ) -> AsyncLLMResponseHandle:
-        if mode == "openai":
-            messages = await request.to_openai_completion_input()
-        elif mode == "qwen_omni":
-            messages = await request.to_qwen_omni_input()
-        else:
-            raise ValueError(f"Unsupported mode: {mode}")
-
-        res = await self._client.chat.completions.create(
-            model=self._model,
-            messages=messages,
-            tools=request.to_openai_completion_tools_input(),
-            stream=True,
+        messages = await request.to_openai_completion_input(
+            audio_support=audio_support, video_support=video_support
         )
+
+        try:
+            res = await self._client.chat.completions.create(
+                model=self._model,
+                messages=messages,
+                tools=request.to_openai_completion_tools_input(),
+                stream=True,
+            )
+        except openai.APIStatusError as e:
+            int_code = int(e.code) if e.code else None
+            raise OpenAICompatibleLLMError(code=int_code, msg=e.message) from e
+        except Exception as e:
+            raise e
 
         handle = AsyncLLMResponseHandle()
 

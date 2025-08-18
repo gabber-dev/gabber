@@ -1,16 +1,11 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-import asyncio
-import logging
 from typing import cast
 
-from core import node, pad, runtime_types
+from core import pad
 from core.node import NodeMetadata
-from lib.llm import AsyncLLMResponseHandle, LLMRequest, openai_compatible
-from utils import get_full_content_from_deltas, get_tool_calls_from_choice_deltas
 
-from nodes.core.tool import Tool, ToolGroup
 from .base_llm import BaseLLM
 
 
@@ -44,12 +39,6 @@ class OpenAICompatibleLLM(BaseLLM):
         if not self.secret_provider:
             raise RuntimeError("Secret provider is not set for OpenAICompatibleLLM.")
         return await self.secret_provider.resolve_secret(api_key_name)
-
-    async def create_completion(
-        self, llm: openai_compatible.OpenAICompatibleLLM, request: LLMRequest
-    ) -> AsyncLLMResponseHandle:
-        handle = await llm.create_completion(request=request, mode="openai")
-        return handle
 
     async def resolve_pads(self):
         await super().resolve_pads()
