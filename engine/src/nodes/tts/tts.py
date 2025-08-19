@@ -69,6 +69,14 @@ class TTS(node.Node):
             )
             self.pads.append(text_sink)
 
+        prev_pad = text_sink.get_previous_pad()
+        if prev_pad:
+            tcs = prev_pad.get_type_constraints()
+            tcs = pad.types.INTERSECTION(tcs, text_sink.get_type_constraints())
+            text_sink.set_type_constraints(tcs)
+        else:
+            text_sink.set_type_constraints([pad.types.TextStream(), pad.types.String()])
+
         audio_source = cast(pad.StatelessSourcePad, self.get_pad("audio"))
         if audio_source is None:
             audio_source = pad.StatelessSourcePad(
