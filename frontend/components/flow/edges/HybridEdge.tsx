@@ -111,7 +111,7 @@ export function HybridEdge({
         }}
         markerEnd={markerEnd}
       />
- 
+
       {/* Selection highlight overlay */}
       {selected && (
         <BaseEdge

@@ -30,7 +30,7 @@ export function CreateAppModal() {
   };
 
   return (
-    <div className="card p-2">
+    <div className="card p-2 bg-neutral-800">
       <h3 className="font-bold text-lg">Create New App</h3>
       <form onSubmit={handleSubmit} className="mt-4">
         <div className="form-control">
