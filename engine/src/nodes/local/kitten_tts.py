@@ -285,16 +285,16 @@ class TTSJob:
         host = os.environ.get("KITTEN_TTS_HOST", "localhost")
         url = f"http://{host}:7003/tts"
 
-        clock_start_time: float | None = None
-        played_time = 0.0
+        send_queue = asyncio.Queue[bytes | None]()
 
-        try:
+        async def generate():
             async with aiohttp.ClientSession() as session:
                 while True:
                     input_text = await self._inference_queue.get()
 
                     if input_text is None:
                         break
+
                     if len(input_text) == 0:
                         continue
 
@@ -310,52 +310,74 @@ class TTSJob:
                             )
                             break
 
+                        total_bytes = b''
                         async for bytes_24000 in response.content.iter_any():
-                            chunk_size_bytes = 480 * 2  # Approx 20ms
-                            for i in range(0, len(bytes_24000), chunk_size_bytes):
-                                small_bytes = bytes_24000[i : i + chunk_size_bytes]
-                                if len(small_bytes) == 0:
-                                    continue
+                            total_bytes += bytes_24000
+                            # 20ms
+                            while len(total_bytes) >= 240 * 4:
+                                chunk = total_bytes[:240 * 4]
+                                total_bytes = total_bytes[240 * 4:]
+                                send_queue.put_nowait(chunk)
+                        
+                        if len(total_bytes) % 2 != 0:
+                            total_bytes = total_bytes[:-1]
+                        send_queue.put_nowait(total_bytes)
+                        send_queue.put_nowait(None)
 
-                                data = np.frombuffer(
-                                    small_bytes, dtype=np.int16
-                                ).reshape(1, -1)
-                                num_samples = data.shape[1]
-                                frame_data_24000 = runtime_types.AudioFrameData(
-                                    data=data,
-                                    sample_rate=24000,
-                                    num_channels=1,
-                                )
-                                frame_data_16000 = self._resampler_16000hz.push_audio(
-                                    frame_data_24000
-                                )
-                                frame_data_44100 = self._resampler_44100hz.push_audio(
-                                    frame_data_24000
-                                )
-                                frame_data_48000 = self._resampler_48000hz.push_audio(
-                                    frame_data_24000
-                                )
-                                frame = runtime_types.AudioFrame(
-                                    original_data=frame_data_24000,
-                                    data_16000hz=frame_data_16000,
-                                    data_24000hz=frame_data_24000,
-                                    data_44100hz=frame_data_44100,
-                                    data_48000hz=frame_data_48000,
-                                )
-                                if clock_start_time is None:
-                                    clock_start_time = time.time()
-                                played_time += num_samples / 24000.0
-                                self._output_queue.put_nowait(frame)
+        async def push_response():
+            clock_start_time: float | None = None
+            played_time = 0.0
+            while True:
+                chunk = await send_queue.get()
+                if chunk is None:
+                    break
+                data = np.frombuffer(
+                    chunk, dtype=np.int16
+                ).reshape(1, -1)
+                num_samples = data.shape[1]
+                frame_data_24000 = runtime_types.AudioFrameData(
+                    data=data,
+                    sample_rate=24000,
+                    num_channels=1,
+                )
+                frame_data_16000 = self._resampler_16000hz.push_audio(
+                    frame_data_24000
+                )
+                frame_data_44100 = self._resampler_44100hz.push_audio(
+                    frame_data_24000
+                )
+                frame_data_48000 = self._resampler_48000hz.push_audio(
+                    frame_data_24000
+                )
+                frame = runtime_types.AudioFrame(
+                    original_data=frame_data_24000,
+                    data_16000hz=frame_data_16000,
+                    data_24000hz=frame_data_24000,
+                    data_44100hz=frame_data_44100,
+                    data_48000hz=frame_data_48000,
+                )
+                if clock_start_time is None:
+                    clock_start_time = time.time()
+                played_time += num_samples / 24000.0
+                self._output_queue.put_nowait(frame)
 
-                                # Don't go faster than real-time
-                                while (
-                                    played_time + clock_start_time
-                                ) - time.time() > 0.25:
-                                    await asyncio.sleep(0.05)
+                # Don't go faster than real-time
+                while (
+                    played_time + clock_start_time
+                ) - time.time() > 0.25:
+                    await asyncio.sleep(0.05)
+
+        try:
+            await asyncio.gather(
+                generate(),
+                push_response(),
+            )
         except asyncio.CancelledError:
             logging.debug("TTS job cancelled")
-
-        self._output_queue.put_nowait(None)
+        except Exception as e:
+            logging.error(f"Error in TTS job: {e}", exc_info=True)
+        finally:
+            self._output_queue.put_nowait(None)
 
     def __aiter__(self):
         return self
