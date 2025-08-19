@@ -46,7 +46,7 @@ export function SubGraphList() {
         isOpen={showModal}
         onRequestClose={() => setShowModal(false)}
         overlayClassName="fixed top-0 bottom-0 left-0 right-0 backdrop-blur-lg bg-blur flex justify-center items-center"
-        className="w-full max-w-lg bg-white dark:bg-neutral-800 rounded-lg shadow-lg outline-none"
+        className="w-full max-w-lg bg-neutral-800 rounded-lg shadow-lg outline-none"
         shouldCloseOnOverlayClick={true}
       >
         <CreateSubGraphModal />
