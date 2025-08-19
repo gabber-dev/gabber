@@ -155,7 +155,13 @@ class KittenTTS(node.Node):
 
         async def text_stream_task():
             async for item in text_stream_sink:
-                job = TTSJob(item.ctx, voice=voice_id.get_value())
+                job = TTSJob(
+                    ctx=item.ctx,
+                    voice=voice_id.get_value(),
+                    resampler_16000hz=r_16000hz,
+                    resampler_44100hz=r_44100hz,
+                    resampler_48000hz=r_48000hz,
+                )
                 job_queue.put_nowait(job)
                 async for text in item.value:
                     job.push_text(text)
@@ -163,7 +169,13 @@ class KittenTTS(node.Node):
 
         async def complete_text_task():
             async for text in complete_text_sink:
-                job = TTSJob(text.ctx, voice=voice_id.get_value())
+                job = TTSJob(
+                    ctx=text.ctx,
+                    voice=voice_id.get_value(),
+                    resampler_16000hz=r_16000hz,
+                    resampler_44100hz=r_44100hz,
+                    resampler_48000hz=r_48000hz,
+                )
                 job_queue.put_nowait(job)
                 job.push_text(text.value)
                 job.eos()
@@ -176,35 +188,11 @@ class KittenTTS(node.Node):
                     break
 
                 running_job = new_job
-                played_time = 0
-                clock_start_time: float | None = None
                 new_job.ctx.snooze_timeout(
                     120.0
                 )  # Speech playout can take a while so we snooze the timeout. TODO: make this tied to the actual audio playout duration
-                async for bytes_24000 in new_job:
-                    frame_data_24000 = runtime_types.AudioFrameData(
-                        data=np.frombuffer(bytes_24000, dtype=np.int16).reshape(1, -1),
-                        sample_rate=24000,
-                        num_channels=1,
-                    )
-                    frame_data_16000 = r_16000hz.push_audio(frame_data_24000)
-                    frame_data_44100 = r_44100hz.push_audio(frame_data_24000)
-                    frame_data_48000 = r_48000hz.push_audio(frame_data_24000)
-                    frame = runtime_types.AudioFrame(
-                        original_data=frame_data_24000,
-                        data_16000hz=frame_data_16000,
-                        data_24000hz=frame_data_24000,
-                        data_44100hz=frame_data_44100,
-                        data_48000hz=frame_data_48000,
-                    )
-                    if clock_start_time is None:
-                        clock_start_time = time.time()
+                async for frame in new_job:
                     audio_source.push_item(frame, new_job.ctx)
-                    played_time += frame.original_data.duration
-
-                    # Don't go faster than real-time
-                    while (played_time + clock_start_time) - time.time() > 0.25:
-                        await asyncio.sleep(0.1)
 
                 final_transcription_source.push_item(new_job.spoken_text, new_job.ctx)
                 new_job.ctx.complete()
@@ -218,13 +206,24 @@ class KittenTTS(node.Node):
 
 
 class TTSJob:
-    def __init__(self, ctx: pad.RequestContext, voice: str):
+    def __init__(
+        self,
+        *,
+        ctx: pad.RequestContext,
+        voice: str,
+        resampler_16000hz: Resampler,
+        resampler_44100hz: Resampler,
+        resampler_48000hz: Resampler,
+    ):
         self.ctx = ctx
+        self._resampler_16000hz = resampler_16000hz
+        self._resampler_44100hz = resampler_44100hz
+        self._resampler_48000hz = resampler_48000hz
         self._voice = voice
         self._running_text = ""
         self._buffer = ""
         self._pending_short = ""
-        self._output_queue = asyncio.Queue[bytes | None]()
+        self._output_queue = asyncio.Queue[runtime_types.AudioFrame | None]()
         self._inference_queue = asyncio.Queue[str | None]()
         self._run_task = asyncio.create_task(self.run())
 
@@ -287,6 +286,9 @@ class TTSJob:
         host = os.environ.get("KITTEN_TTS_HOST", "localhost")
         url = f"http://{host}:7003/tts"
 
+        clock_start_time: float | None = None
+        played_time = 0.0
+
         try:
             async with aiohttp.ClientSession() as session:
                 while True:
@@ -294,24 +296,63 @@ class TTSJob:
 
                     if input_text is None:
                         break
-                    input_text = (
-                        input_text + " ...."
-                    )  # Adding these dots helps the early cutoff issue that kitten tts has
-                    try:
-                        async with session.post(
-                            url, json={"text": input_text, "voice": self._voice}
-                        ) as response:
-                            if response.status != 200:
-                                logging.error(
-                                    f"Error in TTS request: {response.status} - {await response.text()}"
-                                )
-                                break
+                    if len(input_text) == 0:
+                        continue
 
-                            async for chunk in response.content.iter_any():
-                                self._output_queue.put_nowait(chunk)
-                    except Exception as e:
-                        logging.error(f"Error during TTS request: {e}", exc_info=True)
-                        break
+                    if input_text[-1] not in ".!?":
+                        input_text += ". "
+
+                    async with session.post(
+                        url, json={"text": input_text, "voice": self._voice}
+                    ) as response:
+                        if response.status != 200:
+                            logging.error(
+                                f"Error in TTS request: {response.status} - {await response.text()}"
+                            )
+                            break
+
+                        async for bytes_24000 in response.content.iter_any():
+                            chunk_size_bytes = 480 * 2  # Approx 20ms
+                            for i in range(0, len(bytes_24000), chunk_size_bytes):
+                                small_bytes = bytes_24000[i : i + chunk_size_bytes]
+                                if len(small_bytes) == 0:
+                                    continue
+
+                                data = np.frombuffer(
+                                    small_bytes, dtype=np.int16
+                                ).reshape(1, -1)
+                                num_samples = data.shape[1]
+                                frame_data_24000 = runtime_types.AudioFrameData(
+                                    data=data,
+                                    sample_rate=24000,
+                                    num_channels=1,
+                                )
+                                frame_data_16000 = self._resampler_16000hz.push_audio(
+                                    frame_data_24000
+                                )
+                                frame_data_44100 = self._resampler_44100hz.push_audio(
+                                    frame_data_24000
+                                )
+                                frame_data_48000 = self._resampler_48000hz.push_audio(
+                                    frame_data_24000
+                                )
+                                frame = runtime_types.AudioFrame(
+                                    original_data=frame_data_24000,
+                                    data_16000hz=frame_data_16000,
+                                    data_24000hz=frame_data_24000,
+                                    data_44100hz=frame_data_44100,
+                                    data_48000hz=frame_data_48000,
+                                )
+                                if clock_start_time is None:
+                                    clock_start_time = time.time()
+                                played_time += num_samples / 24000.0
+                                self._output_queue.put_nowait(frame)
+
+                                # Don't go faster than real-time
+                                while (
+                                    played_time + clock_start_time
+                                ) - time.time() > 0.25:
+                                    await asyncio.sleep(0.05)
         except asyncio.CancelledError:
             logging.debug("TTS job cancelled")
 
