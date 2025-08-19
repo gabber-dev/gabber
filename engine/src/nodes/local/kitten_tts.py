@@ -36,6 +36,14 @@ class KittenTTS(node.Node):
         )
 
     async def resolve_pads(self):
+        # Migrate from old versions of this node
+        REMOVE_PADS = [
+            "text_stream",
+            "complete_text",
+        ]
+
+        self.pads = [p for p in self.pads if p.get_id() not in REMOVE_PADS]
+
         voice_id = cast(pad.PropertySinkPad, self.get_pad("voice_id"))
         if not voice_id:
             voice_id = pad.PropertySinkPad(
@@ -47,25 +55,23 @@ class KittenTTS(node.Node):
             )
             self.pads.append(voice_id)
 
-        text_stream_sink = cast(pad.StatelessSinkPad, self.get_pad("text_stream"))
-        if text_stream_sink is None:
-            text_stream_sink = pad.StatelessSinkPad(
-                id="text_stream",
-                group="text_stream",
+        text_sink = cast(pad.StatelessSinkPad, self.get_pad("text"))
+        if text_sink is None:
+            text_sink = pad.StatelessSinkPad(
+                id="text",
+                group="text",
                 owner_node=self,
-                type_constraints=[pad.types.TextStream()],
+                type_constraints=[pad.types.TextStream(), pad.types.String()],
             )
-            self.pads.append(text_stream_sink)
+            self.pads.append(text_sink)
 
-        complete_text_sink = cast(pad.StatelessSinkPad, self.get_pad("complete_text"))
-        if complete_text_sink is None:
-            complete_text_sink = pad.StatelessSinkPad(
-                id="complete_text",
-                group="complete_text",
-                owner_node=self,
-                type_constraints=[pad.types.String()],
-            )
-            self.pads.append(complete_text_sink)
+        prev_pad = text_sink.get_previous_pad()
+        if prev_pad:
+            tcs = prev_pad.get_type_constraints()
+            tcs = pad.types.INTERSECTION(tcs, text_sink.get_type_constraints())
+            text_sink.set_type_constraints(tcs)
+        else:
+            text_sink.set_type_constraints([pad.types.TextStream(), pad.types.String()])
 
         audio_source = cast(pad.StatelessSourcePad, self.get_pad("audio"))
         if audio_source is None:
@@ -102,12 +108,7 @@ class KittenTTS(node.Node):
     async def run(self):
         voice_id = cast(pad.PropertySinkPad, self.get_pad_required("voice_id"))
         audio_source = cast(pad.StatelessSourcePad, self.get_pad_required("audio"))
-        text_stream_sink = cast(
-            pad.StatelessSinkPad, self.get_pad_required("text_stream")
-        )
-        complete_text_sink = cast(
-            pad.StatelessSinkPad, self.get_pad_required("complete_text")
-        )
+        text_sink = cast(pad.StatelessSinkPad, self.get_pad_required("text"))
         cancel_trigger = cast(
             pad.StatelessSinkPad, self.get_pad_required("cancel_trigger")
         )
@@ -153,32 +154,31 @@ class KittenTTS(node.Node):
 
                 it.ctx.complete()
 
-        async def text_stream_task():
-            async for item in text_stream_sink:
-                job = TTSJob(
-                    ctx=item.ctx,
-                    voice=voice_id.get_value(),
-                    resampler_16000hz=r_16000hz,
-                    resampler_44100hz=r_44100hz,
-                    resampler_48000hz=r_48000hz,
-                )
-                job_queue.put_nowait(job)
-                async for text in item.value:
-                    job.push_text(text)
-                job.eos()
-
-        async def complete_text_task():
-            async for text in complete_text_sink:
-                job = TTSJob(
-                    ctx=text.ctx,
-                    voice=voice_id.get_value(),
-                    resampler_16000hz=r_16000hz,
-                    resampler_44100hz=r_44100hz,
-                    resampler_48000hz=r_48000hz,
-                )
-                job_queue.put_nowait(job)
-                job.push_text(text.value)
-                job.eos()
+        async def text_task():
+            async for item in text_sink:
+                if isinstance(item.value, str):
+                    job = TTSJob(
+                        ctx=item.ctx,
+                        voice=voice_id.get_value(),
+                        resampler_16000hz=r_16000hz,
+                        resampler_44100hz=r_44100hz,
+                        resampler_48000hz=r_48000hz,
+                    )
+                    job_queue.put_nowait(job)
+                    job.push_text(item.value)
+                    job.eos()
+                elif isinstance(item.value, runtime_types.TextStream):
+                    job = TTSJob(
+                        ctx=item.ctx,
+                        voice=voice_id.get_value(),
+                        resampler_16000hz=r_16000hz,
+                        resampler_44100hz=r_44100hz,
+                        resampler_48000hz=r_48000hz,
+                    )
+                    job_queue.put_nowait(job)
+                    async for text in item.value:
+                        job.push_text(text)
+                    job.eos()
 
         async def job_task():
             nonlocal running_job
@@ -198,8 +198,7 @@ class KittenTTS(node.Node):
                 new_job.ctx.complete()
 
         await asyncio.gather(
-            complete_text_task(),
-            text_stream_task(),
+            text_task(),
             job_task(),
             cancel_task(),
         )

@@ -2,7 +2,7 @@
     "id": "local-tts",
     "name": "Local TTS",
     "created_at": "2025-08-18T22:10:51.327793",
-    "updated_at": "2025-08-18T22:21:50.670264",
+    "updated_at": "2025-08-19T12:44:33.369858",
     "graph": {
         "nodes": [
             {
@@ -15,14 +15,14 @@
                 ],
                 "editor_dimensions": [
                     256.0,
-                    279.0
+                    251.0
                 ],
                 "pads": [
                     {
                         "id": "voice_id",
                         "group": "voice_id",
                         "type": "PropertySinkPad",
-                        "value": "expr-voice-3-f",
+                        "value": "expr-voice-3-m",
                         "next_pads": [],
                         "previous_pad": null,
                         "allowed_types": [
@@ -38,37 +38,6 @@
                                     "expr-voice-5-m",
                                     "expr-voice-5-f"
                                 ]
-                            }
-                        ]
-                    },
-                    {
-                        "id": "text_stream",
-                        "group": "text_stream",
-                        "type": "StatelessSinkPad",
-                        "value": null,
-                        "next_pads": [],
-                        "previous_pad": null,
-                        "allowed_types": [
-                            {
-                                "type": "text_stream"
-                            }
-                        ]
-                    },
-                    {
-                        "id": "complete_text",
-                        "group": "complete_text",
-                        "type": "StatelessSinkPad",
-                        "value": null,
-                        "next_pads": [],
-                        "previous_pad": {
-                            "node": "chatinput_f3a1d19e",
-                            "pad": "output"
-                        },
-                        "allowed_types": [
-                            {
-                                "type": "string",
-                                "max_length": null,
-                                "min_length": null
                             }
                         ]
                     },
@@ -96,7 +65,10 @@
                         "type": "StatelessSinkPad",
                         "value": null,
                         "next_pads": [],
-                        "previous_pad": null,
+                        "previous_pad": {
+                            "node": "autoconvert_15eb6daf",
+                            "pad": "source"
+                        },
                         "allowed_types": [
                             {
                                 "type": "trigger"
@@ -110,6 +82,24 @@
                         "value": null,
                         "next_pads": [],
                         "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    },
+                    {
+                        "id": "text",
+                        "group": "text",
+                        "type": "StatelessSinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "chatinput_f3a1d19e",
+                            "pad": "output"
+                        },
                         "allowed_types": [
                             {
                                 "type": "string",
@@ -151,7 +141,11 @@
                         "next_pads": [
                             {
                                 "node": "kittentts_d7ec7a90",
-                                "pad": "complete_text"
+                                "pad": "text"
+                            },
+                            {
+                                "node": "autoconvert_15eb6daf",
+                                "pad": "sink"
                             }
                         ],
                         "previous_pad": null,
@@ -224,6 +218,66 @@
                     "tags": [
                         "output",
                         "display"
+                    ]
+                }
+            },
+            {
+                "id": "autoconvert_15eb6daf",
+                "type": "AutoConvert",
+                "editor_name": "AutoConvert",
+                "editor_position": [
+                    720.0,
+                    348.0
+                ],
+                "editor_dimensions": [
+                    80.0,
+                    48.0
+                ],
+                "pads": [
+                    {
+                        "id": "sink",
+                        "group": "sink",
+                        "type": "StatelessSinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "chatinput_f3a1d19e",
+                            "pad": "output"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    },
+                    {
+                        "id": "source",
+                        "group": "source",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "kittentts_d7ec7a90",
+                                "pad": "cancel_trigger"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ]
+                    }
+                ],
+                "description": "Automatically converts data between compatible types",
+                "metadata": {
+                    "primary": "core",
+                    "secondary": "utility",
+                    "tags": [
+                        "auto",
+                        "type"
                     ]
                 }
             }
