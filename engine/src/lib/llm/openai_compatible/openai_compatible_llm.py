@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
+import logging
 from typing import Any, cast
 
 import openai
@@ -50,10 +51,7 @@ class OpenAICompatibleLLM:
                 stream=True,
             )
         except openai.APIStatusError as e:
-            int_code = int(e.code) if e.code else None
-            raise OpenAICompatibleLLMError(code=int_code, msg=e.message) from e
-        except Exception as e:
-            raise e
+            raise OpenAICompatibleLLMError(code=e.status_code, msg=e.message) from e
 
         handle = AsyncLLMResponseHandle()
 
