@@ -3,7 +3,7 @@
   <img src="frontend/public/banner.png" alt="Gabber Logo" width="100%"/>
 </p>
 
-# Gabber - 
+# Gabber - Real-time AI Engine
 
 [Gabber](https://gabber.dev) is an engine for building real-time AI across all modalities — voice, text, video, and more. It supports graph-based apps with multiple participants and simultaneous media streams. Our goal is to give developers the **most powerful, developer-friendly AI app builder** available.
 
