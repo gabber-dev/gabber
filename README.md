@@ -40,7 +40,9 @@ docker compose up
 
 If you are using the `LocalLLM` node, you'll need to start an LLM server. LLM scripts are provided for convenience in the `services/local-llm` directory.
 
-On MacOS, make sure [llama.cpp](https://https://github.com/ggml-org/llama.cpp) is installed and use llama.cpp scripts. On Linux or WSL you can use the vllm scripts.
+On MacOS, make sure [llama.cpp](https://https://github.com/ggml-org/llama.cpp) is installed and use llama.cpp scripts. As of making this, the brew package for llama.cpp didn't seem to be built with Metal support (GPU acceleration for MacOS), therefore it's recommended you build from source.
+
+On Linux or WSL you can use the vllm scripts.
 
 ```bash
 cd services/local-llm
@@ -49,7 +51,7 @@ cd services/local-llm
 #### e.g. MacOS:
 
 ```bash
-./qwen-omni-7b-q4km_llamacpp.sh
+LLAMA_SERVER_PATH=/path/to/llama.cpp/build/bin/llama-server ./qwen-omni-7b-q4km_llamacpp.sh
 ```
 
 #### e.g. Linux:
