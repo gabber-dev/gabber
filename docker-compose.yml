@@ -43,7 +43,7 @@ services:
       - GABBER_REPOSITORY_DIR=.gabber
       - LIVEKIT_URL=ws://livekit:7880
       - LOCAL_LLM_HOST=host.docker.internal
-      - KITTEN_TTS_HOST=host.docker.internal
+      - KITTEN_TTS_HOST=kitten_tts
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
@@ -51,12 +51,18 @@ services:
     image: livekit/livekit-server:latest
     ports:
       - "7880:7880"
-      - "60000-60100:60000-60100/udp"
+      - "7881:7881"
+      - "7882:7882/udp"
     command: ["--dev", "--bind", "0.0.0.0"]
     environment:
       - LIVEKIT_LOG_LEVEL=INFO
 
   frontend:
+    depends_on:
+      - editor
+      - repository
+      - engine
+      - livekit
     build:
       context: ./frontend
       dockerfile: Dockerfile
