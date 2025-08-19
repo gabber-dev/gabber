@@ -1,6 +1,6 @@
 {
-    "id": "130fe92f-4e41-404e-94d5-a64cb3ea2304",
-    "name": "Local Conversational W/ Vision (Qwen Omni + KittenTTS)",
+    "id": "local-conversational",
+    "name": "Local Conversational W/ Vision",
     "created_at": "2025-08-18T17:36:49.997790",
     "updated_at": "2025-08-18T22:51:28.440624",
     "graph": {
@@ -228,9 +228,9 @@
                 }
             },
             {
-                "id": "localopenaicompatiblellm_ec07ef49",
-                "type": "LocalOpenAICompatibleLLM",
-                "editor_name": "LocalOpenAICompatibleLLM",
+                "id": "localllm_ec07ef49",
+                "type": "LocalLLM",
+                "editor_name": "LocalLLM",
                 "editor_position": [
                     1980.0,
                     132.0
@@ -490,7 +490,7 @@
                         ],
                         "next_pads": [
                             {
-                                "node": "localopenaicompatiblellm_ec07ef49",
+                                "node": "localllm_ec07ef49",
                                 "pad": "context"
                             }
                         ],
@@ -629,7 +629,7 @@
                         "value": null,
                         "next_pads": [],
                         "previous_pad": {
-                            "node": "localopenaicompatiblellm_ec07ef49",
+                            "node": "localllm_ec07ef49",
                             "pad": "context_message"
                         },
                         "allowed_types": [
@@ -1032,7 +1032,7 @@
                         "value": null,
                         "next_pads": [
                             {
-                                "node": "localopenaicompatiblellm_ec07ef49",
+                                "node": "localllm_ec07ef49",
                                 "pad": "run_trigger"
                             }
                         ],
@@ -1097,7 +1097,7 @@
                         "value": null,
                         "next_pads": [],
                         "previous_pad": {
-                            "node": "localopenaicompatiblellm_ec07ef49",
+                            "node": "localllm_ec07ef49",
                             "pad": "text_stream"
                         },
                         "allowed_types": [
