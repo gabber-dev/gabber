@@ -4,7 +4,7 @@
  */
 
 import { NodeEditorRepresentation } from "@/generated/editor";
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { StatelessPad } from "./components/pads/StatelessPad";
 import { PropertyPad } from "./components/pads/PropertyPad";
 import { CubeIcon } from "@heroicons/react/24/outline";
@@ -40,6 +40,14 @@ export function BaseBlock({ data }: BaseBlockProps) {
     )[0];
   }, [data]);
 
+  const handleIdClick = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(data.id);
+    } catch (err) {
+      console.error("Failed to copy ID:", err);
+    }
+  }, [data.id]);
+
   if (data.type === "AutoConvert") {
     return <AutoConvertNode />;
   }
@@ -67,7 +75,11 @@ export function BaseBlock({ data }: BaseBlockProps) {
           <h2 className="text-lg text-primary font-medium">
             {data.editor_name}
           </h2>
-          <div className="text-xs text-base-content/60 font-mono">
+          <div
+            className="text-xs text-base-content/60 font-mono cursor-pointer hover:text-primary transition-colors select-none"
+            onClick={handleIdClick}
+            title="Click to copy ID"
+          >
             {data.id}
           </div>
         </div>
