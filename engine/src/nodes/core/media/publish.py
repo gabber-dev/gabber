@@ -24,31 +24,56 @@ class Publish(node.Node):
 
     async def resolve_pads(self):
         audio_source = cast(pad.StatelessSourcePad, self.get_pad("audio"))
-
         if not audio_source:
-            self.pads.append(
-                pad.StatelessSourcePad(
-                    id="audio",
-                    owner_node=self,
-                    group="audio",
-                    type_constraints=[pad.types.Audio()],
-                )
+            audio_source = pad.StatelessSourcePad(
+                id="audio",
+                owner_node=self,
+                group="audio",
+                type_constraints=[pad.types.Audio()],
+            )
+
+        audio_enabled = cast(pad.PropertySourcePad, self.get_pad("audio_enabled"))
+        if not audio_enabled:
+            audio_enabled = pad.PropertySourcePad(
+                id="audio_enabled",
+                owner_node=self,
+                group="audio_enabled",
+                type_constraints=[pad.types.Boolean()],
+                value=False,
             )
 
         video_source = cast(pad.StatelessSourcePad, self.get_pad("video"))
         if not video_source:
-            self.pads.append(
-                pad.StatelessSourcePad(
-                    id="video",
-                    owner_node=self,
-                    group="video",
-                    type_constraints=[pad.types.Video()],
-                )
+            video_source = pad.StatelessSourcePad(
+                id="video",
+                owner_node=self,
+                group="video",
+                type_constraints=[pad.types.Video()],
             )
+
+        video_enabled = cast(pad.PropertySourcePad, self.get_pad("video_enabled"))
+        if not video_enabled:
+            video_enabled = pad.PropertySourcePad(
+                id="video_enabled",
+                owner_node=self,
+                group="video_enabled",
+                type_constraints=[pad.types.Boolean()],
+                value=False,
+            )
+
+        self.pads = [
+            audio_source,
+            video_source,
+            audio_enabled,
+            video_enabled,
+        ]
 
     async def run(self):
         audio_source = cast(pad.StatelessSourcePad, self.get_pad_required("audio"))
         video_source = cast(pad.StatelessSourcePad, self.get_pad_required("video"))
+
+        last_audio_frame_time: float | None = None
+        last_video_frame_time: float | None = None
 
         resampler_16000hz = Resampler(16000)
         resampler_24000hz = Resampler(24000)

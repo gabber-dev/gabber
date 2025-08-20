@@ -231,6 +231,9 @@ class Graph:
         await self._propagate_update([node])
 
     async def _propagate_update(self, starting_nodes: list[Node]):
+        logging.info(
+            f"NEIL - Propagating update in graph: {[n.id for n in starting_nodes]}"
+        )
         seen: set[str] = set()
         stack: list[Node] = starting_nodes[:]
         while stack:
@@ -373,6 +376,11 @@ class Graph:
 
         node_lookup: dict[str, Node] = {n.id: n for n in self.nodes}
 
+        # TODO: We should harden the rules for pad type resolution.
+        # Perhaps we can even get to a place where pads are automatically typed so that nodes don't need
+        # the type logic (?).
+        # A resonable rule might be that source pads types drive the types of sink pads but never the other way around.
+        # This would allow us to build a dependency graph of nodes so that we can update them in order.
         for node_data in snapshot.nodes:
             for pad_data in node_data.pads:
                 prev_pad = pad_data.previous_pad
@@ -407,7 +415,15 @@ class Graph:
                     )
                     continue
                 source_pad.connect(target_pad)
-                await self._propagate_update([source_node, target_node])
+
+            node_obj = node_lookup.get(node_data.id)
+            if not node_obj:
+                logging.error(f"Node {node_data.id} not found in node lookup.")
+                continue
+            await self._propagate_update([node_obj])
+
+        for node_data in snapshot.nodes:
+            pass
 
         # Resolve node reference pads
         for p in node_reference_pads:

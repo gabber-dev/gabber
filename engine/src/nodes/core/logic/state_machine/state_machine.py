@@ -219,6 +219,7 @@ class StateMachine(node.Node):
         configuration.set_value(config.model_dump())
 
         self._resolve_num_pads()
+        self._fix_missing_pads()
         self._resolve_value_types()
         self._resolve_pad_mode()
         self._sort_and_rename_pads()
@@ -383,6 +384,35 @@ class StateMachine(node.Node):
 
         await asyncio.gather(*tasks)
 
+    def _fix_missing_pads(self):
+        for i in self._get_parameter_indices():
+            name_pad = self.get_pad(f"parameter_name_{i}")
+            if not name_pad:
+                logging.warning(
+                    f"Missing name pad for parameter {i}. Creating default pad."
+                )
+                name_pad = pad.PropertySinkPad(
+                    id=f"parameter_name_{i}",
+                    owner_node=self,
+                    type_constraints=[pad.types.String()],
+                    group="parameters",
+                    value=None,
+                )
+                self.pads.append(name_pad)
+            value_pad = self.get_pad(f"parameter_value_{i}")
+            if not value_pad:
+                logging.warning(
+                    f"Missing value pad for parameter {i}. Creating default pad."
+                )
+                value_pad = pad.PropertySinkPad(
+                    id=f"parameter_value_{i}",
+                    owner_node=self,
+                    type_constraints=ALL_PARAMETER_TYPES,
+                    group="parameter_values",
+                    value=None,
+                )
+                self.pads.append(value_pad)
+
     def _resolve_num_pads(self):
         current_num = len(self._get_parameter_indices())
         target_num: int = cast(
@@ -435,18 +465,15 @@ class StateMachine(node.Node):
             self.pads.remove(p)
 
     def _resolve_value_types(self):
-        for p in self.pads:
-            if p.get_id().startswith("parameter_value_"):
-                p = cast(pad.SinkPad, p)
-                prev_pad = p.get_previous_pad()
-                if not prev_pad:
-                    p.set_type_constraints(ALL_PARAMETER_TYPES)
-                else:
-                    tcs = p.get_type_constraints()
-                    intersection = pad.types.INTERSECTION(
-                        tcs, prev_pad.get_type_constraints()
-                    )
-                    p.set_type_constraints(intersection)
+        for i in self._get_parameter_indices():
+            _, value_pad = self._get_pads(i)
+            prev_pad = value_pad.get_previous_pad()
+            if prev_pad:
+                tcs = value_pad.get_type_constraints()
+                tcs = pad.types.INTERSECTION(tcs, prev_pad.get_type_constraints())
+                value_pad.set_type_constraints(tcs)
+            else:
+                value_pad.set_type_constraints(ALL_PARAMETER_TYPES)
 
     def _resolve_pad_mode(self):
         for idx, p in enumerate(self.pads):
