@@ -3,6 +3,7 @@
 
 import asyncio
 import json
+import logging
 from typing import cast
 
 from core import pad, runtime_types
@@ -71,6 +72,7 @@ class AutoConvert(Node):
                     for af in item.value.audio:
                         source.push_item(af, item.ctx)
             elif isinstance(source_type, pad.types.String):
+                logging.info(f"Converting to String type. Input value type: {type(item.value)}")
                 if isinstance(item.value, str):
                     source.push_item(item.value, item.ctx)
                 elif isinstance(item.value, float):
@@ -103,6 +105,13 @@ class AutoConvert(Node):
                         source.push_item(
                             f"Cannot convert {item.value} to string", item.ctx
                         )
+                elif isinstance(item.value, runtime_types.TextStream):
+                    logging.info(f"Received TextStream value: {item.value}")
+                    complete_text = ""
+                    async for text in item.value:
+                        complete_text += text
+                    logging.info(f"Pushing text: {complete_text}")
+                    source.push_item(complete_text, item.ctx)
             elif isinstance(source_type, pad.types.Video):
                 if isinstance(item.value, runtime_types.VideoFrame):
                     source.push_item(item.value, item.ctx)
