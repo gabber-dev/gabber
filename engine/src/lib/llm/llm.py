@@ -200,7 +200,7 @@ class LLMRequest:
 
 class AsyncLLMResponseHandle:
     def __init__(
-        self, *, first_token_timeout: float = 10.0, total_timeout: float = 30.0
+        self, *, first_token_timeout: float = 45.0, total_timeout: float = 90.0
     ):
         self._first_token_timeout = first_token_timeout
         self._total_timeout = total_timeout

@@ -409,7 +409,7 @@ class BaseLLM(node.Node, ABC):
         )
         try:
             handle = await llm.create_completion(
-                request=dummy_request, video_support=True, audio_support=False
+                request=dummy_request, video_support=True, audio_support=False, max_completion_tokens=1
             )
             async for _ in handle:
                 pass
@@ -443,7 +443,7 @@ class BaseLLM(node.Node, ABC):
         )
         try:
             handle = await llm.create_completion(
-                request=dummy_request, video_support=False, audio_support=True
+                request=dummy_request, video_support=False, audio_support=True, max_completion_tokens=1
             )
             async for _ in handle:
                 pass
