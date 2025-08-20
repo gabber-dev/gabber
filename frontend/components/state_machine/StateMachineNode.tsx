@@ -110,8 +110,6 @@ function Parameter({ pads }: { pads: StateMachineParameterPads }) {
   );
   const { pad } = usePropertyPad<unknown>(nodeId || "", pads.valuePadId);
 
-  console.log("NEIL Parameter pads", pad, nodeId, pads);
-
   return (
     <div className="flex items-center border-b border-base-100 p-2">
       <div className="flex gap-2">

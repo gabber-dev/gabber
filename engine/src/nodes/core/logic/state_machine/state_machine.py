@@ -147,9 +147,19 @@ class StateMachine(node.Node):
             for trans_dict in config_dict["transitions"]:
                 try:
                     tm = StateMachineTransition.model_validate(trans_dict)
-                    if tm.from_state not in state_ids or tm.to_state not in state_ids:
+                    if (
+                        tm.from_state != "__ANY__"
+                        and tm.from_state not in state_ids
+                        or tm.to_state not in state_ids
+                    ):
                         logging.warning(
                             f"Transition from '{tm.from_state}' to '{tm.to_state}' contains unknown states. Skipping."
+                        )
+                        continue
+
+                    if tm.to_state == "__ANY__":
+                        logging.warning(
+                            "Transition to '__ANY__' state is not allowed. Skipping."
                         )
                         continue
 
@@ -172,6 +182,20 @@ class StateMachine(node.Node):
                     f"Invalid entry node position configuration: {entry_node_position}. Setting to default."
                 )
                 cleaned_dict["entry_node_position"] = StateMachineStatePosition(
+                    x=0.0, y=0.0
+                )
+
+        special_any_state_position = config_dict.get("special_any_state_position", None)
+        if special_any_state_position and isinstance(special_any_state_position, dict):
+            try:
+                cleaned_dict["special_any_state_position"] = (
+                    StateMachineStatePosition.model_validate(special_any_state_position)
+                )
+            except Exception:
+                logging.warning(
+                    f"Invalid special any state position configuration: {special_any_state_position}. Setting to default."
+                )
+                cleaned_dict["special_any_state_position"] = StateMachineStatePosition(
                     x=0.0, y=0.0
                 )
 
@@ -287,10 +311,6 @@ class StateMachine(node.Node):
                         param_value = parameter_name_value[c.parameter_name]
                         c_value = c.value
                         if isinstance(param_value, bool):
-                            logging.info(
-                                f"NEIL checking boolean condition: {c.parameter_name} {c.operator} {param_value}"
-                            )
-
                             if c.operator != "TRUE" and c.operator != "FALSE":
                                 logging.warning(
                                     f"Invalid operator '{c.operator}' for boolean parameter '{c.parameter_name}'."
@@ -299,15 +319,9 @@ class StateMachine(node.Node):
                                 break
 
                             if c.operator == "TRUE" and not param_value:
-                                logging.info(
-                                    f"NEIL condition failed: {c.parameter_name} is not TRUE"
-                                )
                                 res = False
                                 break
                             elif c.operator == "FALSE" and param_value:
-                                logging.info(
-                                    f"NEIL condition failed: {c.parameter_name} is not FALSE"
-                                )
                                 res = False
                                 break
 
@@ -617,6 +631,12 @@ class StateMachine(node.Node):
                             f"Invalid operator '{operator}' for parameter '{param_name}' with types {[type_.__class__.__name__ for type_ in tcs]}. Setting to None."
                         )
                         cond["operator"] = None
+
+                    if cond.get("operator") is None:
+                        if isinstance(tcs[0], pad.types.Boolean):
+                            cond["operator"] = "TRUE"
+                        else:
+                            cond["operator"] = "=="
 
     def _sort_and_rename_pads(self):
         configuration_pad = cast(

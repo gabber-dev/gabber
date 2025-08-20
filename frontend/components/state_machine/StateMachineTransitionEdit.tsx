@@ -14,7 +14,7 @@ import { useEffect, useMemo } from "react";
 
 export function StateMachineTransitionEdit() {
   const { editingTransition, updateTransition } = useStateMachine();
-  const { transition, fromState, toState } = editingTransition || {};
+  const { transition, fromName, toName } = editingTransition || {};
   if (!editingTransition) {
     return null;
   }
@@ -23,9 +23,9 @@ export function StateMachineTransitionEdit() {
       <div className="border-b w-full flex flex-col gap-2 items-center">
         <h2 className="text-lg font-bold">Editing Transition</h2>
         <div className="flex items-center gap-2 mb-4">
-          <span className="badge badge-primary">{fromState?.name}</span>
+          <span className="badge badge-primary">{fromName}</span>
           <ArrowRightIcon className="w-5 h-5 text-base-content" />
-          <span className="badge badge-primary">{toState?.name}</span>
+          <span className="badge badge-primary">{toName}</span>
         </div>
       </div>
 
