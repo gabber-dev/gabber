@@ -4,5 +4,6 @@
 from .fps import FPS
 from .publish import Publish
 from .sliding_window import SlidingWindow
+from .av_clip_zip import AVClipZip
 
-ALL_NODES = [FPS, Publish, SlidingWindow]
+ALL_NODES = [FPS, Publish, SlidingWindow, AVClipZip]

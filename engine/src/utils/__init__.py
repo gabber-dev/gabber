@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
+import os
 import logging
+import re
 import time
 from typing import (
     Any,
@@ -89,6 +91,32 @@ class ParenthesisRemover:
                     continue
             res += c
         return res
+
+
+class EmojiRemover:
+    def __init__(self):
+        # Regex pattern for common emoji Unicode ranges (covers most, but not all variants)
+        self.emoji_pattern = re.compile(
+            "["
+            "\U0001f600-\U0001f64f"  # Emoticons
+            "\U0001f300-\U0001f5ff"  # Symbols & pictographs
+            "\U0001f680-\U0001f6ff"  # Transport & map symbols
+            "\U0001f1e0-\U0001f1ff"  # Flags (iOS)
+            "\U00002702-\U000027b0"  # Dingbats
+            "\U000024c2-\U0001f251"  # Enclosed characters
+            "\U0001f900-\U0001f9ff"  # Supplemental symbols & pictographs
+            "\U00002600-\U000026ff"  # Miscellaneous symbols
+            "\U00002b50-\U00002b55"  # Stars
+            "\U00002300-\U000023ff"  # Miscellaneous technical
+            "\U00002500-\U00002bef"  # Box drawing & more
+            "\U00002000-\U0000206f"  # General punctuation (includes zero-width joiners for emoji sequences)
+            "]+",
+            flags=re.UNICODE,
+        )
+
+    def push_text(self, text: str) -> str:
+        # Substitute matched emojis with an empty string
+        return self.emoji_pattern.sub("", text)
 
 
 async def audio_stream_provider(room: rtc.Room, track_name: str):
@@ -197,10 +225,27 @@ def get_full_content_from_deltas(
     deltas: list[ContextMessageContent_ChoiceDelta],
 ) -> str:
     content = ""
+    thinking = False
     for delta in deltas:
-        if delta.content:
-            content += delta.content
-    return content
+        cnt = delta.content
+        if not cnt:
+            continue
+        if thinking:
+            split = cnt.split("</think>")
+            if len(split) == 2:
+                normal_cnt = split[1]
+                content += normal_cnt
+                thinking = False
+        else:
+            split = cnt.split("<think>")
+            if len(split) == 2:
+                normal_cnt = split[0]
+                content += normal_cnt
+                thinking = True
+            else:
+                content += cnt
+
+    return content.strip()
 
 
 def short_uuid():

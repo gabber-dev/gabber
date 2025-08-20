@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
-import logging
 from typing import cast
 
 from core import runtime_types
@@ -57,6 +56,18 @@ class SlidingWindow(Node):
                 )
             )
             flush_trigger = cast(StatelessSinkPad, self.get_pad("flush"))
+
+        reset = cast(StatelessSinkPad, self.get_pad("reset"))
+        if not reset:
+            self.pads.append(
+                StatelessSinkPad(
+                    id="reset",
+                    owner_node=self,
+                    type_constraints=[types.Trigger()],
+                    group="reset",
+                )
+            )
+            reset = cast(StatelessSinkPad, self.get_pad("reset"))
 
         clip_source = cast(StatelessSourcePad, self.get_pad("clip"))
         if not clip_source:
@@ -124,6 +135,7 @@ class SlidingWindow(Node):
         audio_sink = cast(StatelessSinkPad, self.get_pad_required("audio"))
         video_sink = cast(StatelessSinkPad, self.get_pad_required("video"))
         flush = cast(StatelessSinkPad, self.get_pad_required("flush"))
+        reset = cast(StatelessSinkPad, self.get_pad_required("reset"))
         window = cast(PropertySinkPad, self.get_pad_required("window_size_s"))
         audio_frames: list[runtime_types.AudioFrame] = []
         video_frames: list[runtime_types.VideoFrame] = []
@@ -183,8 +195,9 @@ class SlidingWindow(Node):
                 audio_frames.clear()
                 video_frames.clear()
 
-        asyncio.gather(
-            audio_task(),
-            video_task(),
-            flush_task(),
-        )
+        async def reset_task():
+            async for item in reset:
+                audio_frames.clear()
+                video_frames.clear()
+
+        asyncio.gather(audio_task(), video_task(), flush_task(), reset_task())

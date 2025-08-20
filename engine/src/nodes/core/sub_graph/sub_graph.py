@@ -1,6 +1,7 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
+import logging
 from typing import TYPE_CHECKING, cast
 
 from core import node, pad
@@ -141,35 +142,46 @@ class SubGraph(node.Node):
         sg_pr_to_remove: list[SubgraphPadReference] = []
         while len(swap_to_proxy) > 0:
             p = swap_to_proxy.pop()
-            for sg_pr in subgraph_pad_refs:
-                if p.get_id() != sg_pr.new_proxy_id and not p.get_id().startswith(
-                    f"{sg_pr.new_proxy_id}_"
+            sg_pr: SubgraphPadReference | None = None
+            for _sg_pr in subgraph_pad_refs:
+                if p.get_id() == _sg_pr.new_proxy_id or p.get_id().startswith(
+                    f"{_sg_pr.new_proxy_id}_"
                 ):
-                    continue
+                    sg_pr = _sg_pr
+                    break
 
-                proxy_p = sg_pr.create_proxy_pad()
-                if isinstance(p, pad.SourcePad):
-                    assert isinstance(proxy_p, pad.SourcePad), (
-                        f"Expected SourcePad, got {type(proxy_p)}"
-                    )
-                    next_pads = p.get_next_pads()
-                    proxy_p.set_next_pads(next_pads)
-                elif isinstance(p, pad.SinkPad):
-                    assert isinstance(proxy_p, pad.SinkPad), (
-                        f"Expected SinkPad, got {type(proxy_p)}"
-                    )
-                    previous_pad = p.get_previous_pad()
-                    proxy_p.set_previous_pad(previous_pad)
+            if sg_pr is None:
+                logging.error(
+                    f"Could not find SubgraphPadReference for pad {p.get_id()}. This should not happen."
+                )
+                continue
 
-                if isinstance(p, pad.PropertyPad):
-                    assert isinstance(proxy_p, pad.PropertyPad), (
-                        f"Expected PropertyPad, got {type(proxy_p)}"
-                    )
-                    proxy_p.set_value(p.get_value())
-
-                self.pads.append(proxy_p)
-                sg_pr_to_remove.append(sg_pr)
+            proxy_p = sg_pr.create_proxy_pad()
+            if isinstance(p, pad.SourcePad):
+                assert isinstance(proxy_p, pad.SourcePad), (
+                    f"Expected SourcePad, got {type(proxy_p)}"
+                )
                 sg_pr.disconnect_proxy_node_pad()
+                next_pads = p.get_next_pads()
+                proxy_p.set_next_pads(next_pads)
+            elif isinstance(p, pad.SinkPad):
+                assert isinstance(proxy_p, pad.SinkPad), (
+                    f"Expected SinkPad, got {type(proxy_p)}"
+                )
+                sg_pr.disconnect_proxy_node_pad()
+                previous_pad = p.get_previous_pad()
+                p.disconnect()
+                if previous_pad:
+                    previous_pad.connect(proxy_p)
+
+            if isinstance(p, pad.PropertyPad):
+                assert isinstance(proxy_p, pad.PropertyPad), (
+                    f"Expected PropertyPad, got {type(proxy_p)}"
+                )
+                proxy_p.set_value(p.get_value())
+
+            self.pads.append(proxy_p)
+            sg_pr_to_remove.append(sg_pr)
 
         subgraph_pad_refs = [
             sg_pr for sg_pr in subgraph_pad_refs if sg_pr not in sg_pr_to_remove

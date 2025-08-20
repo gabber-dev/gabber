@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
+import os
 import json
 import logging
 
@@ -46,7 +47,7 @@ def engine(ctx: click.Context):
     run_engine(
         livekit_api_key="devkey",
         livekit_api_secret="secret",
-        livekit_url="ws://localhost:7880",
+        livekit_url=os.environ.get("LIVEKIT_URL", "ws://localhost:7880"),
     )
 
 

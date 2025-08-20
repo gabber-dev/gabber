@@ -69,7 +69,6 @@ class Tool(node.Node):
         schema = cast(runtime_types.Schema, schema_pad.get_value())
         if not schema:
             schema = runtime_types.Schema(properties={})
-        logging.info(f"NEIL Tool schema: {schema}")
         source = cast(pad.StatelessSourcePad, self.get_pad("source"))
         if not source:
             source = pad.StatelessSourcePad(
@@ -98,9 +97,7 @@ class Tool(node.Node):
         return td
 
     async def call_tool(self, tool_call: ToolCall, ctx: pad.RequestContext):
-        name = cast(pad.PropertySinkPad, self.get_pad_required("name"))
         source = cast(pad.StatelessSourcePad, self.get_pad_required("source"))
-        print("NEIL calling tool", name.get_value(), tool_call.arguments)
         fut = asyncio.Future[str]()
 
         def on_tool_call_done(results: list[Any]) -> None:

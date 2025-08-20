@@ -102,6 +102,12 @@ class VideoFrame:
         b64 = base64.b64encode(buffer.tobytes()).decode("utf-8")
         return b64
 
+    @classmethod
+    def black_frame(cls, width: int, height: int, timestamp: float) -> "VideoFrame":
+        """Create a black video frame of the given width and height."""
+        data = np.zeros((height, width, 4), dtype=np.uint8)
+        return cls(data=data, width=width, height=height, timestamp=timestamp)
+
 
 @dataclass
 class AudioClip:
@@ -113,7 +119,7 @@ class AudioClip:
         if not self.audio:
             return np.array([], dtype=np.int16)
 
-        return np.concatenate([frame.data_24000hz.data for frame in self.audio])
+        return np.concatenate([frame.data_24000hz.data for frame in self.audio], axis=1)
 
     @property
     def fp32_44100(self) -> NDArray[np.float32]:
@@ -131,7 +137,7 @@ class AudioClip:
 @dataclass
 class VideoClip:
     video: list[VideoFrame]
-    mp4_bytes: bytes
+    mp4_bytes: bytes | None = None
 
     @property
     def stacked_bgr_frames(self) -> np.ndarray:

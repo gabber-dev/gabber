@@ -1,0 +1,1249 @@
+{
+    "id": "57b41721-3640-4101-8f47-3fab61fed0ad",
+    "name": "Conversational Local LLM",
+    "created_at": "2025-07-29T21:43:30.505415",
+    "updated_at": "2025-08-15T16:36:10.186965",
+    "graph": {
+        "nodes": [
+            {
+                "id": "localopenaicompatiblellm_fa3c5ac4",
+                "type": "LocalOpenAICompatibleLLM",
+                "editor_name": "LocalOpenAICompatibleLLM",
+                "editor_position": [
+                    708.0,
+                    300.0
+                ],
+                "editor_dimensions": [
+                    295.0,
+                    475.0
+                ],
+                "pads": [
+                    {
+                        "id": "run_trigger",
+                        "group": "run_trigger",
+                        "type": "StatelessSinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "proxystatelesssink_4ec5373c",
+                            "pad": "proxy"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "started",
+                        "group": "started",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "tool_calls_started",
+                        "group": "tool_calls_started",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "tool_calls_finished",
+                        "group": "tool_calls_finished",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "first_token",
+                        "group": "first_token",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "text_stream",
+                        "group": "text_stream",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "tts_57f02895",
+                                "pad": "text_stream"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "text_stream"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "thinking_stream",
+                        "group": "thinking_stream",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "text_stream"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "context_message",
+                        "group": "context_message",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "proxystatelesssource_3949aad0",
+                                "pad": "proxy"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "context_message"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "finished",
+                        "group": "finished",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "cancel_trigger",
+                        "group": "cancel_trigger",
+                        "type": "StatelessSinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "stt_1cfdeb01",
+                            "pad": "speech_started"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "context",
+                        "group": "context",
+                        "type": "PropertySinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "proxypropertysink_5040f56b",
+                            "pad": "proxy"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "list",
+                                "max_length": null,
+                                "item_type_constraints": [
+                                    {}
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "tool_group",
+                        "group": "tool_group",
+                        "type": "PropertySinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "node_reference",
+                                "node_types": [
+                                    "ToolGroup"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "port",
+                        "group": "port",
+                        "type": "PropertySinkPad",
+                        "value": 7002,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "integer",
+                                "maximum": null,
+                                "minimum": null
+                            }
+                        ]
+                    }
+                ],
+                "description": "Send and receive responses from any Qwen-omni language model",
+                "metadata": {
+                    "primary": "ai",
+                    "secondary": "local",
+                    "tags": [
+                        "completion",
+                        "text",
+                        "qwen-omni"
+                    ]
+                }
+            },
+            {
+                "id": "proxypropertysink_5040f56b",
+                "type": "ProxyPropertySink",
+                "editor_name": "ProxyPropertySink",
+                "editor_position": [
+                    324.0,
+                    636.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    167.0
+                ],
+                "pads": [
+                    {
+                        "id": "proxy",
+                        "group": "proxy",
+                        "type": "PropertySourcePad",
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "localopenaicompatiblellm_fa3c5ac4",
+                                "pad": "context"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "list",
+                                "max_length": null,
+                                "item_type_constraints": [
+                                    {}
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "pad_id",
+                        "group": "pad_id",
+                        "type": "PropertySinkPad",
+                        "value": "llm_context",
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    }
+                ],
+                "description": "Create a property sink pad that is exposed when using your subgraph in a flow",
+                "metadata": {
+                    "primary": "subgraph",
+                    "secondary": "sink",
+                    "tags": [
+                        "property",
+                        "sink"
+                    ]
+                }
+            },
+            {
+                "id": "proxystatelesssink_e383d515",
+                "type": "ProxyStatelessSink",
+                "editor_name": "ProxyStatelessSink",
+                "editor_position": [
+                    -444.0,
+                    -240.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    167.0
+                ],
+                "pads": [
+                    {
+                        "id": "proxy",
+                        "group": "proxy",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "stt_1cfdeb01",
+                                "pad": "audio"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "pad_id",
+                        "group": "pad_id",
+                        "type": "PropertySinkPad",
+                        "value": "audio_in",
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    }
+                ],
+                "description": "Create a stateless sink pad that is exposed when using your subgraph in a flow",
+                "metadata": {
+                    "primary": "subgraph",
+                    "secondary": "sink",
+                    "tags": [
+                        "stateless",
+                        "proxy"
+                    ]
+                }
+            },
+            {
+                "id": "proxypropertysink_60680683",
+                "type": "ProxyPropertySink",
+                "editor_name": "ProxyPropertySink",
+                "editor_position": [
+                    -444.0,
+                    -60.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    179.0
+                ],
+                "pads": [
+                    {
+                        "id": "proxy",
+                        "group": "proxy",
+                        "type": "PropertySourcePad",
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "stt_1cfdeb01",
+                                "pad": "service"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "enum",
+                                "options": [
+                                    "assembly_ai",
+                                    "local_kyutai"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "pad_id",
+                        "group": "pad_id",
+                        "type": "PropertySinkPad",
+                        "value": "stt_service",
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    }
+                ],
+                "description": "Create a property sink pad that is exposed when using your subgraph in a flow",
+                "metadata": {
+                    "primary": "subgraph",
+                    "secondary": "sink",
+                    "tags": [
+                        "property",
+                        "sink"
+                    ]
+                }
+            },
+            {
+                "id": "createcontextmessage_069d591b",
+                "type": "CreateContextMessage",
+                "editor_name": "CreateContextMessage",
+                "editor_position": [
+                    252.0,
+                    -156.0
+                ],
+                "editor_dimensions": [
+                    266.0,
+                    195.0
+                ],
+                "pads": [
+                    {
+                        "id": "role",
+                        "group": "role",
+                        "type": "PropertySinkPad",
+                        "value": "user",
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "context_message_role"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "content",
+                        "group": "content",
+                        "type": "StatelessSinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "stt_1cfdeb01",
+                            "pad": "speech_clip"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "audio_clip"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "context_message",
+                        "group": "context_message",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "proxystatelesssource_7813d651",
+                                "pad": "proxy"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "context_message"
+                            }
+                        ]
+                    }
+                ],
+                "description": "Creates new context messages with specified role and content",
+                "metadata": {
+                    "primary": "ai",
+                    "secondary": "llm",
+                    "tags": [
+                        "context",
+                        "message"
+                    ]
+                }
+            },
+            {
+                "id": "proxystatelesssource_7813d651",
+                "type": "ProxyStatelessSource",
+                "editor_name": "ProxyStatelessSource",
+                "editor_position": [
+                    576.0,
+                    -144.0
+                ],
+                "editor_dimensions": [
+                    266.0,
+                    167.0
+                ],
+                "pads": [
+                    {
+                        "id": "proxy",
+                        "group": "proxy",
+                        "type": "StatelessSinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "createcontextmessage_069d591b",
+                            "pad": "context_message"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "context_message"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "pad_id",
+                        "group": "pad_id",
+                        "type": "PropertySinkPad",
+                        "value": "new_user_message",
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    }
+                ],
+                "description": "Proxy source pad for subgraph connections",
+                "metadata": {
+                    "primary": "subgraph",
+                    "secondary": "source",
+                    "tags": [
+                        "stateless",
+                        "proxy"
+                    ]
+                }
+            },
+            {
+                "id": "proxystatelesssink_4ec5373c",
+                "type": "ProxyStatelessSink",
+                "editor_name": "ProxyStatelessSink",
+                "editor_position": [
+                    324.0,
+                    396.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    167.0
+                ],
+                "pads": [
+                    {
+                        "id": "proxy",
+                        "group": "proxy",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "localopenaicompatiblellm_fa3c5ac4",
+                                "pad": "run_trigger"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "pad_id",
+                        "group": "pad_id",
+                        "type": "PropertySinkPad",
+                        "value": "respond_trigger",
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    }
+                ],
+                "description": "Create a stateless sink pad that is exposed when using your subgraph in a flow",
+                "metadata": {
+                    "primary": "subgraph",
+                    "secondary": "sink",
+                    "tags": [
+                        "stateless",
+                        "proxy"
+                    ]
+                }
+            },
+            {
+                "id": "tts_57f02895",
+                "type": "TTS",
+                "editor_name": "TTS",
+                "editor_position": [
+                    1428.0,
+                    420.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    359.0
+                ],
+                "pads": [
+                    {
+                        "id": "service",
+                        "group": "service",
+                        "type": "PropertySinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "proxypropertysink_64ff72da",
+                            "pad": "proxy"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "enum",
+                                "options": [
+                                    "gabber",
+                                    "cartesia",
+                                    "elevenlabs"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "api_key",
+                        "group": "api_key",
+                        "type": "PropertySinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "proxypropertysink_9cdcde81",
+                            "pad": "proxy"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "secret",
+                                "options": []
+                            }
+                        ]
+                    },
+                    {
+                        "id": "voice_id",
+                        "group": "voice_id",
+                        "type": "PropertySinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "proxypropertysink_dfe7687f",
+                            "pad": "proxy"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    },
+                    {
+                        "id": "text_stream",
+                        "group": "text_stream",
+                        "type": "StatelessSinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "localopenaicompatiblellm_fa3c5ac4",
+                            "pad": "text_stream"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "text_stream"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "complete_text",
+                        "group": "complete_text",
+                        "type": "StatelessSinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    },
+                    {
+                        "id": "audio",
+                        "group": "audio",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "proxystatelesssource_b875c693",
+                                "pad": "proxy"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "cancel_trigger",
+                        "group": "cancel_trigger",
+                        "type": "StatelessSinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "stt_1cfdeb01",
+                            "pad": "speech_started"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "complete_transcription",
+                        "group": "complete_transcription",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    }
+                ],
+                "description": "Converts text to speech using Gabber's native TTS model",
+                "metadata": {
+                    "primary": "ai",
+                    "secondary": "audio",
+                    "tags": [
+                        "tts",
+                        "speech",
+                        "gabber"
+                    ]
+                }
+            },
+            {
+                "id": "proxypropertysink_64ff72da",
+                "type": "ProxyPropertySink",
+                "editor_name": "ProxyPropertySink",
+                "editor_position": [
+                    1056.0,
+                    12.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    179.0
+                ],
+                "pads": [
+                    {
+                        "id": "proxy",
+                        "group": "proxy",
+                        "type": "PropertySourcePad",
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "tts_57f02895",
+                                "pad": "service"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "enum",
+                                "options": [
+                                    "gabber",
+                                    "cartesia",
+                                    "elevenlabs"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "pad_id",
+                        "group": "pad_id",
+                        "type": "PropertySinkPad",
+                        "value": "tts_service",
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    }
+                ],
+                "description": "Create a property sink pad that is exposed when using your subgraph in a flow",
+                "metadata": {
+                    "primary": "subgraph",
+                    "secondary": "sink",
+                    "tags": [
+                        "property",
+                        "sink"
+                    ]
+                }
+            },
+            {
+                "id": "proxypropertysink_9cdcde81",
+                "type": "ProxyPropertySink",
+                "editor_name": "ProxyPropertySink",
+                "editor_position": [
+                    1056.0,
+                    204.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    179.0
+                ],
+                "pads": [
+                    {
+                        "id": "proxy",
+                        "group": "proxy",
+                        "type": "PropertySourcePad",
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "tts_57f02895",
+                                "pad": "api_key"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "secret",
+                                "options": []
+                            }
+                        ]
+                    },
+                    {
+                        "id": "pad_id",
+                        "group": "pad_id",
+                        "type": "PropertySinkPad",
+                        "value": "tts_api_key",
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    }
+                ],
+                "description": "Create a property sink pad that is exposed when using your subgraph in a flow",
+                "metadata": {
+                    "primary": "subgraph",
+                    "secondary": "sink",
+                    "tags": [
+                        "property",
+                        "sink"
+                    ]
+                }
+            },
+            {
+                "id": "proxypropertysink_dfe7687f",
+                "type": "ProxyPropertySink",
+                "editor_name": "ProxyPropertySink",
+                "editor_position": [
+                    1056.0,
+                    396.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    179.0
+                ],
+                "pads": [
+                    {
+                        "id": "proxy",
+                        "group": "proxy",
+                        "type": "PropertySourcePad",
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "tts_57f02895",
+                                "pad": "voice_id"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    },
+                    {
+                        "id": "pad_id",
+                        "group": "pad_id",
+                        "type": "PropertySinkPad",
+                        "value": "tts_voice_id",
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    }
+                ],
+                "description": "Create a property sink pad that is exposed when using your subgraph in a flow",
+                "metadata": {
+                    "primary": "subgraph",
+                    "secondary": "sink",
+                    "tags": [
+                        "property",
+                        "sink"
+                    ]
+                }
+            },
+            {
+                "id": "proxystatelesssource_b875c693",
+                "type": "ProxyStatelessSource",
+                "editor_name": "ProxyStatelessSource",
+                "editor_position": [
+                    1836.0,
+                    456.0
+                ],
+                "editor_dimensions": [
+                    266.0,
+                    167.0
+                ],
+                "pads": [
+                    {
+                        "id": "proxy",
+                        "group": "proxy",
+                        "type": "StatelessSinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "tts_57f02895",
+                            "pad": "audio"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "pad_id",
+                        "group": "pad_id",
+                        "type": "PropertySinkPad",
+                        "value": "audio_out",
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    }
+                ],
+                "description": "Proxy source pad for subgraph connections",
+                "metadata": {
+                    "primary": "subgraph",
+                    "secondary": "source",
+                    "tags": [
+                        "stateless",
+                        "proxy"
+                    ]
+                }
+            },
+            {
+                "id": "proxystatelesssource_3949aad0",
+                "type": "ProxyStatelessSource",
+                "editor_name": "ProxyStatelessSource",
+                "editor_position": [
+                    1116.0,
+                    828.0
+                ],
+                "editor_dimensions": [
+                    266.0,
+                    167.0
+                ],
+                "pads": [
+                    {
+                        "id": "proxy",
+                        "group": "proxy",
+                        "type": "StatelessSinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "localopenaicompatiblellm_fa3c5ac4",
+                            "pad": "context_message"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "context_message"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "pad_id",
+                        "group": "pad_id",
+                        "type": "PropertySinkPad",
+                        "value": "new_assistant_message",
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    }
+                ],
+                "description": "Proxy source pad for subgraph connections",
+                "metadata": {
+                    "primary": "subgraph",
+                    "secondary": "source",
+                    "tags": [
+                        "stateless",
+                        "proxy"
+                    ]
+                }
+            },
+            {
+                "id": "stt_1cfdeb01",
+                "type": "STT",
+                "editor_name": "STT",
+                "editor_position": [
+                    -72.0,
+                    -204.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    319.0
+                ],
+                "pads": [
+                    {
+                        "id": "service",
+                        "group": "service",
+                        "type": "PropertySinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "proxypropertysink_60680683",
+                            "pad": "proxy"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "enum",
+                                "options": [
+                                    "assembly_ai",
+                                    "local_kyutai"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "audio",
+                        "group": "audio",
+                        "type": "StatelessSinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "proxystatelesssink_e383d515",
+                            "pad": "proxy"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "speech_clip",
+                        "group": "speech_clip",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "createcontextmessage_069d591b",
+                                "pad": "content"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "audio_clip"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "speech_started",
+                        "group": "speech_started",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "localopenaicompatiblellm_fa3c5ac4",
+                                "pad": "cancel_trigger"
+                            },
+                            {
+                                "node": "tts_57f02895",
+                                "pad": "cancel_trigger"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "speech_ended",
+                        "group": "speech_ended",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "final_transcription",
+                        "group": "final_transcription",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    },
+                    {
+                        "id": "api_key",
+                        "group": "api_key",
+                        "type": "PropertySinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "proxypropertysink_4371b8ec",
+                            "pad": "proxy"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "secret",
+                                "options": []
+                            }
+                        ]
+                    }
+                ],
+                "description": "Speech-to-Text",
+                "metadata": {
+                    "primary": "ai",
+                    "secondary": "audio",
+                    "tags": [
+                        "stt",
+                        "speech",
+                        "kyutai",
+                        "assembly"
+                    ]
+                }
+            },
+            {
+                "id": "proxypropertysink_4371b8ec",
+                "type": "ProxyPropertySink",
+                "editor_name": "ProxyPropertySink",
+                "editor_position": [
+                    -444.0,
+                    144.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    179.0
+                ],
+                "pads": [
+                    {
+                        "id": "proxy",
+                        "group": "proxy",
+                        "type": "PropertySourcePad",
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "stt_1cfdeb01",
+                                "pad": "api_key"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "secret",
+                                "options": []
+                            }
+                        ]
+                    },
+                    {
+                        "id": "pad_id",
+                        "group": "pad_id",
+                        "type": "PropertySinkPad",
+                        "value": "stt_api_key",
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    }
+                ],
+                "description": "Create a property sink pad that is exposed when using your subgraph in a flow",
+                "metadata": {
+                    "primary": "subgraph",
+                    "secondary": "sink",
+                    "tags": [
+                        "property",
+                        "sink"
+                    ]
+                }
+            }
+        ]
+    }
+}

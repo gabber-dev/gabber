@@ -3,7 +3,13 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { getBezierPath, BaseEdge, EdgeProps, Position, Node } from "@xyflow/react";
+import {
+  getBezierPath,
+  BaseEdge,
+  EdgeProps,
+  Position,
+  Node,
+} from "@xyflow/react";
 import { getDataTypeColor } from "../blocks/components/pads/utils/dataTypeColors";
 import { useEditor } from "@/hooks/useEditor";
 
@@ -23,6 +29,7 @@ export function HybridEdge({
   style = {},
   markerEnd,
   data,
+  selected,
 }: EdgeProps) {
   const { reactFlowRepresentation } = useEditor();
   // Determine if we should use step edge logic
@@ -51,10 +58,12 @@ export function HybridEdge({
     // Prefer live editor_dimensions from node data, fallback to measured
     const sourceHeight =
       (sourceNode?.data as any)?.editor_dimensions?.[1] ??
-      (sourceNode?.measured?.height ?? null);
+      sourceNode?.measured?.height ??
+      null;
     const targetHeight =
       (targetNode?.data as any)?.editor_dimensions?.[1] ??
-      (targetNode?.measured?.height ?? null);
+      targetNode?.measured?.height ??
+      null;
 
     const measuredSourceBottom =
       sourceNode && sourceHeight ? sourceNode.position.y + sourceHeight : null;
@@ -91,10 +100,30 @@ export function HybridEdge({
   );
 
   return (
-    <BaseEdge
-      path={edgePath}
-      style={{ ...style, strokeWidth: 2, stroke: color.background }}
-      markerEnd={markerEnd}
-    />
+    <>
+      {/* Base edge with original color */}
+      <BaseEdge
+        path={edgePath}
+        style={{
+          ...style,
+          strokeWidth: selected ? 3 : 2,
+          stroke: color.background,
+        }}
+        markerEnd={markerEnd}
+      />
+
+      {/* Selection highlight overlay */}
+      {selected && (
+        <BaseEdge
+          path={edgePath}
+          style={{
+            stroke: "#FCD34D",
+            strokeWidth: 6,
+            strokeOpacity: 0.3,
+            filter: "blur(2px)",
+          }}
+        />
+      )}
+    </>
   );
 }

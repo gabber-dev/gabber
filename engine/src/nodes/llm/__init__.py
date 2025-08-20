@@ -3,8 +3,11 @@
 
 from .llm_context import LLMContext
 from .openai_compatible_llm import OpenAICompatibleLLM
+from .base_llm import BaseLLM
 
 ALL_NODES = [
     LLMContext,
     OpenAICompatibleLLM,
 ]
+
+__all__ = ["BaseLLM"]

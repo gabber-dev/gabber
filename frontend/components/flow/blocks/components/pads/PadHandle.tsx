@@ -10,9 +10,10 @@ import { getDataTypeColor, getPrimaryDataType } from "./utils/dataTypeColors";
 
 type Props = {
   data: PadEditorRepresentation;
+  isActive?: boolean;
 };
 
-export function PadHandle({ data }: Props) {
+export function PadHandle({ data, isActive = false }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const direction = useMemo(() => {
@@ -75,17 +76,24 @@ export function PadHandle({ data }: Props) {
 
   // Create dynamic styles for the handle
   const handleStyle = useMemo(() => {
+    const baseTranslate = direction === "source" ? "translate(50%, -50%)" : "translate(-50%, -50%)";
     const baseStyle = {
-      width: "18px",
-      height: "18px",
+      width: "12px",
+      height: "12px",
       borderRadius: "9999px",
       border: hasConnections ? `2px solid ${dataTypeColor.border}` : "none",
       background: dataTypeColor.background,
+      backgroundImage: hasConnections
+        ? `radial-gradient(circle at center, #000 30%, ${dataTypeColor.background} 32%)`
+        : "none",
       opacity: hasConnections ? 0.9 : 0.7,
       boxSizing: "border-box" as const,
-    };
+      transition: "transform 300ms ease-in-out, box-shadow 300ms ease-in-out, opacity 150ms ease-in-out",
+      transform: `${baseTranslate} ${isActive ? "scale(1.2)" : "scale(1)"}`,
+      boxShadow: isActive ? `0 0 8px ${dataTypeColor.border}` : "none",
+    } as const;
     return baseStyle;
-  }, [hasConnections, dataTypeColor]);
+  }, [hasConnections, dataTypeColor, isActive, direction]);
 
   return (
     <div
@@ -93,32 +101,10 @@ export function PadHandle({ data }: Props) {
       onMouseEnter={() => setIsModalOpen(true)}
       onMouseLeave={() => setIsModalOpen(false)}
     >
-      <Handle
-        className="!w-3 !h-3"
-        style={handleStyle}
-        type={direction}
-        position={position}
-        id={data.id}
-      />
-      {hasConnections && (
-        <div
-          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-          style={{
-            width: "18px",
-            height: "18px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <div
-            className="w-1 h-1 rounded-full bg-base-100"
-            style={{
-              opacity: 0.8,
-            }}
-          />
-        </div>
-      )}
+      <div className="absolute" style={{ top: "50%", [position === Position.Right ? "right" : "left"]: 0 }}>
+        <Handle style={handleStyle} type={direction} position={position} id={data.id} />
+      </div>
+      {/* inner dot rendered via backgroundImage when connected */}
       {isModalOpen && (
         <div
           className={`absolute z-20 ${direction === "source" ? "-left-56" : "left-4"} -top-2 w-52 bg-base-200 border-2 border-primary rounded-lg shadow-lg p-3 text-sm`}

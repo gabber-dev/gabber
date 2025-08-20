@@ -10,18 +10,33 @@ from core.node import NodeMetadata
 from lib import stt
 
 
-class KyutaiSTT(node.Node):
+class STT(node.Node):
     @classmethod
     def get_description(cls) -> str:
-        return "Speech-to-Text using Kyutai's STT model"
+        return "Speech-to-Text"
 
     @classmethod
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(
-            primary="ai", secondary="audio", tags=["stt", "speech", "kyutai"]
+            primary="ai",
+            secondary="audio",
+            tags=["stt", "speech", "kyutai", "assembly"],
         )
 
     async def resolve_pads(self):
+        service = cast(pad.PropertySinkPad, self.get_pad("service"))
+        if service is None:
+            service = pad.PropertySinkPad(
+                id="service",
+                group="service",
+                owner_node=self,
+                type_constraints=[
+                    pad.types.Enum(options=["assembly_ai", "local_kyutai"])
+                ],
+                value="assembly_ai",
+            )
+            self.pads.append(service)
+
         audio_sink = cast(pad.StatelessSinkPad, self.get_pad("audio"))
         if audio_sink is None:
             audio_sink = pad.StatelessSinkPad(
@@ -76,8 +91,19 @@ class KyutaiSTT(node.Node):
             )
             self.pads.append(final_transcription_source)
 
+        api_key = cast(pad.PropertySinkPad, self.get_pad("api_key"))
+        if api_key is None:
+            api_key = pad.PropertySinkPad(
+                id="api_key",
+                group="api_key",
+                owner_node=self,
+                type_constraints=[pad.types.Secret(options=self.secrets)],
+            )
+            self.pads.append(api_key)
+
     async def run(self):
         audio_sink = cast(pad.StatelessSinkPad, self.get_pad_required("audio"))
+        service = cast(pad.PropertySinkPad, self.get_pad_required("service"))
         speech_clip_source = cast(
             pad.StatelessSourcePad, self.get_pad_required("speech_clip")
         )
@@ -91,19 +117,30 @@ class KyutaiSTT(node.Node):
             pad.StatelessSourcePad, self.get_pad_required("final_transcription")
         )
 
-        self._kyutai = stt.Kyutai(port=8080)
-        kyutai_run_t = asyncio.create_task(self._kyutai.run())
+        stt_impl: stt.STT
+        if service.get_value() == "assembly_ai":
+            api_key_pad = cast(pad.PropertySinkPad, self.get_pad_required("api_key"))
+            api_key_name = api_key_pad.get_value()
+            api_key = await self.secret_provider.resolve_secret(api_key_name)
+            stt_impl = stt.Assembly(api_key=api_key)
+        elif service.get_value() == "local_kyutai":
+            stt_impl = stt.Kyutai(port=8080)
+        else:
+            logging.error("Unsupported STT service: %s", service.get_value())
+            raise ValueError(f"Unsupported STT service: {service.get_value()}")
+
+        stt_run_t = asyncio.create_task(stt_impl.run())
 
         async def audio_sink_task() -> None:
             async for audio in audio_sink:
                 if audio is None:
                     continue
-                self._kyutai.push_audio(audio.value)
+                stt_impl.push_audio(audio.value)
                 audio.ctx.complete()
 
-        async def kyutai_event_task() -> None:
+        async def stt_event_task() -> None:
             ctx: pad.RequestContext | None = None
-            async for event in self._kyutai:
+            async for event in stt_impl:
                 if isinstance(event, stt.STTEvent_SpeechStarted):
                     ctx = pad.RequestContext(parent=None)
                     speech_started_source.push_item(runtime_types.Trigger(), ctx)
@@ -126,12 +163,12 @@ class KyutaiSTT(node.Node):
                     ctx.complete()
 
         audio_sink_t = asyncio.create_task(audio_sink_task())
-        kyutai_event_t = asyncio.create_task(kyutai_event_task())
+        kyutai_event_t = asyncio.create_task(stt_event_task())
 
         try:
-            await asyncio.gather(kyutai_run_t, audio_sink_t, kyutai_event_t)
+            await asyncio.gather(stt_run_t, audio_sink_t, kyutai_event_t)
         except asyncio.CancelledError:
             pass
         finally:
-            self._kyutai.close()
+            stt_impl.close()
             audio_sink_t.cancel()

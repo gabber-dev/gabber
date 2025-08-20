@@ -294,7 +294,6 @@ class Graph:
                     secrets=self.secrets,
                     graph=subgraph,
                 )
-                await node.resolve_pads()
             else:
                 raise ValueError(f"Node type {node_data.type} not found in library.")
 
@@ -303,10 +302,16 @@ class Graph:
             node.editor_name = node_data.editor_name
             node.editor_dimensions = node_data.editor_dimensions
 
+            secret_options = await self.secret_provider.list_secrets()
             for pad_data in node_data.pads:
                 casted_allowed_types = cast(
                     list[pad.types.BasePadType] | None, pad_data.allowed_types
                 )
+
+                if isinstance(casted_allowed_types, list):
+                    for tc in casted_allowed_types:
+                        if isinstance(tc, pad.types.Secret):
+                            tc.options = secret_options
 
                 deserialized_value: Any | None = None
                 if pad_data.type.startswith("Property"):

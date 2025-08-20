@@ -1,3 +1,6 @@
+# Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
+# SPDX-License-Identifier: SUL-1.0
+
 from kittentts import KittenTTS
 from fastapi import FastAPI, Body, Response
 from starlette.concurrency import run_in_threadpool
@@ -31,4 +34,4 @@ async def tts(request: TTSRequest = Body(...)):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=80)
+    uvicorn.run(app, host="0.0.0.0", port=7003)

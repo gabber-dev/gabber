@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import os
+import logging
 from pathlib import Path
 
 import aiofiles
@@ -20,7 +21,9 @@ class DefaultGraphLibrary(graph.GraphLibrary):
                 description=n.get_description(),
                 metadata=n.get_metadata(),
             )
-            for n in ALL_NODES if n.get_type() != "SubGraph" # SubGraph node should not be listed as a library item
+            for n in ALL_NODES
+            if n.get_type()
+            != "SubGraph"  # SubGraph node should not be listed as a library item
         ]
 
         try:
@@ -45,10 +48,11 @@ class DefaultGraphLibrary(graph.GraphLibrary):
 
     async def _get_default_sub_graphs(self) -> list[models.GraphLibraryItem]:
         sub_graphs: list[models.GraphLibraryItem] = []
-        dir_path = Path(__file__).parent / "data" / "sub_graph"
+        dir_path = Path(__file__).parent.parent.parent / "data" / "sub_graph"
         for file_path in dir_path.glob("*.json"):
             async with aiofiles.open(str(file_path), "r") as f:
                 content = await f.read()
             item = models.GraphLibraryItem_SubGraph.model_validate_json(content)
             item.editable = False
+            sub_graphs.append(item)
         return sub_graphs
