@@ -76,7 +76,8 @@ export function PadHandle({ data, isActive = false }: Props) {
 
   // Create dynamic styles for the handle
   const handleStyle = useMemo(() => {
-    const baseTranslate = direction === "source" ? "translate(50%, -50%)" : "translate(-50%, -50%)";
+    const baseTranslate =
+      direction === "source" ? "translate(50%, -50%)" : "translate(-50%, -50%)";
     const baseStyle = {
       width: "12px",
       height: "12px",
@@ -88,7 +89,8 @@ export function PadHandle({ data, isActive = false }: Props) {
         : "none",
       opacity: hasConnections ? 0.9 : 0.7,
       boxSizing: "border-box" as const,
-      transition: "transform 300ms ease-in-out, box-shadow 300ms ease-in-out, opacity 150ms ease-in-out",
+      transition:
+        "transform 300ms ease-in-out, box-shadow 300ms ease-in-out, opacity 150ms ease-in-out",
       transform: `${baseTranslate} ${isActive ? "scale(1.2)" : "scale(1)"}`,
       boxShadow: isActive ? `0 0 8px ${dataTypeColor.border}` : "none",
     } as const;
@@ -101,8 +103,19 @@ export function PadHandle({ data, isActive = false }: Props) {
       onMouseEnter={() => setIsModalOpen(true)}
       onMouseLeave={() => setIsModalOpen(false)}
     >
-      <div className="absolute" style={{ top: "50%", [position === Position.Right ? "right" : "left"]: 0 }}>
-        <Handle style={handleStyle} type={direction} position={position} id={data.id} />
+      <div
+        className="absolute"
+        style={{
+          top: "50%",
+          [position === Position.Right ? "right" : "left"]: 0,
+        }}
+      >
+        <Handle
+          style={handleStyle}
+          type={direction}
+          position={position}
+          id={data.id}
+        />
       </div>
       {/* inner dot rendered via backgroundImage when connected */}
       {isModalOpen && (

@@ -374,9 +374,13 @@ export function StateMachineProvider({ children, nodeId }: Props) {
       type: "default",
       position: {
         x:
-          transientEntryPosition?.x ?? configuration?.entry_node_position?.x ?? 0,
+          transientEntryPosition?.x ??
+          configuration?.entry_node_position?.x ??
+          0,
         y:
-          transientEntryPosition?.y ?? configuration?.entry_node_position?.y ?? 0,
+          transientEntryPosition?.y ??
+          configuration?.entry_node_position?.y ??
+          0,
       },
       data: {},
     };
@@ -449,7 +453,12 @@ export function StateMachineProvider({ children, nodeId }: Props) {
       });
     }
     setRfNodes(nodes);
-  }, [configuration?.states, configuration?.entry_node_position?.x, configuration?.entry_node_position?.y, selectedNodes]);
+  }, [
+    configuration?.states,
+    configuration?.entry_node_position?.x,
+    configuration?.entry_node_position?.y,
+    selectedNodes,
+  ]);
 
   const parameterPads = useMemo(() => {
     const namePads =

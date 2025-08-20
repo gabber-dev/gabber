@@ -44,6 +44,8 @@ class StateMachineTransitionCondition(BaseModel):
             "STARTS_WITH",
             "ENDS_WITH",
             "CONTAINS",
+            "TRUE",
+            "FALSE",
         ]
         | None
     ) = None
@@ -62,6 +64,7 @@ class StateMachineConfiguration(BaseModel):
     transitions: list[StateMachineTransition]
     entry_state: str | None = None
     entry_node_position: StateMachineStatePosition | None = None
+    special_any_state_position: StateMachineStatePosition | None = None
 
 
 class StateMachine(node.Node):
@@ -245,20 +248,23 @@ class StateMachine(node.Node):
                 f"Current state '{state_name}' not found in configuration."
             )
 
-        def get_outgoing_transitions(
-            state: StateMachineState,
-        ) -> list[StateMachineTransition]:
+        def get_outgoing_transitions(state_id: str) -> list[StateMachineTransition]:
             config_dict = configuration_pad.get_value()
             config = StateMachineConfiguration.model_validate(config_dict)
             return [
                 transition
                 for transition in config.transitions
-                if transition.from_state == state.id
+                if transition.from_state == state_id
             ]
 
-        def check_transitions(ctx: pad.RequestContext):
-            current_state = get_current_state()
-            transitions = get_outgoing_transitions(current_state)
+        def check_transitions(
+            *, ctx: pad.RequestContext, from_id: str, current_state_name: str
+        ):
+            transitions = get_outgoing_transitions(from_id)
+
+            if len(transitions) == 0:
+                return
+
             config_dict = configuration_pad.get_value()
             config = StateMachineConfiguration.model_validate(config_dict)
 
@@ -281,19 +287,30 @@ class StateMachine(node.Node):
                         param_value = parameter_name_value[c.parameter_name]
                         c_value = c.value
                         if isinstance(param_value, bool):
-                            if not isinstance(c_value, bool):
-                                res = False
-                                break
+                            logging.info(
+                                f"NEIL checking boolean condition: {c.parameter_name} {c.operator} {param_value}"
+                            )
 
-                            if c.operator == "==":
-                                res = res and (param_value == c_value)
-                            elif c.operator == "!=":
-                                res = res and (param_value != c_value)
-                            else:
+                            if c.operator != "TRUE" and c.operator != "FALSE":
                                 logging.warning(
                                     f"Invalid operator '{c.operator}' for boolean parameter '{c.parameter_name}'."
                                 )
                                 res = False
+                                break
+
+                            if c.operator == "TRUE" and not param_value:
+                                logging.info(
+                                    f"NEIL condition failed: {c.parameter_name} is not TRUE"
+                                )
+                                res = False
+                                break
+                            elif c.operator == "FALSE" and param_value:
+                                logging.info(
+                                    f"NEIL condition failed: {c.parameter_name} is not FALSE"
+                                )
+                                res = False
+                                break
+
                         elif isinstance(param_value, (int, float)):
                             if not isinstance(c_value, (int, float)):
                                 logging.warning(
@@ -359,7 +376,7 @@ class StateMachine(node.Node):
                         continue
 
                     logging.info(
-                        f"Transitioning from state '{current_state.name}' to '{next_state.name}'"
+                        f"Transitioning from state '{current_state_name}' to '{next_state.name}'"
                     )
 
                     current_state_pad.push_item(next_state.name, ctx)
@@ -375,7 +392,17 @@ class StateMachine(node.Node):
                         original_trigger_ctx = item.ctx.original_request
                     triggers[name] = True
 
-                check_transitions(item.ctx)
+                current_state = get_current_state()
+                check_transitions(
+                    ctx=item.ctx,
+                    from_id="__ANY__",
+                    current_state_name=current_state.name,
+                )
+                check_transitions(
+                    ctx=item.ctx,
+                    from_id=current_state.id,
+                    current_state_name=current_state.name,
+                )
 
                 item.ctx.complete()
 
@@ -532,7 +559,7 @@ class StateMachine(node.Node):
         allowed_operators = {
             pad.types.Float: ["<", "<=", "==", "!=", ">=", ">"],
             pad.types.Integer: ["<", "<=", "==", "!=", ">=", ">"],
-            pad.types.Boolean: ["==", "!="],
+            pad.types.Boolean: ["TRUE", "FALSE"],
             pad.types.String: [
                 "==",
                 "!=",
