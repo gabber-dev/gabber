@@ -71,7 +71,13 @@ class Graph:
                 response=messages.NodeLibraryResponse(node_library=self.library_items)
             )
         elif request.type == messages.RequestType.EDIT:
-            await self._handle_edit(request.edit)
+            try:
+                await self._handle_edit(request.edit)
+            except Exception as e:
+                logging.error(
+                    f"Error handling edit in graph: {self.id}-{request.edit}: {e}",
+                    exc_info=e,
+                )
             return messages.Response(
                 response=messages.FullGraphResponse(graph=self.to_editor())
             )
@@ -93,12 +99,8 @@ class Graph:
             elif request.type == EditType.UPDATE_PAD:
                 await self._handle_update_pad(request)
 
-            return True
         except Exception as e:
-            logging.error(
-                f"Error handling edit in graph: {self.id}-{request}: {e}", exc_info=e
-            )
-            return False
+            logging.error(f"Error handling edit in graph: {self.id}-{request}")
 
     async def _handle_insert_node(self, edit: InsertNodeEdit):
         node_cls = self._node_cls_lookup[edit.node_type]
@@ -231,9 +233,6 @@ class Graph:
         await self._propagate_update([node])
 
     async def _propagate_update(self, starting_nodes: list[Node]):
-        logging.info(
-            f"NEIL - Propagating update in graph: {[n.id for n in starting_nodes]}"
-        )
         seen: set[str] = set()
         stack: list[Node] = starting_nodes[:]
         while stack:
@@ -246,7 +245,14 @@ class Graph:
             stack.extend(connected_nodes)
 
     def to_editor(self):
-        nodes = [serialize.node_editor_rep(n) for n in self.nodes]
+        nodes: list[models.NodeEditorRepresentation] = []
+        for node in self.nodes:
+            try:
+                editor_rep = serialize.node_editor_rep(node)
+                nodes.append(editor_rep)
+            except Exception as e:
+                logging.error(f"Error serializing node {node.id}: {e}", exc_info=e)
+                continue
         return models.GraphEditorRepresentation(nodes=nodes)
 
     async def load_from_snapshot(self, snapshot: messages.GraphEditorRepresentation):
@@ -298,7 +304,8 @@ class Graph:
                     graph=subgraph,
                 )
             else:
-                raise ValueError(f"Node type {node_data.type} not found in library.")
+                logging.error(f"Node type {node_data.type} not found in library.")
+                continue
 
             node.id = node_data.id
             node.editor_position = node_data.editor_position
