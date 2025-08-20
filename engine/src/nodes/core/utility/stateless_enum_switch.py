@@ -59,18 +59,18 @@ class StatelessEnumSwitch(Node):
                 for np in p.get_next_pads():
                     tcs = pad.types.INTERSECTION(tcs, np.get_type_constraints()) if tcs else np.get_type_constraints()
 
-        # Ensure a stateless sink pad exists for each enum option
-        value_pads = [p for p in self.pads if isinstance(p, pad.StatelessSinkPad) and p.get_group() == "value"]
-        existing = {p.get_id() for p in value_pads}
+        # Remove all existing value pads
+        self.pads = [p for p in self.pads if not (isinstance(p, pad.StatelessSinkPad) and p.get_group() == "value")]
+        
+        # Create new pads for current enum options
         for option in enum_options:
-            if option not in existing:
-                vp = pad.StatelessSinkPad(
-                    id=option,
-                    owner_node=self,
-                    group="value",
-                    type_constraints=tcs,
-                )
-                self.pads.append(vp)
+            vp = pad.StatelessSinkPad(
+                id=option,  # Use the original option as the ID
+                owner_node=self,
+                group="value",
+                type_constraints=tcs,
+            )
+            self.pads.append(vp)
 
         # Reset references and set type constraints
         value_pads = [p for p in self.pads if isinstance(p, pad.StatelessSinkPad) and p.get_group() == "value"]
