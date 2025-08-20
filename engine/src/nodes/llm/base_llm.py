@@ -223,7 +223,9 @@ class BaseLLM(node.Node, ABC):
                 video_supported = await self._supports_video(llm)
                 break
             except Exception:
-                logging.error("Failed to check video support, trying again in 5s")
+                logging.error(
+                    "Failed to check video support, trying again in 5s", exc_info=True
+                )
 
             await asyncio.sleep(5)
 
@@ -407,7 +409,7 @@ class BaseLLM(node.Node, ABC):
         )
         try:
             handle = await llm.create_completion(
-                request=dummy_request, video_support=True, audio_support=False
+                request=dummy_request, video_support=True, audio_support=False, max_completion_tokens=1
             )
             async for _ in handle:
                 pass
@@ -441,7 +443,7 @@ class BaseLLM(node.Node, ABC):
         )
         try:
             handle = await llm.create_completion(
-                request=dummy_request, video_support=False, audio_support=True
+                request=dummy_request, video_support=False, audio_support=True, max_completion_tokens=1
             )
             async for _ in handle:
                 pass
