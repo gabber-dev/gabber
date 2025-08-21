@@ -3,6 +3,8 @@
 
 from . import state_machine
 from .enum_switch_trigger import EnumSwitchTrigger
+from .filter import Filter
+from .compare import Compare
 
 
-ALL_NODES = [EnumSwitchTrigger] + state_machine.ALL_NODES
+ALL_NODES = [EnumSwitchTrigger, Filter, Compare] + state_machine.ALL_NODES
