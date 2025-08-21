@@ -66,14 +66,12 @@ function Controls({
     useState<LocalAudioTrack | null>(null);
   const [localScreenShareTrack, setLocalScreenShareTrack] =
     useState<LocalVideoTrack | null>(null);
+  const [webcamPublication, setWebcamPublication] =
+    useState<Publication | null>(null);
   return (
     <div className="flex items-center justify-center gap-2 p-2">
       <button
-        className={`rounded-full h-8 w-8 p-1.5 btn-primary btn text-primary-content relative ${
-          localWebcamTrack !== null
-            ? "border-2 border-primary border-opacity-50"
-            : ""
-        }`}
+        className="rounded-full h-8 w-8 p-1.5 btn-primary btn text-primary-content relative"
         disabled={!enabled}
         onClick={async () => {
           if (!nodeId) {
@@ -89,20 +87,20 @@ function Controls({
           })) as LocalVideoTrack;
           webcamTrack.attachToElement(videoElRef.current!);
           setLocalWebcamTrack(webcamTrack);
-          await publishToNode({
+          const pub = await publishToNode({
             localTrack: webcamTrack,
             publishNodeId: nodeId,
           });
+          setWebcamPublication(pub);
         }}
       >
         <VideoCameraIcon className="w-full h-full" />
+        <div
+          className={`absolute bottom-0 right-0 w-2 h-2 rounded-full ${localWebcamTrack ? "bg-red-500 animate-pulse" : "bg-gray-500"} ${enabled ? "" : "opacity-50"}`}
+        ></div>
       </button>
       <button
-        className={`rounded-full h-8 w-8 p-1.5 btn-primary btn text-primary-content relative ${
-          localMicrophoneTrack
-            ? "border-2 border-primary border-opacity-50"
-            : ""
-        }`}
+        className="rounded-full h-8 w-8 p-1.5 btn-primary btn text-primary-content relative"
         disabled={!enabled}
         onClick={async () => {
           if (!nodeId) {
@@ -124,13 +122,12 @@ function Controls({
         }}
       >
         <MicrophoneIcon className="w-full h-full" />
+        <div
+          className={`absolute bottom-0 right-0 w-2 h-2 rounded-full ${localMicrophoneTrack ? "bg-red-500 animate-pulse" : "bg-gray-500"} ${enabled ? "" : "opacity-50"}`}
+        ></div>
       </button>
       <button
-        className={`rounded-full h-8 w-8 p-1.5 btn-primary btn text-primary-content relative ${
-          localScreenShareTrack
-            ? "border-2 border-primary border-opacity-50"
-            : ""
-        }`}
+        className="rounded-full h-8 w-8 p-1.5 btn-primary btn text-primary-content relative"
         disabled={!enabled}
         onClick={async () => {
           if (!nodeId) {
@@ -175,6 +172,9 @@ function Controls({
         }}
       >
         <ComputerDesktopIcon className="w-full h-full" />
+        <div
+          className={`absolute bottom-0 right-0 w-2 h-2 rounded-full ${localScreenShareTrack ? "bg-red-500 animate-pulse" : "bg-gray-500"} ${enabled ? "" : "opacity-50"}`}
+        ></div>
       </button>
     </div>
   );
