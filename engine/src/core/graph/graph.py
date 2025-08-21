@@ -100,7 +100,9 @@ class Graph:
                 await self._handle_update_pad(request)
 
         except Exception as e:
-            logging.error(f"Error handling edit in graph: {self.id}-{request}")
+            logging.error(
+                f"Error handling edit in graph: {self.id}-{request}", exc_info=e
+            )
 
     async def _handle_insert_node(self, edit: InsertNodeEdit):
         node_cls = self._node_cls_lookup[edit.node_type]

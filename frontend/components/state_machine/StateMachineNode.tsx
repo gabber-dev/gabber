@@ -30,6 +30,7 @@ export function StateMachineNode({ data }: BaseBlockProps) {
       </div>
       <div>
         <StateMachineProvider nodeId={data.id}>
+          <PreviousState />
           <CurrentState />
           <Parameters />
           <StateMachineGraphMini />
@@ -88,6 +89,38 @@ function CurrentState() {
         )}
         <label className="italic absolute bottom-0 label text-xs text-base-content/50">
           Current State
+          {runtimeValue !== editorValue &&
+            runtimeValue !== undefined &&
+            editorValue !== undefined && <span className="ml-1">*</span>}
+        </label>
+      </div>
+      {pad && (
+        <div className="absolute right-0">
+          <PadHandle data={pad} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PreviousState() {
+  const { runtimeValue, editorValue, pad } = usePropertyPad<string>(
+    useNodeId() || "",
+    "previous_state",
+  );
+
+  return (
+    <div className="flex items-center justify-between p-2 border-b border-black">
+      <div className="relative flex flex-col items-center gap-1 grow-5 basis-0 pb-4">
+        {runtimeValue !== "" ? (
+          <div className="text-sm border border-base-300 bg-base-100 px-2 py-1 rounded">
+            {runtimeValue ?? ""}
+          </div>
+        ) : (
+          <div className="text-sm text-base-content/60">⚠️ no states</div>
+        )}
+        <label className="italic absolute bottom-0 label text-xs text-base-content/50">
+          Previous State
           {runtimeValue !== editorValue &&
             runtimeValue !== undefined &&
             editorValue !== undefined && <span className="ml-1">*</span>}

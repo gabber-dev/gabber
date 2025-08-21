@@ -96,14 +96,13 @@ class Compare(Node):
                 type_constraints=[pad.types.Enum(options=[])],
             )
 
+        self.pads = [pad_a, operator_pad, pad_b, value]
         self._resolve_types()
 
         if operator_pad.get_value() is not None:
             value.set_value(self.compare_values(pad_a, pad_b, operator_pad.get_value()))
         else:
             value.set_value(False)
-
-        self.pads = [pad_a, operator_pad, pad_b, value]
 
     def _resolve_types(self):
         pad_a = cast(pad.PropertySinkPad, self.get_pad_required("A"))
@@ -145,34 +144,41 @@ class Compare(Node):
                 operator_pad.set_type_constraints(
                     [pad.types.Enum(options=STRING_COMPARISON_OPERATORS)]
                 )
-                operator_pad.set_value(STRING_COMPARISON_OPERATORS[0])
+                if operator_pad.get_value() not in STRING_COMPARISON_OPERATORS:
+                    operator_pad.set_value(STRING_COMPARISON_OPERATORS[0])
             elif isinstance(tc, pad.types.Integer):
                 operator_pad.set_type_constraints(
                     [pad.types.Enum(options=INTEGER_COMPARISON_OPERATORS)]
                 )
-                operator_pad.set_value(INTEGER_COMPARISON_OPERATORS[0])
+                if operator_pad.get_value() not in INTEGER_COMPARISON_OPERATORS:
+                    operator_pad.set_value(INTEGER_COMPARISON_OPERATORS[0])
             elif isinstance(tc, pad.types.Float):
                 operator_pad.set_type_constraints(
                     [pad.types.Enum(options=FLOAT_COMPARISON_OPERATORS)]
                 )
-                operator_pad.set_value(FLOAT_COMPARISON_OPERATORS[0])
+                if operator_pad.get_value() not in FLOAT_COMPARISON_OPERATORS:
+                    operator_pad.set_value(FLOAT_COMPARISON_OPERATORS[0])
             elif isinstance(tc, pad.types.Boolean):
                 operator_pad.set_type_constraints(
                     [pad.types.Enum(options=BOOL_COMPARISON_OPERATORS)]
                 )
-                operator_pad.set_value(BOOL_COMPARISON_OPERATORS[0])
+                if operator_pad.get_value() not in BOOL_COMPARISON_OPERATORS:
+                    operator_pad.set_value(BOOL_COMPARISON_OPERATORS[0])
             elif isinstance(tc, pad.types.Enum):
                 operator_pad.set_type_constraints(
                     [pad.types.Enum(options=ENUM_COMPARISON_OPERATORS)]
                 )
-                operator_pad.set_value(ENUM_COMPARISON_OPERATORS[0])
+                if operator_pad.get_value() not in ENUM_COMPARISON_OPERATORS:
+                    operator_pad.set_value(ENUM_COMPARISON_OPERATORS[0])
             else:
                 logging.error(
                     f"Unsupported type for comparison: {tc}. No operator pad will be created."
                 )
                 operator_pad.set_type_constraints([pad.types.Enum(options=[])])
+                operator_pad.set_value(None)
         else:
             operator_pad.set_type_constraints([pad.types.Enum(options=[])])
+            operator_pad.set_value(None)
 
     async def run(self):
         pad_a = cast(pad.PropertySinkPad, self.get_pad_required("A"))
@@ -200,12 +206,15 @@ class Compare(Node):
     ) -> bool:
         a = pad_a.get_value()
         b = pad_b.get_value()
-        tc_a = pad_a.get_type_constraints()
-        tc_b = pad_b.get_type_constraints()
-        if not tc_a or len(tc_a) != 1 or not tc_b or len(tc_b) != 1:
+        tcs_a = pad_a.get_type_constraints()
+        tcs_b = pad_b.get_type_constraints()
+        if not tcs_a or len(tcs_a) != 1 or not tcs_b or len(tcs_b) != 1:
             return False
 
-        if isinstance(tc_a[0], pad.types.String) and isinstance(b, pad.types.String):
+        tc_a = tcs_a[0]
+        tc_b = tcs_b[0]
+
+        if isinstance(tc_a, pad.types.String) and isinstance(tc_b, pad.types.String):
             if not isinstance(a, str) or not isinstance(b, str):
                 logging.error(
                     f"Type mismatch for string comparison: {type(a)} vs {type(b)}"
@@ -226,7 +235,9 @@ class Compare(Node):
             else:
                 logging.error(f"Unsupported operator for string comparison: {op}")
                 return False
-        elif isinstance(tc_a, pad.types.Integer) and isinstance(b, pad.types.Integer):
+        elif isinstance(tc_a, pad.types.Integer) and isinstance(
+            tc_b, pad.types.Integer
+        ):
             if not isinstance(a, int) or not isinstance(b, int):
                 logging.error(
                     f"Type mismatch for integer comparison: {type(a)} vs {type(b)}"
@@ -292,5 +303,5 @@ class Compare(Node):
                 logging.error(f"Unsupported operator for enum comparison: {op}")
                 return False
 
-        logging.error(f"Unsupported type for comparison: {tc_a[0]}")
+        logging.error(f"Unsupported type for comparison: {tc_a} vs {tc_b}")
         return False

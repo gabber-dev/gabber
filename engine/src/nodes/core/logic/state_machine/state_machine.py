@@ -115,6 +115,17 @@ class StateMachine(node.Node):
             )
             self.pads.append(current_state)
 
+        previous_state = cast(pad.PropertySourcePad, self.get_pad("previous_state"))
+        if not previous_state:
+            previous_state = pad.PropertySourcePad(
+                id="previous_state",
+                owner_node=self,
+                type_constraints=[pad.types.Enum(options=[])],
+                group="previous_state",
+                value="",
+            )
+            self.pads.append(previous_state)
+
         # Ensure configuration has necessary keys and set entry_state if needed
         config_dict = configuration.get_value()
         cleaned_dict = {}
@@ -230,6 +241,7 @@ class StateMachine(node.Node):
         # Update current_state enum options and default value from configuration
         try:
             enum_options = [s.name for s in config.states]
+            previous_state.set_type_constraints([pad.types.Enum(options=enum_options)])
             current_state.set_type_constraints([pad.types.Enum(options=enum_options)])
 
             # Set current state value to entry state's name if present, else blank
@@ -237,8 +249,10 @@ class StateMachine(node.Node):
                 entry = next(
                     (s for s in config.states if s.id == config.entry_state), None
                 )
+                previous_state.set_value(entry.name if entry else "")
                 current_state.set_value(entry.name if entry else "")
             else:
+                previous_state.set_value("")
                 current_state.set_value("")
         except Exception as e:
             logging.warning(f"Failed to update current_state pad: {e}")
@@ -256,6 +270,9 @@ class StateMachine(node.Node):
         configuration_pad = cast(pad.PropertySinkPad, self.get_pad("configuration"))
         current_state_pad = cast(
             pad.PropertySourcePad, self.get_pad_required("current_state")
+        )
+        previous_state_pad = cast(
+            pad.PropertySourcePad, self.get_pad_required("previous_state")
         )
 
         triggers: dict[str, bool] = {}
@@ -393,6 +410,7 @@ class StateMachine(node.Node):
                         f"Transitioning from state '{current_state_name}' to '{next_state.name}'"
                     )
 
+                    previous_state_pad.push_item(current_state_name, ctx)
                     current_state_pad.push_item(next_state.name, ctx)
 
         async def pad_task(idx: int):
@@ -648,6 +666,9 @@ class StateMachine(node.Node):
         current_state_pad = cast(
             pad.PropertySourcePad, self.get_pad_required("current_state")
         )
+        previous_state_pad = cast(
+            pad.PropertySourcePad, self.get_pad_required("previous_state")
+        )
 
         indices = self._get_parameter_indices()
 
@@ -669,6 +690,7 @@ class StateMachine(node.Node):
             configuration_pad,
             num_parameters_pad,
             current_state_pad,
+            previous_state_pad,
         ] + parameter_pads
 
     def _get_parameter_indices(self):
