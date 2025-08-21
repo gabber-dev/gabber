@@ -40,6 +40,7 @@ class Deepgram(STT):
             await asyncio.sleep(1)
 
     async def _run_ws(self) -> None:
+        transcript: str = ""
         trans_id: str = short_uuid()
         offset_samples: int = 0
         frames: list[AudioFrame] = []
@@ -47,8 +48,66 @@ class Deepgram(STT):
         end_ms: float = -1
         running_words: list[str] = []
 
+        def commit_transcription():
+            nonlocal \
+                start_ms, \
+                end_ms, \
+                trans_id, \
+                running_words, \
+                frames, \
+                offset_samples, \
+                transcript
+            if transcript == "":
+                running_words.clear()
+                start_ms = -1
+                end_ms = -1
+                return
+
+            offset_time_ms = offset_samples * 1000.0 / 24000.0
+            if not frames:
+                logging.warning("No frames available for end of turn processing")
+                return
+
+            # Remove frames that are before the start of the turn
+            while (
+                frames
+                and (offset_time_ms + frames[0].data_24000hz.duration * 1000.0)
+                < start_ms
+            ):
+                f = frames.pop(0)
+                offset_samples += f.data_24000hz.sample_count
+                offset_time_ms = (offset_samples * 1000.0) / 24000.0
+
+            # Only include frames that are within the turn
+            clip_frames: list[AudioFrame] = []
+            while (
+                frames
+                and (offset_time_ms + frames[0].data_24000hz.duration * 1000.0) < end_ms
+            ):
+                f = frames.pop(0)
+                clip_frames.append(f)
+                offset_samples += f.data_24000hz.sample_count
+                offset_time_ms = offset_samples * 1000.0 / 24000.0
+
+            clip = AudioClip(
+                audio=clip_frames,
+                transcription=transcript,
+            )
+            self._output_queue.put_nowait(STTEvent_EndOfTurn(id=trans_id, clip=clip))
+            trans_id = short_uuid()
+            running_words = []
+            start_ms = -1
+            end_ms = -1
+
         async def rec_task(ws: aiohttp.ClientWebSocketResponse) -> None:
-            nonlocal start_ms, end_ms, trans_id, running_words, frames, offset_samples
+            nonlocal \
+                start_ms, \
+                end_ms, \
+                trans_id, \
+                running_words, \
+                frames, \
+                offset_samples, \
+                transcript
             while not self._closed:
                 if ws.closed:
                     break
@@ -84,66 +143,12 @@ class Deepgram(STT):
                         )
                     )
 
+                    if len(words) > 0:
+                        end_ms = words[-1]["end"] * 1000.0
+
                     if is_final:
-                        last_word = words[-1] if words else {}
-                        end_ms = last_word.get("end", 0) * 1000.0
-                        logging.info(
-                            "NEIL Final transcription: %s, end_ms: %s",
-                            transcript,
-                            end_ms,
-                        )
-                        if transcript == "":
-                            running_words.clear()
-                            start_ms = -1
-                            end_ms = -1
-                            continue
+                        commit_transcription()
 
-                        offset_time_ms = offset_samples * 1000.0 / 24000.0
-                        if not frames:
-                            logging.warning(
-                                "No frames available for end of turn processing"
-                            )
-                            continue
-
-                        # Remove frames that are before the start of the turn
-                        while (
-                            frames
-                            and (
-                                offset_time_ms
-                                + frames[0].data_24000hz.duration * 1000.0
-                            )
-                            < start_ms
-                        ):
-                            f = frames.pop(0)
-                            offset_samples += f.data_24000hz.sample_count
-                            offset_time_ms = (offset_samples * 1000.0) / 24000.0
-
-                        # Only include frames that are within the turn
-                        clip_frames: list[AudioFrame] = []
-                        while (
-                            frames
-                            and (
-                                offset_time_ms
-                                + frames[0].data_24000hz.duration * 1000.0
-                            )
-                            < end_ms
-                        ):
-                            f = frames.pop(0)
-                            clip_frames.append(f)
-                            offset_samples += f.data_24000hz.sample_count
-                            offset_time_ms = offset_samples * 1000.0 / 24000.0
-
-                        clip = AudioClip(
-                            audio=clip_frames,
-                            transcription=transcript,
-                        )
-                        self._output_queue.put_nowait(
-                            STTEvent_EndOfTurn(id=trans_id, clip=clip)
-                        )
-                        trans_id = short_uuid()
-                        running_words = []
-                        start_ms = -1
-                        end_ms = -1
                 elif msg_type == "SpeechStarted":
                     logging.info("NEIL Speech started: %s", data)
                     if start_ms < 0:
@@ -153,6 +158,9 @@ class Deepgram(STT):
                         )
                 elif msg_type == "UtteranceEnd":
                     logging.info("NEIL Utterance end: %s", data)
+                    last_word: float = data["last_word"]
+                    end_ms = last_word * 1000.0
+                    commit_transcription()
                 else:
                     logging.warning("NEIL Unknown message type: %s", msg)
 
@@ -190,21 +198,20 @@ class Deepgram(STT):
             "model": "nova-3-general",
             "punctuate": True,
             "smart_format": True,
-            "interim_results": True,
             "encoding": "linear16",
             "sample_rate": 24000,
             "channels": 1,
-            "no_delay": True,
             "filler_words": True,
+            "interim_results": True,
+            "utterance_end_ms": "1000",
+            "vad_events": True,
             "endpointing": 250,
-            "utterance_end_ms": "500",
         }
         url = f"wss://api.deepgram.com/v1/listen?{urlencode(config).lower()}"
 
         async with aiohttp.ClientSession(
             headers={"Authorization": f"Token {self._api_key}"}
         ) as session:
-            logging.info(f"NEIL Connecting to Deepgram WebSocket: {self._api_key}")
             async with session.ws_connect(url) as ws:
                 await asyncio.gather(
                     rec_task(ws),
