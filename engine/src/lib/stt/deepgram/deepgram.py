@@ -124,7 +124,6 @@ class Deepgram(STT):
                 data = json.loads(msg.data)
                 msg_type = data.get("type")
                 if msg_type == "Results":
-                    logging.info("NEIL Received transcription: %s", data)
                     is_final = data.get("is_final", False)
                     alternative = data.get("channel", {}).get("alternatives", [{}])[0]
                     transcript = alternative.get("transcript", "")
@@ -152,19 +151,17 @@ class Deepgram(STT):
                         commit_transcription()
 
                 elif msg_type == "SpeechStarted":
-                    logging.info("NEIL Speech started: %s", data)
                     if start_ms < 0:
                         start_ms = data.get("timestamp", 0) * 1000
                         self._output_queue.put_nowait(
                             STTEvent_SpeechStarted(id=trans_id)
                         )
                 elif msg_type == "UtteranceEnd":
-                    logging.info("NEIL Utterance end: %s", data)
                     last_word: float = data["last_word"]
                     end_ms = last_word * 1000.0
                     commit_transcription()
                 else:
-                    logging.warning("NEIL Unknown message type: %s", msg)
+                    logging.warning("Deepgram Unknown message type: %s", msg)
 
         async def send_task(ws: aiohttp.ClientWebSocketResponse) -> None:
             audio_bytes = b""
