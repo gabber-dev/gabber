@@ -33,7 +33,7 @@ export class Publication {
         return this._nodeId;
     }
 
-    async unPublish(): Promise<void> {
+    async unpublish(): Promise<void> {
         const track = this.room.localParticipant.getTrackPublicationByName(this.trackName);
         if (!track) {
             throw new Error(`No track found with name: ${this.trackName}`);

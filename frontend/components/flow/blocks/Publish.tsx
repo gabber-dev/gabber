@@ -7,6 +7,7 @@ import { useEditor } from "@/hooks/useEditor";
 import {
   LocalAudioTrack,
   LocalVideoTrack,
+  Publication,
   useEngine,
 } from "@gabber/client-react";
 import {
@@ -68,6 +69,10 @@ function Controls({
     useState<LocalVideoTrack | null>(null);
   const [webcamPublication, setWebcamPublication] =
     useState<Publication | null>(null);
+  const [microphonePublication, setMicrophonePublication] =
+    useState<Publication | null>(null);
+  const [screenSharePublication, setScreenSharePublication] =
+    useState<Publication | null>(null);
   return (
     <div className="flex items-center justify-center gap-2 p-2">
       <button
@@ -109,16 +114,18 @@ function Controls({
           }
           if (localMicrophoneTrack) {
             setLocalMicrophoneTrack(null);
+            microphonePublication?.unpublish();
             return;
           }
           const microphoneTrack = (await getLocalTrack({
             type: "microphone",
           })) as LocalAudioTrack;
           setLocalMicrophoneTrack(microphoneTrack);
-          await publishToNode({
+          const pub = await publishToNode({
             localTrack: microphoneTrack,
             publishNodeId: nodeId,
           });
+          setMicrophonePublication(pub);
         }}
       >
         <MicrophoneIcon className="w-full h-full" />
@@ -145,10 +152,11 @@ function Controls({
             })) as LocalVideoTrack;
             screenShareTrack.attachToElement(videoElRef.current!);
             setLocalScreenShareTrack(screenShareTrack);
-            await publishToNode({
+            const pub = await publishToNode({
               localTrack: screenShareTrack,
               publishNodeId: nodeId,
             });
+            setScreenSharePublication(pub);
           } catch (error) {
             if (error instanceof Error) {
               if (

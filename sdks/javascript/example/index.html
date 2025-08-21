@@ -103,7 +103,7 @@
 
         async function unpublishWebcam() {
             if (webcamPublication) {
-                await webcamPublication.unPublish().then(() => {
+                await webcamPublication.unpublish().then(() => {
                     if (webcamLocalTrack) {
                         webcamLocalTrack.detachAll(document.getElementById("local_webcam"));
                         webcamLocalTrack = null;
@@ -130,7 +130,7 @@
 
         async function unpublishScreenshare() {
             if (screensharePublication) {
-                await screensharePublication.unPublish().then(() => {
+                await screensharePublication.unpublish().then(() => {
                     if (screenshareLocalTrack) {
                         screenshareLocalTrack.detachAll();
                         screenshareLocalTrack = null;
