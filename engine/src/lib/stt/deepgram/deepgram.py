@@ -145,6 +145,8 @@ class Deepgram(STT):
 
                     if len(words) > 0:
                         end_ms = words[-1]["end"] * 1000.0
+                        if start_ms < 0:
+                            start_ms = words[0]["start"] * 1000.0
 
                     if is_final:
                         commit_transcription()
@@ -205,7 +207,7 @@ class Deepgram(STT):
             "interim_results": True,
             "utterance_end_ms": "1000",
             "vad_events": True,
-            "endpointing": 250,
+            "endpointing": 750,
         }
         url = f"wss://api.deepgram.com/v1/listen?{urlencode(config).lower()}"
 
