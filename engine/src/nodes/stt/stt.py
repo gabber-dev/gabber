@@ -20,7 +20,7 @@ class STT(node.Node):
         return NodeMetadata(
             primary="ai",
             secondary="audio",
-            tags=["stt", "speech", "kyutai", "assembly"],
+            tags=["stt", "speech", "kyutai", "assembly", "deepgram"],
         )
 
     async def resolve_pads(self):
@@ -31,7 +31,7 @@ class STT(node.Node):
                 group="service",
                 owner_node=self,
                 type_constraints=[
-                    pad.types.Enum(options=["assembly_ai", "local_kyutai"])
+                    pad.types.Enum(options=["assembly_ai", "local_kyutai", "deepgram"])
                 ],
                 value="assembly_ai",
             )
@@ -125,6 +125,11 @@ class STT(node.Node):
             stt_impl = stt.Assembly(api_key=api_key)
         elif service.get_value() == "local_kyutai":
             stt_impl = stt.Kyutai(port=8080)
+        elif service.get_value() == "deepgram":
+            api_key_pad = cast(pad.PropertySinkPad, self.get_pad_required("api_key"))
+            api_key_name = api_key_pad.get_value()
+            api_key = await self.secret_provider.resolve_secret(api_key_name)
+            stt_impl = stt.Deepgram(api_key=api_key)
         else:
             logging.error("Unsupported STT service: %s", service.get_value())
             raise ValueError(f"Unsupported STT service: {service.get_value()}")
