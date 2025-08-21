@@ -7,10 +7,12 @@ import { MinusIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { useEditor } from "@/hooks/useEditor";
 import { BaseBlockProps } from "./BaseBlock";
 import { usePropertyPad } from "./components/pads/hooks/usePropertyPad";
-import { useNodeId } from "@xyflow/react";
+import { useNodeId, useNodesData, Node } from "@xyflow/react";
 import { PadHandle } from "./components/pads/PadHandle";
 import { PropertyPad } from "./components/pads/PropertyPad";
 import { PropertyEdit } from "./components/pads/property_edit/PropertyEdit";
+import { ReactNode, useMemo } from "react";
+import { NodeEditorRepresentation } from "@/generated/repository";
 
 export function CompareNode({ data }: BaseBlockProps) {
   const {} = useEditor();
@@ -48,7 +50,6 @@ function Parameters() {
     nodeId || "",
     "num_conditions",
   );
-  const modePad = usePropertyPad<string>(nodeId || "", "mode");
   return (
     <div className="flex flex-col">
       <div className="flex items-center justify-between p-2 bg-base-300 border-b border-black">
@@ -76,27 +77,52 @@ function Parameters() {
       </div>
       <div>
         <div className="p-2">
-          {(() => {
-            for (let i = 0; i < (editorValue || 0); i++) {
-              return (
-                <>
-                  <Parameter idx={i} />
-                  {i !== (editorValue || 0) - 1 && (
-                    <div className="divider text-xs italic text-base-content/60 m-2">
-                      {modePad.editorValue || "ERROR"}
-                    </div>
-                  )}
-                </>
-              );
-            }
-          })()}
+          <AllConditions />
         </div>
       </div>
     </div>
   );
 }
 
-function Parameter({ idx }: { idx: number }) {
+function AllConditions() {
+  const nodeId = useNodeId();
+  const node = useNodesData<Node<NodeEditorRepresentation>>(nodeId || "");
+  const { runtimeValue: modeValue } = usePropertyPad<string>(
+    nodeId || "",
+    "mode",
+  );
+
+  const indexes = useMemo(() => {
+    if (!node || !node.data) return [];
+    const res: number[] = [];
+    for (const p of node.data.pads) {
+      if (p.id.startsWith("condition_")) {
+        const idx = Number(p.id.split("_")[1]);
+        if (isNaN(idx)) continue; // Skip if idx is not a number
+        if (res.includes(idx)) continue; // Skip if idx already exists
+        res.push(idx);
+      }
+    }
+    return res;
+  }, [node]);
+
+  return (
+    <div className="flex flex-col">
+      {indexes.map((idx) => (
+        <div key={idx} className="flex items-center gap-2 flex-col">
+          <Condition idx={idx} />
+          {idx !== indexes.length - 1 && (
+            <div className="divider text-sm">
+              {modeValue || "ERROR: mode not set"}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Condition({ idx }: { idx: number }) {
   const nodeId = useNodeId();
   const padA = usePropertyPad(nodeId || "", `condition_${idx}_A`);
   const padB = usePropertyPad(nodeId || "", `condition_${idx}_B`);
@@ -106,8 +132,7 @@ function Parameter({ idx }: { idx: number }) {
   );
 
   if (!padA.pad || !padB.pad || !padOperator.pad) {
-    console.warn(`Pads for condition ${idx} are not available.`);
-    return <div></div>;
+    return null;
   }
 
   return (

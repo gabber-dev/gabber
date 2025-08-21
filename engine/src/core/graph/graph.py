@@ -327,19 +327,15 @@ class Graph:
 
                 deserialized_value: Any | None = None
                 if pad_data.type.startswith("Property"):
-                    if not casted_allowed_types or len(casted_allowed_types) != 1:
-                        logging.error(
-                            f"Expected exactly one type constraint for pad {pad_data.id}, got {casted_allowed_types}"
-                        )
-                        continue
-                    tc = casted_allowed_types[0]
-                    if not isinstance(tc, pad.types.NodeReference):
-                        deserialized_value = serialize.deserialize_pad_value(
-                            tc, pad_data.value
-                        )
-                    else:
-                        # Keep the node reference id, it will be resolved later in this function
-                        deserialized_value = pad_data.value
+                    if casted_allowed_types and len(casted_allowed_types) == 1:
+                        tc = casted_allowed_types[0]
+                        if not isinstance(tc, pad.types.NodeReference):
+                            deserialized_value = serialize.deserialize_pad_value(
+                                tc, pad_data.value
+                            )
+                        else:
+                            # Keep the node reference id, it will be resolved later in this function
+                            deserialized_value = pad_data.value
 
                 if pad_data.type == "PropertySinkPad":
                     pad_instance = pad.PropertySinkPad(

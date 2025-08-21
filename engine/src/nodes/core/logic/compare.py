@@ -90,14 +90,14 @@ class Compare(Node):
                 value=False,
             )
 
+        self._rename_conditions()
         condition_pads = self._get_condition_pads()
-
         self.pads = [num_conditions, mode, value] + [
-            p for cps in condition_pads for p in cps
+            p for cps in condition_pads for p in cps if p is not None
         ]
 
-        self._rename_conditions()
         self._add_or_remove_condition_pads()
+        logging.info(f"NEIL Resolved pads: {[p.get_id() for p in self.pads]}")
         condition_pads = self._get_condition_pads()
         for cps in condition_pads:
             a, b, op = cps
@@ -110,6 +110,9 @@ class Compare(Node):
     def _get_indices(self) -> list[int]:
         indices = set[int]()
         for p in self.pads:
+            if not p:
+                logging.error("Found None pad in self.pads")
+                continue
             if p.get_id().startswith("condition_"):
                 try:
                     index = int(p.get_id().split("_")[1])
@@ -122,6 +125,7 @@ class Compare(Node):
 
     def _rename_conditions(self):
         indices = self._get_indices()
+        logging.info(f"NEIL Renaming condition pads: {indices}")
         for order, index in enumerate(indices):
             pad_a = cast(pad.PropertySinkPad, self.get_pad(f"condition_{index}_A"))
             pad_b = cast(pad.PropertySinkPad, self.get_pad(f"condition_{index}_B"))
@@ -171,15 +175,20 @@ class Compare(Node):
                 self.pads.extend([pad_a, pad_b, operator_pad])
         elif current_count > num_conditions:
             for i in range(num_conditions, current_count):
-                pad_a = self.get_pad(f"condition_{i}_A")
-                pad_b = self.get_pad(f"condition_{i}_B")
-                operator_pad = self.get_pad(f"condition_{i}_operator")
+                pad_a = cast(pad.SinkPad, self.get_pad(f"condition_{i}_A"))
+                pad_b = cast(pad.SinkPad, self.get_pad(f"condition_{i}_B"))
+                operator_pad = cast(
+                    pad.SinkPad, self.get_pad(f"condition_{i}_operator")
+                )
                 if pad_a:
                     self.pads.remove(pad_a)
+                    pad_a.disconnect()
                 if pad_b:
                     self.pads.remove(pad_b)
+                    pad_b.disconnect()
                 if operator_pad:
                     self.pads.remove(operator_pad)
+                    operator_pad.disconnect()
 
     def _get_condition_pads(
         self,
@@ -192,6 +201,11 @@ class Compare(Node):
                 pad.PropertySinkPad, self.get_pad(f"condition_{i}_operator")
             )
             condition_pads.append((pad_a, pad_b, operator_pad))
+            if not pad_a or not pad_b or not operator_pad:
+                logging.error(
+                    f"Missing condition pads for index {i}: {pad_a}, {pad_b}, {operator_pad}"
+                )
+                continue
         return condition_pads
 
     def _resolve_condition_types(
