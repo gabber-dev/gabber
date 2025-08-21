@@ -60,21 +60,24 @@ class Compare(Node):
         return NodeMetadata(primary="core", secondary="logic", tags=["compare"])
 
     async def resolve_pads(self):
-        pad_a = cast(pad.PropertySinkPad, self.get_pad("A"))
-        if not pad_a:
-            pad_a = pad.PropertySinkPad(
-                id="A",
-                group="A",
+        num_conditions = cast(pad.PropertySinkPad, self.get_pad("num_conditions"))
+        if not num_conditions:
+            num_conditions = pad.PropertySinkPad(
+                id="num_conditions",
+                group="num_conditions",
                 owner_node=self,
-                type_constraints=ALL_ALLOWED_TYPES,
+                type_constraints=[pad.types.Integer()],
+                value=1,
             )
-        pad_b = cast(pad.PropertySinkPad, self.get_pad("B"))
-        if not pad_b:
-            pad_b = pad.PropertySinkPad(
-                id="B",
-                group="B",
+
+        mode = cast(pad.PropertySinkPad, self.get_pad("mode"))
+        if not mode:
+            mode = pad.PropertySinkPad(
+                id="mode",
+                group="mode",
                 owner_node=self,
-                type_constraints=ALL_ALLOWED_TYPES,
+                type_constraints=[pad.types.Enum(options=["AND", "OR"])],
+                value="AND",
             )
 
         value = cast(pad.PropertySourcePad, self.get_pad("value"))
@@ -87,28 +90,116 @@ class Compare(Node):
                 value=False,
             )
 
-        operator_pad = cast(pad.PropertySinkPad, self.get_pad("operator"))
-        if not operator_pad:
-            operator_pad = pad.PropertySinkPad(
-                id="operator",
-                group="operator",
-                owner_node=self,
-                type_constraints=[pad.types.Enum(options=[])],
+        condition_pads = self._get_condition_pads()
+
+        self.pads = [num_conditions, mode, value] + [
+            p for cps in condition_pads for p in cps
+        ]
+
+        self._rename_conditions()
+        self._add_or_remove_condition_pads()
+        condition_pads = self._get_condition_pads()
+        for cps in condition_pads:
+            a, b, op = cps
+            self._resolve_condition_types(a, b, op)
+
+        self.pads = [num_conditions, mode, value] + [
+            p for cps in condition_pads for p in cps
+        ]
+
+    def _get_indices(self) -> list[int]:
+        indices = set[int]()
+        for p in self.pads:
+            if p.get_id().startswith("condition_"):
+                try:
+                    index = int(p.get_id().split("_")[1])
+                    indices.add(index)
+                except (ValueError, IndexError):
+                    logging.error(f"Invalid pad ID format: {p.get_id()}")
+
+        indices = sorted(indices)
+        return indices
+
+    def _rename_conditions(self):
+        indices = self._get_indices()
+        for order, index in enumerate(indices):
+            pad_a = cast(pad.PropertySinkPad, self.get_pad(f"condition_{index}_A"))
+            pad_b = cast(pad.PropertySinkPad, self.get_pad(f"condition_{index}_B"))
+            operator_pad = cast(
+                pad.PropertySinkPad, self.get_pad(f"condition_{index}_operator")
             )
+            if pad_a:
+                pad_a.set_id(f"condition_{order}_A")
+            if pad_b:
+                pad_b.set_id(f"condition_{order}_B")
+            if operator_pad:
+                operator_pad.set_id(f"condition_{order}_operator")
 
-        self.pads = [pad_a, operator_pad, pad_b, value]
-        self._resolve_types()
+    def _add_or_remove_condition_pads(self):
+        indices = self._get_indices()
+        num_conditions_pad = cast(
+            pad.PropertySinkPad, self.get_pad_required("num_conditions")
+        )
 
-        if operator_pad.get_value() is not None:
-            value.set_value(self.compare_values(pad_a, pad_b, operator_pad.get_value()))
-        else:
-            value.set_value(False)
+        if not num_conditions_pad.get_value():
+            num_conditions_pad.set_value(1)
 
-    def _resolve_types(self):
-        pad_a = cast(pad.PropertySinkPad, self.get_pad_required("A"))
-        pad_b = cast(pad.PropertySinkPad, self.get_pad_required("B"))
-        operator_pad = cast(pad.PropertySinkPad, self.get_pad_required("operator"))
+        num_conditions: int = num_conditions_pad.get_value()
 
+        current_count = len(indices)
+
+        if current_count < num_conditions:
+            for i in range(current_count, num_conditions):
+                pad_a = pad.PropertySinkPad(
+                    id=f"condition_{i}_A",
+                    group="condition_A",
+                    owner_node=self,
+                    type_constraints=None,
+                )
+                pad_b = pad.PropertySinkPad(
+                    id=f"condition_{i}_B",
+                    group="condition_B",
+                    owner_node=self,
+                    type_constraints=None,
+                )
+                operator_pad = pad.PropertySinkPad(
+                    id=f"condition_{i}_operator",
+                    group="condition_operator",
+                    owner_node=self,
+                    type_constraints=[pad.types.Enum(options=[])],
+                )
+                self.pads.extend([pad_a, pad_b, operator_pad])
+        elif current_count > num_conditions:
+            for i in range(num_conditions, current_count):
+                pad_a = self.get_pad(f"condition_{i}_A")
+                pad_b = self.get_pad(f"condition_{i}_B")
+                operator_pad = self.get_pad(f"condition_{i}_operator")
+                if pad_a:
+                    self.pads.remove(pad_a)
+                if pad_b:
+                    self.pads.remove(pad_b)
+                if operator_pad:
+                    self.pads.remove(operator_pad)
+
+    def _get_condition_pads(
+        self,
+    ) -> list[tuple[pad.PropertySinkPad, pad.PropertySinkPad, pad.PropertySinkPad]]:
+        condition_pads = []
+        for i in self._get_indices():
+            pad_a = cast(pad.PropertySinkPad, self.get_pad(f"condition_{i}_A"))
+            pad_b = cast(pad.PropertySinkPad, self.get_pad(f"condition_{i}_B"))
+            operator_pad = cast(
+                pad.PropertySinkPad, self.get_pad(f"condition_{i}_operator")
+            )
+            condition_pads.append((pad_a, pad_b, operator_pad))
+        return condition_pads
+
+    def _resolve_condition_types(
+        self,
+        pad_a: pad.PropertySinkPad,
+        pad_b: pad.PropertySinkPad,
+        operator_pad: pad.PropertySinkPad,
+    ):
         prev_a = pad_a.get_previous_pad()
         prev_b = pad_b.get_previous_pad()
 

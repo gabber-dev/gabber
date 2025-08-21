@@ -15,6 +15,7 @@ import { ChatInputNode } from "./ChatInputNode";
 import { CommentNode } from "./CommentNode";
 import { SelfPad } from "./components/pads/SelfPad";
 import { StateMachineNode } from "@/components/state_machine/StateMachineNode";
+import { CompareNode } from "./CompareNode";
 
 export interface BaseBlockProps {
   data: NodeEditorRepresentation;
@@ -54,6 +55,10 @@ export function BaseBlock({ data }: BaseBlockProps) {
 
   if (data.type === "StateMachine") {
     return <StateMachineNode data={data} />;
+  }
+
+  if (data.type === "Compare") {
+    return <CompareNode data={data} />;
   }
 
   // Add ambient-float by default, but remove it if selected
