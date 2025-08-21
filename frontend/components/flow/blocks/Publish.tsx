@@ -85,6 +85,7 @@ function Controls({
           }
           if (localWebcamTrack) {
             setLocalWebcamTrack(null);
+            await webcamPublication?.unpublish();
             return;
           }
           const webcamTrack = (await getLocalTrack({
@@ -114,7 +115,7 @@ function Controls({
           }
           if (localMicrophoneTrack) {
             setLocalMicrophoneTrack(null);
-            microphonePublication?.unpublish();
+            await microphonePublication?.unpublish();
             return;
           }
           const microphoneTrack = (await getLocalTrack({
@@ -143,6 +144,7 @@ function Controls({
           }
           if (localScreenShareTrack) {
             setLocalScreenShareTrack(null);
+            await screenSharePublication?.unpublish();
             return;
           }
           try {
