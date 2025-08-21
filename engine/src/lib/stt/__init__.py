@@ -3,6 +3,7 @@
 
 from .kyutai import Kyutai
 from .assembly import Assembly
+from .deepgram import Deepgram
 from .stt import (
     STT,
     STTEvent,
@@ -14,6 +15,7 @@ from .stt import (
 __all__ = [
     "Kyutai",
     "Assembly",
+    "Deepgram",
     "STT",
     "STTEvent",
     "STTEvent_EndOfTurn",
