@@ -26,7 +26,12 @@ export function CompareNode({ data }: BaseBlockProps) {
         </div>
       </div>
       <div className="p-2">
-        <Controls />
+        <div className="flex flex-col items-center gap-1 w-full">
+          <Mode />
+          <ValuePad />
+          <AddRemoveCondition />
+        </div>
+
         <div className="divider w-full m-0" />
         <AllConditions />
       </div>
@@ -34,38 +39,64 @@ export function CompareNode({ data }: BaseBlockProps) {
   );
 }
 
-function Controls() {
+function ValuePad() {
+  const nodeId = useNodeId();
+  const pad = usePropertyPad(nodeId || "", "value");
+  if (!pad.pad) return null;
+  return (
+    <div className="relative w-full flex gap-2 justify-between pr-2 basis-0 grow items-center">
+      <div className="text-xs italic text-base-content/60">Current Value:</div>
+      {pad.pad && (
+        <div className="absolute -right-2">
+          <PadHandle data={pad.pad} />
+        </div>
+      )}{" "}
+      {pad.singleAllowedType ? (
+        <PropertyEdit padId={pad.pad.id} nodeId={nodeId || ""} />
+      ) : (
+        <div className="text-xs pl-2">Value</div>
+      )}
+    </div>
+  );
+}
+
+function Mode() {
+  const nodeId = useNodeId();
+
+  return (
+    <div className="flex w-full justify-between items-center gap-2">
+      <div className="italic text-xs text-base-content/60">Mode:</div>
+      <PropertyEdit padId={"mode"} nodeId={nodeId || ""} />
+    </div>
+  );
+}
+
+function AddRemoveCondition() {
   const nodeId = useNodeId();
   const { editorValue, setEditorValue } = usePropertyPad<number>(
     nodeId || "",
     "num_conditions",
   );
   return (
-    <div className="flex items-center justify-between mb-2">
-      <div className="flex items-center gap-2">
-        <div className="italic text-xs text-base-content/60">mode:</div>
-        <PropertyEdit padId={"mode"} nodeId={nodeId || ""} />
-      </div>
-      <div className="flex gap-1">
-        <button
-          className="btn btn-sm btn-success p-0 m-0 w-4 h-4"
-          onClick={() => {
-            setEditorValue((editorValue || 0) + 1);
-          }}
-        >
-          <PlusIcon className="w-full h-full" />
-        </button>
-        <button
-          className="btn btn-sm btn-error p-0 m-0 w-4 h-4"
-          onClick={() => {
-            if (editorValue && editorValue > 0) {
-              setEditorValue(editorValue - 1);
-            }
-          }}
-        >
-          <MinusIcon className="w-full h-full" />
-        </button>
-      </div>
+    <div className="flex gap-1">
+      <button
+        className="btn btn-sm btn-success p-0 m-0 w-4 h-4"
+        onClick={() => {
+          setEditorValue((editorValue || 0) + 1);
+        }}
+      >
+        <PlusIcon className="w-full h-full" />
+      </button>
+      <button
+        className="btn btn-sm btn-error p-0 m-0 w-4 h-4"
+        onClick={() => {
+          if (editorValue && editorValue > 0) {
+            setEditorValue(editorValue - 1);
+          }
+        }}
+      >
+        <MinusIcon className="w-full h-full" />
+      </button>
     </div>
   );
 }

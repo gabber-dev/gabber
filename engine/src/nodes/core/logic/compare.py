@@ -334,6 +334,8 @@ class Compare(Node):
             mode = "AND"
 
         res = False
+        if mode == "AND":
+            res = True
         for cps in condition_pads:
             a, b, op = cps
             if a and b and op and op.get_value() is not None:
