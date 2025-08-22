@@ -345,7 +345,7 @@ class StateMachine(node.Node):
                         elif isinstance(param_value, (int, float)):
                             if not isinstance(c_value, (int, float)):
                                 logging.warning(
-                                    f"Condition value for numeric parameter '{c.parameter_name}' must be a number."
+                                    f"Condition value for numeric parameter '{c.parameter_name}' must be a number. Got: {c_value}"
                                 )
                                 res = False
                                 break

@@ -28,7 +28,6 @@ class Boolean(node.Node):
                 group="set",
                 type_constraints=[pad.types.Boolean()],
             )
-            self.pads.append(set_pad)
 
         emit = cast(pad.StatelessSinkPad | None, self.get_pad("emit"))
         if not emit:
@@ -38,7 +37,15 @@ class Boolean(node.Node):
                 group="emit",
                 type_constraints=[pad.types.Trigger()],
             )
-            self.pads.append(emit)
+
+        toggle = cast(pad.StatelessSinkPad | None, self.get_pad("toggle"))
+        if not toggle:
+            toggle = pad.StatelessSinkPad(
+                id="toggle",
+                owner_node=self,
+                group="toggle",
+                type_constraints=[pad.types.Trigger()],
+            )
 
         value = cast(pad.PropertySourcePad | None, self.get_pad("value"))
         if not value:
@@ -47,9 +54,8 @@ class Boolean(node.Node):
                 group="value",
                 owner_node=self,
                 type_constraints=[pad.types.Boolean()],
-                value=None,
+                value=True,
             )
-            self.pads.append(value)
 
         changed = cast(pad.StatelessSourcePad | None, self.get_pad("changed"))
         if not changed:
@@ -59,13 +65,15 @@ class Boolean(node.Node):
                 owner_node=self,
                 type_constraints=[pad.types.Boolean()],
             )
-            self.pads.append(changed)
+
+        self.pads = [emit, set_pad, toggle, value, changed]
 
     async def run(self):
         emit = cast(pad.StatelessSinkPad, self.get_pad_required("emit"))
         set_pad = cast(pad.StatelessSinkPad, self.get_pad_required("set"))
         value = cast(pad.PropertySourcePad, self.get_pad_required("value"))
         changed_pad = cast(pad.StatelessSourcePad, self.get_pad_required("changed"))
+        toggle_pad = cast(pad.StatelessSinkPad, self.get_pad_required("toggle"))
 
         async def emit_task():
             async for item in emit:
@@ -82,7 +90,14 @@ class Boolean(node.Node):
                     changed_pad.push_item(item.value, item.ctx)
                 item.ctx.complete()
 
+        async def toggle_task():
+            async for item in toggle_pad:
+                if item.value:
+                    value.push_item(not value.get_value(), item.ctx)
+                item.ctx.complete()
+
         await asyncio.gather(
             emit_task(),
             set_task(),
+            toggle_task(),
         )

@@ -30,8 +30,8 @@ export function StateMachineNode({ data }: BaseBlockProps) {
       </div>
       <div>
         <StateMachineProvider nodeId={data.id}>
-          <StatePad label="Previous State" padId="previous_state" />
           <StatePad label="Current State" padId="current_state" />
+          <StatePad label="Previous State" padId="previous_state" />
           <Parameters />
           <StateMachineGraphMini />
         </StateMachineProvider>
