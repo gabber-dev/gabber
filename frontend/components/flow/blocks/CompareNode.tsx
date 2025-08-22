@@ -16,7 +16,7 @@ import { NodeEditorRepresentation } from "@/generated/repository";
 export function CompareNode({ data }: BaseBlockProps) {
   const {} = useEditor();
   return (
-    <div className="w-48 flex flex-col bg-base-200 border-2 border-black border-b-4 border-r-4 rounded-lg relative">
+    <div className="w-54 flex flex-col bg-base-200 border-2 border-black border-b-4 border-r-4 rounded-lg relative">
       <div className="flex w-full items-center gap-2 bg-base-300 border-b-2 border-black p-3 rounded-t-lg drag-handle cursor-grab active:cursor-grabbing">
         <div className="flex-1">
           <h2 className="text-lg text-purple-400 font-medium">

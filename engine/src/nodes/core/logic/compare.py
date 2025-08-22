@@ -70,9 +70,9 @@ class Compare(Node):
                 value=1,
             )
 
-        mode = cast(pad.PropertySinkPad, self.get_pad("mode"))
-        if not mode:
-            mode = pad.PropertySinkPad(
+        mode_pad = cast(pad.PropertySinkPad, self.get_pad("mode"))
+        if not mode_pad:
+            mode_pad = pad.PropertySinkPad(
                 id="mode",
                 group="mode",
                 owner_node=self,
@@ -92,7 +92,7 @@ class Compare(Node):
 
         self._rename_conditions()
         condition_pads = self._get_condition_pads()
-        self.pads = [num_conditions, mode, value] + [
+        self.pads = [num_conditions, mode_pad, value] + [
             p for cps in condition_pads for p in cps if p is not None
         ]
 
@@ -102,9 +102,17 @@ class Compare(Node):
             a, b, op = cps
             self._resolve_condition_types(a, b, op)
 
-        self.pads = [num_conditions, mode, value] + [
+        self.pads = [num_conditions, mode_pad, value] + [
             p for cps in condition_pads for p in cps
         ]
+
+        mode = mode_pad.get_value()
+        if mode not in ["AND", "OR"]:
+            mode_pad.set_value("AND")
+
+        self.resolve_value(
+            condition_pads=condition_pads, value_pad=value, mode_pad=mode_pad
+        )
 
     def _get_indices(self) -> list[int]:
         indices = set[int]()
@@ -291,25 +299,54 @@ class Compare(Node):
             operator_pad.set_value(None)
 
     async def run(self):
-        pad_a = cast(pad.PropertySinkPad, self.get_pad_required("A"))
-        pad_b = cast(pad.PropertySinkPad, self.get_pad_required("B"))
-        operator = cast(pad.PropertySinkPad, self.get_pad_required("operator"))
-        value = cast(pad.PropertySourcePad, self.get_pad_required("value"))
+        condition_pads = self._get_condition_pads()
+        mode_pad = cast(pad.PropertySinkPad, self.get_pad_required("mode"))
+        value_pad = cast(pad.PropertySourcePad, self.get_pad_required("value"))
 
         async def pad_task(pad: pad.PropertySinkPad):
             async for item in pad:
-                if operator.get_value() is not None:
-                    result = self.compare_values(pad_a, pad_b, operator.get_value())
-                    value.push_item(result, item.ctx)
-                else:
-                    value.push_item(False, item.ctx)
+                self.resolve_value(
+                    condition_pads=condition_pads,
+                    value_pad=value_pad,
+                    mode_pad=mode_pad,
+                )
                 item.ctx.complete()
 
         await asyncio.gather(
-            pad_task(pad_a),
-            pad_task(pad_b),
-            pad_task(operator),
+            *[
+                pad_task(p)
+                for p in [mode_pad] + [p for cps in condition_pads for p in cps]
+            ]
         )
+
+    def resolve_value(
+        self,
+        *,
+        condition_pads: list[
+            tuple[pad.PropertySinkPad, pad.PropertySinkPad, pad.PropertySinkPad]
+        ],
+        value_pad: pad.PropertySourcePad,
+        mode_pad: pad.PropertySinkPad,
+    ):
+        mode = mode_pad.get_value()
+        if mode not in ["AND", "OR"]:
+            mode_pad.set_value("AND")
+            mode = "AND"
+
+        res = False
+        for cps in condition_pads:
+            a, b, op = cps
+            if a and b and op and op.get_value() is not None:
+                result = self.compare_values(a, b, op.get_value())
+                if mode == "AND":
+                    res = res and result
+                    if not res:
+                        break
+                elif mode == "OR":
+                    res = res or result
+                    if res:
+                        break
+        value_pad.set_value(res)
 
     def compare_values(
         self, pad_a: pad.PropertySinkPad, pad_b: pad.PropertySinkPad, op: str
