@@ -14,6 +14,8 @@ import {
 } from "@/generated/repository";
 import { RepositoryProvider } from "@/hooks/useRepository";
 import {
+  deleteApp,
+  deleteSubGraph,
   listApps,
   listSubGraphs,
   saveApp,
@@ -39,7 +41,10 @@ export function ClientLayout({
   const saveAppImpl = useCallback(async (params: SaveAppRequest) => {
     return await saveApp(params);
   }, []);
-  const deleteAppImpl = useCallback(async (appId: string) => {}, []);
+
+  const deleteAppImpl = useCallback(async (appId: string) => {
+    return await deleteApp(appId);
+  }, []);
 
   const saveSubGraphImpl = useCallback(async (params: SaveSubgraphRequest) => {
     return await saveSubGraph(params);
@@ -49,7 +54,9 @@ export function ClientLayout({
     return listSubGraphs();
   }, []);
 
-  const deleteSubGraphImpl = useCallback(async (subGraphId: string) => {}, []);
+  const deleteSubGraphImpl = useCallback(async (subGraphId: string) => {
+    return await deleteSubGraph(subGraphId);
+  }, []);
 
   return (
     <RepositoryProvider
