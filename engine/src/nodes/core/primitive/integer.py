@@ -106,11 +106,13 @@ class Integer(node.Node):
         async def increment_task():
             async for item in increment:
                 value.push_item(value.get_value() + 1, item.ctx)
+                changed_pad.push_item(value.get_value(), item.ctx)
                 item.ctx.complete()
 
         async def decrement_task():
             async for item in decrement:
                 value.push_item(value.get_value() - 1, item.ctx)
+                changed_pad.push_item(value.get_value(), item.ctx)
                 item.ctx.complete()
 
         await asyncio.gather(

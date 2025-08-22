@@ -77,6 +77,7 @@ class AutoConvert(Node):
                 elif isinstance(item.value, float):
                     source.push_item(str(item.value), item.ctx)
                 elif isinstance(item.value, int):
+                    logging.debug(f"Converting int {item.value} to string")
                     source.push_item(str(item.value), item.ctx)
                 elif isinstance(item.value, runtime_types.ContextMessage):
                     txt: str | None = None
