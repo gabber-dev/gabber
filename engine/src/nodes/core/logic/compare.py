@@ -97,7 +97,6 @@ class Compare(Node):
         ]
 
         self._add_or_remove_condition_pads()
-        logging.info(f"NEIL Resolved pads: {[p.get_id() for p in self.pads]}")
         condition_pads = self._get_condition_pads()
         for cps in condition_pads:
             a, b, op = cps
@@ -125,7 +124,6 @@ class Compare(Node):
 
     def _rename_conditions(self):
         indices = self._get_indices()
-        logging.info(f"NEIL Renaming condition pads: {indices}")
         for order, index in enumerate(indices):
             pad_a = cast(pad.PropertySinkPad, self.get_pad(f"condition_{index}_A"))
             pad_b = cast(pad.PropertySinkPad, self.get_pad(f"condition_{index}_B"))
@@ -216,6 +214,13 @@ class Compare(Node):
     ):
         prev_a = pad_a.get_previous_pad()
         prev_b = pad_b.get_previous_pad()
+
+        if not prev_a and not prev_b:
+            pad_a.set_type_constraints(ALL_ALLOWED_TYPES)
+            pad_b.set_type_constraints(ALL_ALLOWED_TYPES)
+            operator_pad.set_type_constraints([pad.types.Enum(options=[])])
+            operator_pad.set_value(None)
+            return
 
         tcs_a: list[pad.types.BasePadType] | None = ALL_ALLOWED_TYPES
         if prev_a:

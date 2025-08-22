@@ -9,9 +9,8 @@ import { BaseBlockProps } from "./BaseBlock";
 import { usePropertyPad } from "./components/pads/hooks/usePropertyPad";
 import { useNodeId, useNodesData, Node } from "@xyflow/react";
 import { PadHandle } from "./components/pads/PadHandle";
-import { PropertyPad } from "./components/pads/PropertyPad";
 import { PropertyEdit } from "./components/pads/property_edit/PropertyEdit";
-import { ReactNode, useMemo } from "react";
+import { useMemo } from "react";
 import { NodeEditorRepresentation } from "@/generated/repository";
 
 export function CompareNode({ data }: BaseBlockProps) {
@@ -26,59 +25,46 @@ export function CompareNode({ data }: BaseBlockProps) {
           <div className="text-xs text-purple-400/60 font-mono">{data.id}</div>
         </div>
       </div>
-      <div>
-        <Mode />
-        <Parameters />
+      <div className="p-2">
+        <Controls />
+        <div className="divider w-full m-0" />
+        <AllConditions />
       </div>
     </div>
   );
 }
 
-function Mode() {
-  const nodeId = useNodeId();
-  return (
-    <div className="flex flex-col items-center border-b border-base-100 p-2">
-      <PropertyEdit padId={"mode"} nodeId={nodeId || ""} />
-      <div className="italic text-xs text-base-content/60">mode</div>
-    </div>
-  );
-}
-
-function Parameters() {
+function Controls() {
   const nodeId = useNodeId();
   const { editorValue, setEditorValue } = usePropertyPad<number>(
     nodeId || "",
     "num_conditions",
   );
   return (
-    <div className="flex flex-col">
-      <div className="flex items-center justify-between p-2 bg-base-300 border-b border-black">
-        <h3>Parameters</h3>
-        <div className="flex gap-1">
-          <button
-            className="btn btn-sm btn-success p-0 m-0 w-4 h-4"
-            onClick={() => {
-              setEditorValue((editorValue || 0) + 1);
-            }}
-          >
-            <PlusIcon className="w-full h-full" />
-          </button>
-          <button
-            className="btn btn-sm btn-error p-0 m-0 w-4 h-4"
-            onClick={() => {
-              if (editorValue && editorValue > 0) {
-                setEditorValue(editorValue - 1);
-              }
-            }}
-          >
-            <MinusIcon className="w-full h-full" />
-          </button>
-        </div>
+    <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center gap-2">
+        <div className="italic text-xs text-base-content/60">mode:</div>
+        <PropertyEdit padId={"mode"} nodeId={nodeId || ""} />
       </div>
-      <div>
-        <div className="p-2">
-          <AllConditions />
-        </div>
+      <div className="flex gap-1">
+        <button
+          className="btn btn-sm btn-success p-0 m-0 w-4 h-4"
+          onClick={() => {
+            setEditorValue((editorValue || 0) + 1);
+          }}
+        >
+          <PlusIcon className="w-full h-full" />
+        </button>
+        <button
+          className="btn btn-sm btn-error p-0 m-0 w-4 h-4"
+          onClick={() => {
+            if (editorValue && editorValue > 0) {
+              setEditorValue(editorValue - 1);
+            }
+          }}
+        >
+          <MinusIcon className="w-full h-full" />
+        </button>
       </div>
     </div>
   );
@@ -112,7 +98,7 @@ function AllConditions() {
         <div key={idx} className="flex items-center gap-2 flex-col">
           <Condition idx={idx} />
           {idx !== indexes.length - 1 && (
-            <div className="divider text-sm">
+            <div className="divider text-xs p-0 m-0">
               {modeValue || "ERROR: mode not set"}
             </div>
           )}
@@ -144,7 +130,11 @@ function Condition({ idx }: { idx: number }) {
               <PadHandle data={padA.pad} />
             </div>
           )}{" "}
-          <PropertyEdit padId={padA.pad.id} nodeId={nodeId || ""} />
+          {padA.singleAllowedType ? (
+            <PropertyEdit padId={padA.pad.id} nodeId={nodeId || ""} />
+          ) : (
+            <div className="text-xs pl-2">A</div>
+          )}
         </div>
         <PropertyEdit padId={padOperator.pad.id} nodeId={nodeId || ""} />
         <div className="relative flex basis-0 grow items-center">
@@ -153,7 +143,11 @@ function Condition({ idx }: { idx: number }) {
               <PadHandle data={padB.pad} />
             </div>
           )}{" "}
-          <PropertyEdit padId={padB.pad.id} nodeId={nodeId || ""} />
+          {padB.singleAllowedType ? (
+            <PropertyEdit padId={padB.pad.id} nodeId={nodeId || ""} />
+          ) : (
+            <div className="text-xs pl-2">B</div>
+          )}
         </div>
       </div>
     </div>
