@@ -13,6 +13,7 @@ export function StateMachineStateBlock() {
   const nodeId = useNodeId();
   const nodeData = useNodesData<Node<StateMachineState>>(nodeId || "");
   const isEntry = nodeId === "__ENTRY__";
+  const isAny = nodeId === "__ANY__";
   const [isEditing, setIsEditing] = useState(false);
   const { selectedNodes, updateState } = useStateMachine();
 
@@ -26,19 +27,31 @@ export function StateMachineStateBlock() {
   );
 
   const handleDoubleClick = useCallback(() => {
-    if (!isEntry) {
+    if (!isEntry && !isAny) {
       setIsEditing(true);
     }
-  }, [isEntry]);
+  }, [isAny, isEntry]);
 
   const handleBlur = useCallback(() => {
     setIsEditing(false);
   }, []);
 
   const name = useMemo(() => {
+    if (isAny) {
+      return "Any State";
+    }
     return isEntry ? "Entry" : nodeData?.data?.name || "";
-  }, [isEntry, nodeData?.data?.name]);
-  const bgColor = isEntry ? "bg-success" : "bg-primary";
+  }, [isAny, isEntry, nodeData?.data?.name]);
+
+  const bgColor = useMemo(() => {
+    if (isAny) {
+      return "bg-info";
+    }
+    if (isEntry) {
+      return "bg-success";
+    }
+    return "bg-primary";
+  }, [isAny, isEntry]);
 
   const isSelected = useMemo(() => {
     return selectedNodes.includes(nodeId || "");

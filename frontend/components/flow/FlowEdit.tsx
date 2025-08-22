@@ -139,7 +139,6 @@ function FlowEditInner() {
             }}
             nodesDraggable={!isRunning}
             nodesConnectable={!isRunning}
-            edgesSelectable={true}
             selectNodesOnDrag={false}
           >
             <Background variant={BackgroundVariant.Dots} gap={12} size={1} />

@@ -16,8 +16,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { RemoteAudioTrack as LKRemoteAudioTrack, RemoteVideoTrack as LKRemoteVideoTrack, RemoteTrack as LKRemoteTrack, Room, RemoteTrackPublication } from "livekit-client";
-import { RemoteAudioTrack, RemoteVideoTrack } from "./RemoteTrack";
+import { Room } from "livekit-client";
 
 export class Publication {
     private room: Room;
@@ -32,5 +31,16 @@ export class Publication {
 
     public get nodeId(): string {
         return this._nodeId;
+    }
+
+    async unpublish(): Promise<void> {
+        const track = this.room.localParticipant.getTrackPublicationByName(this.trackName);
+        if (!track) {
+            throw new Error(`No track found with name: ${this.trackName}`);
+        }
+        if (!track.track) {
+            throw new Error(`Track with name ${this.trackName} is not published`);
+        }
+        await this.room.localParticipant.unpublishTrack(track.track, false);
     }
 }

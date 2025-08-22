@@ -14,7 +14,6 @@ import {
 import { useStateMachine } from "./useStateMachine";
 import { StateMachineStateBlock } from "./StateMachineStateBlock";
 import { useCallback } from "react";
-import ReactModal from "react-modal";
 import { StateMachineTransitionEdit } from "./StateMachineTransitionEdit";
 import StateMachineEdge from "./StateMachineEdge";
 import StateMachineConnectionLine from "./StateMachineConnectionLine";
@@ -35,7 +34,6 @@ function Inner() {
     addStateAndTransition,
     addTransition,
     editingTransition,
-    setEditingTransition,
   } = useStateMachine();
   const { screenToFlowPosition } = useReactFlow();
 

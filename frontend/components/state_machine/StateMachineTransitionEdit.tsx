@@ -4,7 +4,7 @@
  */
 
 import { ArrowRightIcon, XCircleIcon } from "@heroicons/react/24/outline";
-import { useStateMachine } from "./useStateMachine";
+import { StateMachineParameterPads, useStateMachine } from "./useStateMachine";
 import {
   Operator,
   StateMachineTransition,
@@ -14,7 +14,7 @@ import { useEffect, useMemo } from "react";
 
 export function StateMachineTransitionEdit() {
   const { editingTransition, updateTransition } = useStateMachine();
-  const { transition, fromState, toState } = editingTransition || {};
+  const { transition, fromName, toName } = editingTransition || {};
   if (!editingTransition) {
     return null;
   }
@@ -23,9 +23,9 @@ export function StateMachineTransitionEdit() {
       <div className="border-b w-full flex flex-col gap-2 items-center">
         <h2 className="text-lg font-bold">Editing Transition</h2>
         <div className="flex items-center gap-2 mb-4">
-          <span className="badge badge-primary">{fromState?.name}</span>
+          <span className="badge badge-primary">{fromName}</span>
           <ArrowRightIcon className="w-5 h-5 text-base-content" />
-          <span className="badge badge-primary">{toState?.name}</span>
+          <span className="badge badge-primary">{toName}</span>
         </div>
       </div>
 
@@ -103,47 +103,8 @@ function Condition({
     (selectedPad?.valueType?.type || "unknown") as string
   ).toLowerCase();
   const isTrigger = valueType === "trigger";
-  const selectedOperator = condition.operator || "";
-  const isUnaryOperator = ["NON_EMPTY", "EMPTY"].includes(selectedOperator);
-
-  const operatorOptions: { value: Operator; label: string }[] = [
-    { value: "<", label: "<" },
-    { value: "<=", label: "<=" },
-    { value: "==", label: "==" },
-    { value: "!=", label: "!=" },
-    { value: ">=", label: ">=" },
-    { value: ">", label: ">" },
-    { value: "NON_EMPTY", label: "NON_EMPTY" },
-    { value: "EMPTY", label: "EMPTY" },
-    { value: "STARTS_WITH", label: "STARTS_WITH" },
-    { value: "ENDS_WITH", label: "ENDS_WITH" },
-    { value: "CONTAINS", label: "CONTAINS" },
-  ];
-
-  let availableOperators: { value: Operator; label: string }[] = [];
-  if (valueType === "string") {
-    const stringAllowed = new Set<Operator | "">([
-      "==",
-      "!=",
-      "STARTS_WITH",
-      "ENDS_WITH",
-      "CONTAINS",
-      "NON_EMPTY",
-      "EMPTY",
-    ]);
-    availableOperators = operatorOptions.filter((op) =>
-      stringAllowed.has(op.value || ""),
-    );
-  } else if (
-    valueType === "number" ||
-    valueType === "integer" ||
-    valueType === "float"
-  ) {
-    availableOperators = operatorOptions.filter((op) =>
-      ["<", "<=", "==", "!=", ">=", ">"].includes(op.value || ""),
-    );
-  }
-  // For other types, default to empty or handle as needed
+  const isBoolean = valueType === "boolean";
+  const isCompare = !isTrigger && !isBoolean;
 
   return (
     <div className="flex items-center gap-1 w-full">
@@ -170,67 +131,14 @@ function Condition({
           </option>
         ))}
       </select>
-      {!isTrigger && (
-        <select
-          className="select select-bordered select-xs w-40 !outline-none"
-          value={selectedOperator}
-          onChange={(e) => {
-            updateTransition(transition.id, {
-              ...transition,
-              conditions: transition.conditions?.map((cond, idx) =>
-                idx === conditionIdx
-                  ? { ...cond, operator: e.target.value as Operator }
-                  : cond,
-              ),
-            });
-          }}
-        >
-          {availableOperators.map((op) => (
-            <option key={op.value} value={op.value as string}>
-              {op.label}
-            </option>
-          ))}
-        </select>
+      {isBoolean && (
+        <BooleanCondition condition={condition} conditionIdx={conditionIdx} />
       )}
-      {!isTrigger && !isUnaryOperator && (
-        <input
-          type={
-            valueType === "integer" ||
-            valueType === "float" ||
-            valueType === "number"
-              ? "number"
-              : "text"
-          }
-          className="input input-bordered grow select-xs !outline-none"
-          value={
-            valueType === "integer" ||
-            valueType === "float" ||
-            valueType === "number"
-              ? typeof condition.value === "number"
-                ? (condition.value as number)
-                : (condition.value as unknown as string) || ""
-              : (condition.value as unknown as string) || ""
-          }
-          onChange={(e) => {
-            const nextValue =
-              valueType === "integer" || valueType === "number"
-                ? e.target.value === ""
-                  ? null
-                  : parseInt(e.target.value, 10)
-                : valueType === "float"
-                  ? e.target.value === ""
-                    ? null
-                    : parseFloat(e.target.value)
-                  : e.target.value;
-            updateTransition(transition.id, {
-              ...transition,
-              conditions: transition.conditions?.map((cond, idx) =>
-                idx === conditionIdx
-                  ? { ...cond, value: nextValue as unknown }
-                  : cond,
-              ),
-            });
-          }}
+      {isCompare && (
+        <CompareCondition
+          condition={condition}
+          conditionIdx={conditionIdx}
+          selectedPad={selectedPad}
         />
       )}
       <button
@@ -247,5 +155,142 @@ function Condition({
         <XCircleIcon className="w-full h-full text-error" />
       </button>
     </div>
+  );
+}
+
+function CompareCondition({
+  condition,
+  conditionIdx,
+  selectedPad,
+}: {
+  condition: StateMachineTransitionCondition;
+  conditionIdx: number;
+  selectedPad: StateMachineParameterPads | undefined;
+}) {
+  const { editingTransition, updateTransition } = useStateMachine();
+  const { transition } = editingTransition || {};
+
+  const operators: Operator[] = useMemo(() => {
+    if (selectedPad?.valueType?.type === "string") {
+      return [
+        "==",
+        "!=",
+        "STARTS_WITH",
+        "ENDS_WITH",
+        "CONTAINS",
+        "NON_EMPTY",
+        "EMPTY",
+      ];
+    } else if (
+      selectedPad?.valueType?.type === "number" ||
+      selectedPad?.valueType?.type === "integer" ||
+      selectedPad?.valueType?.type === "float"
+    ) {
+      return ["<", "<=", "==", "!=", ">=", ">"];
+    }
+    return [];
+  }, [selectedPad?.valueType?.type]);
+
+  const inputType = useMemo(() => {
+    if (selectedPad?.valueType?.type === "string") {
+      return "text";
+    }
+    if (
+      selectedPad?.valueType?.type === "number" ||
+      selectedPad?.valueType?.type === "integer" ||
+      selectedPad?.valueType?.type === "float"
+    ) {
+      return "number";
+    }
+    return "text"; // Default fallback
+  }, [selectedPad?.valueType?.type]);
+
+  if (!transition) {
+    return null;
+  }
+
+  return (
+    <>
+      <select
+        className="select select-bordered select-xs w-20 !outline-none w-10"
+        value={condition.operator || ""}
+        onChange={(e) => {
+          updateTransition(transition.id, {
+            ...transition,
+            conditions: transition.conditions?.map((cond, idx) =>
+              idx === conditionIdx
+                ? { ...cond, operator: e.target.value as Operator }
+                : cond,
+            ),
+          });
+        }}
+      >
+        {operators.map((op) => (
+          <option key={op} value={op as string}>
+            {op}
+          </option>
+        ))}
+      </select>
+      {condition.operator !== "EMPTY" && condition.operator !== "NON_EMPTY" && (
+        <input
+          className="input input-bordered input-xs !outline-none"
+          type={inputType}
+          value={(condition.value as string | number) || ""}
+          onChange={(e) => {
+            updateTransition(transition.id, {
+              ...transition,
+              conditions: transition.conditions?.map((cond, idx) =>
+                idx === conditionIdx
+                  ? { ...cond, value: e.target.value }
+                  : cond,
+              ),
+            });
+          }}
+          step={
+            selectedPad?.valueType?.type === "integer"
+              ? "1"
+              : selectedPad?.valueType?.type === "float" ||
+                  selectedPad?.valueType?.type === "number"
+                ? "any"
+                : undefined
+          }
+        />
+      )}
+    </>
+  );
+}
+
+function BooleanCondition({
+  condition,
+  conditionIdx,
+}: {
+  condition: StateMachineTransitionCondition;
+  conditionIdx: number;
+}) {
+  const { editingTransition, updateTransition } = useStateMachine();
+  const { transition } = editingTransition || {};
+
+  if (!transition) {
+    return null;
+  }
+
+  return (
+    <select
+      className="select select-bordered select-xs w-40 !outline-none"
+      value={(condition.operator as string) || "TRUE"}
+      onChange={(e) => {
+        updateTransition(transition.id, {
+          ...transition,
+          conditions: transition.conditions?.map((cond, idx) =>
+            idx === conditionIdx
+              ? { ...cond, operator: e.target.value as Operator }
+              : cond,
+          ),
+        });
+      }}
+    >
+      <option value="TRUE">True</option>
+      <option value="FALSE">False</option>
+    </select>
   );
 }

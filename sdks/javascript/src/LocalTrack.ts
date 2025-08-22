@@ -26,6 +26,8 @@ export class LocalTrack {
 
 export class LocalAudioTrack extends LocalTrack {
     public mediaStream: MediaStream;
+    private elements: HTMLAudioElement[] = [];
+
     constructor(params: { mediaStream: MediaStream }) {
         super();
         this.mediaStream = params.mediaStream;
@@ -37,9 +39,19 @@ export class LocalAudioTrack extends LocalTrack {
         }
         if (this.mediaStream) {
             element.srcObject = this.mediaStream;
+            this.elements.push(element);
             await element.play();
         } else {
             throw new Error('No audio track available to attach.');
+        }
+    }
+
+    async detachAll() {
+        for (const element of this.elements) {
+            if (element.srcObject === this.mediaStream) {
+                element.srcObject = null; // Clear the source
+                await element.pause(); // Pause the audio element
+            }
         }
     }
 
@@ -51,6 +63,7 @@ export class LocalAudioTrack extends LocalTrack {
 
 export class LocalVideoTrack extends LocalTrack {
     public mediaStream: MediaStream;
+    private elements: HTMLVideoElement[] = [];
     constructor(params: { mediaStream: MediaStream }) {
         super();
         this.mediaStream = params.mediaStream;
@@ -62,9 +75,19 @@ export class LocalVideoTrack extends LocalTrack {
         }
         if (this.mediaStream) {
             element.srcObject = this.mediaStream;
+            this.elements.push(element);
             await element.play();
         } else {
             throw new Error('No video track available to attach.');
+        }
+    }
+
+    async detachAll() {
+        for (const element of this.elements) {
+            if (element.srcObject === this.mediaStream) {
+                element.srcObject = null; // Clear the source
+                await element.pause(); // Pause the video element
+            }
         }
     }
 

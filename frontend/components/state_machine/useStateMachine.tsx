@@ -10,7 +10,6 @@ import {
   Node,
   NodeChange,
   useNodesData,
-  applyNodeChanges,
 } from "@xyflow/react";
 import {
   createContext,
@@ -49,8 +48,8 @@ type StateMachineContextType = {
   reactFlowRepresentation: { nodes: Node[]; edges: Edge[] };
   editingTransition?: {
     transition: StateMachineTransition;
-    fromState: StateMachineState;
-    toState: StateMachineState;
+    fromName: string;
+    toName: string;
   };
   setEditingTransition?: (transitionId: string) => void;
 };
@@ -75,16 +74,11 @@ export function StateMachineProvider({ children, nodeId }: Props) {
   const [editingTransitionId, setEditingTransitionId] = useState<
     string | undefined
   >(undefined);
-  // Transient positions used while dragging for smooth updates without
-  // rewriting the persisted configuration on every mouse move
-  const [transientPositions, setTransientPositions] = useState<
-    Record<string, { x: number; y: number }>
-  >({});
-  const [transientEntryPosition, setTransientEntryPosition] = useState<
-    { x: number; y: number } | undefined
-  >(undefined);
   // Local RF nodes buffer for smooth drag visual updates
-  const [rfNodes, setRfNodes] = useState<Node[]>([]);
+  const [rfRepresentation, setRfRepresentation] = useState<{
+    nodes: Node[];
+    edges: Edge[];
+  }>({ nodes: [], edges: [] });
 
   const { editorValue: configuration, setEditorValue: setConfiguration } =
     usePropertyPad<StateMachineConfiguration>(nodeId || "", "configuration");
@@ -145,6 +139,7 @@ export function StateMachineProvider({ children, nodeId }: Props) {
       if (!configuration) {
         return;
       }
+      console.log("Updating transition", id, newTransition.conditions);
       const updatedTransitions = configuration.transitions.map((t) =>
         t.id === id ? newTransition : t,
       );
@@ -193,8 +188,6 @@ export function StateMachineProvider({ children, nodeId }: Props) {
 
   const handleNodeChanges = useCallback(
     (changes: NodeChange[]) => {
-      // Apply drag changes to local RF nodes immediately for smooth visuals
-      setRfNodes((prev) => applyNodeChanges(changes, prev));
       const prevConfiguration = configuration || {
         states: [],
         entry_state: "",
@@ -205,18 +198,18 @@ export function StateMachineProvider({ children, nodeId }: Props) {
       for (const change of changes) {
         if (change.type === "position") {
           if (change.dragging) {
-            // Update transient positions during drag only
-            if (change.id === "__ENTRY__") {
-              setTransientEntryPosition({
-                x: change.position?.x || 0,
-                y: change.position?.y || 0,
-              });
-            } else {
-              setTransientPositions((prev) => ({
-                ...prev,
-                [change.id]: change.position || { x: 0, y: 0 },
-              }));
-            }
+            setRfRepresentation((prev) => ({
+              ...prev,
+              nodes: prev.nodes.map((node) =>
+                node.id === change.id
+                  ? {
+                      ...node,
+                      position: change.position || { x: 0, y: 0 },
+                      measured: { width: 20, height: 20 },
+                    }
+                  : node,
+              ),
+            }));
           } else {
             // Commit final position to configuration on drop
             if (change.id === "__ENTRY__") {
@@ -227,7 +220,14 @@ export function StateMachineProvider({ children, nodeId }: Props) {
                   y: change.position?.y || 0,
                 },
               });
-              setTransientEntryPosition(undefined);
+            } else if (change.id === "__ANY__") {
+              setConfiguration({
+                ...prevConfiguration,
+                special_any_state_position: {
+                  x: change.position?.x || 0,
+                  y: change.position?.y || 0,
+                },
+              });
             } else {
               const updatedStates = prevConfiguration.states.map((state) =>
                 state.id === change.id
@@ -235,14 +235,10 @@ export function StateMachineProvider({ children, nodeId }: Props) {
                   : state,
               );
               setConfiguration({ ...prevConfiguration, states: updatedStates });
-              setTransientPositions((prev) => {
-                const { [change.id]: _omit, ...rest } = prev;
-                return rest;
-              });
             }
           }
         } else if (change.type === "select") {
-          if (change.id === "__ENTRY__") {
+          if (change.id === "__ENTRY__" || change.id === "__ANY__") {
             continue;
           }
           if (change.selected) {
@@ -251,8 +247,8 @@ export function StateMachineProvider({ children, nodeId }: Props) {
             setSelectedNodes((prev) => prev.filter((id) => id !== change.id));
           }
         } else if (change.type === "remove") {
-          if (change.id === "__ENTRY__") {
-            console.warn("Cannot remove entry node");
+          if (change.id === "__ENTRY__" || change.id === "__ANY__") {
+            console.warn("Cannot remove ENTRY node or ANY node");
             continue;
           }
           const updatedStates = prevConfiguration.states.filter(
@@ -340,8 +336,6 @@ export function StateMachineProvider({ children, nodeId }: Props) {
           }
         }
       }
-      console.log("Edge changes:", changes);
-      // Handle edge changes here
     },
     [configuration, setConfiguration],
   );
@@ -359,97 +353,36 @@ export function StateMachineProvider({ children, nodeId }: Props) {
     const fromState = configuration.states.find(
       (s) => s.id === transition.from_state,
     );
+    let fromName = fromState?.name;
+    if (transition.from_state === "__ANY__") {
+      fromName = "Any";
+    }
+    if (fromName === undefined) {
+      return undefined;
+    }
+
     const toState = configuration.states.find(
       (s) => s.id === transition.to_state,
     );
-    if (!fromState || !toState) {
+    const toName = toState?.name;
+    if (toName === undefined) {
       return undefined;
     }
-    return { transition, fromState, toState };
+    return { transition, fromName, toName };
   }, [editingTransitionId, configuration]);
 
-  const reactFlowRepresentation = useMemo(() => {
-    const entryNode: Node = {
-      id: "__ENTRY__",
-      type: "default",
-      position: {
-        x:
-          transientEntryPosition?.x ?? configuration?.entry_node_position?.x ?? 0,
-        y:
-          transientEntryPosition?.y ?? configuration?.entry_node_position?.y ?? 0,
-      },
-      data: {},
-    };
-    const builtNodes = [entryNode];
-    for (const state of configuration?.states || []) {
-      builtNodes.push({
-        id: state.id,
-        type: "default",
-        position: transientPositions[state.id] ?? state.position,
-        data: state,
-        selected: selectedNodes.includes(state.id),
-      });
-    }
-
-    const edges: Edge[] = [];
-
-    if (configuration?.entry_state) {
-      edges.push({
-        id: "entry_edge",
-        source: "__ENTRY__",
-        target: configuration.entry_state,
-        type: "default",
-      });
-    }
-
-    for (const transition of configuration?.transitions || []) {
-      edges.push({
-        id: transition.id,
-        source: transition.from_state,
-        target: transition.to_state,
-        type: "default",
-        selected: editingTransition?.transition.id === transition.id,
-      });
-    }
-
-    const nodes = rfNodes.length > 0 ? rfNodes : builtNodes;
-    return { nodes, edges };
+  useEffect(() => {
+    setRfRepresentation(
+      configToRF(configuration, selectedNodes, editingTransition?.transition),
+    );
   }, [
+    configuration?.states,
     configuration?.entry_node_position?.x,
     configuration?.entry_node_position?.y,
-    configuration?.entry_state,
-    configuration?.states,
-    configuration?.transitions,
-    editingTransition?.transition.id,
     selectedNodes,
-    transientPositions,
-    transientEntryPosition,
-    rfNodes,
+    configuration,
+    editingTransition?.transition,
   ]);
-
-  // Initialize or rebuild local RF nodes when node ids change or selection/entry pos changes
-  useEffect(() => {
-    const entryNode: Node = {
-      id: "__ENTRY__",
-      type: "default",
-      position: {
-        x: configuration?.entry_node_position?.x || 0,
-        y: configuration?.entry_node_position?.y || 0,
-      },
-      data: {},
-    };
-    const nodes: Node[] = [entryNode];
-    for (const state of configuration?.states || []) {
-      nodes.push({
-        id: state.id,
-        type: "default",
-        position: state.position,
-        data: state,
-        selected: selectedNodes.includes(state.id),
-      });
-    }
-    setRfNodes(nodes);
-  }, [configuration?.states, configuration?.entry_node_position?.x, configuration?.entry_node_position?.y, selectedNodes]);
 
   const parameterPads = useMemo(() => {
     const namePads =
@@ -495,7 +428,7 @@ export function StateMachineProvider({ children, nodeId }: Props) {
         editingTransition,
         selectedNodes,
         parameterPads,
-        reactFlowRepresentation,
+        reactFlowRepresentation: rfRepresentation,
         editorNode,
         setEditingTransition: setEditingTransitionId,
       }}
@@ -521,3 +454,63 @@ export type StateMachineParameterPads = {
   valuePadId: string;
   valueType: BasePadType | undefined;
 };
+
+function configToRF(
+  config: StateMachineConfiguration | undefined,
+  selectedNodes: string[],
+  editingTransition: StateMachineTransition | undefined,
+): {
+  nodes: Node[];
+  edges: Edge[];
+} {
+  const entryNode: Node = {
+    id: "__ENTRY__",
+    type: "default",
+    position: {
+      x: config?.entry_node_position?.x ?? 0,
+      y: config?.entry_node_position?.y ?? 0,
+    },
+    data: {},
+  };
+  const specialAnyNode: Node = {
+    id: "__ANY__",
+    type: "default",
+    position: config?.special_any_state_position || { x: 0, y: 0 },
+    data: {},
+    selected: false,
+  };
+
+  const nodes = [entryNode, specialAnyNode];
+  for (const state of config?.states || []) {
+    nodes.push({
+      id: state.id,
+      type: "default",
+      position: state.position,
+      data: state,
+      selected: selectedNodes.includes(state.id),
+    });
+  }
+
+  const edges: Edge[] = [];
+
+  if (config?.entry_state) {
+    edges.push({
+      id: "entry_edge",
+      source: "__ENTRY__",
+      target: config.entry_state,
+      type: "default",
+    });
+  }
+
+  for (const transition of config?.transitions || []) {
+    edges.push({
+      id: transition.id,
+      source: transition.from_state,
+      target: transition.to_state,
+      type: "default",
+      selected: editingTransition?.id === transition.id,
+    });
+  }
+
+  return { nodes, edges };
+}

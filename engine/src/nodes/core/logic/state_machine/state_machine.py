@@ -44,6 +44,8 @@ class StateMachineTransitionCondition(BaseModel):
             "STARTS_WITH",
             "ENDS_WITH",
             "CONTAINS",
+            "TRUE",
+            "FALSE",
         ]
         | None
     ) = None
@@ -62,6 +64,7 @@ class StateMachineConfiguration(BaseModel):
     transitions: list[StateMachineTransition]
     entry_state: str | None = None
     entry_node_position: StateMachineStatePosition | None = None
+    special_any_state_position: StateMachineStatePosition | None = None
 
 
 class StateMachine(node.Node):
@@ -112,6 +115,17 @@ class StateMachine(node.Node):
             )
             self.pads.append(current_state)
 
+        previous_state = cast(pad.PropertySourcePad, self.get_pad("previous_state"))
+        if not previous_state:
+            previous_state = pad.PropertySourcePad(
+                id="previous_state",
+                owner_node=self,
+                type_constraints=[pad.types.Enum(options=[])],
+                group="previous_state",
+                value="",
+            )
+            self.pads.append(previous_state)
+
         # Ensure configuration has necessary keys and set entry_state if needed
         config_dict = configuration.get_value()
         cleaned_dict = {}
@@ -144,9 +158,19 @@ class StateMachine(node.Node):
             for trans_dict in config_dict["transitions"]:
                 try:
                     tm = StateMachineTransition.model_validate(trans_dict)
-                    if tm.from_state not in state_ids or tm.to_state not in state_ids:
+                    if (
+                        tm.from_state != "__ANY__"
+                        and tm.from_state not in state_ids
+                        or tm.to_state not in state_ids
+                    ):
                         logging.warning(
                             f"Transition from '{tm.from_state}' to '{tm.to_state}' contains unknown states. Skipping."
+                        )
+                        continue
+
+                    if tm.to_state == "__ANY__":
+                        logging.warning(
+                            "Transition to '__ANY__' state is not allowed. Skipping."
                         )
                         continue
 
@@ -169,6 +193,20 @@ class StateMachine(node.Node):
                     f"Invalid entry node position configuration: {entry_node_position}. Setting to default."
                 )
                 cleaned_dict["entry_node_position"] = StateMachineStatePosition(
+                    x=0.0, y=0.0
+                )
+
+        special_any_state_position = config_dict.get("special_any_state_position", None)
+        if special_any_state_position and isinstance(special_any_state_position, dict):
+            try:
+                cleaned_dict["special_any_state_position"] = (
+                    StateMachineStatePosition.model_validate(special_any_state_position)
+                )
+            except Exception:
+                logging.warning(
+                    f"Invalid special any state position configuration: {special_any_state_position}. Setting to default."
+                )
+                cleaned_dict["special_any_state_position"] = StateMachineStatePosition(
                     x=0.0, y=0.0
                 )
 
@@ -203,6 +241,7 @@ class StateMachine(node.Node):
         # Update current_state enum options and default value from configuration
         try:
             enum_options = [s.name for s in config.states]
+            previous_state.set_type_constraints([pad.types.Enum(options=enum_options)])
             current_state.set_type_constraints([pad.types.Enum(options=enum_options)])
 
             # Set current state value to entry state's name if present, else blank
@@ -210,8 +249,10 @@ class StateMachine(node.Node):
                 entry = next(
                     (s for s in config.states if s.id == config.entry_state), None
                 )
+                previous_state.set_value(entry.name if entry else "")
                 current_state.set_value(entry.name if entry else "")
             else:
+                previous_state.set_value("")
                 current_state.set_value("")
         except Exception as e:
             logging.warning(f"Failed to update current_state pad: {e}")
@@ -219,6 +260,7 @@ class StateMachine(node.Node):
         configuration.set_value(config.model_dump())
 
         self._resolve_num_pads()
+        self._fix_missing_pads()
         self._resolve_value_types()
         self._resolve_pad_mode()
         self._sort_and_rename_pads()
@@ -228,6 +270,9 @@ class StateMachine(node.Node):
         configuration_pad = cast(pad.PropertySinkPad, self.get_pad("configuration"))
         current_state_pad = cast(
             pad.PropertySourcePad, self.get_pad_required("current_state")
+        )
+        previous_state_pad = cast(
+            pad.PropertySourcePad, self.get_pad_required("previous_state")
         )
 
         triggers: dict[str, bool] = {}
@@ -244,20 +289,23 @@ class StateMachine(node.Node):
                 f"Current state '{state_name}' not found in configuration."
             )
 
-        def get_outgoing_transitions(
-            state: StateMachineState,
-        ) -> list[StateMachineTransition]:
+        def get_outgoing_transitions(state_id: str) -> list[StateMachineTransition]:
             config_dict = configuration_pad.get_value()
             config = StateMachineConfiguration.model_validate(config_dict)
             return [
                 transition
                 for transition in config.transitions
-                if transition.from_state == state.id
+                if transition.from_state == state_id
             ]
 
-        def check_transitions(ctx: pad.RequestContext):
-            current_state = get_current_state()
-            transitions = get_outgoing_transitions(current_state)
+        def check_transitions(
+            *, ctx: pad.RequestContext, from_id: str, current_state_name: str
+        ):
+            transitions = get_outgoing_transitions(from_id)
+
+            if len(transitions) == 0:
+                return
+
             config_dict = configuration_pad.get_value()
             config = StateMachineConfiguration.model_validate(config_dict)
 
@@ -280,19 +328,20 @@ class StateMachine(node.Node):
                         param_value = parameter_name_value[c.parameter_name]
                         c_value = c.value
                         if isinstance(param_value, bool):
-                            if not isinstance(c_value, bool):
-                                res = False
-                                break
-
-                            if c.operator == "==":
-                                res = res and (param_value == c_value)
-                            elif c.operator == "!=":
-                                res = res and (param_value != c_value)
-                            else:
+                            if c.operator != "TRUE" and c.operator != "FALSE":
                                 logging.warning(
                                     f"Invalid operator '{c.operator}' for boolean parameter '{c.parameter_name}'."
                                 )
                                 res = False
+                                break
+
+                            if c.operator == "TRUE" and not param_value:
+                                res = False
+                                break
+                            elif c.operator == "FALSE" and param_value:
+                                res = False
+                                break
+
                         elif isinstance(param_value, (int, float)):
                             if not isinstance(c_value, (int, float)):
                                 logging.warning(
@@ -358,9 +407,10 @@ class StateMachine(node.Node):
                         continue
 
                     logging.info(
-                        f"Transitioning from state '{current_state.name}' to '{next_state.name}'"
+                        f"Transitioning from state '{current_state_name}' to '{next_state.name}'"
                     )
 
+                    previous_state_pad.push_item(current_state_name, ctx)
                     current_state_pad.push_item(next_state.name, ctx)
 
         async def pad_task(idx: int):
@@ -374,7 +424,17 @@ class StateMachine(node.Node):
                         original_trigger_ctx = item.ctx.original_request
                     triggers[name] = True
 
-                check_transitions(item.ctx)
+                current_state = get_current_state()
+                check_transitions(
+                    ctx=item.ctx,
+                    from_id="__ANY__",
+                    current_state_name=current_state.name,
+                )
+                check_transitions(
+                    ctx=item.ctx,
+                    from_id=current_state.id,
+                    current_state_name=current_state.name,
+                )
 
                 item.ctx.complete()
 
@@ -382,6 +442,35 @@ class StateMachine(node.Node):
         tasks = [pad_task(idx) for idx in all_idxes if idx is not None and idx >= 0]
 
         await asyncio.gather(*tasks)
+
+    def _fix_missing_pads(self):
+        for i in self._get_parameter_indices():
+            name_pad = self.get_pad(f"parameter_name_{i}")
+            if not name_pad:
+                logging.warning(
+                    f"Missing name pad for parameter {i}. Creating default pad."
+                )
+                name_pad = pad.PropertySinkPad(
+                    id=f"parameter_name_{i}",
+                    owner_node=self,
+                    type_constraints=[pad.types.String()],
+                    group="parameters",
+                    value=None,
+                )
+                self.pads.append(name_pad)
+            value_pad = self.get_pad(f"parameter_value_{i}")
+            if not value_pad:
+                logging.warning(
+                    f"Missing value pad for parameter {i}. Creating default pad."
+                )
+                value_pad = pad.PropertySinkPad(
+                    id=f"parameter_value_{i}",
+                    owner_node=self,
+                    type_constraints=ALL_PARAMETER_TYPES,
+                    group="parameter_values",
+                    value=None,
+                )
+                self.pads.append(value_pad)
 
     def _resolve_num_pads(self):
         current_num = len(self._get_parameter_indices())
@@ -435,18 +524,15 @@ class StateMachine(node.Node):
             self.pads.remove(p)
 
     def _resolve_value_types(self):
-        for p in self.pads:
-            if p.get_id().startswith("parameter_value_"):
-                p = cast(pad.SinkPad, p)
-                prev_pad = p.get_previous_pad()
-                if not prev_pad:
-                    p.set_type_constraints(ALL_PARAMETER_TYPES)
-                else:
-                    tcs = p.get_type_constraints()
-                    intersection = pad.types.INTERSECTION(
-                        tcs, prev_pad.get_type_constraints()
-                    )
-                    p.set_type_constraints(intersection)
+        for i in self._get_parameter_indices():
+            _, value_pad = self._get_pads(i)
+            prev_pad = value_pad.get_previous_pad()
+            if prev_pad:
+                tcs = value_pad.get_type_constraints()
+                tcs = pad.types.INTERSECTION(tcs, prev_pad.get_type_constraints())
+                value_pad.set_type_constraints(tcs)
+            else:
+                value_pad.set_type_constraints(ALL_PARAMETER_TYPES)
 
     def _resolve_pad_mode(self):
         for idx, p in enumerate(self.pads):
@@ -505,7 +591,7 @@ class StateMachine(node.Node):
         allowed_operators = {
             pad.types.Float: ["<", "<=", "==", "!=", ">=", ">"],
             pad.types.Integer: ["<", "<=", "==", "!=", ">=", ">"],
-            pad.types.Boolean: ["==", "!="],
+            pad.types.Boolean: ["TRUE", "FALSE"],
             pad.types.String: [
                 "==",
                 "!=",
@@ -564,6 +650,12 @@ class StateMachine(node.Node):
                         )
                         cond["operator"] = None
 
+                    if cond.get("operator") is None:
+                        if isinstance(tcs[0], pad.types.Boolean):
+                            cond["operator"] = "TRUE"
+                        else:
+                            cond["operator"] = "=="
+
     def _sort_and_rename_pads(self):
         configuration_pad = cast(
             pad.PropertySinkPad, self.get_pad_required("configuration")
@@ -573,6 +665,9 @@ class StateMachine(node.Node):
         )
         current_state_pad = cast(
             pad.PropertySourcePad, self.get_pad_required("current_state")
+        )
+        previous_state_pad = cast(
+            pad.PropertySourcePad, self.get_pad_required("previous_state")
         )
 
         indices = self._get_parameter_indices()
@@ -595,6 +690,7 @@ class StateMachine(node.Node):
             configuration_pad,
             num_parameters_pad,
             current_state_pad,
+            previous_state_pad,
         ] + parameter_pads
 
     def _get_parameter_indices(self):

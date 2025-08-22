@@ -2,10 +2,9 @@
 # SPDX-License-Identifier: SUL-1.0
 
 from . import state_machine
-from .gate import Gate
-from .not_node import Not
+from .enum_switch_trigger import EnumSwitchTrigger
+from .filter import Filter
+from .compare import Compare
 
-ALL_NODES = [
-    Gate,
-    Not,
-] + state_machine.ALL_NODES
+
+ALL_NODES = [EnumSwitchTrigger, Filter, Compare] + state_machine.ALL_NODES

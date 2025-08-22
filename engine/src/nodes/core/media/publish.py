@@ -3,6 +3,7 @@
 
 import asyncio
 from typing import cast
+import time
 
 import numpy as np
 from core import node, pad
@@ -24,31 +25,62 @@ class Publish(node.Node):
 
     async def resolve_pads(self):
         audio_source = cast(pad.StatelessSourcePad, self.get_pad("audio"))
-
         if not audio_source:
-            self.pads.append(
-                pad.StatelessSourcePad(
-                    id="audio",
-                    owner_node=self,
-                    group="audio",
-                    type_constraints=[pad.types.Audio()],
-                )
+            audio_source = pad.StatelessSourcePad(
+                id="audio",
+                owner_node=self,
+                group="audio",
+                type_constraints=[pad.types.Audio()],
+            )
+
+        audio_enabled = cast(pad.PropertySourcePad, self.get_pad("audio_enabled"))
+        if not audio_enabled:
+            audio_enabled = pad.PropertySourcePad(
+                id="audio_enabled",
+                owner_node=self,
+                group="audio_enabled",
+                type_constraints=[pad.types.Boolean()],
+                value=False,
             )
 
         video_source = cast(pad.StatelessSourcePad, self.get_pad("video"))
         if not video_source:
-            self.pads.append(
-                pad.StatelessSourcePad(
-                    id="video",
-                    owner_node=self,
-                    group="video",
-                    type_constraints=[pad.types.Video()],
-                )
+            video_source = pad.StatelessSourcePad(
+                id="video",
+                owner_node=self,
+                group="video",
+                type_constraints=[pad.types.Video()],
             )
+
+        video_enabled = cast(pad.PropertySourcePad, self.get_pad("video_enabled"))
+        if not video_enabled:
+            video_enabled = pad.PropertySourcePad(
+                id="video_enabled",
+                owner_node=self,
+                group="video_enabled",
+                type_constraints=[pad.types.Boolean()],
+                value=False,
+            )
+
+        self.pads = [
+            audio_source,
+            video_source,
+            audio_enabled,
+            video_enabled,
+        ]
 
     async def run(self):
         audio_source = cast(pad.StatelessSourcePad, self.get_pad_required("audio"))
         video_source = cast(pad.StatelessSourcePad, self.get_pad_required("video"))
+        audio_enabled = cast(
+            pad.PropertySourcePad, self.get_pad_required("audio_enabled")
+        )
+        video_enabled = cast(
+            pad.PropertySourcePad, self.get_pad_required("video_enabled")
+        )
+
+        last_audio_frame_time: float | None = None
+        last_video_frame_time: float | None = None
 
         resampler_16000hz = Resampler(16000)
         resampler_24000hz = Resampler(24000)
@@ -56,11 +88,13 @@ class Publish(node.Node):
         resampler_48000hz = Resampler(48000)
 
         async def video_consume():
+            nonlocal last_video_frame_time
             while True:
                 video_stream = await video_stream_provider(
                     self.room, f"{self.id}:video"
                 )
                 async for frame in video_stream:
+                    last_video_frame_time = time.time()
                     timestamp_s = frame.timestamp_us / 1_000_000.0
                     converted = frame.frame.convert(rtc.VideoBufferType.RGBA)
                     np_buf = np.frombuffer(converted.data, dtype=np.uint8).reshape(
@@ -77,11 +111,13 @@ class Publish(node.Node):
                     ctx.complete()
 
         async def audio_consume():
+            nonlocal last_audio_frame_time
             while True:
                 audio_stream = await audio_stream_provider(
                     self.room, f"{self.id}:audio"
                 )
                 async for frame in audio_stream:
+                    last_audio_frame_time = time.time()
                     original_data = AudioFrameData(
                         data=np.frombuffer(frame.frame.data, dtype=np.int16).reshape(
                             1, -1
@@ -106,7 +142,50 @@ class Publish(node.Node):
                     audio_source.push_item(frame, ctx)
                     ctx.complete()
 
+        async def frame_timeout():
+            while True:
+                await asyncio.sleep(0.5)
+                current_time = time.time()
+
+                if last_audio_frame_time is None:
+                    if audio_enabled.get_value():
+                        audio_enabled.push_item(
+                            False, pad.RequestContext(parent=None, originator=self.id)
+                        )
+                else:
+                    if current_time - last_audio_frame_time > 1:
+                        if audio_enabled.get_value():
+                            audio_enabled.push_item(
+                                False,
+                                pad.RequestContext(parent=None, originator=self.id),
+                            )
+                    else:
+                        if not audio_enabled.get_value():
+                            audio_enabled.push_item(
+                                True,
+                                pad.RequestContext(parent=None, originator=self.id),
+                            )
+                if last_video_frame_time is None:
+                    if video_enabled.get_value():
+                        video_enabled.push_item(
+                            False, pad.RequestContext(parent=None, originator=self.id)
+                        )
+                else:
+                    if current_time - last_video_frame_time > 1:
+                        if video_enabled.get_value():
+                            video_enabled.push_item(
+                                False,
+                                pad.RequestContext(parent=None, originator=self.id),
+                            )
+                    else:
+                        if not video_enabled.get_value():
+                            video_enabled.push_item(
+                                True,
+                                pad.RequestContext(parent=None, originator=self.id),
+                            )
+
         await asyncio.gather(
             video_consume(),
             audio_consume(),
+            frame_timeout(),
         )

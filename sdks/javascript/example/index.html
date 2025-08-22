@@ -30,6 +30,10 @@
         let appRunId;
         let engineConnectionState = "disconnected";
         let buttonSourcePad = null;
+        let webcamPublication = null;
+        let screensharePublication = null;
+        let webcamLocalTrack = null;
+        let screenshareLocalTrack = null;
         let handler = {
             onConnectionStateChange: (state) => {
                 engineConnectionState = state;
@@ -85,23 +89,58 @@
         }
 
         async function publishWebcam() {
-            let webcamLocalTrack = await engine.getLocalTrack({ type: "webcam", width: 1280, height: 720 });
+            webcamLocalTrack = await engine.getLocalTrack({ type: "webcam", width: 1280, height: 720 });
             webcamLocalTrack.attachToElement(document.getElementById("local_webcam"));
-            await engine.publishToNode({
+            webcamPublication = await engine.publishToNode({
                 localTrack: webcamLocalTrack,
                 publishNodeId: "publish_webcam",
             });
+            console.log("Webcam published:", webcamPublication);
+            document.getElementById("webcam-button").style.display = "none";
             document.getElementById("webcam-sub-button").style.display = "block";
+            document.getElementById("unpublish-webcam").style.display = "block";
+        }
+
+        async function unpublishWebcam() {
+            if (webcamPublication) {
+                await webcamPublication.unpublish().then(() => {
+                    if (webcamLocalTrack) {
+                        webcamLocalTrack.detachAll(document.getElementById("local_webcam"));
+                        webcamLocalTrack = null;
+                    }
+                    webcamPublication = null;
+                    document.getElementById("webcam-button").style.display = "block";
+                    document.getElementById("webcam-sub-button").style.display = "none";
+                    document.getElementById("unpublish-webcam").style.display = "none";
+                });
+            }
         }
 
         async function publishScreenshare() {
-            let screenshareLocalTrack = await engine.getLocalTrack({ type: "screen_share", width: 1920, height: 1080 });
+            screenshareLocalTrack = await engine.getLocalTrack({ type: "screen_share", width: 1920, height: 1080 });
             screenshareLocalTrack.attachToElement(document.getElementById("local_screenshare"));
-            await engine.publishToNode({
+            screensharePublication = await engine.publishToNode({
                 localTrack: screenshareLocalTrack,
                 publishNodeId: "publish_screen",
             });
+            document.getElementById("screenshare-button").style.display = "none";
             document.getElementById("screenshare-sub-button").style.display = "block";
+            document.getElementById("unpublish-screenshare").style.display = "block";
+        }
+
+        async function unpublishScreenshare() {
+            if (screensharePublication) {
+                await screensharePublication.unpublish().then(() => {
+                    if (screenshareLocalTrack) {
+                        screenshareLocalTrack.detachAll();
+                        screenshareLocalTrack = null;
+                    }
+                    screensharePublication = null;
+                    document.getElementById("screenshare-button").style.display = "block";
+                    document.getElementById("screenshare-sub-button").style.display = "none";
+                    document.getElementById("unpublish-screenshare").style.display = "none";
+                });
+            }
         }
 
         async function subscribeWebcam() {
@@ -127,6 +166,7 @@
             <video id="local_webcam" width="320" height="240" controls>
             </video>
             <button id="webcam-button" onclick="publishWebcam()" style="display: none;">Publish Webcam</button>
+            <button id="unpublish-webcam" onclick="unpublishWebcam()" style="display: none;">Unpublish Webcam</button>
         </div>
         <div> ==> </div>
         <div>
@@ -144,6 +184,8 @@
             <video id="local_screenshare" width="320" height="240" controls>
             </video>
             <button id="screenshare-button" onclick="publishScreenshare()" style="display: none;">Publish
+                Screenshare</button>
+            <button id="unpublish-screenshare" onclick="unpublishScreenshare()" style="display: none;">Unpublish
                 Screenshare</button>
         </div>
         <div> ==> </div>

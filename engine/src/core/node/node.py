@@ -1,6 +1,7 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
+import logging
 from abc import abstractmethod
 
 from livekit import rtc
@@ -55,6 +56,9 @@ class Node:
 
     def get_pad(self, pad_id: str) -> Pad | None:
         for pad in self.pads:
+            if not pad:
+                logging.error(f"Pad is None in node {self.id}")
+                continue
             if pad.get_id() == pad_id:
                 return pad
         return None
