@@ -47,12 +47,20 @@ export async function saveApp(req: SaveAppRequest) {
   return (resp.data as SaveAppResponse).app;
 }
 
+export async function deleteApp(appId: string) {
+  await axios.delete(`${getBaseUrl()}/app/${appId}`);
+}
+
 export async function saveSubGraph(
   params: SaveSubgraphRequest,
 ): Promise<RepositorySubGraph> {
   params.type = "save_subgraph";
   const resp = await axios.post(`${getBaseUrl()}/sub_graph`, params);
   return (resp.data as SaveSubgraphResponse).sub_graph;
+}
+
+export async function deleteSubGraph(graphId: string) {
+  await axios.delete(`${getBaseUrl()}/sub_graph/${graphId}`);
 }
 
 export async function getSubGraph(
