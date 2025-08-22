@@ -34,7 +34,7 @@ class LLMContext(node.Node):
             pad.PropertySinkPad, self.get_pad_required("system_message")
         )
         max_non_system_messages = cast(
-            pad.PropertySourcePad, self.get_pad_required("max_non_system_messages")
+            pad.PropertySinkPad, self.get_pad_required("max_non_system_messages")
         )
         new_user_message = cast(
             pad.StatelessSourcePad, self.get_pad_required("new_user_message")
@@ -179,10 +179,10 @@ class LLMContext(node.Node):
             )
             self.pads.append(new_user_message)
         max_non_system_messages = cast(
-            pad.PropertySourcePad, self.get_pad("max_non_system_messages")
+            pad.PropertySinkPad, self.get_pad("max_non_system_messages")
         )
         if not max_non_system_messages:
-            max_non_system_messages = pad.PropertySourcePad(
+            max_non_system_messages = pad.PropertySinkPad(
                 id="max_non_system_messages",
                 group="max_non_system_messages",
                 owner_node=self,

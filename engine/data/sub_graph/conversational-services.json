@@ -1,239 +1,17 @@
 {
-    "id": "57b41721-3640-4101-8f47-3fab61fed0ad",
-    "name": "Conversational Local LLM",
+    "id": "conversational-services",
+    "name": "Conversational w/ Remote Services",
     "created_at": "2025-07-29T21:43:30.505415",
-    "updated_at": "2025-08-15T16:36:10.186965",
+    "updated_at": "2025-08-22T10:16:51.637223",
     "graph": {
         "nodes": [
-            {
-                "id": "localopenaicompatiblellm_fa3c5ac4",
-                "type": "LocalOpenAICompatibleLLM",
-                "editor_name": "LocalOpenAICompatibleLLM",
-                "editor_position": [
-                    708.0,
-                    300.0
-                ],
-                "editor_dimensions": [
-                    295.0,
-                    475.0
-                ],
-                "pads": [
-                    {
-                        "id": "run_trigger",
-                        "group": "run_trigger",
-                        "type": "StatelessSinkPad",
-                        "value": null,
-                        "next_pads": [],
-                        "previous_pad": {
-                            "node": "proxystatelesssink_4ec5373c",
-                            "pad": "proxy"
-                        },
-                        "allowed_types": [
-                            {
-                                "type": "trigger"
-                            }
-                        ]
-                    },
-                    {
-                        "id": "started",
-                        "group": "started",
-                        "type": "StatelessSourcePad",
-                        "value": null,
-                        "next_pads": [],
-                        "previous_pad": null,
-                        "allowed_types": [
-                            {
-                                "type": "trigger"
-                            }
-                        ]
-                    },
-                    {
-                        "id": "tool_calls_started",
-                        "group": "tool_calls_started",
-                        "type": "StatelessSourcePad",
-                        "value": null,
-                        "next_pads": [],
-                        "previous_pad": null,
-                        "allowed_types": [
-                            {
-                                "type": "trigger"
-                            }
-                        ]
-                    },
-                    {
-                        "id": "tool_calls_finished",
-                        "group": "tool_calls_finished",
-                        "type": "StatelessSourcePad",
-                        "value": null,
-                        "next_pads": [],
-                        "previous_pad": null,
-                        "allowed_types": [
-                            {
-                                "type": "trigger"
-                            }
-                        ]
-                    },
-                    {
-                        "id": "first_token",
-                        "group": "first_token",
-                        "type": "StatelessSourcePad",
-                        "value": null,
-                        "next_pads": [],
-                        "previous_pad": null,
-                        "allowed_types": [
-                            {
-                                "type": "trigger"
-                            }
-                        ]
-                    },
-                    {
-                        "id": "text_stream",
-                        "group": "text_stream",
-                        "type": "StatelessSourcePad",
-                        "value": null,
-                        "next_pads": [
-                            {
-                                "node": "tts_57f02895",
-                                "pad": "text_stream"
-                            }
-                        ],
-                        "previous_pad": null,
-                        "allowed_types": [
-                            {
-                                "type": "text_stream"
-                            }
-                        ]
-                    },
-                    {
-                        "id": "thinking_stream",
-                        "group": "thinking_stream",
-                        "type": "StatelessSourcePad",
-                        "value": null,
-                        "next_pads": [],
-                        "previous_pad": null,
-                        "allowed_types": [
-                            {
-                                "type": "text_stream"
-                            }
-                        ]
-                    },
-                    {
-                        "id": "context_message",
-                        "group": "context_message",
-                        "type": "StatelessSourcePad",
-                        "value": null,
-                        "next_pads": [
-                            {
-                                "node": "proxystatelesssource_3949aad0",
-                                "pad": "proxy"
-                            }
-                        ],
-                        "previous_pad": null,
-                        "allowed_types": [
-                            {
-                                "type": "context_message"
-                            }
-                        ]
-                    },
-                    {
-                        "id": "finished",
-                        "group": "finished",
-                        "type": "StatelessSourcePad",
-                        "value": null,
-                        "next_pads": [],
-                        "previous_pad": null,
-                        "allowed_types": [
-                            {
-                                "type": "trigger"
-                            }
-                        ]
-                    },
-                    {
-                        "id": "cancel_trigger",
-                        "group": "cancel_trigger",
-                        "type": "StatelessSinkPad",
-                        "value": null,
-                        "next_pads": [],
-                        "previous_pad": {
-                            "node": "stt_1cfdeb01",
-                            "pad": "speech_started"
-                        },
-                        "allowed_types": [
-                            {
-                                "type": "trigger"
-                            }
-                        ]
-                    },
-                    {
-                        "id": "context",
-                        "group": "context",
-                        "type": "PropertySinkPad",
-                        "value": null,
-                        "next_pads": [],
-                        "previous_pad": {
-                            "node": "proxypropertysink_5040f56b",
-                            "pad": "proxy"
-                        },
-                        "allowed_types": [
-                            {
-                                "type": "list",
-                                "max_length": null,
-                                "item_type_constraints": [
-                                    {}
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        "id": "tool_group",
-                        "group": "tool_group",
-                        "type": "PropertySinkPad",
-                        "value": null,
-                        "next_pads": [],
-                        "previous_pad": null,
-                        "allowed_types": [
-                            {
-                                "type": "node_reference",
-                                "node_types": [
-                                    "ToolGroup"
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        "id": "port",
-                        "group": "port",
-                        "type": "PropertySinkPad",
-                        "value": 7002,
-                        "next_pads": [],
-                        "previous_pad": null,
-                        "allowed_types": [
-                            {
-                                "type": "integer",
-                                "maximum": null,
-                                "minimum": null
-                            }
-                        ]
-                    }
-                ],
-                "description": "Send and receive responses from any Qwen-omni language model",
-                "metadata": {
-                    "primary": "ai",
-                    "secondary": "local",
-                    "tags": [
-                        "completion",
-                        "text",
-                        "qwen-omni"
-                    ]
-                }
-            },
             {
                 "id": "proxypropertysink_5040f56b",
                 "type": "ProxyPropertySink",
                 "editor_name": "ProxyPropertySink",
                 "editor_position": [
-                    324.0,
-                    636.0
+                    204.0,
+                    960.0
                 ],
                 "editor_dimensions": [
                     256.0,
@@ -247,7 +25,7 @@
                         "value": null,
                         "next_pads": [
                             {
-                                "node": "localopenaicompatiblellm_fa3c5ac4",
+                                "node": "openaicompatiblellm_e89fdde4",
                                 "pad": "context"
                             }
                         ],
@@ -355,7 +133,7 @@
                 ],
                 "editor_dimensions": [
                     256.0,
-                    179.0
+                    172.0
                 ],
                 "pads": [
                     {
@@ -375,6 +153,7 @@
                                 "type": "enum",
                                 "options": [
                                     "assembly_ai",
+                                    "deepgram",
                                     "local_kyutai"
                                 ]
                             }
@@ -411,7 +190,7 @@
                 "type": "CreateContextMessage",
                 "editor_name": "CreateContextMessage",
                 "editor_position": [
-                    252.0,
+                    216.0,
                     -156.0
                 ],
                 "editor_dimensions": [
@@ -482,8 +261,8 @@
                 "type": "ProxyStatelessSource",
                 "editor_name": "ProxyStatelessSource",
                 "editor_position": [
-                    576.0,
-                    -144.0
+                    552.0,
+                    -156.0
                 ],
                 "editor_dimensions": [
                     266.0,
@@ -537,8 +316,8 @@
                 "type": "ProxyStatelessSink",
                 "editor_name": "ProxyStatelessSink",
                 "editor_position": [
-                    324.0,
-                    396.0
+                    216.0,
+                    132.0
                 ],
                 "editor_dimensions": [
                     256.0,
@@ -552,7 +331,7 @@
                         "value": null,
                         "next_pads": [
                             {
-                                "node": "localopenaicompatiblellm_fa3c5ac4",
+                                "node": "openaicompatiblellm_e89fdde4",
                                 "pad": "run_trigger"
                             }
                         ],
@@ -599,7 +378,7 @@
                 ],
                 "editor_dimensions": [
                     256.0,
-                    359.0
+                    324.0
                 ],
                 "pads": [
                     {
@@ -659,37 +438,6 @@
                         ]
                     },
                     {
-                        "id": "text_stream",
-                        "group": "text_stream",
-                        "type": "StatelessSinkPad",
-                        "value": null,
-                        "next_pads": [],
-                        "previous_pad": {
-                            "node": "localopenaicompatiblellm_fa3c5ac4",
-                            "pad": "text_stream"
-                        },
-                        "allowed_types": [
-                            {
-                                "type": "text_stream"
-                            }
-                        ]
-                    },
-                    {
-                        "id": "complete_text",
-                        "group": "complete_text",
-                        "type": "StatelessSinkPad",
-                        "value": null,
-                        "next_pads": [],
-                        "previous_pad": null,
-                        "allowed_types": [
-                            {
-                                "type": "string",
-                                "max_length": null,
-                                "min_length": null
-                            }
-                        ]
-                    },
-                    {
                         "id": "audio",
                         "group": "audio",
                         "type": "StatelessSourcePad",
@@ -737,6 +485,22 @@
                                 "min_length": null
                             }
                         ]
+                    },
+                    {
+                        "id": "text",
+                        "group": "text",
+                        "type": "StatelessSinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "openaicompatiblellm_e89fdde4",
+                            "pad": "text_stream"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "text_stream"
+                            }
+                        ]
                     }
                 ],
                 "description": "Converts text to speech using Gabber's native TTS model",
@@ -760,7 +524,7 @@
                 ],
                 "editor_dimensions": [
                     256.0,
-                    179.0
+                    172.0
                 ],
                 "pads": [
                     {
@@ -1004,7 +768,7 @@
                         "value": null,
                         "next_pads": [],
                         "previous_pad": {
-                            "node": "localopenaicompatiblellm_fa3c5ac4",
+                            "node": "openaicompatiblellm_e89fdde4",
                             "pad": "context_message"
                         },
                         "allowed_types": [
@@ -1044,12 +808,12 @@
                 "type": "STT",
                 "editor_name": "STT",
                 "editor_position": [
-                    -72.0,
-                    -204.0
+                    -120.0,
+                    -180.0
                 ],
                 "editor_dimensions": [
                     256.0,
-                    319.0
+                    312.0
                 ],
                 "pads": [
                     {
@@ -1067,6 +831,7 @@
                                 "type": "enum",
                                 "options": [
                                     "assembly_ai",
+                                    "deepgram",
                                     "local_kyutai"
                                 ]
                             }
@@ -1113,11 +878,11 @@
                         "value": null,
                         "next_pads": [
                             {
-                                "node": "localopenaicompatiblellm_fa3c5ac4",
+                                "node": "tts_57f02895",
                                 "pad": "cancel_trigger"
                             },
                             {
-                                "node": "tts_57f02895",
+                                "node": "openaicompatiblellm_e89fdde4",
                                 "pad": "cancel_trigger"
                             }
                         ],
@@ -1182,7 +947,8 @@
                         "stt",
                         "speech",
                         "kyutai",
-                        "assembly"
+                        "assembly",
+                        "deepgram"
                     ]
                 }
             },
@@ -1223,6 +989,442 @@
                         "group": "pad_id",
                         "type": "PropertySinkPad",
                         "value": "stt_api_key",
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    }
+                ],
+                "description": "Create a property sink pad that is exposed when using your subgraph in a flow",
+                "metadata": {
+                    "primary": "subgraph",
+                    "secondary": "sink",
+                    "tags": [
+                        "property",
+                        "sink"
+                    ]
+                }
+            },
+            {
+                "id": "openaicompatiblellm_e89fdde4",
+                "type": "OpenAICompatibleLLM",
+                "editor_name": "OpenAICompatibleLLM",
+                "editor_position": [
+                    660.0,
+                    204.0
+                ],
+                "editor_dimensions": [
+                    259.0,
+                    555.0
+                ],
+                "pads": [
+                    {
+                        "id": "run_trigger",
+                        "group": "run_trigger",
+                        "type": "StatelessSinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "proxystatelesssink_4ec5373c",
+                            "pad": "proxy"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "started",
+                        "group": "started",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "tool_calls_started",
+                        "group": "tool_calls_started",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "tool_calls_finished",
+                        "group": "tool_calls_finished",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "first_token",
+                        "group": "first_token",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "text_stream",
+                        "group": "text_stream",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "tts_57f02895",
+                                "pad": "text"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "text_stream"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "thinking_stream",
+                        "group": "thinking_stream",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "text_stream"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "context_message",
+                        "group": "context_message",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "proxystatelesssource_3949aad0",
+                                "pad": "proxy"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "context_message"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "finished",
+                        "group": "finished",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "cancel_trigger",
+                        "group": "cancel_trigger",
+                        "type": "StatelessSinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "stt_1cfdeb01",
+                            "pad": "speech_started"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "context",
+                        "group": "context",
+                        "type": "PropertySinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "proxypropertysink_5040f56b",
+                            "pad": "proxy"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "list",
+                                "max_length": null,
+                                "item_type_constraints": [
+                                    {}
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "tool_group",
+                        "group": "tool_group",
+                        "type": "PropertySinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "node_reference",
+                                "node_types": [
+                                    "ToolGroup"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "base_url",
+                        "group": "base_url",
+                        "type": "PropertySinkPad",
+                        "value": "https://api.openai.com/v1",
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "proxypropertysink_c985d3c0",
+                            "pad": "proxy"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    },
+                    {
+                        "id": "api_key",
+                        "group": "api_key",
+                        "type": "PropertySinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "proxypropertysink_9453004e",
+                            "pad": "proxy"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "secret",
+                                "options": []
+                            }
+                        ]
+                    },
+                    {
+                        "id": "model",
+                        "group": "model",
+                        "type": "PropertySinkPad",
+                        "value": "gpt-4.1-mini",
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "proxypropertysink_43a0bb25",
+                            "pad": "proxy"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    }
+                ],
+                "description": "Send and receive responses from any OpenAI-compatible language model",
+                "metadata": {
+                    "primary": "ai",
+                    "secondary": "llm",
+                    "tags": [
+                        "completion",
+                        "text",
+                        "openai"
+                    ]
+                }
+            },
+            {
+                "id": "proxypropertysink_c985d3c0",
+                "type": "ProxyPropertySink",
+                "editor_name": "ProxyPropertySink",
+                "editor_position": [
+                    216.0,
+                    336.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    179.0
+                ],
+                "pads": [
+                    {
+                        "id": "proxy",
+                        "group": "proxy",
+                        "type": "PropertySourcePad",
+                        "value": "https://api.openai.com/v1",
+                        "next_pads": [
+                            {
+                                "node": "openaicompatiblellm_e89fdde4",
+                                "pad": "base_url"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    },
+                    {
+                        "id": "pad_id",
+                        "group": "pad_id",
+                        "type": "PropertySinkPad",
+                        "value": "llm_base_url",
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    }
+                ],
+                "description": "Create a property sink pad that is exposed when using your subgraph in a flow",
+                "metadata": {
+                    "primary": "subgraph",
+                    "secondary": "sink",
+                    "tags": [
+                        "property",
+                        "sink"
+                    ]
+                }
+            },
+            {
+                "id": "proxypropertysink_9453004e",
+                "type": "ProxyPropertySink",
+                "editor_name": "ProxyPropertySink",
+                "editor_position": [
+                    216.0,
+                    528.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    179.0
+                ],
+                "pads": [
+                    {
+                        "id": "proxy",
+                        "group": "proxy",
+                        "type": "PropertySourcePad",
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "openaicompatiblellm_e89fdde4",
+                                "pad": "api_key"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "secret",
+                                "options": []
+                            }
+                        ]
+                    },
+                    {
+                        "id": "pad_id",
+                        "group": "pad_id",
+                        "type": "PropertySinkPad",
+                        "value": "llm_api_key",
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    }
+                ],
+                "description": "Create a property sink pad that is exposed when using your subgraph in a flow",
+                "metadata": {
+                    "primary": "subgraph",
+                    "secondary": "sink",
+                    "tags": [
+                        "property",
+                        "sink"
+                    ]
+                }
+            },
+            {
+                "id": "proxypropertysink_43a0bb25",
+                "type": "ProxyPropertySink",
+                "editor_name": "ProxyPropertySink",
+                "editor_position": [
+                    216.0,
+                    720.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    179.0
+                ],
+                "pads": [
+                    {
+                        "id": "proxy",
+                        "group": "proxy",
+                        "type": "PropertySourcePad",
+                        "value": "gpt-4.1-mini",
+                        "next_pads": [
+                            {
+                                "node": "openaicompatiblellm_e89fdde4",
+                                "pad": "model"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    },
+                    {
+                        "id": "pad_id",
+                        "group": "pad_id",
+                        "type": "PropertySinkPad",
+                        "value": "llm_model",
                         "next_pads": [],
                         "previous_pad": null,
                         "allowed_types": [

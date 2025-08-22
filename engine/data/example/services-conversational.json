@@ -1,0 +1,437 @@
+{
+    "id": "services-conversational",
+    "name": "Conversational w/ Remote Services",
+    "created_at": "2025-08-18T22:10:51.327793",
+    "updated_at": "2025-08-20T17:08:11.823538",
+    "graph": {
+        "nodes": [
+            {
+                "id": "publish_da29950d",
+                "type": "Publish",
+                "editor_name": "Publish",
+                "editor_position": [
+                    120.0,
+                    96.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    348.0
+                ],
+                "pads": [
+                    {
+                        "id": "audio",
+                        "group": "audio",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "stt_b3bff0d1",
+                                "pad": "audio"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "video",
+                        "group": "video",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "video"
+                            }
+                        ]
+                    }
+                ],
+                "description": "Stream audio and video into your Gabber flow",
+                "metadata": {
+                    "primary": "core",
+                    "secondary": "media",
+                    "tags": [
+                        "input",
+                        "stream"
+                    ]
+                }
+            },
+            {
+                "id": "stt_b3bff0d1",
+                "type": "STT",
+                "editor_name": "STT",
+                "editor_position": [
+                    624.0,
+                    120.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    319.0
+                ],
+                "pads": [
+                    {
+                        "id": "service",
+                        "group": "service",
+                        "type": "PropertySinkPad",
+                        "value": "deepgram",
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "enum",
+                                "options": [
+                                    "assembly_ai",
+                                    "local_kyutai",
+                                    "deepgram"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "audio",
+                        "group": "audio",
+                        "type": "StatelessSinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "publish_da29950d",
+                            "pad": "audio"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "speech_clip",
+                        "group": "speech_clip",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "autoconvert_d3f393cb",
+                                "pad": "sink"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "audio_clip"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "speech_started",
+                        "group": "speech_started",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "speech_ended",
+                        "group": "speech_ended",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "final_transcription",
+                        "group": "final_transcription",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "string_50a82ded",
+                                "pad": "set"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    },
+                    {
+                        "id": "api_key",
+                        "group": "api_key",
+                        "type": "PropertySinkPad",
+                        "value": "DEEPGRAM_API_KEY",
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "secret",
+                                "options": [
+                                    {
+                                        "updated_at": "2025-08-20T17:07:47.710178",
+                                        "created_at": "2025-08-20T17:07:47.710181",
+                                        "id": "GABBER_API_KEY",
+                                        "name": "GABBER_API_KEY"
+                                    },
+                                    {
+                                        "updated_at": "2025-08-20T17:07:47.710191",
+                                        "created_at": "2025-08-20T17:07:47.710192",
+                                        "id": "CARTESIA_API_KEY",
+                                        "name": "CARTESIA_API_KEY"
+                                    },
+                                    {
+                                        "updated_at": "2025-08-20T17:07:47.710194",
+                                        "created_at": "2025-08-20T17:07:47.710194",
+                                        "id": "ELEVENLABS_API_KEY",
+                                        "name": "ELEVENLABS_API_KEY"
+                                    },
+                                    {
+                                        "updated_at": "2025-08-20T17:07:47.710196",
+                                        "created_at": "2025-08-20T17:07:47.710196",
+                                        "id": "DEEPGRAM_API_KEY",
+                                        "name": "DEEPGRAM_API_KEY"
+                                    },
+                                    {
+                                        "updated_at": "2025-08-20T17:07:47.710197",
+                                        "created_at": "2025-08-20T17:07:47.710198",
+                                        "id": "OPENAI_API_KEY",
+                                        "name": "OPENAI_API_KEY"
+                                    },
+                                    {
+                                        "updated_at": "2025-08-20T17:07:47.710199",
+                                        "created_at": "2025-08-20T17:07:47.710199",
+                                        "id": "ASSEMBLY_AI_API_KEY",
+                                        "name": "ASSEMBLY_AI_API_KEY"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                "description": "Speech-to-Text",
+                "metadata": {
+                    "primary": "ai",
+                    "secondary": "audio",
+                    "tags": [
+                        "stt",
+                        "speech",
+                        "kyutai",
+                        "assembly",
+                        "deepgram"
+                    ]
+                }
+            },
+            {
+                "id": "string_50a82ded",
+                "type": "String",
+                "editor_name": "String",
+                "editor_position": [
+                    1008.0,
+                    156.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    223.0
+                ],
+                "pads": [
+                    {
+                        "id": "set",
+                        "group": "set",
+                        "type": "StatelessSinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "stt_b3bff0d1",
+                            "pad": "final_transcription"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    },
+                    {
+                        "id": "emit",
+                        "group": "emit",
+                        "type": "StatelessSinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "value",
+                        "group": "value",
+                        "type": "PropertySourcePad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    },
+                    {
+                        "id": "changed",
+                        "group": "changed",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    }
+                ],
+                "description": "Stores and manages string values",
+                "metadata": {
+                    "primary": "core",
+                    "secondary": "primitive",
+                    "tags": [
+                        "storage",
+                        "string"
+                    ]
+                }
+            },
+            {
+                "id": "output_650ee874",
+                "type": "Output",
+                "editor_name": "Output",
+                "editor_position": [
+                    1116.0,
+                    420.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    300.0
+                ],
+                "pads": [
+                    {
+                        "id": "audio_sink",
+                        "group": "audio_sink",
+                        "type": "StatelessSinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "autoconvert_d3f393cb",
+                            "pad": "source"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "video_sink",
+                        "group": "video_sink",
+                        "type": "StatelessSinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "video"
+                            }
+                        ]
+                    }
+                ],
+                "description": "Outputs audio and video to the end user",
+                "metadata": {
+                    "primary": "core",
+                    "secondary": "media",
+                    "tags": [
+                        "output",
+                        "display"
+                    ]
+                }
+            },
+            {
+                "id": "autoconvert_d3f393cb",
+                "type": "AutoConvert",
+                "editor_name": "AutoConvert",
+                "editor_position": [
+                    948.0,
+                    516.0
+                ],
+                "editor_dimensions": [
+                    80.0,
+                    48.0
+                ],
+                "pads": [
+                    {
+                        "id": "sink",
+                        "group": "sink",
+                        "type": "StatelessSinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "stt_b3bff0d1",
+                            "pad": "speech_clip"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "audio_clip"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "source",
+                        "group": "source",
+                        "type": "StatelessSourcePad",
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "output_650ee874",
+                                "pad": "audio_sink"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ]
+                    }
+                ],
+                "description": "Automatically converts data between compatible types",
+                "metadata": {
+                    "primary": "core",
+                    "secondary": "utility",
+                    "tags": [
+                        "auto",
+                        "type"
+                    ]
+                }
+            }
+        ]
+    }
+}
