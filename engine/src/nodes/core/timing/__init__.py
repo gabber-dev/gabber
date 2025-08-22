@@ -2,5 +2,6 @@
 # SPDX-License-Identifier: SUL-1.0
 
 from .delay import Delay
+from .ticker import Ticker
 
-ALL_NODES = [Delay]
+ALL_NODES = [Delay, Ticker]

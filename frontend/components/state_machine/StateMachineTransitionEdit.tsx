@@ -237,12 +237,12 @@ function CompareCondition({
           type={inputType}
           value={(condition.value as string | number) || ""}
           onChange={(e) => {
+            const newValue =
+              inputType === "number" ? Number(e.target.value) : e.target.value;
             updateTransition(transition.id, {
               ...transition,
               conditions: transition.conditions?.map((cond, idx) =>
-                idx === conditionIdx
-                  ? { ...cond, value: e.target.value }
-                  : cond,
+                idx === conditionIdx ? { ...cond, value: newValue } : cond,
               ),
             });
           }}

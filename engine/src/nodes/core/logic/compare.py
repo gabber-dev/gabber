@@ -110,9 +110,8 @@ class Compare(Node):
         if mode not in ["AND", "OR"]:
             mode_pad.set_value("AND")
 
-        self.resolve_value(
-            condition_pads=condition_pads, value_pad=value, mode_pad=mode_pad
-        )
+        val = self.resolve_value(condition_pads=condition_pads, mode_pad=mode_pad)
+        value.set_value(val)
 
     def _get_indices(self) -> list[int]:
         indices = set[int]()
@@ -305,11 +304,12 @@ class Compare(Node):
 
         async def pad_task(pad: pad.PropertySinkPad):
             async for item in pad:
-                self.resolve_value(
+                res = self.resolve_value(
                     condition_pads=condition_pads,
-                    value_pad=value_pad,
                     mode_pad=mode_pad,
                 )
+                if value_pad.get_value() != res:
+                    value_pad.push_item(res, item.ctx)
                 item.ctx.complete()
 
         await asyncio.gather(
@@ -325,7 +325,6 @@ class Compare(Node):
         condition_pads: list[
             tuple[pad.PropertySinkPad, pad.PropertySinkPad, pad.PropertySinkPad]
         ],
-        value_pad: pad.PropertySourcePad,
         mode_pad: pad.PropertySinkPad,
     ):
         mode = mode_pad.get_value()
@@ -348,7 +347,7 @@ class Compare(Node):
                     res = res or result
                     if res:
                         break
-        value_pad.set_value(res)
+        return res
 
     def compare_values(
         self, pad_a: pad.PropertySinkPad, pad_b: pad.PropertySinkPad, op: str

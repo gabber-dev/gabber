@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
+import logging
 import json
 from typing import cast
 
@@ -76,6 +77,7 @@ class AutoConvert(Node):
                 elif isinstance(item.value, float):
                     source.push_item(str(item.value), item.ctx)
                 elif isinstance(item.value, int):
+                    logging.debug(f"Converting int {item.value} to string")
                     source.push_item(str(item.value), item.ctx)
                 elif isinstance(item.value, runtime_types.ContextMessage):
                     txt: str | None = None
@@ -103,6 +105,11 @@ class AutoConvert(Node):
                         source.push_item(
                             f"Cannot convert {item.value} to string", item.ctx
                         )
+                elif isinstance(item.value, runtime_types.TextStream):
+                    acc = ""
+                    async for chunk in item.value:
+                        acc += chunk
+                    source.push_item(acc, item.ctx)
             elif isinstance(source_type, pad.types.Video):
                 if isinstance(item.value, runtime_types.VideoFrame):
                     source.push_item(item.value, item.ctx)

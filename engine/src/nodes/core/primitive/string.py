@@ -48,7 +48,7 @@ class String(node.Node):
                 group="value",
                 owner_node=self,
                 type_constraints=[pad.types.String()],
-                value=None,
+                value="",
             )
             self.pads.append(value)
 

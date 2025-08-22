@@ -28,7 +28,6 @@ class Integer(node.Node):
                 group="set",
                 type_constraints=[pad.types.Integer()],
             )
-            self.pads.append(set_pad)
 
         emit = cast(pad.StatelessSinkPad | None, self.get_pad("emit"))
         if not emit:
@@ -38,7 +37,6 @@ class Integer(node.Node):
                 group="emit",
                 type_constraints=[pad.types.Trigger()],
             )
-            self.pads.append(emit)
 
         value = cast(pad.PropertySourcePad | None, self.get_pad("value"))
         if not value:
@@ -47,9 +45,8 @@ class Integer(node.Node):
                 group="value",
                 owner_node=self,
                 type_constraints=[pad.types.Integer()],
-                value=None,
+                value=0,
             )
-            self.pads.append(value)
 
         changed = cast(pad.StatelessSourcePad | None, self.get_pad("changed"))
         if not changed:
@@ -59,13 +56,37 @@ class Integer(node.Node):
                 owner_node=self,
                 type_constraints=[pad.types.Integer()],
             )
-            self.pads.append(changed)
+
+        increment = cast(pad.StatelessSinkPad | None, self.get_pad("increment"))
+        if not increment:
+            increment = pad.StatelessSinkPad(
+                id="increment",
+                group="increment",
+                owner_node=self,
+                type_constraints=[pad.types.Trigger()],
+            )
+
+        decrement = cast(pad.StatelessSinkPad | None, self.get_pad("decrement"))
+        if not decrement:
+            decrement = pad.StatelessSinkPad(
+                id="decrement",
+                group="decrement",
+                owner_node=self,
+                type_constraints=[pad.types.Trigger()],
+            )
+
+        self.pads = [set_pad, emit, value, changed, increment, decrement]
 
     async def run(self):
         emit = cast(pad.StatelessSinkPad, self.get_pad_required("emit"))
         set_pad = cast(pad.StatelessSinkPad, self.get_pad_required("set"))
         value = cast(pad.PropertySourcePad, self.get_pad_required("value"))
         changed_pad = cast(pad.StatelessSourcePad, self.get_pad_required("changed"))
+        increment = cast(pad.StatelessSinkPad, self.get_pad_required("increment"))
+        decrement = cast(pad.StatelessSinkPad, self.get_pad_required("decrement"))
+
+        if value.get_value() is None:
+            value.set_value(0)
 
         async def emit_task():
             async for item in emit:
@@ -82,7 +103,21 @@ class Integer(node.Node):
                     changed_pad.push_item(item.value, item.ctx)
                 item.ctx.complete()
 
+        async def increment_task():
+            async for item in increment:
+                value.push_item(value.get_value() + 1, item.ctx)
+                changed_pad.push_item(value.get_value(), item.ctx)
+                item.ctx.complete()
+
+        async def decrement_task():
+            async for item in decrement:
+                value.push_item(value.get_value() - 1, item.ctx)
+                changed_pad.push_item(value.get_value(), item.ctx)
+                item.ctx.complete()
+
         await asyncio.gather(
             emit_task(),
             set_task(),
+            increment_task(),
+            decrement_task(),
         )

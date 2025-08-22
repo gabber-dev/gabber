@@ -20,9 +20,7 @@ class ContextMessage(Node):
 
     @classmethod
     def get_metadata(cls) -> NodeMetadata:
-        return NodeMetadata(
-            primary="ai", secondary="llm", tags=["context", "message"]
-        )
+        return NodeMetadata(primary="ai", secondary="llm", tags=["context", "message"])
 
     async def resolve_pads(self):
         role = cast(PropertySinkPad, self.get_pad("role"))
@@ -66,14 +64,13 @@ class ContextMessage(Node):
             )
             self.pads.append(message_source)
 
+        val = content_sink.get_value()
+        if val is None:
+            val = ""
         message_source.set_value(
             runtime_types.ContextMessage(
                 role=runtime_types.ContextMessageRole.SYSTEM,
-                content=[
-                    runtime_types.ContextMessageContentItem_Text(
-                        content=content_sink.get_value()
-                    )
-                ],
+                content=[runtime_types.ContextMessageContentItem_Text(content=val)],
                 tool_calls=[],
             )
         )

@@ -159,7 +159,6 @@ class Deepgram(STT):
                 elif msg_type == "SpeechStarted":
                     pass
                 elif msg_type == "UtteranceEnd":
-                    logging.info("NEIL Deepgram UtteranceEnd: %s", msg)
                     last_word: float = data["last_word_end"]
                     end_ms = last_word * 1000.0
                     commit_transcription()
