@@ -126,7 +126,13 @@ class Deepgram(STT):
                 if msg_type == "Results":
                     is_final = data.get("is_final", False)
                     alternative = data.get("channel", {}).get("alternatives", [{}])[0]
+
+                    prev_transcript = transcript
                     transcript = alternative.get("transcript", "")
+                    if prev_transcript == "" and transcript != "":
+                        self._output_queue.put_nowait(
+                            STTEvent_SpeechStarted(id=trans_id)
+                        )
                     words = alternative.get("words", [])
                     new_word_cnt = len(words) - len(running_words)
                     new_words: list[str] = []
@@ -151,13 +157,10 @@ class Deepgram(STT):
                         commit_transcription()
 
                 elif msg_type == "SpeechStarted":
-                    if start_ms < 0:
-                        start_ms = data.get("timestamp", 0) * 1000
-                        self._output_queue.put_nowait(
-                            STTEvent_SpeechStarted(id=trans_id)
-                        )
+                    pass
                 elif msg_type == "UtteranceEnd":
-                    last_word: float = data["last_word"]
+                    logging.info("NEIL Deepgram UtteranceEnd: %s", msg)
+                    last_word: float = data["last_word_end"]
                     end_ms = last_word * 1000.0
                     commit_transcription()
                 else:
