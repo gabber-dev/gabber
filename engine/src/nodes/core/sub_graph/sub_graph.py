@@ -49,7 +49,7 @@ class SubGraph(node.Node):
                 id="__subgraph_id__",
                 group="subgraph",
                 owner_node=self,
-                default_type_constraints=[pad.types.String()],
+                type_constraints=[pad.types.String()],
                 value=subgraph_id,
             )
             self.pads.append(subgraph_id_pad)
@@ -62,7 +62,7 @@ class SubGraph(node.Node):
                 id="__subgraph_id__",
                 group="subgraph",
                 owner_node=self,
-                default_type_constraints=[pad.types.String()],
+                type_constraints=[pad.types.String()],
                 value="",
             )
             self.pads.append(subgraph_id_pad)

@@ -47,7 +47,7 @@ class LocalLLM(BaseLLM):
                 id="port",
                 group="port",
                 owner_node=self,
-                default_type_constraints=[pad.types.Integer()],
+                type_constraints=[pad.types.Integer()],
                 value=7002,
             )
             self.pads.append(port_pad)

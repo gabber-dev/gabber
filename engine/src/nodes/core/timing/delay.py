@@ -25,9 +25,8 @@ class Delay(node.Node):
                 id="sink",
                 group="sink",
                 owner_node=self,
-                default_type_constraints=None,
+                type_constraints=None,
             )
-            self.pads.append(sink)
 
         source = cast(pad.StatelessSourcePad, self.get_pad("source"))
         if not source:
@@ -35,9 +34,8 @@ class Delay(node.Node):
                 id="source",
                 group="source",
                 owner_node=self,
-                default_type_constraints=None,
+                type_constraints=None,
             )
-            self.pads.append(source)
 
         delay_ms = cast(pad.PropertySinkPad, self.get_pad("delay_ms"))
         if not delay_ms:
@@ -45,16 +43,16 @@ class Delay(node.Node):
                 id="delay_ms",
                 group="delay_ms",
                 owner_node=self,
-                default_type_constraints=[pad.types.Integer(minimum=0)],
+                type_constraints=[pad.types.Integer(minimum=0)],
                 value=1000,
             )
-            self.pads.append(delay_ms)
 
         tcs = pad.types.INTERSECTION(
             sink.get_type_constraints(), source.get_type_constraints()
         )
         sink.set_type_constraints(tcs)
         source.set_type_constraints(tcs)
+        self.pads = [sink, source, delay_ms]
 
     async def run(self):
         sink_pad = cast(pad.StatelessSinkPad, self.get_pad_required("sink"))

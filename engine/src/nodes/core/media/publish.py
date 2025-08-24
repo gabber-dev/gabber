@@ -30,7 +30,7 @@ class Publish(node.Node):
                 id="audio",
                 owner_node=self,
                 group="audio",
-                default_type_constraints=[pad.types.Audio()],
+                type_constraints=[pad.types.Audio()],
             )
 
         audio_enabled = cast(pad.PropertySourcePad, self.get_pad("audio_enabled"))
@@ -39,7 +39,7 @@ class Publish(node.Node):
                 id="audio_enabled",
                 owner_node=self,
                 group="audio_enabled",
-                default_type_constraints=[pad.types.Boolean()],
+                type_constraints=[pad.types.Boolean()],
                 value=False,
             )
 
@@ -49,7 +49,7 @@ class Publish(node.Node):
                 id="video",
                 owner_node=self,
                 group="video",
-                default_type_constraints=[pad.types.Video()],
+                type_constraints=[pad.types.Video()],
             )
 
         video_enabled = cast(pad.PropertySourcePad, self.get_pad("video_enabled"))
@@ -58,7 +58,7 @@ class Publish(node.Node):
                 id="video_enabled",
                 owner_node=self,
                 group="video_enabled",
-                default_type_constraints=[pad.types.Boolean()],
+                type_constraints=[pad.types.Boolean()],
                 value=False,
             )
 

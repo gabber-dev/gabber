@@ -19,7 +19,7 @@ class TypeConstraint(Node):
                 id="type_selector",
                 group="type_selector",
                 owner_node=self,
-                default_type_constraints=[
+                type_constraints=[
                     pad.types.Enum(
                         options=["string", "integer", "float", "boolean", "trigger"]
                     )
@@ -87,7 +87,7 @@ class TypeConstraint(Node):
                     owner_node=self,
                     id=sink.get_id(),
                     group=sink.get_group(),
-                    default_type_constraints=intersection,
+                    type_constraints=intersection,
                     value=value,
                 )
                 prev_pad.disconnect(old_sink)
@@ -96,7 +96,7 @@ class TypeConstraint(Node):
                     owner_node=self,
                     id=source.get_id(),
                     group=source.get_group(),
-                    default_type_constraints=intersection,
+                    type_constraints=intersection,
                     value=value,
                 )
                 if not prev_value:

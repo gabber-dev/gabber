@@ -25,7 +25,7 @@ class Comment(node.Node):
                 id="text",
                 owner_node=self,
                 group="text",
-                default_type_constraints=[pad.types.String()],
+                type_constraints=[pad.types.String()],
                 value="",
             )
             self.pads.append(text)

@@ -53,7 +53,7 @@ class Boolean(node.Node):
                 id="value",
                 group="value",
                 owner_node=self,
-                default_type_constraints=[pad.types.Boolean()],
+                type_constraints=[pad.types.Boolean()],
                 value=True,
             )
 

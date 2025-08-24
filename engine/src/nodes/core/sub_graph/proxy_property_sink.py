@@ -28,7 +28,7 @@ class ProxyPropertySink(node.Node):
                     id="proxy",
                     owner_node=self,
                     group="proxy",
-                    default_type_constraints=None,
+                    type_constraints=None,
                     value=None,
                 )
             )
@@ -41,7 +41,7 @@ class ProxyPropertySink(node.Node):
                     id="pad_id",
                     owner_node=self,
                     group="pad_id",
-                    default_type_constraints=[pad.types.String()],
+                    type_constraints=[pad.types.String()],
                     value=f"proxy_{short_uuid()}",
                 )
             )

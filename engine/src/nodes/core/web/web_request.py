@@ -17,7 +17,7 @@ class WebRequest(Node):
                 id="url",
                 group="url",
                 owner_node=self,
-                default_type_constraints=[pad.types.String()],
+                type_constraints=[pad.types.String()],
                 value="https://example-url.test",
             )
             self.pads.append(url)
@@ -28,7 +28,7 @@ class WebRequest(Node):
                 id="method",
                 group="method",
                 owner_node=self,
-                default_type_constraints=[
+                type_constraints=[
                     pad.types.Enum(options=["GET", "POST", "PUT", "PATCH", "DELETE"])
                 ],
                 value="GET",
@@ -41,7 +41,7 @@ class WebRequest(Node):
                 id="max_retries",
                 group="max_retries",
                 owner_node=self,
-                default_type_constraints=[pad.types.Integer()],
+                type_constraints=[pad.types.Integer()],
                 value=3,
             )
             self.pads.append(max_retries)
@@ -54,7 +54,7 @@ class WebRequest(Node):
                 id="authorization_type",
                 group="authorization_type",
                 owner_node=self,
-                default_type_constraints=[
+                type_constraints=[
                     pad.types.Enum(options=["None", "Bearer Token", "API Key"])
                 ],
                 value="None",
@@ -67,7 +67,7 @@ class WebRequest(Node):
                 id="response_type",
                 group="response_type",
                 owner_node=self,
-                default_type_constraints=[
+                type_constraints=[
                     pad.types.Enum(
                         options=[
                             "application/json",
@@ -85,7 +85,7 @@ class WebRequest(Node):
                 id="bearer_token",
                 group="bearer_token",
                 owner_node=self,
-                default_type_constraints=[pad.types.Secret(options=self.secrets)],
+                type_constraints=[pad.types.Secret(options=self.secrets)],
                 value="",
             )
             self.pads.append(bearer_token)
@@ -96,7 +96,7 @@ class WebRequest(Node):
                 id="api_header_key",
                 group="api_header_key",
                 owner_node=self,
-                default_type_constraints=[pad.types.String()],
+                type_constraints=[pad.types.String()],
                 value="",
             )
             self.pads.append(api_header_key)
@@ -107,7 +107,7 @@ class WebRequest(Node):
                 id="api_value",
                 group="api_value",
                 owner_node=self,
-                default_type_constraints=[pad.types.Secret(options=self.secrets)],
+                type_constraints=[pad.types.Secret(options=self.secrets)],
                 value="",
             )
             self.pads.append(api_value)

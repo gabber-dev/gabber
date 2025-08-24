@@ -50,7 +50,7 @@ class KittenTTS(node.Node):
                 id="voice_id",
                 group="voice_id",
                 owner_node=self,
-                default_type_constraints=[pad.types.Enum(options=VOICES)],
+                type_constraints=[pad.types.Enum(options=VOICES)],
                 value="expr-voice-2-m",
             )
             self.pads.append(voice_id)

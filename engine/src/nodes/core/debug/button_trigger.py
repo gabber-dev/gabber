@@ -17,12 +17,13 @@ class ButtonTrigger(node.Node):
         )
 
     async def resolve_pads(self):
-        if not self.get_pad("trigger"):
-            self.pads.append(
-                pad.StatelessSourcePad(
-                    id="trigger",
-                    owner_node=self,
-                    group="trigger",
-                    type_constraints=[pad.types.Trigger()],
-                )
+        trigger = self.get_pad("trigger")
+        if not trigger:
+            trigger = pad.StatelessSourcePad(
+                id="trigger",
+                group="trigger",
+                owner_node=self,
+                type_constraints=[pad.types.Trigger()],
             )
+
+        self.pads = [trigger]

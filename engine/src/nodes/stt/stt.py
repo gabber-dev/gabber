@@ -30,7 +30,7 @@ class STT(node.Node):
                 id="service",
                 group="service",
                 owner_node=self,
-                default_type_constraints=[
+                type_constraints=[
                     pad.types.Enum(options=["assembly_ai", "local_kyutai", "deepgram"])
                 ],
                 value="assembly_ai",
@@ -45,7 +45,6 @@ class STT(node.Node):
                 owner_node=self,
                 type_constraints=[pad.types.Audio()],
             )
-            self.pads.append(audio_sink)
 
         speech_clip_source = cast(pad.StatelessSourcePad, self.get_pad("speech_clip"))
         if speech_clip_source is None:
@@ -55,7 +54,6 @@ class STT(node.Node):
                 owner_node=self,
                 type_constraints=[pad.types.AudioClip()],
             )
-            self.pads.append(speech_clip_source)
 
         speech_started_source = cast(
             pad.StatelessSourcePad, self.get_pad("speech_started")
@@ -67,7 +65,6 @@ class STT(node.Node):
                 owner_node=self,
                 type_constraints=[pad.types.Trigger()],
             )
-            self.pads.append(speech_started_source)
 
         speech_ended_source = cast(pad.StatelessSourcePad, self.get_pad("speech_ended"))
         if speech_ended_source is None:
@@ -77,7 +74,6 @@ class STT(node.Node):
                 owner_node=self,
                 type_constraints=[pad.types.Trigger()],
             )
-            self.pads.append(speech_ended_source)
 
         final_transcription_source = cast(
             pad.StatelessSourcePad, self.get_pad("final_transcription")
@@ -89,7 +85,6 @@ class STT(node.Node):
                 owner_node=self,
                 type_constraints=[pad.types.String()],
             )
-            self.pads.append(final_transcription_source)
 
         api_key = cast(pad.PropertySinkPad, self.get_pad("api_key"))
         if api_key is None:
@@ -97,9 +92,18 @@ class STT(node.Node):
                 id="api_key",
                 group="api_key",
                 owner_node=self,
-                default_type_constraints=[pad.types.Secret(options=self.secrets)],
+                type_constraints=[pad.types.Secret(options=self.secrets)],
             )
-            self.pads.append(api_key)
+
+        self.pads = [
+            audio_sink,
+            service,
+            api_key,
+            speech_clip_source,
+            speech_started_source,
+            speech_ended_source,
+            final_transcription_source,
+        ]
 
     async def run(self):
         audio_sink = cast(pad.StatelessSinkPad, self.get_pad_required("audio"))

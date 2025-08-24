@@ -66,7 +66,7 @@ class Compare(Node):
                 id="num_conditions",
                 group="num_conditions",
                 owner_node=self,
-                default_type_constraints=[pad.types.Integer()],
+                type_constraints=[pad.types.Integer()],
                 value=1,
             )
 
@@ -76,7 +76,7 @@ class Compare(Node):
                 id="mode",
                 group="mode",
                 owner_node=self,
-                default_type_constraints=[pad.types.Enum(options=["AND", "OR"])],
+                type_constraints=[pad.types.Enum(options=["AND", "OR"])],
                 value="AND",
             )
 
@@ -86,7 +86,7 @@ class Compare(Node):
                 id="value",
                 group="value",
                 owner_node=self,
-                default_type_constraints=[pad.types.Boolean()],
+                type_constraints=[pad.types.Boolean()],
                 value=False,
             )
 
@@ -163,19 +163,19 @@ class Compare(Node):
                     id=f"condition_{i}_A",
                     group="condition_A",
                     owner_node=self,
-                    default_type_constraints=None,
+                    type_constraints=None,
                 )
                 pad_b = pad.PropertySinkPad(
                     id=f"condition_{i}_B",
                     group="condition_B",
                     owner_node=self,
-                    default_type_constraints=None,
+                    type_constraints=None,
                 )
                 operator_pad = pad.PropertySinkPad(
                     id=f"condition_{i}_operator",
                     group="condition_operator",
                     owner_node=self,
-                    default_type_constraints=[pad.types.Enum(options=[])],
+                    type_constraints=[pad.types.Enum(options=[])],
                 )
                 self.pads.extend([pad_a, pad_b, operator_pad])
         elif current_count > num_conditions:

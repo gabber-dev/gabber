@@ -140,7 +140,7 @@ class BaseLLM(node.Node, ABC):
                 id="context",
                 group="context",
                 owner_node=self,
-                default_type_constraints=[
+                type_constraints=[
                     pad.types.List(item_type_constraints=[pad.types.ContextMessage()])
                 ],
                 value=[
@@ -164,7 +164,7 @@ class BaseLLM(node.Node, ABC):
                     id="tool_group",
                     group="tool_group",
                     owner_node=self,
-                    default_type_constraints=[
+                    type_constraints=[
                         pad.types.NodeReference(node_types=["ToolGroup"])
                     ],
                     value=None,

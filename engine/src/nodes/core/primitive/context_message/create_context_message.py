@@ -1,7 +1,6 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-import logging
 from typing import cast
 
 from core import pad, runtime_types
@@ -32,10 +31,9 @@ class CreateContextMessage(Node):
                 id="role",
                 group="role",
                 owner_node=self,
-                default_type_constraints=[types.ContextMessageRole()],
+                type_constraints=[types.ContextMessageRole()],
                 value=runtime_types.ContextMessageRole.SYSTEM,
             )
-            self.pads.append(role)
 
         content_sink = cast(StatelessSinkPad, self.get_pad("content"))
         if not content_sink:
@@ -45,7 +43,6 @@ class CreateContextMessage(Node):
                 owner_node=self,
                 type_constraints=sink_default,
             )
-            self.pads.append(content_sink)
 
         message_source = cast(StatelessSourcePad, self.get_pad("context_message"))
         if not message_source:
@@ -55,15 +52,8 @@ class CreateContextMessage(Node):
                 owner_node=self,
                 type_constraints=[types.ContextMessage()],
             )
-            self.pads.append(message_source)
 
-        prev_pad = content_sink.get_previous_pad()
-        if prev_pad:
-            sink_default = pad.types.INTERSECTION(
-                prev_pad.get_type_constraints(), sink_default
-            )
-
-        content_sink.set_type_constraints(sink_default)
+        self.pads = [role, content_sink, message_source]
 
     async def run(self):
         content_sink = cast(StatelessSinkPad, self.get_pad_required("content"))

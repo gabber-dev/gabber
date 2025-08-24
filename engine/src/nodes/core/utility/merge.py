@@ -41,13 +41,13 @@ class Merge(Node):
                 break
 
         if needs_new:
-            self.first_sink_pad = pad.StatelessSinkPad(
+            new_sink_pad = pad.StatelessSinkPad(
                 id=f"sink_{len(sink_pads)}",
                 owner_node=self,
                 type_constraints=None,
                 group="sink",
             )
-            self.pads.append(self.first_sink_pad)
+            self.pads.append(new_sink_pad)
 
         sink_pads = cast(
             list[pad.SinkPad], [p for p in self.pads if p.get_group() == "sink"]
@@ -56,22 +56,10 @@ class Merge(Node):
         pads: list[pad.Pad] = [cast(pad.Pad, source_pad)] + sink_pads
         self.pads = pads
         tcs: list[pad.types.BasePadType] | None = None
+
         for p in self.pads:
-            if isinstance(p, pad.SinkPad) and p.get_previous_pad():
-                prev_pad = p.get_previous_pad()
-                if prev_pad:
-                    tcs = (
-                        pad.types.INTERSECTION(tcs, prev_pad.get_type_constraints())
-                        if tcs
-                        else prev_pad.get_type_constraints()
-                    )
-            elif isinstance(p, pad.SourcePad):
-                for np in p.get_next_pads():
-                    tcs = (
-                        pad.types.INTERSECTION(tcs, np.get_type_constraints())
-                        if tcs
-                        else np.get_type_constraints()
-                    )
+            tcs = pad.types.INTERSECTION(tcs, p.get_type_constraints())
+
         for p in self.pads:
             p.set_type_constraints(tcs)
 

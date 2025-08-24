@@ -23,21 +23,16 @@ class TTS(node.Node):
         )
 
     async def resolve_pads(self):
-        # Migrate from old version
-        PADS_TO_REMOVE = ["text_stream", "complete_text"]
-        self.pads = [p for p in self.pads if p.get_id() not in PADS_TO_REMOVE]
-
         service = cast(pad.PropertySinkPad, self.get_pad("service"))
         if not service:
             service = pad.PropertySinkPad(
                 id="service",
                 group="service",
                 owner_node=self,
-                default_type_constraints=[
+                type_constraints=[
                     pad.types.Enum(options=["gabber", "cartesia", "elevenlabs"])
                 ],
             )
-            self.pads.append(service)
 
         api_key = cast(pad.PropertySinkPad, self.get_pad("api_key"))
         if not api_key:
@@ -45,9 +40,8 @@ class TTS(node.Node):
                 id="api_key",
                 group="api_key",
                 owner_node=self,
-                default_type_constraints=[pad.types.Secret(options=self.secrets)],
+                type_constraints=[pad.types.Secret(options=self.secrets)],
             )
-            self.pads.append(api_key)
 
         voice_id = cast(pad.PropertySinkPad, self.get_pad("voice_id"))
         if not voice_id:
@@ -55,9 +49,8 @@ class TTS(node.Node):
                 id="voice_id",
                 group="voice_id",
                 owner_node=self,
-                default_type_constraints=[pad.types.String()],
+                type_constraints=[pad.types.String()],
             )
-            self.pads.append(voice_id)
 
         text_sink = cast(pad.StatelessSinkPad, self.get_pad("text"))
         if text_sink is None:
@@ -67,15 +60,6 @@ class TTS(node.Node):
                 owner_node=self,
                 type_constraints=[pad.types.TextStream()],
             )
-            self.pads.append(text_sink)
-
-        prev_pad = text_sink.get_previous_pad()
-        if prev_pad:
-            tcs = prev_pad.get_type_constraints()
-            tcs = pad.types.INTERSECTION(tcs, text_sink.get_type_constraints())
-            text_sink.set_type_constraints(tcs)
-        else:
-            text_sink.set_type_constraints([pad.types.TextStream(), pad.types.String()])
 
         audio_source = cast(pad.StatelessSourcePad, self.get_pad("audio"))
         if audio_source is None:
@@ -85,7 +69,6 @@ class TTS(node.Node):
                 owner_node=self,
                 type_constraints=[pad.types.Audio()],
             )
-            self.pads.append(audio_source)
 
         cancel_trigger = cast(pad.StatelessSinkPad, self.get_pad("cancel_trigger"))
         if cancel_trigger is None:
@@ -95,7 +78,6 @@ class TTS(node.Node):
                 owner_node=self,
                 type_constraints=[pad.types.Trigger()],
             )
-            self.pads.append(cancel_trigger)
 
         final_transcription_source = cast(
             pad.StatelessSourcePad, self.get_pad("complete_transcription")
@@ -107,7 +89,16 @@ class TTS(node.Node):
                 owner_node=self,
                 type_constraints=[pad.types.String()],
             )
-            self.pads.append(final_transcription_source)
+
+        self.pads = [
+            audio_source,
+            service,
+            api_key,
+            voice_id,
+            text_sink,
+            cancel_trigger,
+            final_transcription_source,
+        ]
 
     async def run(self):
         api_key_pad = cast(pad.PropertySinkPad, self.get_pad_required("api_key"))

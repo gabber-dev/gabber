@@ -23,7 +23,6 @@ class Pad(Protocol):
     def get_editor_type(self) -> str: ...
     def set_type_constraints(self, constraints: list[BasePadType] | None) -> None: ...
     def get_type_constraints(self) -> list[BasePadType] | None: ...
-    def get_default_type_constraints(self) -> list[BasePadType] | None: ...
     def get_owner_node(self) -> "Node": ...
 
     def _add_update_handler(self, handler: Callable[["Pad", Any], None]):
@@ -114,6 +113,13 @@ class SourcePad(Pad, Protocol):
             raise ValueError(
                 f"Cannot connect to this type of SinkPad: {self.get_owner_node().id}.{self.get_id()} -> {sink_pad.get_owner_node().id}.{sink_pad.get_id()}"
             )
+
+        sink_tcs = sink_pad.get_type_constraints()
+        src_tcs = self.get_type_constraints()
+        intersect_tcs = INTERSECTION(src_tcs, sink_tcs)
+        self.set_type_constraints(intersect_tcs)
+        sink_pad.set_type_constraints(intersect_tcs)
+
         next_pads = self.get_next_pads()
         next_pads.append(sink_pad)
         self.set_next_pads(next_pads)

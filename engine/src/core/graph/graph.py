@@ -215,6 +215,12 @@ class Graph:
             raise ValueError("Target pad is not a sink pad type.")
 
         source_pad.disconnect(target_pad)
+
+        # remove pads from nodes
+        source_node.pads = []
+        target_node.pads = []
+
+        # re-initialize pads
         await self._propagate_update([source_node, target_node])
 
     async def _handle_update_pad(self, edit: UpdatePadEdit):

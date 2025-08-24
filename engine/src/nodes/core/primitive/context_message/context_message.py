@@ -29,10 +29,9 @@ class ContextMessage(Node):
                 id="role",
                 group="role",
                 owner_node=self,
-                default_type_constraints=[types.ContextMessageRole()],
+                type_constraints=[types.ContextMessageRole()],
                 value=runtime_types.ContextMessageRole.SYSTEM,
             )
-            self.pads.append(role)
 
         content_sink = cast(PropertySinkPad, self.get_pad("content"))
         if not content_sink:
@@ -40,10 +39,9 @@ class ContextMessage(Node):
                 id="content",
                 group="content",
                 owner_node=self,
-                default_type_constraints=[types.String()],
+                type_constraints=[types.String()],
                 value="You are a helpful assistant.",
             )
-            self.pads.append(content_sink)
 
         message_source = cast(PropertySourcePad, self.get_pad("context_message"))
         if not message_source:
@@ -51,7 +49,7 @@ class ContextMessage(Node):
                 id="context_message",
                 group="context_message",
                 owner_node=self,
-                default_type_constraints=[types.ContextMessage()],
+                type_constraints=[types.ContextMessage()],
                 value=runtime_types.ContextMessage(
                     role=runtime_types.ContextMessageRole.SYSTEM,
                     content=[
@@ -62,7 +60,6 @@ class ContextMessage(Node):
                     tool_calls=[],
                 ),
             )
-            self.pads.append(message_source)
 
         val = content_sink.get_value()
         if val is None:
@@ -74,6 +71,7 @@ class ContextMessage(Node):
                 tool_calls=[],
             )
         )
+        self.pads = [role, content_sink, message_source]
 
     async def run(self):
         content_sink = cast(PropertySinkPad, self.get_pad_required("content"))

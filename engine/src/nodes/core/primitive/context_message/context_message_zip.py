@@ -26,7 +26,7 @@ class ContextMessageZip(Node):
                 id="role",
                 group="role",
                 owner_node=self,
-                default_type_constraints=[types.ContextMessageRole()],
+                type_constraints=[types.ContextMessageRole()],
                 value=runtime_types.ContextMessageRole.SYSTEM,
             )
             self.pads.append(role)
@@ -74,16 +74,6 @@ class ContextMessageZip(Node):
                 if cp.get_previous_pad() is None:
                     self.pads.remove(cp)
                 break
-
-        for content_pad in content_pads:
-            prev_pad = content_pad.get_previous_pad()
-            if prev_pad:
-                tcs = pad.types.INTERSECTION(
-                    prev_pad.get_type_constraints(), sink_default
-                )
-                content_pad.set_type_constraints(tcs)
-            else:
-                content_pad.set_type_constraints(sink_default)
 
     async def run(self):
         role_pad = cast(PropertySinkPad, self.get_pad_required("role"))
