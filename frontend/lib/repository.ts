@@ -21,14 +21,7 @@ import {
 import axios from "axios";
 
 function getBaseUrl() {
-  if (typeof window !== "undefined") {
-    return "http://localhost:8001";
-  }
-  const host = process.env.REPOSITORY_HOST;
-  if (host) {
-    return `http://${host}`;
-  }
-  return "http://localhost:8001";
+  return "http://192.168.1.29:8001";
 }
 
 export async function getApp(appId: string) {
