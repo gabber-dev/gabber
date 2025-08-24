@@ -51,7 +51,7 @@ class FPS(Node):
                 PropertySinkPad(
                     id="fps",
                     owner_node=self,
-                    type_constraints=[types.Float(minimum=0.0, maximum=30.0)],
+                    default_type_constraints=[types.Float(minimum=0.0, maximum=30.0)],
                     group="fps",
                     value=0.5,
                 )

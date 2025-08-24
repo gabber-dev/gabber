@@ -103,7 +103,7 @@ class SileroVAD(node.Node):
                 id="vad_threshold",
                 group="vad_threshold",
                 owner_node=self,
-                type_constraints=[pad.types.Float(minimum=0.0, maximum=1.0)],
+                default_type_constraints=[pad.types.Float(minimum=0.0, maximum=1.0)],
                 value=0.5,
             )
             self.pads.append(vad_threshold)
@@ -116,7 +116,7 @@ class SileroVAD(node.Node):
                 id="silence_duration_ms",
                 group="silence_duration_ms",
                 owner_node=self,
-                type_constraints=[pad.types.Float(minimum=0.0, maximum=3000.0)],
+                default_type_constraints=[pad.types.Float(minimum=0.0, maximum=3000.0)],
                 value=500.0,
             )
             self.pads.append(silence_duration_ms)
@@ -129,7 +129,7 @@ class SileroVAD(node.Node):
                 id="speech_duration_ms",
                 group="speech_duration_ms",
                 owner_node=self,
-                type_constraints=[pad.types.Float(minimum=0.0, maximum=3000.0)],
+                default_type_constraints=[pad.types.Float(minimum=0.0, maximum=3000.0)],
                 value=400.0,
             )
             self.pads.append(speech_duration_ms)
@@ -142,7 +142,7 @@ class SileroVAD(node.Node):
                 id="pre_speech_duration_ms",
                 group="pre_speech_duration_ms",
                 owner_node=self,
-                type_constraints=[pad.types.Float(minimum=0.0, maximum=1000.0)],
+                default_type_constraints=[pad.types.Float(minimum=0.0, maximum=1000.0)],
                 value=100.0,
             )
             self.pads.append(pre_speech_duration_ms)

@@ -46,7 +46,9 @@ class ToolGroup(node.Node):
                 id="self",
                 group="self",
                 owner_node=self,
-                type_constraints=[pad.types.NodeReference(node_types=["ToolGroup"])],
+                default_type_constraints=[
+                    pad.types.NodeReference(node_types=["ToolGroup"])
+                ],
                 value=self,
             )
             self.pads.append(self_pad)
@@ -68,7 +70,7 @@ class ToolGroup(node.Node):
             id=f"tool_{next_index}",
             group="tool",
             owner_node=self,
-            type_constraints=[pad.types.NodeReference(node_types=["Tool"])],
+            default_type_constraints=[pad.types.NodeReference(node_types=["Tool"])],
             value=None,
         )
 

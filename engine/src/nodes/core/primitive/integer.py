@@ -44,7 +44,7 @@ class Integer(node.Node):
                 id="value",
                 group="value",
                 owner_node=self,
-                type_constraints=[pad.types.Integer()],
+                default_type_constraints=[pad.types.Integer()],
                 value=0,
             )
 

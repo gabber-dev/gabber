@@ -19,12 +19,13 @@ class StatelessSourcePad(SourcePad):
         id: str,
         group: str,
         owner_node: "Node",
-        type_constraints: list[types.BasePadType] | None = None,
+        default_type_constraints: list[types.BasePadType] | None = None,
     ):
         self._id = id
         self._group = group
         self._owner_node = owner_node
-        self._type_constraints = type_constraints
+        self._default_type_constraints = default_type_constraints
+        self._type_constraints = default_type_constraints
         self._next_pads: list[SinkPad] = []
 
     def get_id(self) -> str:
@@ -41,6 +42,9 @@ class StatelessSourcePad(SourcePad):
 
     def get_type_constraints(self):
         return self._type_constraints
+
+    def get_default_type_constraints(self) -> list[types.BasePadType] | None:
+        return self._default_type_constraints
 
     def set_type_constraints(self, constraints: list[types.BasePadType] | None) -> None:
         self._type_constraints = constraints

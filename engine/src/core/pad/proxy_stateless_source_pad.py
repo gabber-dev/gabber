@@ -38,6 +38,9 @@ class ProxyStatelessSourcePad(SourcePad, ProxyPad):
     def set_type_constraints(self, constraints: list[types.BasePadType] | None) -> None:
         self._other.set_type_constraints(constraints)
 
+    def get_default_type_constraints(self) -> list[types.BasePadType] | None:
+        return self._other.get_default_type_constraints()
+
     def get_editor_type(self) -> str:
         return "StatelessSourcePad"
 

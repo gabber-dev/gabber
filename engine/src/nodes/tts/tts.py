@@ -33,7 +33,7 @@ class TTS(node.Node):
                 id="service",
                 group="service",
                 owner_node=self,
-                type_constraints=[
+                default_type_constraints=[
                     pad.types.Enum(options=["gabber", "cartesia", "elevenlabs"])
                 ],
             )
@@ -45,7 +45,7 @@ class TTS(node.Node):
                 id="api_key",
                 group="api_key",
                 owner_node=self,
-                type_constraints=[pad.types.Secret(options=self.secrets)],
+                default_type_constraints=[pad.types.Secret(options=self.secrets)],
             )
             self.pads.append(api_key)
 
@@ -55,7 +55,7 @@ class TTS(node.Node):
                 id="voice_id",
                 group="voice_id",
                 owner_node=self,
-                type_constraints=[pad.types.String()],
+                default_type_constraints=[pad.types.String()],
             )
             self.pads.append(voice_id)
 

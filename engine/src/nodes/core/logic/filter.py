@@ -28,7 +28,7 @@ class Filter(Node):
                 id="open",
                 group="open",
                 owner_node=self,
-                type_constraints=[pad.types.Boolean()],
+                default_type_constraints=[pad.types.Boolean()],
             )
 
         source = cast(pad.StatelessSourcePad, self.get_pad("source"))

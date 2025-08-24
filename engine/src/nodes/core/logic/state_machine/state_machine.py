@@ -84,7 +84,7 @@ class StateMachine(node.Node):
             configuration = pad.PropertySinkPad(
                 id="configuration",
                 owner_node=self,
-                type_constraints=[pad.types.Object()],
+                default_type_constraints=[pad.types.Object()],
                 group="configuration",
                 value={"states": [], "transitions": []},
             )
@@ -95,7 +95,7 @@ class StateMachine(node.Node):
             num_parameters = pad.PropertySinkPad(
                 id="num_parameters",
                 owner_node=self,
-                type_constraints=[pad.types.Integer()],
+                default_type_constraints=[pad.types.Integer()],
                 group="num_parameters",
                 value=1,
             )
@@ -109,7 +109,7 @@ class StateMachine(node.Node):
             current_state = pad.PropertySourcePad(
                 id="current_state",
                 owner_node=self,
-                type_constraints=[pad.types.Enum(options=[])],
+                default_type_constraints=[pad.types.Enum(options=[])],
                 group="current_state",
                 value="",
             )
@@ -120,7 +120,7 @@ class StateMachine(node.Node):
             previous_state = pad.PropertySourcePad(
                 id="previous_state",
                 owner_node=self,
-                type_constraints=[pad.types.Enum(options=[])],
+                default_type_constraints=[pad.types.Enum(options=[])],
                 group="previous_state",
                 value="",
             )
@@ -453,7 +453,7 @@ class StateMachine(node.Node):
                 name_pad = pad.PropertySinkPad(
                     id=f"parameter_name_{i}",
                     owner_node=self,
-                    type_constraints=[pad.types.String()],
+                    default_type_constraints=[pad.types.String()],
                     group="parameters",
                     value=None,
                 )
@@ -466,7 +466,7 @@ class StateMachine(node.Node):
                 value_pad = pad.PropertySinkPad(
                     id=f"parameter_value_{i}",
                     owner_node=self,
-                    type_constraints=ALL_PARAMETER_TYPES,
+                    default_type_constraints=ALL_PARAMETER_TYPES,
                     group="parameter_values",
                     value=None,
                 )
@@ -490,14 +490,14 @@ class StateMachine(node.Node):
             pad.PropertySinkPad(
                 id=f"parameter_name_{idx}",
                 owner_node=self,
-                type_constraints=[pad.types.String()],
+                default_type_constraints=[pad.types.String()],
                 group="parameters",
                 value=None,
             ),
             pad.PropertySinkPad(
                 id=f"parameter_value_{idx}",
                 owner_node=self,
-                type_constraints=ALL_PARAMETER_TYPES,
+                default_type_constraints=ALL_PARAMETER_TYPES,
                 group="parameter_values",
                 value=None,
             ),
@@ -571,7 +571,7 @@ class StateMachine(node.Node):
                         new_pad = pad.PropertySinkPad(
                             id=p.get_id(),
                             owner_node=self,
-                            type_constraints=tcs,
+                            default_type_constraints=tcs,
                             group=p.get_group(),
                         )
                         if prev_pad:

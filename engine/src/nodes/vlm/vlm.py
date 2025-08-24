@@ -27,7 +27,7 @@ class VLM(node.Node):
                 id="allow_nsfw",
                 group="allow_nsfw",
                 owner_node=self,
-                type_constraints=[pad.types.Boolean()],
+                default_type_constraints=[pad.types.Boolean()],
                 value=False,
             )
             self.pads.append(allow_nsfw)
@@ -38,7 +38,7 @@ class VLM(node.Node):
                 id="allow_race_gender",
                 group="allow_race_gender",
                 owner_node=self,
-                type_constraints=[pad.types.Boolean()],
+                default_type_constraints=[pad.types.Boolean()],
                 value=False,
             )
             self.pads.append(allow_race_gender)
@@ -49,7 +49,7 @@ class VLM(node.Node):
                 id="mention_by_name",
                 group="mention_by_name",
                 owner_node=self,
-                type_constraints=[pad.types.String()],
+                default_type_constraints=[pad.types.String()],
                 value="",
             )
             self.pads.append(mention_by_name)

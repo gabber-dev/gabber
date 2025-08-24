@@ -21,6 +21,7 @@ from core.editor.models import (
     RemoveNodeEdit,
     UpdateNodeEdit,
     UpdatePadEdit,
+    NodeEditorRepresentation,
 )
 from core.node import Node
 from core.secret import PublicSecret, SecretProvider
@@ -259,7 +260,6 @@ class Graph:
 
     async def load_from_snapshot(self, snapshot: messages.GraphEditorRepresentation):
         self.nodes = []
-        node_reference_pads: list[pad.PropertyPad] = []
 
         for node_data in snapshot.nodes:
             node: Node
@@ -269,6 +269,7 @@ class Graph:
                     secret_provider=self.secret_provider,
                     secrets=self.secrets,
                 )
+                await node.resolve_pads()
             elif node_data.type == "SubGraph":
                 subgraph_id_pad = next(
                     (p for p in node_data.pads if p.id == "__subgraph_id__"), None
@@ -305,6 +306,7 @@ class Graph:
                     secrets=self.secrets,
                     graph=subgraph,
                 )
+                await node.resolve_pads()
             else:
                 logging.error(f"Node type {node_data.type} not found in library.")
                 continue
@@ -337,46 +339,22 @@ class Graph:
                             # Keep the node reference id, it will be resolved later in this function
                             deserialized_value = pad_data.value
 
-                if pad_data.type == "PropertySinkPad":
-                    pad_instance = pad.PropertySinkPad(
-                        id=pad_data.id,
-                        owner_node=node,
-                        group=pad_data.group,
-                        type_constraints=casted_allowed_types,
-                        value=deserialized_value,
-                    )
-                    node.pads.append(pad_instance)
-                    if casted_allowed_types and len(casted_allowed_types) == 1:
-                        if isinstance(casted_allowed_types[0], pad.types.NodeReference):
-                            node_reference_pads.append(pad_instance)
-                elif pad_data.type == "PropertySourcePad":
-                    pad_instance = pad.PropertySourcePad(
-                        id=pad_data.id,
-                        owner_node=node,
-                        group=pad_data.group,
-                        type_constraints=casted_allowed_types,
-                        value=deserialized_value,
-                    )
-                    node.pads.append(pad_instance)
-                    if casted_allowed_types and len(casted_allowed_types) == 1:
-                        if isinstance(casted_allowed_types[0], pad.types.NodeReference):
-                            node_reference_pads.append(pad_instance)
-                elif pad_data.type == "StatelessSinkPad":
-                    pad_instance = pad.StatelessSinkPad(
-                        id=pad_data.id,
-                        owner_node=node,
-                        group=pad_data.group,
-                        type_constraints=casted_allowed_types,
-                    )
-                    node.pads.append(pad_instance)
-                elif pad_data.type == "StatelessSourcePad":
-                    pad_instance = pad.StatelessSourcePad(
-                        id=pad_data.id,
-                        owner_node=node,
-                        group=pad_data.group,
-                        type_constraints=casted_allowed_types,
-                    )
-                    node.pads.append(pad_instance)
+                if "Property" in pad_data.type:
+                    pad_instance = node.get_pad(pad_data.id)
+                    if not pad_instance:
+                        logging.warning(
+                            f"PropertySinkPad {pad_data.id} not found in node {node.id}, creating new."
+                        )
+                        continue
+
+                    if not isinstance(pad_instance, pad.PropertyPad):
+                        logging.warning(
+                            f"Pad {pad_data.id} in node {node.id} is not a PropertySinkPad, skipping."
+                        )
+                        continue
+
+                    pad_instance.set_value(deserialized_value)
+
             self.nodes.append(node)
 
         node_lookup: dict[str, Node] = {n.id: n for n in self.nodes}
@@ -386,66 +364,71 @@ class Graph:
         # the type logic (?).
         # A resonable rule might be that source pads types drive the types of sink pads but never the other way around.
         # This would allow us to build a dependency graph of nodes so that we can update them in order.
+
+        editor_node_lookup: dict[str, NodeEditorRepresentation] = {
+            n.id: n for n in snapshot.nodes
+        }
+        node_queue: list[NodeEditorRepresentation] = []
         for node_data in snapshot.nodes:
+            is_root = True
             for pad_data in node_data.pads:
                 prev_pad = pad_data.previous_pad
-                if not prev_pad:
-                    continue
+                if prev_pad:
+                    is_root = False
+                    break
+            if is_root:
+                node_queue.append(node_data)
 
-                source_node = node_lookup.get(prev_pad.node)
-                target_node = node_lookup.get(node_data.id)
-                if not source_node or not target_node:
-                    logging.error(
-                        f"Node not found for pad connection: {prev_pad.node} or {node_data.id}"
-                    )
-                    continue
-                target_pad = target_node.get_pad(pad_data.id)
-                source_pad = source_node.get_pad(prev_pad.pad)
+        if len(node_queue) == 0 and len(snapshot.nodes) > 0:
+            raise ValueError("No root nodes found in graph snapshot.")
 
-                if not target_pad or not source_pad:
+        seen: set[str] = set()
+        while len(node_queue) > 0:
+            node_data = node_queue.pop(0)
+            seen.add(node_data.id)
+
+            source_node = node_lookup.get(node_data.id)
+            if not source_node:
+                logging.error(f"Node {node_data.id} not found in node lookup.")
+                continue
+
+            for pad_data in node_data.pads:
+                source_pad = source_node.get_pad(pad_data.id)
+                if not source_pad:
                     logging.error(
-                        f"Pad not found for connection: {prev_pad.pad} in {source_node.id} or {pad_data.id} in {target_node.id}"
+                        f"Pad {pad_data.id} not found in node {node_data.id}."
                     )
                     continue
 
                 if not isinstance(source_pad, pad.SourcePad):
-                    logging.error(
-                        f"Source pad {prev_pad.pad} in node {prev_pad.node} is not a SourcePad."
-                    )
                     continue
 
-                if not isinstance(target_pad, pad.SinkPad):
-                    logging.error(
-                        f"Target pad {pad_data.id} in node {node_data.id} is not a SinkPad."
-                    )
-                    continue
-                source_pad.connect(target_pad)
+                next_pads = pad_data.next_pads
+                for next_pad in next_pads:
+                    target_node = node_lookup.get(next_pad.node)
+                    if not target_node:
+                        logging.error(
+                            f"Target node {next_pad.node} not found in node lookup."
+                        )
+                        continue
 
-            node_obj = node_lookup.get(node_data.id)
-            if not node_obj:
-                logging.error(f"Node {node_data.id} not found in node lookup.")
-                continue
-            await self._propagate_update([node_obj])
+                    target_pad = target_node.get_pad(next_pad.pad)
+                    if not target_pad:
+                        logging.error(
+                            f"Target pad {next_pad.pad} not found in node {next_pad.node}."
+                        )
+                        continue
 
-        for node_data in snapshot.nodes:
-            pass
+                    if not isinstance(target_pad, pad.SinkPad):
+                        logging.error(
+                            f"Target pad {next_pad.pad} in node {next_pad.node} is not a SinkPad."
+                        )
+                        continue
 
-        # Resolve node reference pads
-        for p in node_reference_pads:
-            self._resolve_node_reference_property(p, p.get_value(), node_lookup)
-            await self._propagate_update([p.get_owner_node()])
+                    source_pad.connect(target_pad)
+                    node_queue.append(editor_node_lookup[next_pad.node])
 
-    def _resolve_node_reference_property(
-        self, p: pad.PropertyPad, v: str, nodes: dict[str, Node]
-    ):
-        if not isinstance(p, pad.SourcePad):
-            return
-
-        # Proxy pads would already be handled by the subgraph
-        if not isinstance(p, pad.ProxyPad):
-            node = next((n for n in nodes.values() if n.id == v), None)
-            p.set_value(node)
-            return
+            await source_node.resolve_pads()
 
     async def run(self, room: rtc.Room):
         # Only top level graph gets events

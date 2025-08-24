@@ -91,7 +91,7 @@ class SlidingWindow(Node):
                 PropertySinkPad(
                     id="window_size_s",
                     owner_node=self,
-                    type_constraints=[types.Float()],
+                    default_type_constraints=[types.Float()],
                     group="window_size_s",
                     value=5.0,
                 )

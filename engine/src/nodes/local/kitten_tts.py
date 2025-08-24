@@ -50,7 +50,7 @@ class KittenTTS(node.Node):
                 id="voice_id",
                 group="voice_id",
                 owner_node=self,
-                type_constraints=[pad.types.Enum(options=VOICES)],
+                default_type_constraints=[pad.types.Enum(options=VOICES)],
                 value="expr-voice-2-m",
             )
             self.pads.append(voice_id)
@@ -310,15 +310,15 @@ class TTSJob:
                             )
                             break
 
-                        total_bytes = b''
+                        total_bytes = b""
                         async for bytes_24000 in response.content.iter_any():
                             total_bytes += bytes_24000
                             # 20ms
                             while len(total_bytes) >= 240 * 4:
-                                chunk = total_bytes[:240 * 4]
-                                total_bytes = total_bytes[240 * 4:]
+                                chunk = total_bytes[: 240 * 4]
+                                total_bytes = total_bytes[240 * 4 :]
                                 send_queue.put_nowait(chunk)
-                        
+
                         if len(total_bytes) % 2 != 0:
                             total_bytes = total_bytes[:-1]
                         send_queue.put_nowait(total_bytes)
@@ -331,24 +331,16 @@ class TTSJob:
                 chunk = await send_queue.get()
                 if chunk is None:
                     break
-                data = np.frombuffer(
-                    chunk, dtype=np.int16
-                ).reshape(1, -1)
+                data = np.frombuffer(chunk, dtype=np.int16).reshape(1, -1)
                 num_samples = data.shape[1]
                 frame_data_24000 = runtime_types.AudioFrameData(
                     data=data,
                     sample_rate=24000,
                     num_channels=1,
                 )
-                frame_data_16000 = self._resampler_16000hz.push_audio(
-                    frame_data_24000
-                )
-                frame_data_44100 = self._resampler_44100hz.push_audio(
-                    frame_data_24000
-                )
-                frame_data_48000 = self._resampler_48000hz.push_audio(
-                    frame_data_24000
-                )
+                frame_data_16000 = self._resampler_16000hz.push_audio(frame_data_24000)
+                frame_data_44100 = self._resampler_44100hz.push_audio(frame_data_24000)
+                frame_data_48000 = self._resampler_48000hz.push_audio(frame_data_24000)
                 frame = runtime_types.AudioFrame(
                     original_data=frame_data_24000,
                     data_16000hz=frame_data_16000,
@@ -362,9 +354,7 @@ class TTSJob:
                 self._output_queue.put_nowait(frame)
 
                 # Don't go faster than real-time
-                while (
-                    played_time + clock_start_time
-                ) - time.time() > 0.25:
+                while (played_time + clock_start_time) - time.time() > 0.25:
                     await asyncio.sleep(0.05)
 
         try:

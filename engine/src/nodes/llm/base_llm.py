@@ -140,7 +140,7 @@ class BaseLLM(node.Node, ABC):
                 id="context",
                 group="context",
                 owner_node=self,
-                type_constraints=[
+                default_type_constraints=[
                     pad.types.List(item_type_constraints=[pad.types.ContextMessage()])
                 ],
                 value=[
@@ -164,7 +164,7 @@ class BaseLLM(node.Node, ABC):
                     id="tool_group",
                     group="tool_group",
                     owner_node=self,
-                    type_constraints=[
+                    default_type_constraints=[
                         pad.types.NodeReference(node_types=["ToolGroup"])
                     ],
                     value=None,
@@ -409,7 +409,10 @@ class BaseLLM(node.Node, ABC):
         )
         try:
             handle = await llm.create_completion(
-                request=dummy_request, video_support=True, audio_support=False, max_completion_tokens=1
+                request=dummy_request,
+                video_support=True,
+                audio_support=False,
+                max_completion_tokens=1,
             )
             async for _ in handle:
                 pass
@@ -443,7 +446,10 @@ class BaseLLM(node.Node, ABC):
         )
         try:
             handle = await llm.create_completion(
-                request=dummy_request, video_support=False, audio_support=True, max_completion_tokens=1
+                request=dummy_request,
+                video_support=False,
+                audio_support=True,
+                max_completion_tokens=1,
             )
             async for _ in handle:
                 pass

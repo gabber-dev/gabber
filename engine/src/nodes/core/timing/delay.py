@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
-import logging
 from typing import Any, cast
 import time
 
@@ -26,7 +25,7 @@ class Delay(node.Node):
                 id="sink",
                 group="sink",
                 owner_node=self,
-                type_constraints=None,
+                default_type_constraints=None,
             )
             self.pads.append(sink)
 
@@ -36,7 +35,7 @@ class Delay(node.Node):
                 id="source",
                 group="source",
                 owner_node=self,
-                type_constraints=None,
+                default_type_constraints=None,
             )
             self.pads.append(source)
 
@@ -46,20 +45,14 @@ class Delay(node.Node):
                 id="delay_ms",
                 group="delay_ms",
                 owner_node=self,
-                type_constraints=[pad.types.Integer(minimum=0)],
+                default_type_constraints=[pad.types.Integer(minimum=0)],
                 value=1000,
             )
             self.pads.append(delay_ms)
 
-        next_pads = source.get_next_pads()
-        tcs: list[pad.types.BasePadType] | None = None
-        for next_pad in next_pads:
-            tcs = pad.types.INTERSECTION(tcs, next_pad.get_type_constraints())
-
-        prev_pad = sink.get_previous_pad()
-        if prev_pad:
-            tcs = pad.types.INTERSECTION(tcs, prev_pad.get_type_constraints())
-
+        tcs = pad.types.INTERSECTION(
+            sink.get_type_constraints(), source.get_type_constraints()
+        )
         sink.set_type_constraints(tcs)
         source.set_type_constraints(tcs)
 

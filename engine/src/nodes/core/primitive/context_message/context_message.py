@@ -29,7 +29,7 @@ class ContextMessage(Node):
                 id="role",
                 group="role",
                 owner_node=self,
-                type_constraints=[types.ContextMessageRole()],
+                default_type_constraints=[types.ContextMessageRole()],
                 value=runtime_types.ContextMessageRole.SYSTEM,
             )
             self.pads.append(role)
@@ -40,7 +40,7 @@ class ContextMessage(Node):
                 id="content",
                 group="content",
                 owner_node=self,
-                type_constraints=[types.String()],
+                default_type_constraints=[types.String()],
                 value="You are a helpful assistant.",
             )
             self.pads.append(content_sink)
@@ -51,7 +51,7 @@ class ContextMessage(Node):
                 id="context_message",
                 group="context_message",
                 owner_node=self,
-                type_constraints=[types.ContextMessage()],
+                default_type_constraints=[types.ContextMessage()],
                 value=runtime_types.ContextMessage(
                     role=runtime_types.ContextMessageRole.SYSTEM,
                     content=[

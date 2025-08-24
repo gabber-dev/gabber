@@ -40,7 +40,7 @@ class ProxyStatelessSink(node.Node):
                     id="pad_id",
                     owner_node=self,
                     group="pad_id",
-                    type_constraints=[pad.types.String()],
+                    default_type_constraints=[pad.types.String()],
                     value=f"proxy_{short_uuid()}",
                 )
             )

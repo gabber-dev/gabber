@@ -30,7 +30,7 @@ class STT(node.Node):
                 id="service",
                 group="service",
                 owner_node=self,
-                type_constraints=[
+                default_type_constraints=[
                     pad.types.Enum(options=["assembly_ai", "local_kyutai", "deepgram"])
                 ],
                 value="assembly_ai",
@@ -97,7 +97,7 @@ class STT(node.Node):
                 id="api_key",
                 group="api_key",
                 owner_node=self,
-                type_constraints=[pad.types.Secret(options=self.secrets)],
+                default_type_constraints=[pad.types.Secret(options=self.secrets)],
             )
             self.pads.append(api_key)
 
