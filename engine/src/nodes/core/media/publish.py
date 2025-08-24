@@ -23,7 +23,7 @@ class Publish(node.Node):
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(primary="core", secondary="media", tags=["input", "stream"])
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         audio_source = cast(pad.StatelessSourcePad, self.get_pad("audio"))
         if not audio_source:
             audio_source = pad.StatelessSourcePad(

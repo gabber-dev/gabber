@@ -23,7 +23,7 @@ class STT(node.Node):
             tags=["stt", "speech", "kyutai", "assembly", "deepgram"],
         )
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         service = cast(pad.PropertySinkPad, self.get_pad("service"))
         if service is None:
             service = pad.PropertySinkPad(

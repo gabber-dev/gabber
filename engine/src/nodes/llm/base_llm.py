@@ -25,7 +25,7 @@ class BaseLLM(node.Node, ABC):
     @abstractmethod
     async def api_key(self) -> str: ...
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         run_trigger = cast(pad.StatelessSinkPad, self.get_pad("run_trigger"))
         if not run_trigger:
             run_trigger = pad.StatelessSinkPad(
@@ -409,7 +409,10 @@ class BaseLLM(node.Node, ABC):
         )
         try:
             handle = await llm.create_completion(
-                request=dummy_request, video_support=True, audio_support=False, max_completion_tokens=1
+                request=dummy_request,
+                video_support=True,
+                audio_support=False,
+                max_completion_tokens=1,
             )
             async for _ in handle:
                 pass
@@ -443,7 +446,10 @@ class BaseLLM(node.Node, ABC):
         )
         try:
             handle = await llm.create_completion(
-                request=dummy_request, video_support=False, audio_support=True, max_completion_tokens=1
+                request=dummy_request,
+                video_support=False,
+                audio_support=True,
+                max_completion_tokens=1,
             )
             async for _ in handle:
                 pass

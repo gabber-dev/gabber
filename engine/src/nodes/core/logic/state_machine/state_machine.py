@@ -78,7 +78,7 @@ class StateMachine(node.Node):
     def get_description(cls) -> str:
         return "Create logic to control the flow of your application based on parameter conditions."
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         configuration = cast(pad.PropertySinkPad, self.get_pad("configuration"))
         if not configuration:
             configuration = pad.PropertySinkPad(

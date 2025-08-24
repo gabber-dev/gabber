@@ -18,7 +18,7 @@ class CreateContextMessage(Node):
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(primary="ai", secondary="llm", tags=["context", "message"])
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         sink_default: list[pad.types.BasePadType] | None = [
             types.AudioClip(),
             types.VideoClip(),

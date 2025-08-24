@@ -16,7 +16,7 @@ class ButtonTrigger(node.Node):
             primary="core", secondary="utility", tags=["trigger", "debug"]
         )
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         if not self.get_pad("trigger"):
             self.pads.append(
                 pad.StatelessSourcePad(

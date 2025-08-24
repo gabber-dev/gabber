@@ -3,13 +3,8 @@
 
 from core import node
 from typing import Type
-from . import core, llm, stt, tts, vlm, local
+from . import core, llm, stt, tts, local
 
 ALL_NODES: list[Type[node.Node]] = (
-    core.ALL_NODES
-    + llm.ALL_NODES
-    + stt.ALL_NODES
-    + tts.ALL_NODES
-    + vlm.ALL_NODES
-    + local.ALL_NODES
+    core.ALL_NODES + llm.ALL_NODES + stt.ALL_NODES + tts.ALL_NODES + local.ALL_NODES
 )

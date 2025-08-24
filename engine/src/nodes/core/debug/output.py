@@ -23,7 +23,7 @@ class Output(Node):
             primary="core", secondary="media", tags=["output", "display"]
         )
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         audio_sink = cast(pad.StatelessSinkPad, self.get_pad("audio_sink"))
         if not audio_sink:
             self.pads.append(

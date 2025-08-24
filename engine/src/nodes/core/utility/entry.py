@@ -9,7 +9,7 @@ from core.node import Node, NodeMetadata
 
 
 class Entry(Node):
-    async def resolve_pads(self):
+    def resolve_pads(self):
         trigger = cast(pad.StatelessSourcePad, self.get_pad("trigger"))
         if not trigger:
             trigger = pad.StatelessSourcePad(

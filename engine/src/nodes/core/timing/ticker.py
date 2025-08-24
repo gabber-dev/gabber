@@ -19,7 +19,7 @@ class Ticker(node.Node):
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(primary="core", secondary="timing", tags=["ticker"])
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         tick = cast(pad.PropertySourcePad, self.get_pad("tick"))
         if not tick:
             tick = pad.PropertySourcePad(

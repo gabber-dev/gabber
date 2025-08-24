@@ -21,7 +21,7 @@ class Tool(node.Node):
             primary="core", secondary="tools", tags=["function", "definition"]
         )
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         self_pad = cast(pad.PropertySourcePad, self.get_pad("self"))
         if not self_pad:
             self_pad = pad.PropertySourcePad(

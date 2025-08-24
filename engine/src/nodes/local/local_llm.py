@@ -39,8 +39,8 @@ class LocalLLM(BaseLLM):
     async def api_key(self) -> str:
         return ""
 
-    async def resolve_pads(self):
-        await super().resolve_pads()
+    def resolve_pads(self):
+        super().resolve_pads()
         port_pad = cast(pad.PropertySinkPad, self.get_pad("port"))
         if not port_pad:
             port_pad = pad.PropertySinkPad(

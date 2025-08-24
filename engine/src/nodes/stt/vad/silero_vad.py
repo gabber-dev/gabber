@@ -40,7 +40,7 @@ class SileroVAD(node.Node):
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(primary="ai", secondary="audio", tags=["vad", "detection"])
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         audio_sink = cast(pad.StatelessSinkPad, self.get_pad("audio"))
         if not audio_sink:
             audio_sink = pad.StatelessSinkPad(

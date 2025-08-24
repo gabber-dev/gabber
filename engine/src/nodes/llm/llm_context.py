@@ -166,7 +166,7 @@ class LLMContext(node.Node):
         tasks.append(asyncio.create_task(system_message_task()))
         await asyncio.gather(*tasks)
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         new_user_message = cast(
             pad.StatelessSourcePad, self.get_pad("new_user_message")
         )

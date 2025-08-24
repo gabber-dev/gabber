@@ -20,7 +20,7 @@ class SlidingWindow(Node):
             primary="core", secondary="media", tags=["control", "sliding_window"]
         )
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         video_sink = cast(StatelessSinkPad, self.get_pad("video"))
         if not video_sink:
             self.pads.append(

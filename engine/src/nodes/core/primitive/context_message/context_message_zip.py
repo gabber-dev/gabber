@@ -19,7 +19,7 @@ class ContextMessageZip(Node):
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(primary="ai", secondary="llm", tags=["context", "message"])
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         role = cast(PropertySinkPad, self.get_pad("role"))
         if not role:
             role = PropertySinkPad(

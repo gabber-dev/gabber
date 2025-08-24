@@ -20,7 +20,7 @@ class FPS(Node):
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(primary="core", secondary="media", tags=["control", "fps"])
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         sink = cast(StatelessSinkPad, self.get_pad("video_in"))
         if not sink:
             self.pads.append(

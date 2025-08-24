@@ -12,7 +12,7 @@ class TypeConstraint(Node):
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(primary="core", secondary="utility", tags=[])
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         type_selector = cast(pad.PropertySinkPad, self.get_pad("type_selector"))
         if not type_selector:
             type_selector = pad.PropertySinkPad(

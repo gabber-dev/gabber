@@ -22,7 +22,7 @@ class TTS(node.Node):
             primary="ai", secondary="audio", tags=["tts", "speech", "gabber"]
         )
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         # Migrate from old version
         PADS_TO_REMOVE = ["text_stream", "complete_text"]
         self.pads = [p for p in self.pads if p.get_id() not in PADS_TO_REMOVE]

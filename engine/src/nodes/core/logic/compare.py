@@ -59,7 +59,7 @@ class Compare(Node):
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(primary="core", secondary="logic", tags=["compare"])
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         num_conditions = cast(pad.PropertySinkPad, self.get_pad("num_conditions"))
         if not num_conditions:
             num_conditions = pad.PropertySinkPad(

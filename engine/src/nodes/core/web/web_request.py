@@ -10,7 +10,7 @@ from core.node import Node
 
 
 class WebRequest(Node):
-    async def resolve_pads(self):
+    def resolve_pads(self):
         url = cast(pad.PropertySinkPad, self.get_pad("url"))
         if not url:
             url = pad.PropertySinkPad(

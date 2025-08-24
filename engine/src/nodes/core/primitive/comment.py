@@ -18,7 +18,7 @@ class Comment(node.Node):
             tags=["documentation", "comment"],
         )
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         text = self.get_pad("text")
         if not text:
             text = pad.PropertySinkPad(

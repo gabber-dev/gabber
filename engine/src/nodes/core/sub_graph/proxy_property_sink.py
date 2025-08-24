@@ -20,7 +20,7 @@ class ProxyPropertySink(node.Node):
             primary="subgraph", secondary="sink", tags=["property", "sink"]
         )
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         proxy_pad = cast(pad.PropertySourcePad, self.get_pad("proxy"))
         if not proxy_pad:
             self.pads.append(

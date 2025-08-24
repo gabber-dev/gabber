@@ -39,7 +39,7 @@ class ToolGroup(node.Node):
             res.append(p.get_value())
         return res
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         self_pad = cast(pad.PropertySourcePad, self.get_pad("self"))
         if not self_pad:
             self_pad = pad.PropertySourcePad(

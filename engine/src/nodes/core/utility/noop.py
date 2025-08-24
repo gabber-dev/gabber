@@ -16,7 +16,7 @@ class Noop(Node):
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(primary="core", secondary="utility", tags=[])
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         sink = cast(pad.StatelessSinkPad, self.get_pad("sink"))
         if not sink:
             sink = pad.StatelessSinkPad(

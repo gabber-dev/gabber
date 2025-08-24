@@ -15,7 +15,7 @@ class UnpackObject(Node):
             primary="core", secondary="utility", tags=["trigger", "start"]
         )
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         sink = cast(pad.StatelessSinkPad, self.get_pad("sink"))
         if not sink:
             sink = pad.StatelessSinkPad(

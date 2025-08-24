@@ -20,7 +20,7 @@ class AVClipZip(Node):
             primary="core", secondary="media", tags=["control", "clip", "zip"]
         )
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         video_clip = cast(pad.StatelessSinkPad, self.get_pad("video_clip"))
         if not video_clip:
             self.pads.append(

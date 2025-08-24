@@ -118,6 +118,9 @@ class SourcePad(Pad, Protocol):
         self.set_next_pads(next_pads)
         sink_pad.set_previous_pad(self)
 
+        tcs = INTERSECTION(self.get_type_constraints(), sink_pad.get_type_constraints())
+        sink_pad.set_type_constraints(tcs)
+
         if isinstance(self, PropertyPad):
             v = self.get_value()
             for np in next_pads:
@@ -141,6 +144,14 @@ class SourcePad(Pad, Protocol):
             self.get_type_constraints(), other.get_type_constraints()
         )
 
+        logging.info(
+            "NEIL intersection: "
+            + str(intersection)
+            + " --- "
+            + str(self.get_type_constraints())
+            + " --- "
+            + str(other.get_type_constraints())
+        )
         if intersection is not None and len(intersection) == 0:
             return False
 

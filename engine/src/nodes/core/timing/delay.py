@@ -19,7 +19,7 @@ class Delay(node.Node):
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(primary="core", secondary="timing", tags=["delay"])
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         sink = cast(pad.StatelessSinkPad, self.get_pad("sink"))
         if not sink:
             sink = pad.StatelessSinkPad(
@@ -28,7 +28,6 @@ class Delay(node.Node):
                 owner_node=self,
                 type_constraints=None,
             )
-            self.pads.append(sink)
 
         source = cast(pad.StatelessSourcePad, self.get_pad("source"))
         if not source:
@@ -36,9 +35,8 @@ class Delay(node.Node):
                 id="source",
                 group="source",
                 owner_node=self,
-                type_constraints=None,
+                type_constraints=[],
             )
-            self.pads.append(source)
 
         delay_ms = cast(pad.PropertySinkPad, self.get_pad("delay_ms"))
         if not delay_ms:
@@ -49,19 +47,14 @@ class Delay(node.Node):
                 type_constraints=[pad.types.Integer(minimum=0)],
                 value=1000,
             )
-            self.pads.append(delay_ms)
 
-        next_pads = source.get_next_pads()
-        tcs: list[pad.types.BasePadType] | None = None
-        for next_pad in next_pads:
-            tcs = pad.types.INTERSECTION(tcs, next_pad.get_type_constraints())
+        self.pads = [sink, source, delay_ms]
 
-        prev_pad = sink.get_previous_pad()
-        if prev_pad:
-            tcs = pad.types.INTERSECTION(tcs, prev_pad.get_type_constraints())
-
-        sink.set_type_constraints(tcs)
-        source.set_type_constraints(tcs)
+        tcs = sink.get_type_constraints()
+        if tcs is not None:
+            source.set_type_constraints(tcs)
+        else:
+            source.set_type_constraints([])
 
     async def run(self):
         sink_pad = cast(pad.StatelessSinkPad, self.get_pad_required("sink"))

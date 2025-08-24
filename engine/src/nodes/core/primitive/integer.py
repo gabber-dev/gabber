@@ -19,7 +19,7 @@ class Integer(node.Node):
             primary="core", secondary="primitive", tags=["storage", "integer"]
         )
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         set_pad = cast(pad.StatelessSinkPad | None, self.get_pad("set"))
         if not set_pad:
             set_pad = pad.StatelessSinkPad(

@@ -40,8 +40,8 @@ class OpenAICompatibleLLM(BaseLLM):
             raise RuntimeError("Secret provider is not set for OpenAICompatibleLLM.")
         return await self.secret_provider.resolve_secret(api_key_name)
 
-    async def resolve_pads(self):
-        await super().resolve_pads()
+    def resolve_pads(self):
+        super().resolve_pads()
         base_url_sink = cast(pad.PropertySinkPad, self.get_pad("base_url"))
         if not base_url_sink:
             base_url_sink = pad.PropertySinkPad(
