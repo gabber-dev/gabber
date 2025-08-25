@@ -25,7 +25,6 @@ class TypeConstraint(Node):
                     )
                 ],
             )
-            self.pads.append(type_selector)
 
         sink = cast(pad.StatelessSinkPad, self.get_pad("sink"))
         if not sink:
@@ -35,7 +34,6 @@ class TypeConstraint(Node):
                 group="sink",
                 default_type_constraints=None,
             )
-            self.pads.append(sink)
 
         source = cast(pad.StatelessSourcePad, self.get_pad("source"))
         if not source:
@@ -45,30 +43,31 @@ class TypeConstraint(Node):
                 group="source",
                 default_type_constraints=None,
             )
-            self.pads.append(source)
 
         selected_type = type_selector.get_value()
         default_value: Any | None = None
         if selected_type == "string":
-            sink.set_type_constraints([pad.types.String()])
-            source.set_type_constraints([pad.types.String()])
+            sink.set_default_type_constraints([pad.types.String()])
+            source.set_default_type_constraints([pad.types.String()])
             default_value = ""
         elif selected_type == "integer":
-            sink.set_type_constraints([pad.types.Integer()])
-            source.set_type_constraints([pad.types.Integer()])
+            sink.set_default_type_constraints([pad.types.Integer()])
+            source.set_default_type_constraints([pad.types.Integer()])
             default_value = 0
         elif selected_type == "float":
-            sink.set_type_constraints([pad.types.Float()])
-            source.set_type_constraints([pad.types.Float()])
+            sink.set_default_type_constraints([pad.types.Float()])
+            source.set_default_type_constraints([pad.types.Float()])
             default_value = 0.0
         elif selected_type == "boolean":
-            sink.set_type_constraints([pad.types.Boolean()])
-            source.set_type_constraints([pad.types.Boolean()])
+            sink.set_default_type_constraints([pad.types.Boolean()])
+            source.set_default_type_constraints([pad.types.Boolean()])
             default_value = False
         elif selected_type == "trigger":
-            sink.set_type_constraints([pad.types.Trigger()])
-            source.set_type_constraints([pad.types.Trigger()])
+            sink.set_default_type_constraints([pad.types.Trigger()])
+            source.set_default_type_constraints([pad.types.Trigger()])
             default_value = None
+        
+        self.pads = [sink, source, type_selector]
 
         prev_pad = sink.get_previous_pad()
         next_pads = source.get_next_pads()
