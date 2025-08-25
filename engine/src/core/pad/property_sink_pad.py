@@ -18,13 +18,15 @@ class PropertySinkPad(SinkPad, PropertyPad):
         id: str,
         group: str,
         owner_node: "Node",
-        type_constraints: list[types.BasePadType] | None = None,
+        default_type_constraints: list[types.BasePadType] | None = None,
         value: Any = None,
     ):
+        super().__init__()
         self._id = id
         self._group = group
         self._owner_node = owner_node
-        self._type_constraints = type_constraints
+        self._type_constraints = default_type_constraints
+        self._default_type_constraints = default_type_constraints
         self._value = value
         self._previous_pad: SourcePad | None = None
         self._queue = asyncio.Queue[Item | None]()
@@ -46,6 +48,15 @@ class PropertySinkPad(SinkPad, PropertyPad):
 
     def set_type_constraints(self, constraints: list[types.BasePadType] | None) -> None:
         self._type_constraints = constraints
+
+    def set_default_type_constraints(
+        self, constraints: list[types.BasePadType] | None
+    ) -> None:
+        self._default_type_constraints = constraints
+        self._resolve_type_constraints()
+
+    def get_default_type_constraints(self):
+        return self._default_type_constraints
 
     def get_previous_pad(self) -> SourcePad | None:
         return self._previous_pad

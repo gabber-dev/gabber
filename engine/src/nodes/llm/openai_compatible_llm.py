@@ -46,15 +46,15 @@ class OpenAICompatibleLLM(BaseLLM):
             raise RuntimeError("Secret provider is not set for OpenAICompatibleLLM.")
         return await self.secret_provider.resolve_secret(api_key_name)
 
-    async def resolve_pads(self):
-        await super().resolve_pads()
+    def resolve_pads(self):
+        super().resolve_pads()
         base_url_sink = cast(pad.PropertySinkPad, self.get_pad("base_url"))
         if not base_url_sink:
             base_url_sink = pad.PropertySinkPad(
                 id="base_url",
                 group="base_url",
                 owner_node=self,
-                type_constraints=[pad.types.String()],
+                default_type_constraints=[pad.types.String()],
                 value="https://api.openai.com/v1",
             )
             self.pads.append(base_url_sink)
@@ -65,7 +65,7 @@ class OpenAICompatibleLLM(BaseLLM):
                 id="api_key",
                 group="api_key",
                 owner_node=self,
-                type_constraints=[pad.types.Secret(options=[])],
+                default_type_constraints=[pad.types.Secret(options=[])],
                 value="",
             )
             self.pads.append(api_key_sink)
@@ -76,7 +76,7 @@ class OpenAICompatibleLLM(BaseLLM):
                 id="model",
                 group="model",
                 owner_node=self,
-                type_constraints=[pad.types.String()],
+                default_type_constraints=[pad.types.String()],
                 value="gpt-4.1-mini",
             )
             self.pads.append(model_sink)

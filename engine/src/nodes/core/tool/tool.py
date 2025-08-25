@@ -21,17 +21,16 @@ class Tool(node.Node):
             primary="core", secondary="tools", tags=["function", "definition"]
         )
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         self_pad = cast(pad.PropertySourcePad, self.get_pad("self"))
         if not self_pad:
             self_pad = pad.PropertySourcePad(
                 id="self",
                 group="self",
                 owner_node=self,
-                type_constraints=[pad.types.NodeReference(node_types=["Tool"])],
+                default_type_constraints=[pad.types.NodeReference(node_types=["Tool"])],
                 value=self,
             )
-            self.pads.append(self_pad)
 
         name = cast(pad.PropertySinkPad, self.get_pad("name"))
         if not name:
@@ -39,10 +38,9 @@ class Tool(node.Node):
                 id="name",
                 owner_node=self,
                 group="name",
-                type_constraints=[pad.types.String(max_length=100)],
+                default_type_constraints=[pad.types.String(max_length=100)],
                 value="get_weather",
             )
-            self.pads.append(name)
 
         description = cast(pad.PropertySinkPad, self.get_pad("description"))
         if not description:
@@ -50,10 +48,9 @@ class Tool(node.Node):
                 id="description",
                 group="description",
                 owner_node=self,
-                type_constraints=[pad.types.String(max_length=500)],
+                default_type_constraints=[pad.types.String(max_length=500)],
                 value="Get the current weather for a specified location.",
             )
-            self.pads.append(description)
 
         schema_pad = cast(pad.PropertySinkPad, self.get_pad("schema"))
         if not schema_pad:
@@ -61,10 +58,9 @@ class Tool(node.Node):
                 id="schema",
                 group="schema",
                 owner_node=self,
-                type_constraints=[pad.types.Schema()],
+                default_type_constraints=[pad.types.Schema()],
                 value=runtime_types.Schema(properties={"location": pad.types.String()}),
             )
-            self.pads.append(schema_pad)
 
         schema = cast(runtime_types.Schema, schema_pad.get_value())
         if not schema:
@@ -75,15 +71,15 @@ class Tool(node.Node):
                 id="source",
                 group="source",
                 owner_node=self,
-                type_constraints=[
+                default_type_constraints=[
                     pad.types.Object(object_schema=schema.to_json_schema())
                 ],
             )
-            self.pads.append(source)
 
-        source.set_type_constraints(
+        source.set_default_type_constraints(
             [pad.types.Object(object_schema=schema.to_json_schema())]
         )
+        self.pads = [self_pad, name, description, schema_pad, source]
 
     def get_tool_definition(self) -> runtime_types.ToolDefinition:
         name = cast(pad.PropertySinkPad, self.get_pad_required("name"))

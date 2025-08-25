@@ -48,7 +48,7 @@ class Node:
         return NodeMetadata(primary="core", secondary="general", tags=["default"])
 
     @abstractmethod
-    async def resolve_pads(self): ...
+    def resolve_pads(self): ...
 
     @abstractmethod
     async def run(self):

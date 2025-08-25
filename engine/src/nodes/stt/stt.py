@@ -23,14 +23,14 @@ class STT(node.Node):
             tags=["stt", "speech", "kyutai", "assembly", "deepgram"],
         )
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         service = cast(pad.PropertySinkPad, self.get_pad("service"))
         if service is None:
             service = pad.PropertySinkPad(
                 id="service",
                 group="service",
                 owner_node=self,
-                type_constraints=[
+                default_type_constraints=[
                     pad.types.Enum(options=["assembly_ai", "local_kyutai", "deepgram"])
                 ],
                 value="assembly_ai",
@@ -43,7 +43,7 @@ class STT(node.Node):
                 id="audio",
                 group="audio",
                 owner_node=self,
-                type_constraints=[pad.types.Audio()],
+                default_type_constraints=[pad.types.Audio()],
             )
             self.pads.append(audio_sink)
 
@@ -53,7 +53,7 @@ class STT(node.Node):
                 id="speech_clip",
                 group="speech_clip",
                 owner_node=self,
-                type_constraints=[pad.types.AudioClip()],
+                default_type_constraints=[pad.types.AudioClip()],
             )
             self.pads.append(speech_clip_source)
 
@@ -65,7 +65,7 @@ class STT(node.Node):
                 id="speech_started",
                 group="speech_started",
                 owner_node=self,
-                type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad.types.Trigger()],
             )
             self.pads.append(speech_started_source)
 
@@ -75,7 +75,7 @@ class STT(node.Node):
                 id="speech_ended",
                 group="speech_ended",
                 owner_node=self,
-                type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad.types.Trigger()],
             )
             self.pads.append(speech_ended_source)
 
@@ -87,7 +87,7 @@ class STT(node.Node):
                 id="final_transcription",
                 group="final_transcription",
                 owner_node=self,
-                type_constraints=[pad.types.String()],
+                default_type_constraints=[pad.types.String()],
             )
             self.pads.append(final_transcription_source)
 
@@ -97,7 +97,7 @@ class STT(node.Node):
                 id="api_key",
                 group="api_key",
                 owner_node=self,
-                type_constraints=[pad.types.Secret(options=self.secrets)],
+                default_type_constraints=[pad.types.Secret(options=self.secrets)],
             )
             self.pads.append(api_key)
 

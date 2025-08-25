@@ -1,6 +1,7 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
+import logging
 import asyncio
 from typing import cast
 
@@ -17,63 +18,47 @@ class Merge(Node):
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(primary="core", secondary="utility", tags=["merge", "flow"])
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         source_pad = cast(pad.StatelessSourcePad | None, self.get_pad("source"))
         if not source_pad:
-            self.pads.append(
-                pad.StatelessSourcePad(
-                    id="source",
-                    owner_node=self,
-                    type_constraints=None,
-                    group="source",
-                )
-            )
-            source_pad = cast(pad.StatelessSourcePad, self.get_pad("source"))
-
-        sink_pads = cast(
-            list[pad.SinkPad], [p for p in self.pads if p.get_group() == "sink"]
-        )
-
-        needs_new = True
-        for p in sink_pads:
-            if p.get_previous_pad() is None:
-                needs_new = False
-                break
-
-        if needs_new:
-            self.first_sink_pad = pad.StatelessSinkPad(
-                id=f"sink_{len(sink_pads)}",
+            source_pad = pad.StatelessSourcePad(
+                id="source",
                 owner_node=self,
-                type_constraints=None,
-                group="sink",
+                default_type_constraints=None,
+                group="source",
             )
-            self.pads.append(self.first_sink_pad)
 
-        sink_pads = cast(
-            list[pad.SinkPad], [p for p in self.pads if p.get_group() == "sink"]
-        )
+        num_sink_pads = cast(pad.PropertySinkPad | None, self.get_pad("num_sinks"))
+        if not num_sink_pads:
+            num_sink_pads = pad.PropertySinkPad(
+                id="num_sinks",
+                owner_node=self,
+                default_type_constraints=[pad.types.Integer()],
+                group="num_sinks",
+                value=1,
+            )
 
-        pads: list[pad.Pad] = [cast(pad.Pad, source_pad)] + sink_pads
+        sink_pads: list[pad.Pad] = []
+        for i in range(num_sink_pads.get_value() or 1):
+            pad_id = f"sink_{i}"
+            sp = self.get_pad(pad_id)
+            if not sp:
+                sp = pad.PropertySinkPad(
+                    id=pad_id,
+                    owner_node=self,
+                    default_type_constraints=None,
+                    group="sink",
+                )
+                sp.link_types_to_pad(source_pad)
+            sink_pads.append(sp)
+
+        for p in self.pads:
+            if p.get_id().startswith("sink_") and p not in sink_pads:
+                if isinstance(p, pad.PropertySinkPad):
+                    p.unlink_types_from_pad(source_pad)
+
+        pads: list[pad.Pad] = [num_sink_pads, source_pad] + sink_pads
         self.pads = pads
-        tcs: list[pad.types.BasePadType] | None = None
-        for p in self.pads:
-            if isinstance(p, pad.SinkPad) and p.get_previous_pad():
-                prev_pad = p.get_previous_pad()
-                if prev_pad:
-                    tcs = (
-                        pad.types.INTERSECTION(tcs, prev_pad.get_type_constraints())
-                        if tcs
-                        else prev_pad.get_type_constraints()
-                    )
-            elif isinstance(p, pad.SourcePad):
-                for np in p.get_next_pads():
-                    tcs = (
-                        pad.types.INTERSECTION(tcs, np.get_type_constraints())
-                        if tcs
-                        else np.get_type_constraints()
-                    )
-        for p in self.pads:
-            p.set_type_constraints(tcs)
 
     async def run(self):
         tasks = []

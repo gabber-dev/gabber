@@ -22,17 +22,16 @@ class ContextMessage(Node):
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(primary="ai", secondary="llm", tags=["context", "message"])
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         role = cast(PropertySinkPad, self.get_pad("role"))
         if not role:
             role = PropertySinkPad(
                 id="role",
                 group="role",
                 owner_node=self,
-                type_constraints=[types.ContextMessageRole()],
+                default_type_constraints=[types.ContextMessageRole()],
                 value=runtime_types.ContextMessageRole.SYSTEM,
             )
-            self.pads.append(role)
 
         content_sink = cast(PropertySinkPad, self.get_pad("content"))
         if not content_sink:
@@ -40,10 +39,9 @@ class ContextMessage(Node):
                 id="content",
                 group="content",
                 owner_node=self,
-                type_constraints=[types.String()],
+                default_type_constraints=[types.String()],
                 value="You are a helpful assistant.",
             )
-            self.pads.append(content_sink)
 
         message_source = cast(PropertySourcePad, self.get_pad("context_message"))
         if not message_source:
@@ -51,7 +49,7 @@ class ContextMessage(Node):
                 id="context_message",
                 group="context_message",
                 owner_node=self,
-                type_constraints=[types.ContextMessage()],
+                default_type_constraints=[types.ContextMessage()],
                 value=runtime_types.ContextMessage(
                     role=runtime_types.ContextMessageRole.SYSTEM,
                     content=[
@@ -62,7 +60,12 @@ class ContextMessage(Node):
                     tool_calls=[],
                 ),
             )
-            self.pads.append(message_source)
+
+        self.pads = [
+            role,
+            content_sink,
+            message_source,
+        ]
 
         val = content_sink.get_value()
         if val is None:

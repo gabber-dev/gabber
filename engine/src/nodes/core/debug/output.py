@@ -23,35 +23,29 @@ class Output(Node):
             primary="core", secondary="media", tags=["output", "display"]
         )
 
-    async def resolve_pads(self):
-        audio_sink = cast(pad.StatelessSinkPad, self.get_pad("audio_sink"))
-        if not audio_sink:
-            self.pads.append(
-                pad.StatelessSinkPad(
-                    id="audio_sink",
+    def resolve_pads(self):
+        audio = cast(pad.StatelessSinkPad, self.get_pad("audio"))
+        if not audio:
+            audio = pad.StatelessSinkPad(
+                    id="audio",
                     owner_node=self,
-                    type_constraints=[pad.types.Audio()],
-                    group="audio_sink",
+                    default_type_constraints=[pad.types.Audio()],
+                    group="audio",
                 )
-            )
-            audio_sink = cast(pad.StatelessSinkPad, self.get_pad("audio_sink"))
-        video_sink = cast(pad.StatelessSinkPad, self.get_pad("video_sink"))
-        if not video_sink:
-            self.pads.append(
-                pad.StatelessSinkPad(
-                    id="video_sink",
+        video = cast(pad.StatelessSinkPad, self.get_pad("video"))
+        if not video:
+            video = pad.StatelessSinkPad(
+                    id="video",
                     owner_node=self,
-                    type_constraints=[pad.types.Video()],
-                    group="video_sink",
+                    default_type_constraints=[pad.types.Video()],
+                    group="video",
                 )
-            )
-            video_sink = cast(pad.StatelessSinkPad, self.get_pad("video_sink"))
 
-        self.pads = [audio_sink, video_sink]
+        self.pads = [audio, video]
 
     async def run(self):
-        audio_sink = cast(pad.StatelessSinkPad, self.get_pad_required("audio_sink"))
-        video_sink = cast(pad.StatelessSinkPad, self.get_pad_required("video_sink"))
+        audio = cast(pad.StatelessSinkPad, self.get_pad_required("audio"))
+        video = cast(pad.StatelessSinkPad, self.get_pad_required("video"))
 
         async def audio_consume():
             source = rtc.AudioSource(24000, 1)
@@ -60,7 +54,7 @@ class Output(Node):
             options.source = rtc.TrackSource.SOURCE_MICROPHONE
             await self.room.local_participant.publish_track(track, options)
 
-            async for f in audio_sink:
+            async for f in audio:
                 a_frame = cast(AudioFrame, f.value)
                 rtc_frame = rtc.AudioFrame.create(
                     24000, 1, a_frame.data_24000hz.sample_count
@@ -76,7 +70,7 @@ class Output(Node):
             options = rtc.TrackPublishOptions()
             options.source = rtc.TrackSource.SOURCE_CAMERA
             await self.room.local_participant.publish_track(track, options)
-            async for f in video_sink:
+            async for f in video:
                 v_frame = cast(VideoFrame, f.value)
                 frame = rtc.VideoFrame(
                     v_frame.width,

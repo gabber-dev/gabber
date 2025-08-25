@@ -20,16 +20,15 @@ class String(node.Node):
             primary="core", secondary="primitive", tags=["storage", "string"]
         )
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         set_pad = cast(pad.StatelessSinkPad | None, self.get_pad("set"))
         if not set_pad:
             set_pad = pad.StatelessSinkPad(
                 id="set",
                 owner_node=self,
                 group="set",
-                type_constraints=[pad.types.String()],
+                default_type_constraints=[pad.types.String()],
             )
-            self.pads.append(set_pad)
 
         emit = cast(pad.StatelessSinkPad | None, self.get_pad("emit"))
         if not emit:
@@ -37,9 +36,8 @@ class String(node.Node):
                 id="emit",
                 owner_node=self,
                 group="emit",
-                type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad.types.Trigger()],
             )
-            self.pads.append(emit)
 
         value = cast(pad.PropertySourcePad | None, self.get_pad("value"))
         if not value:
@@ -47,10 +45,9 @@ class String(node.Node):
                 id="value",
                 group="value",
                 owner_node=self,
-                type_constraints=[pad.types.String()],
+                default_type_constraints=[pad.types.String()],
                 value="",
             )
-            self.pads.append(value)
 
         changed = cast(pad.StatelessSourcePad | None, self.get_pad("changed"))
         if not changed:
@@ -58,9 +55,10 @@ class String(node.Node):
                 id="changed",
                 group="changed",
                 owner_node=self,
-                type_constraints=[pad.types.String()],
+                default_type_constraints=[pad.types.String()],
             )
-            self.pads.append(changed)
+
+        self.pads = [set_pad, emit, value, changed]
 
     async def run(self):
         emit = cast(pad.StatelessSinkPad, self.get_pad_required("emit"))

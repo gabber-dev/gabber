@@ -19,7 +19,7 @@ class ProxyPropertySource(node.Node):
             primary="subgraph", secondary="source", tags=["property", "source"]
         )
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         proxy_pad = cast(pad.PropertySinkPad, self.get_pad("proxy"))
         if not proxy_pad:
             self.pads.append(
@@ -27,7 +27,7 @@ class ProxyPropertySource(node.Node):
                     id="proxy",
                     owner_node=self,
                     group="proxy",
-                    type_constraints=None,
+                    default_type_constraints=None,
                     value=None,
                 )
             )
@@ -40,7 +40,7 @@ class ProxyPropertySource(node.Node):
                     id="pad_id",
                     owner_node=self,
                     group="pad_id",
-                    type_constraints=[pad.types.String()],
+                    default_type_constraints=[pad.types.String()],
                     value=f"proxy_{short_uuid()}",
                 )
             )

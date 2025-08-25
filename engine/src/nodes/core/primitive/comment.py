@@ -18,14 +18,14 @@ class Comment(node.Node):
             tags=["documentation", "comment"],
         )
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         text = self.get_pad("text")
         if not text:
             text = pad.PropertySinkPad(
                 id="text",
                 owner_node=self,
                 group="text",
-                type_constraints=[pad.types.String()],
+                default_type_constraints=[pad.types.String()],
                 value="",
             )
             self.pads.append(text)

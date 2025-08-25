@@ -23,14 +23,14 @@ class Publish(node.Node):
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(primary="core", secondary="media", tags=["input", "stream"])
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         audio_source = cast(pad.StatelessSourcePad, self.get_pad("audio"))
         if not audio_source:
             audio_source = pad.StatelessSourcePad(
                 id="audio",
                 owner_node=self,
                 group="audio",
-                type_constraints=[pad.types.Audio()],
+                default_type_constraints=[pad.types.Audio()],
             )
 
         audio_enabled = cast(pad.PropertySourcePad, self.get_pad("audio_enabled"))
@@ -39,7 +39,7 @@ class Publish(node.Node):
                 id="audio_enabled",
                 owner_node=self,
                 group="audio_enabled",
-                type_constraints=[pad.types.Boolean()],
+                default_type_constraints=[pad.types.Boolean()],
                 value=False,
             )
 
@@ -49,7 +49,7 @@ class Publish(node.Node):
                 id="video",
                 owner_node=self,
                 group="video",
-                type_constraints=[pad.types.Video()],
+                default_type_constraints=[pad.types.Video()],
             )
 
         video_enabled = cast(pad.PropertySourcePad, self.get_pad("video_enabled"))
@@ -58,7 +58,7 @@ class Publish(node.Node):
                 id="video_enabled",
                 owner_node=self,
                 group="video_enabled",
-                type_constraints=[pad.types.Boolean()],
+                default_type_constraints=[pad.types.Boolean()],
                 value=False,
             )
 

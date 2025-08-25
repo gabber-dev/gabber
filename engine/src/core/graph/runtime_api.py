@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from core import node, pad, runtime_types
 import logging
 from core.editor import serialize
+from core.node import Node
 
 
 class RuntimeApi:
@@ -176,6 +177,11 @@ class RuntimeApi:
                     return
 
                 value = pad_obj.get_value()
+
+                # Don't get node references
+                if isinstance(value, Node):
+                    return
+
                 complete_resp.payload = RuntimeResponsePayload_GetValue(
                     type="get_value", value=value
                 )

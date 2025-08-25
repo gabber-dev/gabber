@@ -114,7 +114,7 @@ class Graph:
         node.editor_position = edit.editor_position
         node.editor_name = edit.editor_name
         node.editor_dimensions = edit.editor_dimensions
-        await self._propagate_update([node])
+        node.resolve_pads()
         self.nodes.append(node)
 
     async def _handle_insert_subgraph(self, edit: InsertSubGraphEdit):
@@ -142,7 +142,7 @@ class Graph:
         node.editor_position = edit.editor_position
         node.editor_name = edit.editor_name
         node.editor_dimensions = edit.editor_dimensions
-        await self._propagate_update([node])
+        node.resolve_pads()
         self.nodes.append(node)
 
     async def _handle_update_node(self, edit: UpdateNodeEdit):
@@ -173,8 +173,9 @@ class Graph:
         new_nodes = [n for n in self.nodes if n.id != edit.node_id]
         connected_nodes = node_to_remove.get_connected_nodes()
         node_to_remove.disconnect_all()
-        await self._propagate_update(connected_nodes)
         self.nodes = new_nodes
+        for n in connected_nodes:
+            n.resolve_pads()
 
     async def _handle_connect_pad(self, edit: ConnectPadEdit):
         source_node = next((n for n in self.nodes if n.id == edit.node), None)
@@ -191,8 +192,12 @@ class Graph:
         if not isinstance(source_pad, pad.SourcePad):
             raise ValueError("Source pad is not a source pad type.")
 
-        source_pad.connect(cast(Any, target_pad))
-        await self._propagate_update([source_node, target_node])
+        if not isinstance(target_pad, pad.SinkPad):
+            raise ValueError("Target pad is not a sink pad type.")
+
+        source_pad.connect(target_pad)
+        source_node.resolve_pads()
+        target_node.resolve_pads()
 
     async def _handle_disconnect_pad(self, edit: DisconnectPadEdit):
         source_node = next((n for n in self.nodes if n.id == edit.node), None)
@@ -214,7 +219,8 @@ class Graph:
             raise ValueError("Target pad is not a sink pad type.")
 
         source_pad.disconnect(target_pad)
-        await self._propagate_update([source_node, target_node])
+        source_node.resolve_pads()
+        target_node.resolve_pads()
 
     async def _handle_update_pad(self, edit: UpdatePadEdit):
         node = next((n for n in self.nodes if n.id == edit.node), None)
@@ -232,19 +238,7 @@ class Graph:
                 v = serialize.deserialize_pad_value(tcs[0], edit.value)
                 p.set_value(v)
 
-        await self._propagate_update([node])
-
-    async def _propagate_update(self, starting_nodes: list[Node]):
-        seen: set[str] = set()
-        stack: list[Node] = starting_nodes[:]
-        while stack:
-            node = stack.pop()
-            if node.id in seen:
-                continue
-            seen.add(node.id)
-            await node.resolve_pads()
-            connected_nodes = node.get_connected_nodes()
-            stack.extend(connected_nodes)
+        node.resolve_pads()
 
     def to_editor(self):
         nodes: list[models.NodeEditorRepresentation] = []
@@ -315,6 +309,7 @@ class Graph:
             node.editor_dimensions = node_data.editor_dimensions
 
             secret_options = await self.secret_provider.list_secrets()
+            node.resolve_pads()
             for pad_data in node_data.pads:
                 casted_allowed_types = cast(
                     list[pad.types.BasePadType] | None, pad_data.allowed_types
@@ -326,6 +321,7 @@ class Graph:
                             tc.options = secret_options
 
                 deserialized_value: Any | None = None
+                node_reference_pad = False
                 if pad_data.type.startswith("Property"):
                     if casted_allowed_types and len(casted_allowed_types) == 1:
                         tc = casted_allowed_types[0]
@@ -334,58 +330,26 @@ class Graph:
                                 tc, pad_data.value
                             )
                         else:
-                            # Keep the node reference id, it will be resolved later in this function
+                            node_reference_pad = True
                             deserialized_value = pad_data.value
 
-                if pad_data.type == "PropertySinkPad":
-                    pad_instance = pad.PropertySinkPad(
-                        id=pad_data.id,
-                        owner_node=node,
-                        group=pad_data.group,
-                        type_constraints=casted_allowed_types,
-                        value=deserialized_value,
+                pad_instance = node.get_pad(pad_data.id)
+                if not pad_instance:
+                    logging.warning(
+                        f"Pad with ID {pad_data.id} not found in node {node.id}."
                     )
-                    node.pads.append(pad_instance)
-                    if casted_allowed_types and len(casted_allowed_types) == 1:
-                        if isinstance(casted_allowed_types[0], pad.types.NodeReference):
-                            node_reference_pads.append(pad_instance)
-                elif pad_data.type == "PropertySourcePad":
-                    pad_instance = pad.PropertySourcePad(
-                        id=pad_data.id,
-                        owner_node=node,
-                        group=pad_data.group,
-                        type_constraints=casted_allowed_types,
-                        value=deserialized_value,
-                    )
-                    node.pads.append(pad_instance)
-                    if casted_allowed_types and len(casted_allowed_types) == 1:
-                        if isinstance(casted_allowed_types[0], pad.types.NodeReference):
-                            node_reference_pads.append(pad_instance)
-                elif pad_data.type == "StatelessSinkPad":
-                    pad_instance = pad.StatelessSinkPad(
-                        id=pad_data.id,
-                        owner_node=node,
-                        group=pad_data.group,
-                        type_constraints=casted_allowed_types,
-                    )
-                    node.pads.append(pad_instance)
-                elif pad_data.type == "StatelessSourcePad":
-                    pad_instance = pad.StatelessSourcePad(
-                        id=pad_data.id,
-                        owner_node=node,
-                        group=pad_data.group,
-                        type_constraints=casted_allowed_types,
-                    )
-                    node.pads.append(pad_instance)
+                    continue
+
+                if node_reference_pad:
+                    node_reference_pads.append(cast(pad.PropertyPad, pad_instance))
+
+                if isinstance(pad_instance, pad.PropertyPad):
+                    pad_instance.set_value(deserialized_value)
+
             self.nodes.append(node)
 
         node_lookup: dict[str, Node] = {n.id: n for n in self.nodes}
 
-        # TODO: We should harden the rules for pad type resolution.
-        # Perhaps we can even get to a place where pads are automatically typed so that nodes don't need
-        # the type logic (?).
-        # A resonable rule might be that source pads types drive the types of sink pads but never the other way around.
-        # This would allow us to build a dependency graph of nodes so that we can update them in order.
         for node_data in snapshot.nodes:
             for pad_data in node_data.pads:
                 prev_pad = pad_data.previous_pad
@@ -420,20 +384,25 @@ class Graph:
                     )
                     continue
                 source_pad.connect(target_pad)
+                source_node.resolve_pads()
+                target_node.resolve_pads()
 
             node_obj = node_lookup.get(node_data.id)
             if not node_obj:
                 logging.error(f"Node {node_data.id} not found in node lookup.")
                 continue
-            await self._propagate_update([node_obj])
 
-        for node_data in snapshot.nodes:
-            pass
+        for node in self.nodes:
+            node.resolve_pads()
+
+        for node in self.nodes:
+            for p in node.pads:
+                p._resolve_type_constraints()
+                node.resolve_pads()
 
         # Resolve node reference pads
         for p in node_reference_pads:
             self._resolve_node_reference_property(p, p.get_value(), node_lookup)
-            await self._propagate_update([p.get_owner_node()])
 
     def _resolve_node_reference_property(
         self, p: pad.PropertyPad, v: str, nodes: dict[str, Node]

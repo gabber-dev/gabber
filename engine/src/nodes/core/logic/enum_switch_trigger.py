@@ -15,23 +15,20 @@ class EnumSwitchTrigger(Node):
             primary="core", secondary="utility", tags=["switch", "enum"]
         )
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         sink = cast(pad.StatelessSinkPad, self.get_pad("sink"))
         if not sink:
             sink = pad.StatelessSinkPad(
                 id="sink",
                 group="sink",
                 owner_node=self,
-                type_constraints=[pad.types.Enum(options=[])],
+                default_type_constraints=[pad.types.Enum(options=None)],
             )
 
-        prev_pad = sink.get_previous_pad()
         options: list[str] = []
-        if prev_pad:
-            prev_tc = prev_pad.get_type_constraints()
-            if prev_tc and len(prev_tc) == 1 and isinstance(prev_tc[0], pad.types.Enum):
-                sink.set_type_constraints([pad.types.Enum(options=prev_tc[0].options)])
-                options = prev_tc[0].options if prev_tc[0].options else []
+        sink_tc = sink.get_type_constraints()
+        if sink_tc and isinstance(sink_tc[0], pad.types.Enum) and sink_tc[0].options:
+            options = sink_tc[0].options
 
         source_pads: list[pad.StatelessSourcePad] = []
         for o in options:
@@ -41,7 +38,7 @@ class EnumSwitchTrigger(Node):
                     id=o,
                     owner_node=self,
                     group="value",
-                    type_constraints=[pad.types.Trigger()],
+                    default_type_constraints=[pad.types.Trigger()],
                 )
             source_pads.append(s_p)
 

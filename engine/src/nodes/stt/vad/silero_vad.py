@@ -40,14 +40,14 @@ class SileroVAD(node.Node):
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(primary="ai", secondary="audio", tags=["vad", "detection"])
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         audio_sink = cast(pad.StatelessSinkPad, self.get_pad("audio"))
         if not audio_sink:
             audio_sink = pad.StatelessSinkPad(
                 id="audio",
                 group="audio",
                 owner_node=self,
-                type_constraints=[pad.types.Audio()],
+                default_type_constraints=[pad.types.Audio()],
             )
             self.pads.append(audio_sink)
 
@@ -57,7 +57,7 @@ class SileroVAD(node.Node):
                 id="audio_clip",
                 group="audio_clip",
                 owner_node=self,
-                type_constraints=[pad.types.AudioClip()],
+                default_type_constraints=[pad.types.AudioClip()],
             )
             self.pads.append(audio_clip_source)
 
@@ -69,7 +69,7 @@ class SileroVAD(node.Node):
                 id="speech_started_trigger",
                 group="speech_started_trigger",
                 owner_node=self,
-                type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad.types.Trigger()],
             )
             self.pads.append(speech_started_trigger)
 
@@ -81,7 +81,7 @@ class SileroVAD(node.Node):
                 id="speech_ended_trigger",
                 group="speech_ended_trigger",
                 owner_node=self,
-                type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad.types.Trigger()],
             )
             self.pads.append(speech_ended_trigger)
 
@@ -93,7 +93,7 @@ class SileroVAD(node.Node):
                 id="continued_speech_trigger",
                 group="continued_speech_trigger",
                 owner_node=self,
-                type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad.types.Trigger()],
             )
             self.pads.append(continued_speech_trigger)
 
@@ -103,7 +103,7 @@ class SileroVAD(node.Node):
                 id="vad_threshold",
                 group="vad_threshold",
                 owner_node=self,
-                type_constraints=[pad.types.Float(minimum=0.0, maximum=1.0)],
+                default_type_constraints=[pad.types.Float(minimum=0.0, maximum=1.0)],
                 value=0.5,
             )
             self.pads.append(vad_threshold)
@@ -116,7 +116,7 @@ class SileroVAD(node.Node):
                 id="silence_duration_ms",
                 group="silence_duration_ms",
                 owner_node=self,
-                type_constraints=[pad.types.Float(minimum=0.0, maximum=3000.0)],
+                default_type_constraints=[pad.types.Float(minimum=0.0, maximum=3000.0)],
                 value=500.0,
             )
             self.pads.append(silence_duration_ms)
@@ -129,7 +129,7 @@ class SileroVAD(node.Node):
                 id="speech_duration_ms",
                 group="speech_duration_ms",
                 owner_node=self,
-                type_constraints=[pad.types.Float(minimum=0.0, maximum=3000.0)],
+                default_type_constraints=[pad.types.Float(minimum=0.0, maximum=3000.0)],
                 value=400.0,
             )
             self.pads.append(speech_duration_ms)
@@ -142,7 +142,7 @@ class SileroVAD(node.Node):
                 id="pre_speech_duration_ms",
                 group="pre_speech_duration_ms",
                 owner_node=self,
-                type_constraints=[pad.types.Float(minimum=0.0, maximum=1000.0)],
+                default_type_constraints=[pad.types.Float(minimum=0.0, maximum=1000.0)],
                 value=100.0,
             )
             self.pads.append(pre_speech_duration_ms)

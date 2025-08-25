@@ -19,17 +19,16 @@ class ContextMessageZip(Node):
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(primary="ai", secondary="llm", tags=["context", "message"])
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         role = cast(PropertySinkPad, self.get_pad("role"))
         if not role:
             role = PropertySinkPad(
                 id="role",
                 group="role",
                 owner_node=self,
-                type_constraints=[types.ContextMessageRole()],
+                default_type_constraints=[types.ContextMessageRole()],
                 value=runtime_types.ContextMessageRole.SYSTEM,
             )
-            self.pads.append(role)
 
         message_source = cast(StatelessSourcePad, self.get_pad("context_message"))
         if not message_source:
@@ -37,11 +36,22 @@ class ContextMessageZip(Node):
                 id="context_message",
                 group="context_message",
                 owner_node=self,
-                type_constraints=[types.ContextMessage()],
+                default_type_constraints=[types.ContextMessage()],
             )
-            self.pads.append(message_source)
 
-        self._resolve_content_pads()
+        num_content_pads = self.get_pad("num_contents")
+        if not num_content_pads:
+            num_content_pads = PropertySinkPad(
+                id="num_contents",
+                group="config",
+                owner_node=self,
+                default_type_constraints=[types.Integer()],
+                value=1,
+            )
+
+        self.pads = [role, message_source, num_content_pads]
+        content_pads = self._resolve_content_pads()
+        self.pads = [role, message_source, num_content_pads] + content_pads
 
     def _resolve_content_pads(self):
         sink_default: list[pad.types.BasePadType] | None = [
@@ -50,40 +60,30 @@ class ContextMessageZip(Node):
             types.AVClip(),
             types.String(),
             types.Video(),
+            types.TextStream(),
         ]
-        content_pads = cast(
-            list[pad.StatelessSinkPad],
-            [p for p in self.pads if p.get_group() == "content"],
-        )
-        content_pads.sort(key=lambda p: p.get_id())
-        free_pads = 0
-        for content_pad in content_pads:
-            if content_pad.get_previous_pad() is None:
-                free_pads += 1
-
-        if free_pads == 0:
-            content_sink = StatelessSinkPad(
-                id=f"content_{len(content_pads)}",
-                group="content",
-                owner_node=self,
-                type_constraints=sink_default,
-            )
-            self.pads.append(content_sink)
-        elif free_pads > 1:
-            for cp in content_pads[::-1]:
-                if cp.get_previous_pad() is None:
-                    self.pads.remove(cp)
-                break
-
-        for content_pad in content_pads:
-            prev_pad = content_pad.get_previous_pad()
-            if prev_pad:
-                tcs = pad.types.INTERSECTION(
-                    prev_pad.get_type_constraints(), sink_default
+        num_content_pads = cast(
+            PropertySinkPad, self.get_pad_required("num_contents")
+        ).get_value() or 1
+        content_pads: list[pad.Pad] = []
+        for i in range(num_content_pads):
+            pad_id = f"content_{i}"
+            content_pad = self.get_pad(pad_id)
+            if not content_pad:
+                content_pad = StatelessSinkPad(
+                    id=pad_id,
+                    group="content",
+                    owner_node=self,
+                    default_type_constraints=sink_default,
                 )
-                content_pad.set_type_constraints(tcs)
-            else:
-                content_pad.set_type_constraints(sink_default)
+            content_pads.append(content_pad)
+
+        for p in self.pads:
+            if p.get_group() == "content":
+                if p not in content_pads:
+                    self.pads.remove(p)
+
+        return content_pads
 
     async def run(self):
         role_pad = cast(PropertySinkPad, self.get_pad_required("role"))
@@ -140,6 +140,15 @@ class ContextMessageZip(Node):
                         content.append(
                             runtime_types.ContextMessageContentItem_Text(
                                 content=item.value
+                            )
+                        )
+                    elif isinstance(item.value, runtime_types.TextStream):
+                        acc = ""
+                        async for chunk in item.value:
+                            acc += chunk
+                        content.append(
+                            runtime_types.ContextMessageContentItem_Text(
+                                content=acc
                             )
                         )
 

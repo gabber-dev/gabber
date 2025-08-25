@@ -78,13 +78,13 @@ class StateMachine(node.Node):
     def get_description(cls) -> str:
         return "Create logic to control the flow of your application based on parameter conditions."
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         configuration = cast(pad.PropertySinkPad, self.get_pad("configuration"))
         if not configuration:
             configuration = pad.PropertySinkPad(
                 id="configuration",
                 owner_node=self,
-                type_constraints=[pad.types.Object()],
+                default_type_constraints=[pad.types.Object()],
                 group="configuration",
                 value={"states": [], "transitions": []},
             )
@@ -95,7 +95,7 @@ class StateMachine(node.Node):
             num_parameters = pad.PropertySinkPad(
                 id="num_parameters",
                 owner_node=self,
-                type_constraints=[pad.types.Integer()],
+                default_type_constraints=[pad.types.Integer()],
                 group="num_parameters",
                 value=1,
             )
@@ -109,7 +109,7 @@ class StateMachine(node.Node):
             current_state = pad.PropertySourcePad(
                 id="current_state",
                 owner_node=self,
-                type_constraints=[pad.types.Enum(options=[])],
+                default_type_constraints=[pad.types.Enum(options=[])],
                 group="current_state",
                 value="",
             )
@@ -120,12 +120,12 @@ class StateMachine(node.Node):
             previous_state = pad.PropertySourcePad(
                 id="previous_state",
                 owner_node=self,
-                type_constraints=[pad.types.Enum(options=[])],
+                default_type_constraints=[pad.types.Enum(options=[])],
                 group="previous_state",
                 value="",
             )
             self.pads.append(previous_state)
-
+        
         # Ensure configuration has necessary keys and set entry_state if needed
         config_dict = configuration.get_value()
         cleaned_dict = {}
@@ -241,8 +241,8 @@ class StateMachine(node.Node):
         # Update current_state enum options and default value from configuration
         try:
             enum_options = [s.name for s in config.states]
-            previous_state.set_type_constraints([pad.types.Enum(options=enum_options)])
-            current_state.set_type_constraints([pad.types.Enum(options=enum_options)])
+            previous_state.set_default_type_constraints([pad.types.Enum(options=enum_options)])
+            current_state.set_default_type_constraints([pad.types.Enum(options=enum_options)])
 
             # Set current state value to entry state's name if present, else blank
             if config.entry_state:
@@ -261,7 +261,6 @@ class StateMachine(node.Node):
 
         self._resolve_num_pads()
         self._fix_missing_pads()
-        self._resolve_value_types()
         self._resolve_pad_mode()
         self._sort_and_rename_pads()
         self._resolve_condition_operators()
@@ -453,7 +452,7 @@ class StateMachine(node.Node):
                 name_pad = pad.PropertySinkPad(
                     id=f"parameter_name_{i}",
                     owner_node=self,
-                    type_constraints=[pad.types.String()],
+                    default_type_constraints=[pad.types.String()],
                     group="parameters",
                     value=None,
                 )
@@ -466,7 +465,7 @@ class StateMachine(node.Node):
                 value_pad = pad.PropertySinkPad(
                     id=f"parameter_value_{i}",
                     owner_node=self,
-                    type_constraints=ALL_PARAMETER_TYPES,
+                    default_type_constraints=ALL_PARAMETER_TYPES,
                     group="parameter_values",
                     value=None,
                 )
@@ -490,14 +489,14 @@ class StateMachine(node.Node):
             pad.PropertySinkPad(
                 id=f"parameter_name_{idx}",
                 owner_node=self,
-                type_constraints=[pad.types.String()],
+                default_type_constraints=[pad.types.String()],
                 group="parameters",
                 value=None,
             ),
             pad.PropertySinkPad(
                 id=f"parameter_value_{idx}",
                 owner_node=self,
-                type_constraints=ALL_PARAMETER_TYPES,
+                default_type_constraints=ALL_PARAMETER_TYPES,
                 group="parameter_values",
                 value=None,
             ),
@@ -523,17 +522,6 @@ class StateMachine(node.Node):
             p.disconnect()
             self.pads.remove(p)
 
-    def _resolve_value_types(self):
-        for i in self._get_parameter_indices():
-            _, value_pad = self._get_pads(i)
-            prev_pad = value_pad.get_previous_pad()
-            if prev_pad:
-                tcs = value_pad.get_type_constraints()
-                tcs = pad.types.INTERSECTION(tcs, prev_pad.get_type_constraints())
-                value_pad.set_type_constraints(tcs)
-            else:
-                value_pad.set_type_constraints(ALL_PARAMETER_TYPES)
-
     def _resolve_pad_mode(self):
         for idx, p in enumerate(self.pads):
             if p.get_id().startswith("parameter_value_"):
@@ -550,7 +538,7 @@ class StateMachine(node.Node):
                         new_pad = pad.StatelessSinkPad(
                             id=p.get_id(),
                             owner_node=self,
-                            type_constraints=tcs,
+                            default_type_constraints=tcs,
                             group=p.get_group(),
                         )
                         prev_pad.disconnect(p)
@@ -571,7 +559,7 @@ class StateMachine(node.Node):
                         new_pad = pad.PropertySinkPad(
                             id=p.get_id(),
                             owner_node=self,
-                            type_constraints=tcs,
+                            default_type_constraints=tcs,
                             group=p.get_group(),
                         )
                         if prev_pad:

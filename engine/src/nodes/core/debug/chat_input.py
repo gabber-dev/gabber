@@ -18,16 +18,17 @@ class ChatInput(node.Node):
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(primary="core", secondary="debug", tags=["input", "text"])
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         output = cast(pad.StatelessSourcePad | None, self.get_pad("output"))
         if output is None:
             output = pad.StatelessSourcePad(
                 id="output",
                 owner_node=self,
                 group="text",
-                type_constraints=[pad.types.String()],
+                default_type_constraints=[pad.types.String()],
             )
-            self.pads.append(output)
+        
+        self.pads = [output]
 
     async def run(self):
         pass

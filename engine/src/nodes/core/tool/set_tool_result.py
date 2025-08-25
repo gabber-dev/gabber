@@ -16,13 +16,13 @@ class SetToolResult(node.Node):
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(primary="core", secondary="tools", tags=["result", "set"])
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         sink = cast(pad.StatelessSinkPad, self.get_pad("result"))
         if not sink:
             sink = pad.StatelessSinkPad(
                 id="result",
                 owner_node=self,
-                type_constraints=[pad.types.String(max_length=1024)],
+                default_type_constraints=[pad.types.String(max_length=1024)],
                 group="result",
             )
             self.pads.append(sink)
