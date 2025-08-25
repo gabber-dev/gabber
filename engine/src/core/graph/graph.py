@@ -192,9 +192,15 @@ class Graph:
         if not isinstance(source_pad, pad.SourcePad):
             raise ValueError("Source pad is not a source pad type.")
 
-        source_pad.connect(cast(Any, target_pad))
+        if not isinstance(target_pad, pad.SinkPad):
+            raise ValueError("Target pad is not a sink pad type.")
+
+        logging.info(f"NEIL {source_pad} -> {target_pad}. {source_pad.get_default_type_constraints()} -> {target_pad.get_default_type_constraints()}",)
+        source_pad.connect(target_pad)
+        logging.info(f"NEIL 2 {source_pad} -> {target_pad}. {source_pad.get_default_type_constraints()} -> {target_pad.get_default_type_constraints()}",)
         source_node.resolve_pads()
         target_node.resolve_pads()
+        logging.info(f"NEIL 3 {source_pad} -> {target_pad}. {source_pad.get_default_type_constraints()} -> {target_pad.get_default_type_constraints()}",)
 
     async def _handle_disconnect_pad(self, edit: DisconnectPadEdit):
         source_node = next((n for n in self.nodes if n.id == edit.node), None)
@@ -389,6 +395,7 @@ class Graph:
         for node in self.nodes:
             for p in node.pads:
                 p._resolve_type_constraints()
+                node.resolve_pads()
 
         # Resolve node reference pads
         for p in node_reference_pads:

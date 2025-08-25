@@ -22,7 +22,7 @@ class EnumSwitchTrigger(Node):
                 id="sink",
                 group="sink",
                 owner_node=self,
-                default_type_constraints=[pad.types.Enum(options=[])],
+                default_type_constraints=[pad.types.Enum(options=None)],
             )
 
         options: list[str] = []

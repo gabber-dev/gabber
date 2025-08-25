@@ -125,7 +125,7 @@ class StateMachine(node.Node):
                 value="",
             )
             self.pads.append(previous_state)
-
+        
         # Ensure configuration has necessary keys and set entry_state if needed
         config_dict = configuration.get_value()
         cleaned_dict = {}
