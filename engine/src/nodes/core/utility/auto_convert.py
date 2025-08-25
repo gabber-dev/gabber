@@ -28,7 +28,6 @@ class AutoConvert(Node):
                 group="sink",
                 default_type_constraints=None,
             )
-            self.pads.append(sink)
 
         source = cast(pad.StatelessSourcePad, self.get_pad("source"))
         if not source:
@@ -38,17 +37,8 @@ class AutoConvert(Node):
                 group="source",
                 default_type_constraints=None,
             )
-            self.pads.append(source)
-        prev_pad = sink.get_previous_pad()
-        if prev_pad:
-            sink.set_type_constraints(prev_pad.get_type_constraints())
 
-        if source.get_next_pads():
-            tcs = None
-            for np in source.get_next_pads():
-                np_tcs = np.get_type_constraints()
-                tcs = pad.types.INTERSECTION(tcs, np_tcs)
-            source.set_type_constraints(tcs)
+        self.pads = [sink, source]
 
     async def run(self):
         sink = cast(pad.StatelessSinkPad, self.get_pad_required("sink"))
