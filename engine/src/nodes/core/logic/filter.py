@@ -40,13 +40,7 @@ class Filter(Node):
                 default_type_constraints=None,
             )
 
-        prev_pad = sink.get_previous_pad()
-        if prev_pad:
-            prev_tc = prev_pad.get_type_constraints()
-            tcs = pad.types.INTERSECTION(prev_tc, sink.get_type_constraints())
-            sink.set_type_constraints(tcs)
-            source.set_type_constraints(tcs)
-
+        sink.link_types_to_pad(source)
         self.pads = [sink, open_pad, source]
 
     async def run(self):
