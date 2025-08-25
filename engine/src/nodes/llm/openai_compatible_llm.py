@@ -24,7 +24,13 @@ class OpenAICompatibleLLM(BaseLLM):
         return True
 
     def base_url(self) -> str:
-        return "https://api.openai.com/v1"
+        base_url_pad = cast(pad.PropertySinkPad, self.get_pad_required("base_url"))
+        base_url_value = base_url_pad.get_value()
+
+        if isinstance(base_url_value, str):
+            return base_url_value
+        else:
+            return "https://api.openai.com/v1"
 
     def model(self) -> str:
         model_pad = cast(pad.PropertySinkPad, self.get_pad_required("model"))
