@@ -29,7 +29,6 @@ class Ticker(node.Node):
                 default_type_constraints=[pad.types.Integer(minimum=0)],
                 value=0,
             )
-            self.pads.append(tick)
 
         interval_ms = cast(pad.PropertySinkPad, self.get_pad("interval_ms"))
         if not interval_ms:
@@ -40,7 +39,6 @@ class Ticker(node.Node):
                 default_type_constraints=[pad.types.Integer(minimum=0)],
                 value=1000,
             )
-            self.pads.append(interval_ms)
 
         reset = cast(pad.StatelessSinkPad, self.get_pad("reset"))
         if not reset:
@@ -50,7 +48,6 @@ class Ticker(node.Node):
                 owner_node=self,
                 default_type_constraints=[pad.types.Trigger()],
             )
-            self.pads.append(reset)
 
         active = cast(pad.PropertySinkPad, self.get_pad("active"))
         if not active:
@@ -61,7 +58,6 @@ class Ticker(node.Node):
                 default_type_constraints=[pad.types.Boolean()],
                 value=True,
             )
-            self.pads.append(active)
 
         self.pads = [tick, interval_ms, active, reset]
 
