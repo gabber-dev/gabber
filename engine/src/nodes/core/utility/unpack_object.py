@@ -45,7 +45,7 @@ class UnpackObject(Node):
         if not prev_schema:
             raise ValueError("Previous pad Object type must have a schema.")
 
-        sink.set_type_constraints([pad.types.Object(object_schema=prev_schema)])
+        sink.set_default_type_constraints([pad.types.Object(object_schema=prev_schema)])
         self.resolve_output_pads(prev_schema)
 
     def resolve_output_pads(self, schema: dict[str, Any]):
@@ -55,7 +55,7 @@ class UnpackObject(Node):
         for key, pad_type in pad_types.items():
             output_pad = next((p for p in output_pads if p.get_id() == key), None)
             if output_pad:
-                output_pad.set_type_constraints([pad_type])
+                output_pad.set_default_type_constraints([pad_type])
             else:
                 output_pad = pad.StatelessSourcePad(
                     id=f"{key}",
