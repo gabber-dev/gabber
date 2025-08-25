@@ -95,7 +95,7 @@ function FlowEditInner() {
           ${isNodeLibraryOpen ? "translate-x-0" : "translate-x-full"}
         `}
       >
-        <NodeLibrary setIsModalOpen={setIsNodeLibraryOpen} />
+        <NodeLibrary setIsModalOpen={setIsNodeLibraryOpen} isOpen={isNodeLibraryOpen} />
       </div>
 
       {connectionStatus && (
