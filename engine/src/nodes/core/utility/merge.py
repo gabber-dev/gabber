@@ -42,15 +42,16 @@ class Merge(Node):
         for i in range(num_sink_pads.get_value() or 1):
             logging.info(f"NEIL Ensuring sink pad {i} exists")
             pad_id = f"sink_{i}"
-            if not self.get_pad(pad_id):
-                new_pad = pad.PropertySinkPad(
+            sp = self.get_pad(pad_id)
+            if not sp:
+                sp = pad.PropertySinkPad(
                     id=pad_id,
                     owner_node=self,
                     default_type_constraints=None,
                     group="sink",
                 )
-                sink_pads.append(new_pad)
-                new_pad.link_types_to_pad(source_pad)
+                sp.link_types_to_pad(source_pad)
+            sink_pads.append(sp)
 
         for p in self.pads:
             if p.get_id().startswith("sink_") and p not in sink_pads:
