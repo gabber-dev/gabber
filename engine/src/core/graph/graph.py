@@ -304,9 +304,6 @@ class Graph:
                 casted_allowed_types = cast(
                     list[pad.types.BasePadType] | None, pad_data.allowed_types
                 )
-                casted_default_types = cast(
-                    list[pad.types.BasePadType] | None, pad_data.default_types
-                )
 
                 if isinstance(casted_allowed_types, list):
                     for tc in casted_allowed_types:

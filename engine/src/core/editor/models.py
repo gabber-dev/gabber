@@ -144,7 +144,6 @@ class PadEditorRepresentation(BaseModel):
     next_pads: list[PadReference]
     previous_pad: PadReference | None = None
     allowed_types: list[types.PadType] | None = None
-    default_types: list[types.PadType] | None = None
 
     class Config:
         # Enable arbitrary types to allow Any

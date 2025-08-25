@@ -25,6 +25,7 @@ class CreateContextMessage(Node):
             types.AVClip(),
             types.String(),
             types.Video(),
+            types.TextStream(),
         ]
         role = cast(PropertySinkPad, self.get_pad("role"))
         if not role:
@@ -57,14 +58,6 @@ class CreateContextMessage(Node):
             )
             self.pads.append(message_source)
 
-        prev_pad = content_sink.get_previous_pad()
-        if prev_pad:
-            sink_default = pad.types.INTERSECTION(
-                prev_pad.get_type_constraints(), sink_default
-            )
-
-        content_sink.set_type_constraints(sink_default)
-
     async def run(self):
         content_sink = cast(StatelessSinkPad, self.get_pad_required("content"))
         role_pad = cast(PropertySinkPad, self.get_pad_required("role"))
@@ -96,6 +89,13 @@ class CreateContextMessage(Node):
             elif isinstance(item.value, str):
                 content.append(
                     runtime_types.ContextMessageContentItem_Text(content=item.value)
+                )
+            elif isinstance(item.value, runtime_types.TextStream):
+                acc = ""
+                async for chunk in item.value:
+                    acc += chunk
+                content.append(
+                    runtime_types.ContextMessageContentItem_Text(content=acc)
                 )
 
             if len(content) > 0:

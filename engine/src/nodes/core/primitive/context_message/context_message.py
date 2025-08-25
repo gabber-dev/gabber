@@ -32,7 +32,6 @@ class ContextMessage(Node):
                 default_type_constraints=[types.ContextMessageRole()],
                 value=runtime_types.ContextMessageRole.SYSTEM,
             )
-            self.pads.append(role)
 
         content_sink = cast(PropertySinkPad, self.get_pad("content"))
         if not content_sink:
@@ -43,7 +42,6 @@ class ContextMessage(Node):
                 default_type_constraints=[types.String()],
                 value="You are a helpful assistant.",
             )
-            self.pads.append(content_sink)
 
         message_source = cast(PropertySourcePad, self.get_pad("context_message"))
         if not message_source:
@@ -62,7 +60,12 @@ class ContextMessage(Node):
                     tool_calls=[],
                 ),
             )
-            self.pads.append(message_source)
+
+        self.pads = [
+            role,
+            content_sink,
+            message_source,
+        ]
 
         val = content_sink.get_value()
         if val is None:
