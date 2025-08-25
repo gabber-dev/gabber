@@ -27,7 +27,8 @@ class ChatInput(node.Node):
                 group="text",
                 default_type_constraints=[pad.types.String()],
             )
-            self.pads.append(output)
+        
+        self.pads = [output]
 
     async def run(self):
         pass

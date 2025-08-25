@@ -23,40 +23,33 @@ class FPS(Node):
     def resolve_pads(self):
         sink = cast(StatelessSinkPad, self.get_pad("video_in"))
         if not sink:
-            self.pads.append(
-                StatelessSinkPad(
+            sink = StatelessSinkPad(
                     id="video_in",
                     owner_node=self,
                     default_type_constraints=[types.Video()],
                     group="video_in",
                 )
-            )
-            sink = cast(StatelessSinkPad, self.get_pad("video_in"))
 
         source = cast(StatelessSourcePad, self.get_pad("video_out"))
         if not source:
-            self.pads.append(
-                StatelessSourcePad(
+            source = StatelessSourcePad(
                     id="video_out",
                     owner_node=self,
                     default_type_constraints=[types.Video()],
                     group="video_out",
                 )
-            )
-            source = cast(StatelessSourcePad, self.get_pad("video_out"))
 
         fps_sink = cast(PropertySinkPad, self.get_pad("fps"))
         if not fps_sink:
-            self.pads.append(
-                PropertySinkPad(
+            fps_sink = PropertySinkPad(
                     id="fps",
                     owner_node=self,
                     default_type_constraints=[types.Float(minimum=0.0, maximum=30.0)],
                     group="fps",
                     value=0.5,
                 )
-            )
-            fps_sink = cast(PropertySinkPad, self.get_pad("fps"))
+        
+        self.pads = [sink, source, fps_sink]
 
     async def run(self):
         sink = cast(StatelessSinkPad, self.get_pad_required("video_in"))
