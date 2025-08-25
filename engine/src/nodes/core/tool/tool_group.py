@@ -29,6 +29,9 @@ class ToolGroup(node.Node):
             if not isinstance(p, pad.PropertySinkPad):
                 continue
 
+            if p.get_group() != "tool":
+                continue
+
             if not p.get_value():
                 continue
 
