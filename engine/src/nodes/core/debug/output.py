@@ -24,7 +24,7 @@ class Output(Node):
         )
 
     def resolve_pads(self):
-        audio = cast(pad.StatelessSinkPad, self.get_pad("audio_sink"))
+        audio = cast(pad.StatelessSinkPad, self.get_pad("audio"))
         if not audio:
             audio = pad.StatelessSinkPad(
                     id="audio",
@@ -32,7 +32,7 @@ class Output(Node):
                     default_type_constraints=[pad.types.Audio()],
                     group="audio",
                 )
-        video = cast(pad.StatelessSinkPad, self.get_pad("video_sink"))
+        video = cast(pad.StatelessSinkPad, self.get_pad("video"))
         if not video:
             video = pad.StatelessSinkPad(
                     id="video",
