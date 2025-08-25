@@ -241,8 +241,8 @@ class StateMachine(node.Node):
         # Update current_state enum options and default value from configuration
         try:
             enum_options = [s.name for s in config.states]
-            previous_state.set_type_constraints([pad.types.Enum(options=enum_options)])
-            current_state.set_type_constraints([pad.types.Enum(options=enum_options)])
+            previous_state.set_default_type_constraints([pad.types.Enum(options=enum_options)])
+            current_state.set_default_type_constraints([pad.types.Enum(options=enum_options)])
 
             # Set current state value to entry state's name if present, else blank
             if config.entry_state:
