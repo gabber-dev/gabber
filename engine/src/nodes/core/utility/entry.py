@@ -16,7 +16,7 @@ class Entry(Node):
                 id="trigger",
                 group="trigger",
                 owner_node=self,
-                type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad.types.Trigger()],
             )
             self.pads.append(trigger)
 

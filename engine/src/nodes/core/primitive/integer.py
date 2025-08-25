@@ -26,7 +26,7 @@ class Integer(node.Node):
                 id="set",
                 owner_node=self,
                 group="set",
-                type_constraints=[pad.types.Integer()],
+                default_type_constraints=[pad.types.Integer()],
             )
 
         emit = cast(pad.StatelessSinkPad | None, self.get_pad("emit"))
@@ -35,7 +35,7 @@ class Integer(node.Node):
                 id="emit",
                 owner_node=self,
                 group="emit",
-                type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad.types.Trigger()],
             )
 
         value = cast(pad.PropertySourcePad | None, self.get_pad("value"))
@@ -44,7 +44,7 @@ class Integer(node.Node):
                 id="value",
                 group="value",
                 owner_node=self,
-                type_constraints=[pad.types.Integer()],
+                default_type_constraints=[pad.types.Integer()],
                 value=0,
             )
 
@@ -54,7 +54,7 @@ class Integer(node.Node):
                 id="changed",
                 group="changed",
                 owner_node=self,
-                type_constraints=[pad.types.Integer()],
+                default_type_constraints=[pad.types.Integer()],
             )
 
         increment = cast(pad.StatelessSinkPad | None, self.get_pad("increment"))
@@ -63,7 +63,7 @@ class Integer(node.Node):
                 id="increment",
                 group="increment",
                 owner_node=self,
-                type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad.types.Trigger()],
             )
 
         decrement = cast(pad.StatelessSinkPad | None, self.get_pad("decrement"))
@@ -72,7 +72,7 @@ class Integer(node.Node):
                 id="decrement",
                 group="decrement",
                 owner_node=self,
-                type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad.types.Trigger()],
             )
 
         self.pads = [set_pad, emit, value, changed, increment, decrement]

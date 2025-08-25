@@ -23,7 +23,7 @@ class Noop(Node):
                 id="sink",
                 owner_node=self,
                 group="sink",
-                type_constraints=None,
+                default_type_constraints=None,
             )
             self.pads.append(sink)
 
@@ -33,7 +33,7 @@ class Noop(Node):
                 id="source",
                 owner_node=self,
                 group="source",
-                type_constraints=None,
+                default_type_constraints=None,
             )
             self.pads.append(source)
         tcs: list[pad.types.BasePadType] | None = None

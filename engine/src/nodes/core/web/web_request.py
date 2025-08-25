@@ -17,7 +17,7 @@ class WebRequest(Node):
                 id="url",
                 group="url",
                 owner_node=self,
-                type_constraints=[pad.types.String()],
+                default_type_constraints=[pad.types.String()],
                 value="https://example-url.test",
             )
             self.pads.append(url)
@@ -28,7 +28,7 @@ class WebRequest(Node):
                 id="method",
                 group="method",
                 owner_node=self,
-                type_constraints=[
+                default_type_constraints=[
                     pad.types.Enum(options=["GET", "POST", "PUT", "PATCH", "DELETE"])
                 ],
                 value="GET",
@@ -41,7 +41,7 @@ class WebRequest(Node):
                 id="max_retries",
                 group="max_retries",
                 owner_node=self,
-                type_constraints=[pad.types.Integer()],
+                default_type_constraints=[pad.types.Integer()],
                 value=3,
             )
             self.pads.append(max_retries)
@@ -54,7 +54,7 @@ class WebRequest(Node):
                 id="authorization_type",
                 group="authorization_type",
                 owner_node=self,
-                type_constraints=[
+                default_type_constraints=[
                     pad.types.Enum(options=["None", "Bearer Token", "API Key"])
                 ],
                 value="None",
@@ -67,7 +67,7 @@ class WebRequest(Node):
                 id="response_type",
                 group="response_type",
                 owner_node=self,
-                type_constraints=[
+                default_type_constraints=[
                     pad.types.Enum(
                         options=[
                             "application/json",
@@ -85,7 +85,7 @@ class WebRequest(Node):
                 id="bearer_token",
                 group="bearer_token",
                 owner_node=self,
-                type_constraints=[pad.types.Secret(options=self.secrets)],
+                default_type_constraints=[pad.types.Secret(options=self.secrets)],
                 value="",
             )
             self.pads.append(bearer_token)
@@ -96,7 +96,7 @@ class WebRequest(Node):
                 id="api_header_key",
                 group="api_header_key",
                 owner_node=self,
-                type_constraints=[pad.types.String()],
+                default_type_constraints=[pad.types.String()],
                 value="",
             )
             self.pads.append(api_header_key)
@@ -107,7 +107,7 @@ class WebRequest(Node):
                 id="api_value",
                 group="api_value",
                 owner_node=self,
-                type_constraints=[pad.types.Secret(options=self.secrets)],
+                default_type_constraints=[pad.types.Secret(options=self.secrets)],
                 value="",
             )
             self.pads.append(api_value)
@@ -118,7 +118,7 @@ class WebRequest(Node):
                 id="response",
                 group="response",
                 owner_node=self,
-                type_constraints=None,
+                default_type_constraints=None,
             )
             self.pads.append(response)
 
@@ -128,7 +128,7 @@ class WebRequest(Node):
                 id="error_response",
                 group="error_response",
                 owner_node=self,
-                type_constraints=[pad.types.String()],
+                default_type_constraints=[pad.types.String()],
             )
             self.pads.append(error_response)
 
@@ -138,7 +138,7 @@ class WebRequest(Node):
                 id="request_body",
                 group="request_body",
                 owner_node=self,
-                type_constraints=[pad.types.Object()],
+                default_type_constraints=[pad.types.Object()],
             )
             self.pads.append(request_body)
 
@@ -148,7 +148,7 @@ class WebRequest(Node):
                 id="query_params",
                 group="query_params",
                 owner_node=self,
-                type_constraints=[pad.types.Object()],
+                default_type_constraints=[pad.types.Object()],
             )
             self.pads.append(query_params)
 

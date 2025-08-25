@@ -27,7 +27,7 @@ class ProxyStatelessSource(node.Node):
                     id="proxy",
                     owner_node=self,
                     group="proxy",
-                    type_constraints=None,
+                    default_type_constraints=None,
                 )
             )
             proxy_pad = cast(pad.StatelessSinkPad, self.get_pad("proxy"))
@@ -39,7 +39,7 @@ class ProxyStatelessSource(node.Node):
                     id="pad_id",
                     owner_node=self,
                     group="pad_id",
-                    type_constraints=[pad.types.String()],
+                    default_type_constraints=[pad.types.String()],
                     value=f"proxy_{short_uuid()}",
                 )
             )

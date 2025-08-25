@@ -19,7 +19,7 @@ class Filter(Node):
                 id="sink",
                 group="sink",
                 owner_node=self,
-                type_constraints=None,
+                default_type_constraints=None,
             )
 
         open_pad = cast(pad.PropertySinkPad, self.get_pad("open"))
@@ -28,7 +28,7 @@ class Filter(Node):
                 id="open",
                 group="open",
                 owner_node=self,
-                type_constraints=[pad.types.Boolean()],
+                default_type_constraints=[pad.types.Boolean()],
             )
 
         source = cast(pad.StatelessSourcePad, self.get_pad("source"))
@@ -37,7 +37,7 @@ class Filter(Node):
                 id="source",
                 group="source",
                 owner_node=self,
-                type_constraints=None,
+                default_type_constraints=None,
             )
 
         prev_pad = sink.get_previous_pad()

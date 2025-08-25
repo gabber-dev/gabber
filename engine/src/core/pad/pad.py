@@ -15,7 +15,12 @@ if TYPE_CHECKING:
 
 
 class Pad(Protocol):
-    _update_handlers: set[Callable[["Pad", Any], None]] = set()
+    _update_handlers: set[Callable[["Pad", Any], None]]
+    _pad_links: set["Pad"]
+
+    def __init__(self):
+        self._update_handlers = set()
+        self._pad_links = set()
 
     def get_id(self) -> str: ...
     def set_id(self, id: str) -> None: ...
@@ -23,7 +28,12 @@ class Pad(Protocol):
     def get_editor_type(self) -> str: ...
     def set_type_constraints(self, constraints: list[BasePadType] | None) -> None: ...
     def get_type_constraints(self) -> list[BasePadType] | None: ...
+    def get_default_type_constraints(self) -> list[BasePadType] | None: ...
     def get_owner_node(self) -> "Node": ...
+    def link_types_to_pad(self, other: "Pad") -> None:
+        self._pad_links.add(other)
+        other._pad_links.add(self)
+        self._resolve_type_constraints()
 
     def _add_update_handler(self, handler: Callable[["Pad", Any], None]):
         self._update_handlers.add(handler)
@@ -38,6 +48,48 @@ class Pad(Protocol):
                 handler(self, value)
             except Exception as e:
                 logging.error(f"Error in update handler {handler}: {e}")
+
+    def _resolve_type_constraints(self) -> None:
+        intersection = self.get_default_type_constraints()
+        for p in self._pad_links:
+            intersection = INTERSECTION(intersection, p.get_default_type_constraints())
+
+        all_pads: list[Pad] = []
+        q: list[Pad] = [self]
+        seen = set()
+        while q:
+            current = q.pop(0)
+            if current in seen:
+                continue
+            seen.add(current)
+            all_pads.append(current)
+            for p in current._pad_links:
+                if p not in all_pads:
+                    q.append(p)
+
+            if isinstance(current, SourcePad):
+                next_pads = current.get_next_pads()
+                for np in next_pads:
+                    if np not in all_pads:
+                        q.append(np)
+            elif isinstance(current, SinkPad):
+                prev_pad = current.get_previous_pad()
+                if prev_pad and prev_pad not in all_pads:
+                    q.append(prev_pad)
+
+        intersection = self.get_default_type_constraints()
+        for p in all_pads:
+            intersection = INTERSECTION(intersection, p.get_default_type_constraints())
+
+        for p in all_pads:
+            p.set_type_constraints(intersection)
+
+        logging.info(
+            "NEIL Resolving type constraints for pad %s - %s - %s",
+            self.get_id(),
+            self._pad_links,
+            intersection,
+        )
 
 
 @runtime_checkable
@@ -118,8 +170,7 @@ class SourcePad(Pad, Protocol):
         self.set_next_pads(next_pads)
         sink_pad.set_previous_pad(self)
 
-        tcs = INTERSECTION(self.get_type_constraints(), sink_pad.get_type_constraints())
-        sink_pad.set_type_constraints(tcs)
+        self._resolve_type_constraints()
 
         if isinstance(self, PropertyPad):
             v = self.get_value()
@@ -132,6 +183,8 @@ class SourcePad(Pad, Protocol):
         next_pads = [np for np in next_pads if np.get_id() != sink_pad.get_id()]
         self.set_next_pads(next_pads)
         sink_pad.set_previous_pad(None)
+        self._resolve_type_constraints()
+        sink_pad._resolve_type_constraints()
 
     def can_connect(self, other: "Pad") -> bool:
         if not isinstance(other, SinkPad):

@@ -27,7 +27,7 @@ class String(node.Node):
                 id="set",
                 owner_node=self,
                 group="set",
-                type_constraints=[pad.types.String()],
+                default_type_constraints=[pad.types.String()],
             )
             self.pads.append(set_pad)
 
@@ -37,7 +37,7 @@ class String(node.Node):
                 id="emit",
                 owner_node=self,
                 group="emit",
-                type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad.types.Trigger()],
             )
             self.pads.append(emit)
 
@@ -47,7 +47,7 @@ class String(node.Node):
                 id="value",
                 group="value",
                 owner_node=self,
-                type_constraints=[pad.types.String()],
+                default_type_constraints=[pad.types.String()],
                 value="",
             )
             self.pads.append(value)
@@ -58,7 +58,7 @@ class String(node.Node):
                 id="changed",
                 group="changed",
                 owner_node=self,
-                type_constraints=[pad.types.String()],
+                default_type_constraints=[pad.types.String()],
             )
             self.pads.append(changed)
 

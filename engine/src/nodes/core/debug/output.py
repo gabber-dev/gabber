@@ -30,7 +30,7 @@ class Output(Node):
                 pad.StatelessSinkPad(
                     id="audio_sink",
                     owner_node=self,
-                    type_constraints=[pad.types.Audio()],
+                    default_type_constraints=[pad.types.Audio()],
                     group="audio_sink",
                 )
             )
@@ -41,7 +41,7 @@ class Output(Node):
                 pad.StatelessSinkPad(
                     id="video_sink",
                     owner_node=self,
-                    type_constraints=[pad.types.Video()],
+                    default_type_constraints=[pad.types.Video()],
                     group="video_sink",
                 )
             )

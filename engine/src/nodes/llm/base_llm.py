@@ -32,7 +32,7 @@ class BaseLLM(node.Node, ABC):
                 id="run_trigger",
                 group="run_trigger",
                 owner_node=self,
-                type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad.types.Trigger()],
             )
             self.pads.append(run_trigger)
 
@@ -42,7 +42,7 @@ class BaseLLM(node.Node, ABC):
                 id="started",
                 group="started",
                 owner_node=self,
-                type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad.types.Trigger()],
             )
             self.pads.append(started_source)
 
@@ -54,7 +54,7 @@ class BaseLLM(node.Node, ABC):
                 id="tool_calls_started",
                 group="tool_calls_started",
                 owner_node=self,
-                type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad.types.Trigger()],
             )
             self.pads.append(tool_calls_started_source)
 
@@ -66,7 +66,7 @@ class BaseLLM(node.Node, ABC):
                 id="tool_calls_finished",
                 group="tool_calls_finished",
                 owner_node=self,
-                type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad.types.Trigger()],
             )
             self.pads.append(tool_calls_finished_source)
 
@@ -76,7 +76,7 @@ class BaseLLM(node.Node, ABC):
                 id="first_token",
                 group="first_token",
                 owner_node=self,
-                type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad.types.Trigger()],
             )
             self.pads.append(first_token_source)
 
@@ -86,7 +86,7 @@ class BaseLLM(node.Node, ABC):
                 id="text_stream",
                 group="text_stream",
                 owner_node=self,
-                type_constraints=[pad.types.TextStream()],
+                default_type_constraints=[pad.types.TextStream()],
             )
             self.pads.append(text_stream_source)
 
@@ -98,7 +98,7 @@ class BaseLLM(node.Node, ABC):
                 id="thinking_stream",
                 group="thinking_stream",
                 owner_node=self,
-                type_constraints=[pad.types.TextStream()],
+                default_type_constraints=[pad.types.TextStream()],
             )
             self.pads.append(thinking_stream_source)
 
@@ -110,7 +110,7 @@ class BaseLLM(node.Node, ABC):
                 id="context_message",
                 group="context_message",
                 owner_node=self,
-                type_constraints=[pad.types.ContextMessage()],
+                default_type_constraints=[pad.types.ContextMessage()],
             )
             self.pads.append(context_message_source)
 
@@ -120,7 +120,7 @@ class BaseLLM(node.Node, ABC):
                 id="finished",
                 group="finished",
                 owner_node=self,
-                type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad.types.Trigger()],
             )
             self.pads.append(finished_source)
 
@@ -130,7 +130,7 @@ class BaseLLM(node.Node, ABC):
                 id="cancel_trigger",
                 group="cancel_trigger",
                 owner_node=self,
-                type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad.types.Trigger()],
             )
             self.pads.append(cancel_trigger)
 
@@ -140,7 +140,7 @@ class BaseLLM(node.Node, ABC):
                 id="context",
                 group="context",
                 owner_node=self,
-                type_constraints=[
+                default_type_constraints=[
                     pad.types.List(item_type_constraints=[pad.types.ContextMessage()])
                 ],
                 value=[
@@ -164,7 +164,7 @@ class BaseLLM(node.Node, ABC):
                     id="tool_group",
                     group="tool_group",
                     owner_node=self,
-                    type_constraints=[
+                    default_type_constraints=[
                         pad.types.NodeReference(node_types=["ToolGroup"])
                     ],
                     value=None,

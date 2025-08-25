@@ -26,7 +26,7 @@ class Ticker(node.Node):
                 id="tick",
                 group="tick",
                 owner_node=self,
-                type_constraints=[pad.types.Integer(minimum=0)],
+                default_type_constraints=[pad.types.Integer(minimum=0)],
                 value=0,
             )
             self.pads.append(tick)
@@ -37,7 +37,7 @@ class Ticker(node.Node):
                 id="interval_ms",
                 group="interval_ms",
                 owner_node=self,
-                type_constraints=[pad.types.Integer(minimum=0)],
+                default_type_constraints=[pad.types.Integer(minimum=0)],
                 value=1000,
             )
             self.pads.append(interval_ms)
@@ -48,7 +48,7 @@ class Ticker(node.Node):
                 id="reset",
                 group="reset",
                 owner_node=self,
-                type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad.types.Trigger()],
             )
             self.pads.append(reset)
 
@@ -58,7 +58,7 @@ class Ticker(node.Node):
                 id="active",
                 group="active",
                 owner_node=self,
-                type_constraints=[pad.types.Boolean()],
+                default_type_constraints=[pad.types.Boolean()],
                 value=True,
             )
             self.pads.append(active)

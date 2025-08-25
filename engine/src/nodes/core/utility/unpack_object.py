@@ -22,7 +22,7 @@ class UnpackObject(Node):
                 id="sink",
                 group="sink",
                 owner_node=self,
-                type_constraints=[pad.types.Object()],
+                default_type_constraints=[pad.types.Object()],
             )
         input_tcs = sink.get_type_constraints()
         if not input_tcs or len(input_tcs) != 1:
@@ -61,7 +61,7 @@ class UnpackObject(Node):
                     id=f"{key}",
                     group="output",
                     owner_node=self,
-                    type_constraints=[pad_type],
+                    default_type_constraints=[pad_type],
                 )
                 self.pads.append(output_pad)
 

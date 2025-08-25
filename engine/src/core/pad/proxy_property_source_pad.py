@@ -26,6 +26,7 @@ class ProxyPropertySourcePad(SourcePad, PropertyPad, ProxyPad):
         owner_node: "Node",
         other: SourcePad,
     ):
+        super().__init__()
         self._id = id
         self._group = group
         self._owner_node = owner_node
@@ -54,6 +55,9 @@ class ProxyPropertySourcePad(SourcePad, PropertyPad, ProxyPad):
 
     def set_type_constraints(self, constraints: list[types.BasePadType] | None) -> None:
         self._other.set_type_constraints(constraints)
+
+    def get_default_type_constraints(self):
+        return self._other.get_default_type_constraints()
 
     def get_next_pads(self) -> list[SinkPad]:
         return self._my_next_pads[:]

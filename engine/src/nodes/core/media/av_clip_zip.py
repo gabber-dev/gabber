@@ -27,7 +27,7 @@ class AVClipZip(Node):
                 pad.StatelessSinkPad(
                     id="video_clip",
                     owner_node=self,
-                    type_constraints=[pad.types.VideoClip()],
+                    default_type_constraints=[pad.types.VideoClip()],
                     group="video_clip",
                 )
             )
@@ -39,7 +39,7 @@ class AVClipZip(Node):
                 pad.StatelessSinkPad(
                     id="audio_clip",
                     owner_node=self,
-                    type_constraints=[pad.types.AudioClip()],
+                    default_type_constraints=[pad.types.AudioClip()],
                     group="audio_clip",
                 )
             )
@@ -51,7 +51,7 @@ class AVClipZip(Node):
                 pad.StatelessSourcePad(
                     id="av_clip",
                     owner_node=self,
-                    type_constraints=[pad.types.AVClip()],
+                    default_type_constraints=[pad.types.AVClip()],
                     group="av_clip",
                 )
             )

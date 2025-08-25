@@ -27,7 +27,7 @@ class SlidingWindow(Node):
                 StatelessSinkPad(
                     id="video",
                     owner_node=self,
-                    type_constraints=[types.Video()],
+                    default_type_constraints=[types.Video()],
                     group="video",
                 )
             )
@@ -39,7 +39,7 @@ class SlidingWindow(Node):
                 StatelessSinkPad(
                     id="audio",
                     owner_node=self,
-                    type_constraints=[types.Audio()],
+                    default_type_constraints=[types.Audio()],
                     group="audio",
                 )
             )
@@ -51,7 +51,7 @@ class SlidingWindow(Node):
                 StatelessSinkPad(
                     id="flush",
                     owner_node=self,
-                    type_constraints=[types.Trigger()],
+                    default_type_constraints=[types.Trigger()],
                     group="flush",
                 )
             )
@@ -63,7 +63,7 @@ class SlidingWindow(Node):
                 StatelessSinkPad(
                     id="reset",
                     owner_node=self,
-                    type_constraints=[types.Trigger()],
+                    default_type_constraints=[types.Trigger()],
                     group="reset",
                 )
             )
@@ -75,7 +75,7 @@ class SlidingWindow(Node):
                 StatelessSourcePad(
                     id="clip",
                     owner_node=self,
-                    type_constraints=[
+                    default_type_constraints=[
                         types.VideoClip(),
                         types.AudioClip(),
                         types.AVClip(),
@@ -91,7 +91,7 @@ class SlidingWindow(Node):
                 PropertySinkPad(
                     id="window_size_s",
                     owner_node=self,
-                    type_constraints=[types.Float()],
+                    default_type_constraints=[types.Float()],
                     group="window_size_s",
                     value=5.0,
                 )

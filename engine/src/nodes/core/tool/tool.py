@@ -28,7 +28,7 @@ class Tool(node.Node):
                 id="self",
                 group="self",
                 owner_node=self,
-                type_constraints=[pad.types.NodeReference(node_types=["Tool"])],
+                default_type_constraints=[pad.types.NodeReference(node_types=["Tool"])],
                 value=self,
             )
             self.pads.append(self_pad)
@@ -39,7 +39,7 @@ class Tool(node.Node):
                 id="name",
                 owner_node=self,
                 group="name",
-                type_constraints=[pad.types.String(max_length=100)],
+                default_type_constraints=[pad.types.String(max_length=100)],
                 value="get_weather",
             )
             self.pads.append(name)
@@ -50,7 +50,7 @@ class Tool(node.Node):
                 id="description",
                 group="description",
                 owner_node=self,
-                type_constraints=[pad.types.String(max_length=500)],
+                default_type_constraints=[pad.types.String(max_length=500)],
                 value="Get the current weather for a specified location.",
             )
             self.pads.append(description)
@@ -61,7 +61,7 @@ class Tool(node.Node):
                 id="schema",
                 group="schema",
                 owner_node=self,
-                type_constraints=[pad.types.Schema()],
+                default_type_constraints=[pad.types.Schema()],
                 value=runtime_types.Schema(properties={"location": pad.types.String()}),
             )
             self.pads.append(schema_pad)
@@ -75,7 +75,7 @@ class Tool(node.Node):
                 id="source",
                 group="source",
                 owner_node=self,
-                type_constraints=[
+                default_type_constraints=[
                     pad.types.Object(object_schema=schema.to_json_schema())
                 ],
             )

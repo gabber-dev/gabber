@@ -23,6 +23,6 @@ class ButtonTrigger(node.Node):
                     id="trigger",
                     owner_node=self,
                     group="trigger",
-                    type_constraints=[pad.types.Trigger()],
+                    default_type_constraints=[pad.types.Trigger()],
                 )
             )

@@ -26,7 +26,7 @@ class AutoConvert(Node):
                 id="sink",
                 owner_node=self,
                 group="sink",
-                type_constraints=None,
+                default_type_constraints=None,
             )
             self.pads.append(sink)
 
@@ -36,7 +36,7 @@ class AutoConvert(Node):
                 id="source",
                 owner_node=self,
                 group="source",
-                type_constraints=None,
+                default_type_constraints=None,
             )
             self.pads.append(source)
         prev_pad = sink.get_previous_pad()

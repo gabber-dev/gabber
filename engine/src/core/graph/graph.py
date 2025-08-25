@@ -114,7 +114,7 @@ class Graph:
         node.editor_position = edit.editor_position
         node.editor_name = edit.editor_name
         node.editor_dimensions = edit.editor_dimensions
-        await self._propagate_update([node])
+        node.resolve_pads()
         self.nodes.append(node)
 
     async def _handle_insert_subgraph(self, edit: InsertSubGraphEdit):
@@ -142,7 +142,7 @@ class Graph:
         node.editor_position = edit.editor_position
         node.editor_name = edit.editor_name
         node.editor_dimensions = edit.editor_dimensions
-        await self._propagate_update([node])
+        node.resolve_pads()
         self.nodes.append(node)
 
     async def _handle_update_node(self, edit: UpdateNodeEdit):
@@ -171,9 +171,7 @@ class Graph:
         if not node_to_remove:
             raise ValueError(f"Node with ID {edit.node_id} not found.")
         new_nodes = [n for n in self.nodes if n.id != edit.node_id]
-        connected_nodes = node_to_remove.get_connected_nodes()
         node_to_remove.disconnect_all()
-        await self._propagate_update(connected_nodes)
         self.nodes = new_nodes
 
     async def _handle_connect_pad(self, edit: ConnectPadEdit):
@@ -192,7 +190,6 @@ class Graph:
             raise ValueError("Source pad is not a source pad type.")
 
         source_pad.connect(cast(Any, target_pad))
-        await self._propagate_update([source_node, target_node])
 
     async def _handle_disconnect_pad(self, edit: DisconnectPadEdit):
         source_node = next((n for n in self.nodes if n.id == edit.node), None)
@@ -214,7 +211,6 @@ class Graph:
             raise ValueError("Target pad is not a sink pad type.")
 
         source_pad.disconnect(target_pad)
-        await self._propagate_update([source_node, target_node])
 
     async def _handle_update_pad(self, edit: UpdatePadEdit):
         node = next((n for n in self.nodes if n.id == edit.node), None)
@@ -231,20 +227,6 @@ class Graph:
             else:
                 v = serialize.deserialize_pad_value(tcs[0], edit.value)
                 p.set_value(v)
-
-        await self._propagate_update([node])
-
-    async def _propagate_update(self, starting_nodes: list[Node]):
-        seen: set[str] = set()
-        q: list[Node] = starting_nodes[:]
-        while q:
-            node = q.pop()
-            if node.id in seen:
-                continue
-            seen.add(node.id)
-            node.resolve_pads()
-            connected_nodes = node.get_connected_nodes()
-            q.extend(connected_nodes)
 
     def to_editor(self):
         nodes: list[models.NodeEditorRepresentation] = []
@@ -342,7 +324,7 @@ class Graph:
                         id=pad_data.id,
                         owner_node=node,
                         group=pad_data.group,
-                        type_constraints=casted_allowed_types,
+                        default_type_constraints=casted_allowed_types,
                         value=deserialized_value,
                     )
                     node.pads.append(pad_instance)
@@ -354,7 +336,7 @@ class Graph:
                         id=pad_data.id,
                         owner_node=node,
                         group=pad_data.group,
-                        type_constraints=casted_allowed_types,
+                        default_type_constraints=casted_allowed_types,
                         value=deserialized_value,
                     )
                     node.pads.append(pad_instance)
@@ -366,7 +348,7 @@ class Graph:
                         id=pad_data.id,
                         owner_node=node,
                         group=pad_data.group,
-                        type_constraints=casted_allowed_types,
+                        default_type_constraints=casted_allowed_types,
                     )
                     node.pads.append(pad_instance)
                 elif pad_data.type == "StatelessSourcePad":
@@ -374,7 +356,7 @@ class Graph:
                         id=pad_data.id,
                         owner_node=node,
                         group=pad_data.group,
-                        type_constraints=casted_allowed_types,
+                        default_type_constraints=casted_allowed_types,
                     )
                     node.pads.append(pad_instance)
             self.nodes.append(node)
@@ -420,12 +402,10 @@ class Graph:
             if not node_obj:
                 logging.error(f"Node {node_data.id} not found in node lookup.")
                 continue
-            await self._propagate_update([node_obj])
 
         # Resolve node reference pads
         for p in node_reference_pads:
             self._resolve_node_reference_property(p, p.get_value(), node_lookup)
-            await self._propagate_update([p.get_owner_node()])
 
     def _resolve_node_reference_property(
         self, p: pad.PropertyPad, v: str, nodes: dict[str, Node]

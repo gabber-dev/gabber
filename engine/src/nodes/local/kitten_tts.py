@@ -50,7 +50,7 @@ class KittenTTS(node.Node):
                 id="voice_id",
                 group="voice_id",
                 owner_node=self,
-                type_constraints=[pad.types.Enum(options=VOICES)],
+                default_type_constraints=[pad.types.Enum(options=VOICES)],
                 value="expr-voice-2-m",
             )
             self.pads.append(voice_id)
@@ -61,7 +61,7 @@ class KittenTTS(node.Node):
                 id="text",
                 group="text",
                 owner_node=self,
-                type_constraints=[pad.types.TextStream(), pad.types.String()],
+                default_type_constraints=[pad.types.TextStream(), pad.types.String()],
             )
             self.pads.append(text_sink)
 
@@ -79,7 +79,7 @@ class KittenTTS(node.Node):
                 id="audio",
                 group="audio",
                 owner_node=self,
-                type_constraints=[pad.types.Audio()],
+                default_type_constraints=[pad.types.Audio()],
             )
             self.pads.append(audio_source)
 
@@ -89,7 +89,7 @@ class KittenTTS(node.Node):
                 id="cancel_trigger",
                 group="cancel_trigger",
                 owner_node=self,
-                type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad.types.Trigger()],
             )
             self.pads.append(cancel_trigger)
 
@@ -101,7 +101,7 @@ class KittenTTS(node.Node):
                 id="complete_transcription",
                 group="complete_transcription",
                 owner_node=self,
-                type_constraints=[pad.types.String()],
+                default_type_constraints=[pad.types.String()],
             )
             self.pads.append(final_transcription_source)
 

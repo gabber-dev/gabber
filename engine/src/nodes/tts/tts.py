@@ -33,7 +33,7 @@ class TTS(node.Node):
                 id="service",
                 group="service",
                 owner_node=self,
-                type_constraints=[
+                default_type_constraints=[
                     pad.types.Enum(options=["gabber", "cartesia", "elevenlabs"])
                 ],
             )
@@ -45,7 +45,7 @@ class TTS(node.Node):
                 id="api_key",
                 group="api_key",
                 owner_node=self,
-                type_constraints=[pad.types.Secret(options=self.secrets)],
+                default_type_constraints=[pad.types.Secret(options=self.secrets)],
             )
             self.pads.append(api_key)
 
@@ -55,7 +55,7 @@ class TTS(node.Node):
                 id="voice_id",
                 group="voice_id",
                 owner_node=self,
-                type_constraints=[pad.types.String()],
+                default_type_constraints=[pad.types.String()],
             )
             self.pads.append(voice_id)
 
@@ -65,7 +65,7 @@ class TTS(node.Node):
                 id="text",
                 group="text",
                 owner_node=self,
-                type_constraints=[pad.types.TextStream()],
+                default_type_constraints=[pad.types.TextStream()],
             )
             self.pads.append(text_sink)
 
@@ -83,7 +83,7 @@ class TTS(node.Node):
                 id="audio",
                 group="audio",
                 owner_node=self,
-                type_constraints=[pad.types.Audio()],
+                default_type_constraints=[pad.types.Audio()],
             )
             self.pads.append(audio_source)
 
@@ -93,7 +93,7 @@ class TTS(node.Node):
                 id="cancel_trigger",
                 group="cancel_trigger",
                 owner_node=self,
-                type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad.types.Trigger()],
             )
             self.pads.append(cancel_trigger)
 
@@ -105,7 +105,7 @@ class TTS(node.Node):
                 id="complete_transcription",
                 group="complete_transcription",
                 owner_node=self,
-                type_constraints=[pad.types.String()],
+                default_type_constraints=[pad.types.String()],
             )
             self.pads.append(final_transcription_source)
 

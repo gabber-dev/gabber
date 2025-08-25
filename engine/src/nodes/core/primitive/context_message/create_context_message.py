@@ -32,7 +32,7 @@ class CreateContextMessage(Node):
                 id="role",
                 group="role",
                 owner_node=self,
-                type_constraints=[types.ContextMessageRole()],
+                default_type_constraints=[types.ContextMessageRole()],
                 value=runtime_types.ContextMessageRole.SYSTEM,
             )
             self.pads.append(role)
@@ -43,7 +43,7 @@ class CreateContextMessage(Node):
                 id="content",
                 group="content",
                 owner_node=self,
-                type_constraints=sink_default,
+                default_type_constraints=sink_default,
             )
             self.pads.append(content_sink)
 
@@ -53,7 +53,7 @@ class CreateContextMessage(Node):
                 id="context_message",
                 group="context_message",
                 owner_node=self,
-                type_constraints=[types.ContextMessage()],
+                default_type_constraints=[types.ContextMessage()],
             )
             self.pads.append(message_source)
 

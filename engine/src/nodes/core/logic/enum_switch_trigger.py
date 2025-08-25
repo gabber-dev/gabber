@@ -22,7 +22,7 @@ class EnumSwitchTrigger(Node):
                 id="sink",
                 group="sink",
                 owner_node=self,
-                type_constraints=[pad.types.Enum(options=[])],
+                default_type_constraints=[pad.types.Enum(options=[])],
             )
 
         prev_pad = sink.get_previous_pad()
@@ -41,7 +41,7 @@ class EnumSwitchTrigger(Node):
                     id=o,
                     owner_node=self,
                     group="value",
-                    type_constraints=[pad.types.Trigger()],
+                    default_type_constraints=[pad.types.Trigger()],
                 )
             source_pads.append(s_p)
 

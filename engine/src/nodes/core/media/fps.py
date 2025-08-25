@@ -27,7 +27,7 @@ class FPS(Node):
                 StatelessSinkPad(
                     id="video_in",
                     owner_node=self,
-                    type_constraints=[types.Video()],
+                    default_type_constraints=[types.Video()],
                     group="video_in",
                 )
             )
@@ -39,7 +39,7 @@ class FPS(Node):
                 StatelessSourcePad(
                     id="video_out",
                     owner_node=self,
-                    type_constraints=[types.Video()],
+                    default_type_constraints=[types.Video()],
                     group="video_out",
                 )
             )
@@ -51,7 +51,7 @@ class FPS(Node):
                 PropertySinkPad(
                     id="fps",
                     owner_node=self,
-                    type_constraints=[types.Float(minimum=0.0, maximum=30.0)],
+                    default_type_constraints=[types.Float(minimum=0.0, maximum=30.0)],
                     group="fps",
                     value=0.5,
                 )

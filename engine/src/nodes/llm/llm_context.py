@@ -175,7 +175,7 @@ class LLMContext(node.Node):
                 id="new_user_message",
                 group="new_user_message",
                 owner_node=self,
-                type_constraints=[pad.types.ContextMessage()],
+                default_type_constraints=[pad.types.ContextMessage()],
             )
             self.pads.append(new_user_message)
         max_non_system_messages = cast(
@@ -186,7 +186,7 @@ class LLMContext(node.Node):
                 id="max_non_system_messages",
                 group="max_non_system_messages",
                 owner_node=self,
-                type_constraints=[pad.types.Integer(minimum=0)],
+                default_type_constraints=[pad.types.Integer(minimum=0)],
                 value=64,
             )
             self.pads.append(max_non_system_messages)
@@ -197,7 +197,7 @@ class LLMContext(node.Node):
                 id="max_videos",
                 group="max_videos",
                 owner_node=self,
-                type_constraints=[pad.types.Integer(minimum=0)],
+                default_type_constraints=[pad.types.Integer(minimum=0)],
                 value=2,
             )
             self.pads.append(max_videos)
@@ -208,7 +208,7 @@ class LLMContext(node.Node):
                 id="max_audios",
                 group="max_audios",
                 owner_node=self,
-                type_constraints=[pad.types.Integer(minimum=0)],
+                default_type_constraints=[pad.types.Integer(minimum=0)],
                 value=2,
             )
             self.pads.append(max_audios)
@@ -219,7 +219,7 @@ class LLMContext(node.Node):
                 id="max_images",
                 group="max_images",
                 owner_node=self,
-                type_constraints=[pad.types.Integer(minimum=0)],
+                default_type_constraints=[pad.types.Integer(minimum=0)],
                 value=2,
             )
             self.pads.append(max_images)
@@ -230,7 +230,7 @@ class LLMContext(node.Node):
                 id="system_message",
                 group="system_message",
                 owner_node=self,
-                type_constraints=[pad.types.ContextMessage()],
+                default_type_constraints=[pad.types.ContextMessage()],
                 value=DEFAULT_SYSTEM_MESSAGE,
             )
             self.pads.append(system_message)
@@ -241,7 +241,7 @@ class LLMContext(node.Node):
                 id="insert_0",
                 group="insert",
                 owner_node=self,
-                type_constraints=[pad.types.ContextMessage()],
+                default_type_constraints=[pad.types.ContextMessage()],
             )
             self.pads.append(insert_sink)
 
@@ -251,7 +251,7 @@ class LLMContext(node.Node):
                 id="source",
                 group="source",
                 owner_node=self,
-                type_constraints=[
+                default_type_constraints=[
                     pad.types.List(item_type_constraints=[pad.types.ContextMessage()])
                 ],
                 value=[system_message.get_value()],
@@ -294,7 +294,7 @@ class LLMContext(node.Node):
                         id=pad_id,
                         group="insert",
                         owner_node=self,
-                        type_constraints=[pad.types.ContextMessage()],
+                        default_type_constraints=[pad.types.ContextMessage()],
                     )
                 )
 

@@ -23,7 +23,7 @@ class Merge(Node):
             source_pad = pad.StatelessSourcePad(
                 id="source",
                 owner_node=self,
-                type_constraints=[],
+                default_type_constraints=None,
                 group="source",
             )
 
@@ -38,28 +38,17 @@ class Merge(Node):
                 break
 
         if needs_new:
-            sink_pads.append(
-                pad.StatelessSinkPad(
-                    id=f"sink_{len(sink_pads)}",
-                    owner_node=self,
-                    type_constraints=None,
-                    group="sink",
-                )
+            new_sink = pad.StatelessSinkPad(
+                id=f"sink_{len(sink_pads)}",
+                owner_node=self,
+                default_type_constraints=None,
+                group="sink",
             )
+            sink_pads.append(new_sink)
+            new_sink.link_types_to_pad(source_pad)
 
         pads: list[pad.Pad] = [cast(pad.Pad, source_pad)] + sink_pads
         self.pads = pads
-        sink_tcs: list[pad.types.BasePadType] | None = None
-        for p in sink_pads:
-            sink_tcs = pad.types.INTERSECTION(p.get_type_constraints(), sink_tcs)
-
-        for p in sink_pads:
-            p.set_type_constraints(sink_tcs)
-
-        if sink_tcs is None:
-            source_pad.set_type_constraints([])
-        else:
-            source_pad.set_type_constraints(sink_tcs)
 
     async def run(self):
         tasks = []

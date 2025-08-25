@@ -26,7 +26,7 @@ class Boolean(node.Node):
                 id="set",
                 owner_node=self,
                 group="set",
-                type_constraints=[pad.types.Boolean()],
+                default_type_constraints=[pad.types.Boolean()],
             )
 
         emit = cast(pad.StatelessSinkPad | None, self.get_pad("emit"))
@@ -35,7 +35,7 @@ class Boolean(node.Node):
                 id="emit",
                 owner_node=self,
                 group="emit",
-                type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad.types.Trigger()],
             )
 
         toggle = cast(pad.StatelessSinkPad | None, self.get_pad("toggle"))
@@ -44,7 +44,7 @@ class Boolean(node.Node):
                 id="toggle",
                 owner_node=self,
                 group="toggle",
-                type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad.types.Trigger()],
             )
 
         value = cast(pad.PropertySourcePad | None, self.get_pad("value"))
@@ -53,7 +53,7 @@ class Boolean(node.Node):
                 id="value",
                 group="value",
                 owner_node=self,
-                type_constraints=[pad.types.Boolean()],
+                default_type_constraints=[pad.types.Boolean()],
                 value=True,
             )
 
@@ -63,7 +63,7 @@ class Boolean(node.Node):
                 id="changed",
                 group="changed",
                 owner_node=self,
-                type_constraints=[pad.types.Boolean()],
+                default_type_constraints=[pad.types.Boolean()],
             )
 
         self.pads = [emit, set_pad, toggle, value, changed]

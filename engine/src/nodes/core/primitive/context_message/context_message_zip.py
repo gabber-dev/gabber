@@ -26,7 +26,7 @@ class ContextMessageZip(Node):
                 id="role",
                 group="role",
                 owner_node=self,
-                type_constraints=[types.ContextMessageRole()],
+                default_type_constraints=[types.ContextMessageRole()],
                 value=runtime_types.ContextMessageRole.SYSTEM,
             )
             self.pads.append(role)
@@ -37,7 +37,7 @@ class ContextMessageZip(Node):
                 id="context_message",
                 group="context_message",
                 owner_node=self,
-                type_constraints=[types.ContextMessage()],
+                default_type_constraints=[types.ContextMessage()],
             )
             self.pads.append(message_source)
 
@@ -66,7 +66,7 @@ class ContextMessageZip(Node):
                 id=f"content_{len(content_pads)}",
                 group="content",
                 owner_node=self,
-                type_constraints=sink_default,
+                default_type_constraints=sink_default,
             )
             self.pads.append(content_sink)
         elif free_pads > 1:
