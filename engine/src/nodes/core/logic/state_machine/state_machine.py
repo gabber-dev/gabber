@@ -261,7 +261,6 @@ class StateMachine(node.Node):
 
         self._resolve_num_pads()
         self._fix_missing_pads()
-        self._resolve_value_types()
         self._resolve_pad_mode()
         self._sort_and_rename_pads()
         self._resolve_condition_operators()
@@ -522,17 +521,6 @@ class StateMachine(node.Node):
         for p in pads_to_remove:
             p.disconnect()
             self.pads.remove(p)
-
-    def _resolve_value_types(self):
-        for i in self._get_parameter_indices():
-            _, value_pad = self._get_pads(i)
-            prev_pad = value_pad.get_previous_pad()
-            if prev_pad:
-                tcs = value_pad.get_type_constraints()
-                tcs = pad.types.INTERSECTION(tcs, prev_pad.get_type_constraints())
-                value_pad.set_type_constraints(tcs)
-            else:
-                value_pad.set_type_constraints(ALL_PARAMETER_TYPES)
 
     def _resolve_pad_mode(self):
         for idx, p in enumerate(self.pads):
