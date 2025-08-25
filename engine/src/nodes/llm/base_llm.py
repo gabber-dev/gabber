@@ -257,29 +257,28 @@ class BaseLLM(node.Node, ABC):
                 started_source.push_item(runtime_types.Trigger(), ctx)
                 thinking = False
                 async for item in handle:
-                    cnt = item.content
-                    if not cnt:
-                        continue
-                    if thinking:
-                        split = cnt.split("</think>")
-                        if len(split) == 2:
-                            thinking_cnt = split[0]
-                            normal_cnt = split[1]
-                            thinking_stream.push_text(thinking_cnt)
-                            text_stream.push_text(normal_cnt)
-                            thinking = False
+                    if item.content:
+                        cnt = item.content
+                        if thinking:
+                            split = cnt.split("</think>")
+                            if len(split) == 2:
+                                thinking_cnt = split[0]
+                                normal_cnt = split[1]
+                                thinking_stream.push_text(thinking_cnt)
+                                text_stream.push_text(normal_cnt)
+                                thinking = False
+                            else:
+                                thinking_stream.push_text(cnt)
                         else:
-                            thinking_stream.push_text(cnt)
-                    else:
-                        split = cnt.split("<think>")
-                        if len(split) == 2:
-                            normal_cnt = split[0]
-                            thinking_cnt = split[1]
-                            thinking_stream.push_text(thinking_cnt)
-                            text_stream.push_text(normal_cnt)
-                            thinking = True
-                        else:
-                            text_stream.push_text(cnt)
+                            split = cnt.split("<think>")
+                            if len(split) == 2:
+                                normal_cnt = split[0]
+                                thinking_cnt = split[1]
+                                thinking_stream.push_text(thinking_cnt)
+                                text_stream.push_text(normal_cnt)
+                                thinking = True
+                            else:
+                                text_stream.push_text(cnt)
 
                     all_deltas.append(item)
 

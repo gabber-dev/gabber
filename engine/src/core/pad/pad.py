@@ -29,7 +29,9 @@ class Pad(Protocol):
     def set_type_constraints(self, constraints: list[BasePadType] | None) -> None: ...
     def get_type_constraints(self) -> list[BasePadType] | None: ...
     def get_default_type_constraints(self) -> list[BasePadType] | None: ...
-    def set_default_type_constraints(self, constraints: list[BasePadType] | None) -> None: ...
+    def set_default_type_constraints(
+        self, constraints: list[BasePadType] | None
+    ) -> None: ...
     def get_owner_node(self) -> "Node": ...
     def link_types_to_pad(self, other: "Pad") -> None:
         self._pad_links.add(other)
@@ -92,13 +94,6 @@ class Pad(Protocol):
 
         for p in all_pads:
             p.set_type_constraints(intersection)
-
-        logging.info(
-            "NEIL Resolving type constraints for pad %s - %s - %s",
-            self.get_id(),
-            self._pad_links,
-            intersection,
-        )
 
 
 @runtime_checkable
@@ -206,14 +201,6 @@ class SourcePad(Pad, Protocol):
             self.get_type_constraints(), other.get_type_constraints()
         )
 
-        logging.info(
-            "NEIL intersection: "
-            + str(intersection)
-            + " --- "
-            + str(self.get_type_constraints())
-            + " --- "
-            + str(other.get_type_constraints())
-        )
         if intersection is not None and len(intersection) == 0:
             return False
 

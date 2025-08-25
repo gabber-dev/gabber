@@ -45,8 +45,8 @@ class UnpackObject(Node):
         if not prev_schema:
             raise ValueError("Previous pad Object type must have a schema.")
 
-        sink.set_default_type_constraints([pad.types.Object(object_schema=prev_schema)])
-        self.resolve_output_pads(prev_schema)
+        output_pads = self.resolve_output_pads(prev_schema)
+        self.pads = [sink] + output_pads
 
     def resolve_output_pads(self, schema: dict[str, Any]):
         pad_types = pad.types.json_schema_to_types(schema)
@@ -63,12 +63,11 @@ class UnpackObject(Node):
                     owner_node=self,
                     default_type_constraints=[pad_type],
                 )
-                self.pads.append(output_pad)
+                output_pads.append(output_pad)
 
         # Remove any output pads that are no longer in the schema
-        for output_pad in output_pads:
-            if output_pad.get_id() not in key_set:
-                self.pads.remove(output_pad)
+        output_pads = [p for p in output_pads if p.get_id() in key_set]
+        return output_pads
 
     async def run(self):
         sink = cast(pad.StatelessSinkPad, self.get_pad_required("sink"))

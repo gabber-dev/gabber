@@ -195,12 +195,9 @@ class Graph:
         if not isinstance(target_pad, pad.SinkPad):
             raise ValueError("Target pad is not a sink pad type.")
 
-        logging.info(f"NEIL {source_pad} -> {target_pad}. {source_pad.get_default_type_constraints()} -> {target_pad.get_default_type_constraints()}",)
         source_pad.connect(target_pad)
-        logging.info(f"NEIL 2 {source_pad} -> {target_pad}. {source_pad.get_default_type_constraints()} -> {target_pad.get_default_type_constraints()}",)
         source_node.resolve_pads()
         target_node.resolve_pads()
-        logging.info(f"NEIL 3 {source_pad} -> {target_pad}. {source_pad.get_default_type_constraints()} -> {target_pad.get_default_type_constraints()}",)
 
     async def _handle_disconnect_pad(self, edit: DisconnectPadEdit):
         source_node = next((n for n in self.nodes if n.id == edit.node), None)
@@ -324,6 +321,7 @@ class Graph:
                             tc.options = secret_options
 
                 deserialized_value: Any | None = None
+                node_reference_pad = False
                 if pad_data.type.startswith("Property"):
                     if casted_allowed_types and len(casted_allowed_types) == 1:
                         tc = casted_allowed_types[0]
@@ -332,7 +330,7 @@ class Graph:
                                 tc, pad_data.value
                             )
                         else:
-                            # Keep the node reference id, it will be resolved later in this function
+                            node_reference_pad = True
                             deserialized_value = pad_data.value
 
                 pad_instance = node.get_pad(pad_data.id)
@@ -341,6 +339,9 @@ class Graph:
                         f"Pad with ID {pad_data.id} not found in node {node.id}."
                     )
                     continue
+
+                if node_reference_pad:
+                    node_reference_pads.append(cast(pad.PropertyPad, pad_instance))
 
                 if isinstance(pad_instance, pad.PropertyPad):
                     pad_instance.set_value(deserialized_value)
@@ -383,6 +384,8 @@ class Graph:
                     )
                     continue
                 source_pad.connect(target_pad)
+                source_node.resolve_pads()
+                target_node.resolve_pads()
 
             node_obj = node_lookup.get(node_data.id)
             if not node_obj:

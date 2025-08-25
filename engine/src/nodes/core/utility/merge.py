@@ -40,7 +40,6 @@ class Merge(Node):
 
         sink_pads: list[pad.Pad] = []
         for i in range(num_sink_pads.get_value() or 1):
-            logging.info(f"NEIL Ensuring sink pad {i} exists")
             pad_id = f"sink_{i}"
             sp = self.get_pad(pad_id)
             if not sp:
