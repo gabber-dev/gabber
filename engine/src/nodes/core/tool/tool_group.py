@@ -51,31 +51,34 @@ class ToolGroup(node.Node):
                 ],
                 value=self,
             )
-            self.pads.append(self_pad)
 
-        connected_tool_pads: list[pad.Pad] = []
-        for p in self.pads:
-            if not isinstance(p, pad.PropertySinkPad):
-                continue
-            if p.get_value() is not None and p.get_id().startswith("tool_"):
-                connected_tool_pads.append(p)
+        num_tools = cast(pad.PropertySinkPad, self.get_pad("num_tools"))
+        if not num_tools:
+            num_tools = pad.PropertySinkPad(
+                id="num_tools",
+                owner_node=self,
+                default_type_constraints=[pad.types.Integer()],
+                group="num_tools",
+                value=1,
+            )
 
-        connected_tool_pads.sort(key=lambda x: int(x.get_id().split("_")[1]))
-        biggest_index = 0
-        if connected_tool_pads:
-            biggest_index = int(connected_tool_pads[-1].get_id().split("_")[1])
+        tools: list[pad.Pad] = []
+        for i in range(num_tools.get_value() or 1):
+            pad_id = f"tool_{i}"
+            tp = self.get_pad(pad_id)
+            if not tp:
+                tp = pad.PropertySinkPad(
+                    id=pad_id,
+                    owner_node=self,
+                    default_type_constraints=[
+                        pad.types.NodeReference(node_types=["Tool"])
+                    ],
+                    group="tool",
+                    value=None,
+                )
+            tools.append(tp)
 
-        next_index = biggest_index + 1
-        free_pad = pad.PropertySinkPad(
-            id=f"tool_{next_index}",
-            group="tool",
-            owner_node=self,
-            default_type_constraints=[pad.types.NodeReference(node_types=["Tool"])],
-            value=None,
-        )
-
-        # Rebuild pads list with renumbered connected pads, one free pad, and self pad
-        self.pads = connected_tool_pads + [free_pad] + [self_pad]
+        self.pads = [num_tools, self_pad] + tools
 
     async def call_tools(
         self,
