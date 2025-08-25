@@ -5,7 +5,13 @@
 
 "use client";
 
-import React, { useState, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useCallback,
+  useMemo,
+  useRef,
+  useEffect,
+} from "react";
 import { useEditor } from "@/hooks/useEditor";
 import { useReactFlow } from "@xyflow/react";
 import {
@@ -20,9 +26,13 @@ import {
 
 interface NodeLibraryProps {
   setIsModalOpen: (open: boolean) => void;
+  isOpen?: boolean;
 }
 
-export function NodeLibrary({ setIsModalOpen }: NodeLibraryProps) {
+export function NodeLibrary({
+  setIsModalOpen,
+  isOpen = true,
+}: NodeLibraryProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMainCategory, setSelectedMainCategory] = useState<
     string | null
@@ -37,6 +47,32 @@ export function NodeLibrary({ setIsModalOpen }: NodeLibraryProps) {
 
   const { nodeLibrary, insertNode, insertSubGraph } = useEditor();
   const { screenToFlowPosition } = useReactFlow();
+
+  // Ref for search input to auto-focus when component mounts
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-focus search input when panel opens
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const focusInput = () => {
+      if (searchInputRef.current) {
+        // Check if the input is visible and focusable
+        const rect = searchInputRef.current.getBoundingClientRect();
+        const isVisible = rect.width > 0 && rect.height > 0;
+
+        if (isVisible) {
+          searchInputRef.current.focus();
+          searchInputRef.current.select();
+        }
+      }
+    };
+
+    // Wait for panel transition to complete, then focus
+    const timer = setTimeout(focusInput, 350);
+
+    return () => clearTimeout(timer);
+  }, [isOpen]);
 
   // Simple dropdown options
   const primaryOptions = useMemo(() => {
@@ -290,11 +326,12 @@ export function NodeLibrary({ setIsModalOpen }: NodeLibraryProps) {
       {/* Search input */}
       <div className="relative mb-2">
         <input
+          ref={searchInputRef}
           type="text"
           placeholder="Search nodes..."
           value={searchQuery}
           onChange={handleSearchChange}
-          className="w-full py-1.5 px-2 bg-base-100 border border-primary/30 rounded 
+          className="w-full py-1.5 px-2 bg-base-100 border border-primary/30 rounded
                      focus:outline-none focus:border-primary
                      transition-all duration-300 text-sm text-base-content
                      placeholder:text-base-content/50"
