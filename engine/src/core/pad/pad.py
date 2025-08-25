@@ -35,6 +35,14 @@ class Pad(Protocol):
         other._pad_links.add(self)
         self._resolve_type_constraints()
 
+    def unlink_types_from_pad(self, other: "Pad") -> None:
+        if other in self._pad_links:
+            self._pad_links.remove(other)
+        if self in other._pad_links:
+            other._pad_links.remove(self)
+        self._resolve_type_constraints()
+        other._resolve_type_constraints()
+
     def _add_update_handler(self, handler: Callable[["Pad", Any], None]):
         self._update_handlers.add(handler)
 

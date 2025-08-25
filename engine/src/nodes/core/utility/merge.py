@@ -1,6 +1,7 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
+import logging
 import asyncio
 from typing import cast
 
@@ -27,27 +28,36 @@ class Merge(Node):
                 group="source",
             )
 
-        sink_pads = cast(
-            list[pad.SinkPad], [p for p in self.pads if p.get_group() == "sink"]
-        )
-
-        needs_new = True
-        for p in sink_pads:
-            if p.get_previous_pad() is None:
-                needs_new = False
-                break
-
-        if needs_new:
-            new_sink = pad.StatelessSinkPad(
-                id=f"sink_{len(sink_pads)}",
+        num_sink_pads = cast(pad.PropertySinkPad | None, self.get_pad("num_sinks"))
+        if not num_sink_pads:
+            num_sink_pads = pad.PropertySinkPad(
+                id="num_sinks",
                 owner_node=self,
-                default_type_constraints=None,
-                group="sink",
+                default_type_constraints=[pad.types.Integer()],
+                group="num_sinks",
+                value=1,
             )
-            sink_pads.append(new_sink)
-            new_sink.link_types_to_pad(source_pad)
 
-        pads: list[pad.Pad] = [cast(pad.Pad, source_pad)] + sink_pads
+        sink_pads: list[pad.Pad] = []
+        for i in range(num_sink_pads.get_value() or 1):
+            logging.info(f"NEIL Ensuring sink pad {i} exists")
+            pad_id = f"sink_{i}"
+            if not self.get_pad(pad_id):
+                new_pad = pad.PropertySinkPad(
+                    id=pad_id,
+                    owner_node=self,
+                    default_type_constraints=None,
+                    group="sink",
+                )
+                sink_pads.append(new_pad)
+                new_pad.link_types_to_pad(source_pad)
+
+        for p in self.pads:
+            if p.get_id().startswith("sink_") and p not in sink_pads:
+                if isinstance(p, pad.PropertySinkPad):
+                    p.unlink_types_from_pad(source_pad)
+
+        pads: list[pad.Pad] = [num_sink_pads, source_pad] + sink_pads
         self.pads = pads
 
     async def run(self):

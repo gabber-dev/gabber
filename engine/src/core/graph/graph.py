@@ -228,6 +228,8 @@ class Graph:
                 v = serialize.deserialize_pad_value(tcs[0], edit.value)
                 p.set_value(v)
 
+        node.resolve_pads()
+
     def to_editor(self):
         nodes: list[models.NodeEditorRepresentation] = []
         for node in self.nodes:
@@ -297,9 +299,13 @@ class Graph:
             node.editor_dimensions = node_data.editor_dimensions
 
             secret_options = await self.secret_provider.list_secrets()
+            node.resolve_pads()
             for pad_data in node_data.pads:
                 casted_allowed_types = cast(
                     list[pad.types.BasePadType] | None, pad_data.allowed_types
+                )
+                casted_default_types = cast(
+                    list[pad.types.BasePadType] | None, pad_data.default_types
                 )
 
                 if isinstance(casted_allowed_types, list):
@@ -319,46 +325,16 @@ class Graph:
                             # Keep the node reference id, it will be resolved later in this function
                             deserialized_value = pad_data.value
 
-                if pad_data.type == "PropertySinkPad":
-                    pad_instance = pad.PropertySinkPad(
-                        id=pad_data.id,
-                        owner_node=node,
-                        group=pad_data.group,
-                        default_type_constraints=casted_allowed_types,
-                        value=deserialized_value,
+                pad_instance = node.get_pad(pad_data.id)
+                if not pad_instance:
+                    logging.warning(
+                        f"Pad with ID {pad_data.id} not found in node {node.id}."
                     )
-                    node.pads.append(pad_instance)
-                    if casted_allowed_types and len(casted_allowed_types) == 1:
-                        if isinstance(casted_allowed_types[0], pad.types.NodeReference):
-                            node_reference_pads.append(pad_instance)
-                elif pad_data.type == "PropertySourcePad":
-                    pad_instance = pad.PropertySourcePad(
-                        id=pad_data.id,
-                        owner_node=node,
-                        group=pad_data.group,
-                        default_type_constraints=casted_allowed_types,
-                        value=deserialized_value,
-                    )
-                    node.pads.append(pad_instance)
-                    if casted_allowed_types and len(casted_allowed_types) == 1:
-                        if isinstance(casted_allowed_types[0], pad.types.NodeReference):
-                            node_reference_pads.append(pad_instance)
-                elif pad_data.type == "StatelessSinkPad":
-                    pad_instance = pad.StatelessSinkPad(
-                        id=pad_data.id,
-                        owner_node=node,
-                        group=pad_data.group,
-                        default_type_constraints=casted_allowed_types,
-                    )
-                    node.pads.append(pad_instance)
-                elif pad_data.type == "StatelessSourcePad":
-                    pad_instance = pad.StatelessSourcePad(
-                        id=pad_data.id,
-                        owner_node=node,
-                        group=pad_data.group,
-                        default_type_constraints=casted_allowed_types,
-                    )
-                    node.pads.append(pad_instance)
+                    continue
+
+                if isinstance(pad_instance, pad.PropertyPad):
+                    pad_instance.set_value(deserialized_value)
+
             self.nodes.append(node)
 
         node_lookup: dict[str, Node] = {n.id: n for n in self.nodes}
@@ -402,6 +378,13 @@ class Graph:
             if not node_obj:
                 logging.error(f"Node {node_data.id} not found in node lookup.")
                 continue
+
+        for node in self.nodes:
+            node.resolve_pads()
+
+        for node in self.nodes:
+            for p in node.pads:
+                p._resolve_type_constraints()
 
         # Resolve node reference pads
         for p in node_reference_pads:
