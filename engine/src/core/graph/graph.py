@@ -171,8 +171,11 @@ class Graph:
         if not node_to_remove:
             raise ValueError(f"Node with ID {edit.node_id} not found.")
         new_nodes = [n for n in self.nodes if n.id != edit.node_id]
+        connected_nodes = node_to_remove.get_connected_nodes()
         node_to_remove.disconnect_all()
         self.nodes = new_nodes
+        for n in connected_nodes:
+            n.resolve_pads()
 
     async def _handle_connect_pad(self, edit: ConnectPadEdit):
         source_node = next((n for n in self.nodes if n.id == edit.node), None)
@@ -190,6 +193,8 @@ class Graph:
             raise ValueError("Source pad is not a source pad type.")
 
         source_pad.connect(cast(Any, target_pad))
+        source_node.resolve_pads()
+        target_node.resolve_pads()
 
     async def _handle_disconnect_pad(self, edit: DisconnectPadEdit):
         source_node = next((n for n in self.nodes if n.id == edit.node), None)
@@ -211,6 +216,8 @@ class Graph:
             raise ValueError("Target pad is not a sink pad type.")
 
         source_pad.disconnect(target_pad)
+        source_node.resolve_pads()
+        target_node.resolve_pads()
 
     async def _handle_update_pad(self, edit: UpdatePadEdit):
         node = next((n for n in self.nodes if n.id == edit.node), None)

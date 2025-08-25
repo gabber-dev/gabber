@@ -50,6 +50,11 @@ class ProxyStatelessSinkPad(SinkPad, ProxyPad):
     def get_default_type_constraints(self):
         return self._other.get_default_type_constraints()
 
+    def set_default_type_constraints(
+        self, constraints: list[types.BasePadType] | None
+    ) -> None:
+        self._other.set_default_type_constraints(constraints)
+
     def get_previous_pad(self) -> SourcePad | None:
         return self._other.get_previous_pad()
 

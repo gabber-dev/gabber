@@ -49,6 +49,12 @@ class StatelessSinkPad(SinkPad):
     def get_default_type_constraints(self):
         return self._default_type_constraints
 
+    def set_default_type_constraints(
+        self, constraints: list[types.BasePadType] | None
+    ) -> None:
+        self._default_type_constraints = constraints
+        self._resolve_type_constraints()
+
     def set_type_constraints(self, constraints: list[types.BasePadType] | None) -> None:
         self._type_constraints = constraints
 

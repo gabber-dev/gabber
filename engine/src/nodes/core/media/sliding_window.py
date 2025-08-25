@@ -23,56 +23,43 @@ class SlidingWindow(Node):
     def resolve_pads(self):
         video_sink = cast(StatelessSinkPad, self.get_pad("video"))
         if not video_sink:
-            self.pads.append(
-                StatelessSinkPad(
+            video_sink = StatelessSinkPad(
                     id="video",
                     owner_node=self,
                     default_type_constraints=[types.Video()],
                     group="video",
                 )
-            )
-            video_sink = cast(StatelessSinkPad, self.get_pad("video"))
 
         audio_sink = cast(StatelessSinkPad, self.get_pad("audio"))
         if not audio_sink:
-            self.pads.append(
-                StatelessSinkPad(
+            audio_sink = StatelessSinkPad(
                     id="audio",
                     owner_node=self,
                     default_type_constraints=[types.Audio()],
                     group="audio",
                 )
-            )
-            audio_sink = cast(StatelessSinkPad, self.get_pad("audio"))
 
         flush_trigger = cast(StatelessSinkPad, self.get_pad("flush"))
         if not flush_trigger:
-            self.pads.append(
-                StatelessSinkPad(
+            flush_trigger = StatelessSinkPad(
                     id="flush",
                     owner_node=self,
                     default_type_constraints=[types.Trigger()],
                     group="flush",
                 )
-            )
-            flush_trigger = cast(StatelessSinkPad, self.get_pad("flush"))
 
         reset = cast(StatelessSinkPad, self.get_pad("reset"))
         if not reset:
-            self.pads.append(
-                StatelessSinkPad(
+            reset = StatelessSinkPad(
                     id="reset",
                     owner_node=self,
                     default_type_constraints=[types.Trigger()],
                     group="reset",
                 )
-            )
-            reset = cast(StatelessSinkPad, self.get_pad("reset"))
 
         clip_source = cast(StatelessSourcePad, self.get_pad("clip"))
         if not clip_source:
-            self.pads.append(
-                StatelessSourcePad(
+            clip_source = StatelessSourcePad(
                     id="clip",
                     owner_node=self,
                     default_type_constraints=[
@@ -82,21 +69,25 @@ class SlidingWindow(Node):
                     ],
                     group="clip",
                 )
-            )
-            clip_source = cast(StatelessSourcePad, self.get_pad("clip"))
 
         window_size_sink = cast(PropertySinkPad, self.get_pad("window_size_s"))
         if not window_size_sink:
-            self.pads.append(
-                PropertySinkPad(
+            window_size_sink = PropertySinkPad(
                     id="window_size_s",
                     owner_node=self,
                     default_type_constraints=[types.Float()],
                     group="window_size_s",
                     value=5.0,
                 )
-            )
-            window_size_sink = cast(PropertySinkPad, self.get_pad("window_size_s"))
+
+        self.pads = [
+            video_sink,
+            audio_sink,
+            flush_trigger,
+            reset,
+            clip_source,
+            window_size_sink,
+        ]
 
         self._resolve_types()
 
@@ -109,24 +100,24 @@ class SlidingWindow(Node):
             video_sink.get_previous_pad() is not None
             and audio_sink.get_previous_pad() is not None
         ):
-            clip_source.set_type_constraints([types.AVClip()])
+            clip_source.set_default_type_constraints([types.AVClip()])
             return
 
         if (
             video_sink.get_previous_pad() is not None
             and audio_sink.get_previous_pad() is None
         ):
-            clip_source.set_type_constraints([types.VideoClip()])
+            clip_source.set_default_type_constraints([types.VideoClip()])
             return
 
         if (
             audio_sink.get_previous_pad() is not None
             and video_sink.get_previous_pad() is None
         ):
-            clip_source.set_type_constraints([types.AudioClip()])
+            clip_source.set_default_type_constraints([types.AudioClip()])
             return
 
-        clip_source.set_type_constraints(
+        clip_source.set_default_type_constraints(
             [types.VideoClip(), types.AudioClip(), types.AVClip()]
         )
 
