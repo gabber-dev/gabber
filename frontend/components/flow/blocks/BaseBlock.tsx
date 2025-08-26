@@ -16,6 +16,7 @@ import { CommentNode } from "./CommentNode";
 import { SelfPad } from "./components/pads/SelfPad";
 import { StateMachineNode } from "@/components/state_machine/StateMachineNode";
 import { CompareNode } from "./CompareNode";
+import { JsonNode } from "./JsonNode";
 
 export interface BaseBlockProps {
   data: NodeEditorRepresentation;
@@ -67,6 +68,10 @@ export function BaseBlock({ data }: BaseBlockProps) {
 
   if (data.type === "Compare") {
     return <CompareNode data={data} />;
+  }
+
+  if (data.type === "Json") {
+    return <JsonNode data={data} />;
   }
 
   // Add ambient-float by default, but remove it if selected

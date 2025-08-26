@@ -6,10 +6,15 @@ from .boolean import Boolean
 from .comment import Comment
 from .integer import Integer
 from .string import String
+from . import json
 
-ALL_NODES = [
-    String,
-    Integer,
-    Boolean,
-    Comment,
-] + context_message.ALL_NODES
+ALL_NODES = (
+    [
+        String,
+        Integer,
+        Boolean,
+        Comment,
+    ]
+    + context_message.ALL_NODES
+    + json.ALL_NODES
+)

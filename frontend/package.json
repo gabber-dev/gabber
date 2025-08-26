@@ -17,6 +17,7 @@
     "@types/react-modal": "^3.16.3",
     "@xyflow/react": "^12.8.2",
     "axios": "^1.11.0",
+    "json-edit-react": "^1.28.2",
     "livekit-server-sdk": "^2.13.1",
     "next": "15.4.4",
     "react": "19.1.0",
