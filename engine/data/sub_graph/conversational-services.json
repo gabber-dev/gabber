@@ -2,7 +2,7 @@
     "id": "conversational-services",
     "name": "Conversational w/ Remote Services",
     "created_at": "2025-07-29T21:43:30.505415",
-    "updated_at": "2025-08-22T10:16:51.637223",
+    "updated_at": "2025-08-26T10:53:42.821127",
     "graph": {
         "nodes": [
             {
@@ -10,8 +10,8 @@
                 "type": "ProxyPropertySink",
                 "editor_name": "ProxyPropertySink",
                 "editor_position": [
-                    204.0,
-                    960.0
+                    216.0,
+                    528.0
                 ],
                 "editor_dimensions": [
                     256.0,
@@ -438,6 +438,22 @@
                         ]
                     },
                     {
+                        "id": "text",
+                        "group": "text",
+                        "type": "StatelessSinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "openaicompatiblellm_e89fdde4",
+                            "pad": "text_stream"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "text_stream"
+                            }
+                        ]
+                    },
+                    {
                         "id": "audio",
                         "group": "audio",
                         "type": "StatelessSourcePad",
@@ -483,22 +499,6 @@
                                 "type": "string",
                                 "max_length": null,
                                 "min_length": null
-                            }
-                        ]
-                    },
-                    {
-                        "id": "text",
-                        "group": "text",
-                        "type": "StatelessSinkPad",
-                        "value": null,
-                        "next_pads": [],
-                        "previous_pad": {
-                            "node": "openaicompatiblellm_e89fdde4",
-                            "pad": "text_stream"
-                        },
-                        "allowed_types": [
-                            {
-                                "type": "text_stream"
                             }
                         ]
                     }
@@ -1195,7 +1195,10 @@
                         "type": "PropertySinkPad",
                         "value": null,
                         "next_pads": [],
-                        "previous_pad": null,
+                        "previous_pad": {
+                            "node": "proxypropertysink_0c193ca8",
+                            "pad": "proxy"
+                        },
                         "allowed_types": [
                             {
                                 "type": "node_reference",
@@ -1335,7 +1338,7 @@
                 "editor_name": "ProxyPropertySink",
                 "editor_position": [
                     216.0,
-                    528.0
+                    924.0
                 ],
                 "editor_dimensions": [
                     256.0,
@@ -1393,7 +1396,7 @@
                 "editor_name": "ProxyPropertySink",
                 "editor_position": [
                     216.0,
-                    720.0
+                    1128.0
                 ],
                 "editor_dimensions": [
                     256.0,
@@ -1425,6 +1428,66 @@
                         "group": "pad_id",
                         "type": "PropertySinkPad",
                         "value": "llm_model",
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ]
+                    }
+                ],
+                "description": "Create a property sink pad that is exposed when using your subgraph in a flow",
+                "metadata": {
+                    "primary": "subgraph",
+                    "secondary": "sink",
+                    "tags": [
+                        "property",
+                        "sink"
+                    ]
+                }
+            },
+            {
+                "id": "proxypropertysink_0c193ca8",
+                "type": "ProxyPropertySink",
+                "editor_name": "ProxyPropertySink",
+                "editor_position": [
+                    216.0,
+                    732.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    167.0
+                ],
+                "pads": [
+                    {
+                        "id": "proxy",
+                        "group": "proxy",
+                        "type": "PropertySourcePad",
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "openaicompatiblellm_e89fdde4",
+                                "pad": "tool_group"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "node_reference",
+                                "node_types": [
+                                    "ToolGroup"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "pad_id",
+                        "group": "pad_id",
+                        "type": "PropertySinkPad",
+                        "value": "tool_group",
                         "next_pads": [],
                         "previous_pad": null,
                         "allowed_types": [

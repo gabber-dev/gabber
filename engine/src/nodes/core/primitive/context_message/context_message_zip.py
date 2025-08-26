@@ -77,7 +77,6 @@ class ContextMessageZip(Node):
             pad_id = f"content_{i}"
             content_pad = self.get_pad(pad_id)
             if not content_pad:
-                logging.info(f"NEIL Creating content pad {pad_id}")
                 content_pad = StatelessSinkPad(
                     id=pad_id,
                     group="content",

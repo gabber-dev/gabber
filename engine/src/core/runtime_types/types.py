@@ -278,12 +278,17 @@ class Schema(BaseModel):
         str, pad.types.String | pad.types.Integer | pad.types.Float | pad.types.Boolean
     ]
     required: list[str] | None = None
+    defaults: dict[str, Any] | None = None
 
     def to_json_schema(self) -> dict[str, Any]:
         properties = {
-            k: v.model_dump(exclude_none=True, exclude_unset=True)
-            for k, v in self.properties.items()
+            k: v.model_dump(exclude_none=True) for k, v in self.properties.items()
         }
+        for d in self.defaults or {}:
+            if self.defaults is None:
+                continue
+            if d in properties:
+                properties[d]["default"] = self.defaults[d]
         return {
             "type": "object",
             "properties": properties,
@@ -297,6 +302,11 @@ class Schema(BaseModel):
             str,
             pad.types.String | pad.types.Integer | pad.types.Float | pad.types.Boolean,
         ] = {}
+        defaults: dict[str, Any] = {}
+        for d in self.defaults or {}:
+            if self.defaults is None:
+                continue
+            defaults[d] = self.defaults[d]
         for key, value in self.properties.items():
             if key in other.properties:
                 intersection = cast(pad.types.BasePadType, value).intersect(
@@ -315,7 +325,9 @@ class Schema(BaseModel):
         my_required = set(self.required or [])
         other_required = set(other.required or [])
         return Schema(
-            properties=properties, required=list(my_required | other_required)
+            properties=properties,
+            required=list(my_required | other_required),
+            defaults=defaults,
         )
 
 

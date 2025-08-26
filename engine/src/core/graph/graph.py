@@ -310,7 +310,11 @@ class Graph:
 
             secret_options = await self.secret_provider.list_secrets()
             node.resolve_pads()
+
+            # Handle property pad values
             for pad_data in node_data.pads:
+                if "Property" not in pad_data.type:
+                    continue
                 casted_allowed_types = cast(
                     list[pad.types.BasePadType] | None, pad_data.allowed_types
                 )
@@ -322,16 +326,15 @@ class Graph:
 
                 deserialized_value: Any | None = None
                 node_reference_pad = False
-                if pad_data.type.startswith("Property"):
-                    if casted_allowed_types and len(casted_allowed_types) == 1:
-                        tc = casted_allowed_types[0]
-                        if not isinstance(tc, pad.types.NodeReference):
-                            deserialized_value = serialize.deserialize_pad_value(
-                                tc, pad_data.value
-                            )
-                        else:
-                            node_reference_pad = True
-                            deserialized_value = pad_data.value
+                if casted_allowed_types and len(casted_allowed_types) == 1:
+                    tc = casted_allowed_types[0]
+                    if not isinstance(tc, pad.types.NodeReference):
+                        deserialized_value = serialize.deserialize_pad_value(
+                            tc, pad_data.value
+                        )
+                    else:
+                        node_reference_pad = True
+                        deserialized_value = pad_data.value
 
                 pad_instance = node.get_pad(pad_data.id)
                 if not pad_instance:
@@ -340,11 +343,16 @@ class Graph:
                     )
                     continue
 
+                if not isinstance(pad_instance, pad.PropertyPad):
+                    logging.warning(
+                        f"Pad with ID {pad_data.id} in node {node.id} is not a PropertyPad."
+                    )
+                    continue
+
                 if node_reference_pad:
                     node_reference_pads.append(cast(pad.PropertyPad, pad_instance))
 
-                if isinstance(pad_instance, pad.PropertyPad):
-                    pad_instance.set_value(deserialized_value)
+                pad_instance.set_value(deserialized_value)
 
             node.resolve_pads()
             self.nodes.append(node)
