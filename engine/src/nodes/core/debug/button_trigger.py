@@ -3,6 +3,7 @@
 
 from core import node, pad
 from core.node import NodeMetadata
+from typing import cast
 
 
 class ButtonTrigger(node.Node):
@@ -16,13 +17,14 @@ class ButtonTrigger(node.Node):
             primary="core", secondary="utility", tags=["trigger", "debug"]
         )
 
-    async def resolve_pads(self):
-        if not self.get_pad("trigger"):
-            self.pads.append(
-                pad.StatelessSourcePad(
+    def resolve_pads(self):
+        trigger = cast(pad.StatelessSourcePad, self.get_pad("trigger"))
+        if not trigger:
+            trigger = pad.StatelessSourcePad(
                     id="trigger",
                     owner_node=self,
                     group="trigger",
-                    type_constraints=[pad.types.Trigger()],
+                    default_type_constraints=[pad.types.Trigger()],
                 )
-            )
+
+        self.pads = [trigger]

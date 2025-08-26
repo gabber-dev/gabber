@@ -20,42 +20,35 @@ class AVClipZip(Node):
             primary="core", secondary="media", tags=["control", "clip", "zip"]
         )
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         video_clip = cast(pad.StatelessSinkPad, self.get_pad("video_clip"))
         if not video_clip:
-            self.pads.append(
-                pad.StatelessSinkPad(
+            video_clip = pad.StatelessSinkPad(
                     id="video_clip",
                     owner_node=self,
-                    type_constraints=[pad.types.VideoClip()],
+                    default_type_constraints=[pad.types.VideoClip()],
                     group="video_clip",
                 )
-            )
-            video_clip = cast(pad.StatelessSinkPad, self.get_pad("video_clip"))
 
         audio_clip = cast(pad.StatelessSinkPad, self.get_pad("audio_clip"))
         if not audio_clip:
-            self.pads.append(
-                pad.StatelessSinkPad(
+            audio_clip = pad.StatelessSinkPad(
                     id="audio_clip",
                     owner_node=self,
-                    type_constraints=[pad.types.AudioClip()],
+                    default_type_constraints=[pad.types.AudioClip()],
                     group="audio_clip",
                 )
-            )
-            audio_clip = cast(pad.StatelessSinkPad, self.get_pad("audio_clip"))
 
         av_clip = cast(pad.StatelessSourcePad, self.get_pad("av_clip"))
         if not av_clip:
-            self.pads.append(
-                pad.StatelessSourcePad(
+            av_clip = pad.StatelessSourcePad(
                     id="av_clip",
                     owner_node=self,
-                    type_constraints=[pad.types.AVClip()],
+                    default_type_constraints=[pad.types.AVClip()],
                     group="av_clip",
                 )
-            )
-            av_clip = cast(pad.StatelessSourcePad, self.get_pad("av_clip"))
+
+        self.pads = [video_clip, audio_clip, av_clip]
 
     async def run(self):
         video_clip_pad = cast(pad.StatelessSinkPad, self.get_pad_required("video_clip"))

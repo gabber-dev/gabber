@@ -37,17 +37,23 @@ class OpenAICompatibleLLM:
         self._tasks = set[asyncio.Task]()
 
     async def create_completion(
-        self, *, request: LLMRequest, audio_support: bool, video_support: bool, max_completion_tokens: int | None = None
+        self,
+        *,
+        request: LLMRequest,
+        audio_support: bool,
+        video_support: bool,
+        max_completion_tokens: int | None = None,
     ) -> AsyncLLMResponseHandle:
         messages = await request.to_openai_completion_input(
             audio_support=audio_support, video_support=video_support
         )
+        tools = request.to_openai_completion_tools_input()
 
         try:
             res = await self._client.chat.completions.create(
                 model=self._model,
                 messages=messages,
-                tools=request.to_openai_completion_tools_input(),
+                tools=tools,
                 stream=True,
                 max_completion_tokens=max_completion_tokens,
             )

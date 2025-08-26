@@ -59,14 +59,14 @@ class Compare(Node):
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(primary="core", secondary="logic", tags=["compare"])
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         num_conditions = cast(pad.PropertySinkPad, self.get_pad("num_conditions"))
         if not num_conditions:
             num_conditions = pad.PropertySinkPad(
                 id="num_conditions",
                 group="num_conditions",
                 owner_node=self,
-                type_constraints=[pad.types.Integer()],
+                default_type_constraints=[pad.types.Integer()],
                 value=1,
             )
 
@@ -76,7 +76,7 @@ class Compare(Node):
                 id="mode",
                 group="mode",
                 owner_node=self,
-                type_constraints=[pad.types.Enum(options=["AND", "OR"])],
+                default_type_constraints=[pad.types.Enum(options=["AND", "OR"])],
                 value="AND",
             )
 
@@ -86,7 +86,7 @@ class Compare(Node):
                 id="value",
                 group="value",
                 owner_node=self,
-                type_constraints=[pad.types.Boolean()],
+                default_type_constraints=[pad.types.Boolean()],
                 value=False,
             )
 
@@ -100,7 +100,7 @@ class Compare(Node):
         condition_pads = self._get_condition_pads()
         for cps in condition_pads:
             a, b, op = cps
-            self._resolve_condition_types(a, b, op)
+            self._resolve_operators(a, b, op)
 
         self.pads = [num_conditions, mode_pad, value] + [
             p for cps in condition_pads for p in cps
@@ -163,19 +163,19 @@ class Compare(Node):
                     id=f"condition_{i}_A",
                     group="condition_A",
                     owner_node=self,
-                    type_constraints=None,
+                    default_type_constraints=ALL_ALLOWED_TYPES,
                 )
                 pad_b = pad.PropertySinkPad(
                     id=f"condition_{i}_B",
                     group="condition_B",
                     owner_node=self,
-                    type_constraints=None,
+                    default_type_constraints=ALL_ALLOWED_TYPES,
                 )
                 operator_pad = pad.PropertySinkPad(
                     id=f"condition_{i}_operator",
                     group="condition_operator",
                     owner_node=self,
-                    type_constraints=[pad.types.Enum(options=[])],
+                    default_type_constraints=[pad.types.Enum(options=[])],
                 )
                 self.pads.extend([pad_a, pad_b, operator_pad])
         elif current_count > num_conditions:
@@ -205,6 +205,7 @@ class Compare(Node):
             operator_pad = cast(
                 pad.PropertySinkPad, self.get_pad(f"condition_{i}_operator")
             )
+            pad_a.link_types_to_pad(pad_b)
             condition_pads.append((pad_a, pad_b, operator_pad))
             if not pad_a or not pad_b or not operator_pad:
                 logging.error(
@@ -213,76 +214,41 @@ class Compare(Node):
                 continue
         return condition_pads
 
-    def _resolve_condition_types(
+    def _resolve_operators(
         self,
         pad_a: pad.PropertySinkPad,
         pad_b: pad.PropertySinkPad,
         operator_pad: pad.PropertySinkPad,
     ):
-        prev_a = pad_a.get_previous_pad()
-        prev_b = pad_b.get_previous_pad()
-
-        if not prev_a and not prev_b:
-            pad_a.set_type_constraints(ALL_ALLOWED_TYPES)
-            pad_b.set_type_constraints(ALL_ALLOWED_TYPES)
-            operator_pad.set_type_constraints([pad.types.Enum(options=[])])
-            operator_pad.set_value(None)
-            return
-
-        tcs_a: list[pad.types.BasePadType] | None = ALL_ALLOWED_TYPES
-        if prev_a:
-            tcs_a = pad.types.INTERSECTION(
-                prev_a.get_type_constraints(), pad_a.get_type_constraints()
-            )
-            if tcs_a is None:
-                tcs_a = ALL_ALLOWED_TYPES
-            pad_a.set_type_constraints(tcs_a)
-
-        tcs_b: list[pad.types.BasePadType] | None = None
-        if prev_b:
-            tcs_b = pad.types.INTERSECTION(
-                prev_b.get_type_constraints(), pad_b.get_type_constraints()
-            )
-            if tcs_b is None:
-                tcs_b = ALL_ALLOWED_TYPES
-            pad_b.set_type_constraints(tcs_b)
-
-        tcs = pad.types.INTERSECTION(
-            tcs_a if tcs_a else pad_a.get_type_constraints(),
-            tcs_b if tcs_b else pad_b.get_type_constraints(),
-        )
-
-        pad_a.set_type_constraints(tcs)
-        pad_b.set_type_constraints(tcs)
-
+        tcs = pad_a.get_type_constraints()
         if tcs is not None and len(tcs) == 1:
             tc = tcs[0]
             if isinstance(tc, pad.types.String):
-                operator_pad.set_type_constraints(
+                operator_pad.set_default_type_constraints(
                     [pad.types.Enum(options=STRING_COMPARISON_OPERATORS)]
                 )
                 if operator_pad.get_value() not in STRING_COMPARISON_OPERATORS:
                     operator_pad.set_value(STRING_COMPARISON_OPERATORS[0])
             elif isinstance(tc, pad.types.Integer):
-                operator_pad.set_type_constraints(
+                operator_pad.set_default_type_constraints(
                     [pad.types.Enum(options=INTEGER_COMPARISON_OPERATORS)]
                 )
                 if operator_pad.get_value() not in INTEGER_COMPARISON_OPERATORS:
                     operator_pad.set_value(INTEGER_COMPARISON_OPERATORS[0])
             elif isinstance(tc, pad.types.Float):
-                operator_pad.set_type_constraints(
+                operator_pad.set_default_type_constraints(
                     [pad.types.Enum(options=FLOAT_COMPARISON_OPERATORS)]
                 )
                 if operator_pad.get_value() not in FLOAT_COMPARISON_OPERATORS:
                     operator_pad.set_value(FLOAT_COMPARISON_OPERATORS[0])
             elif isinstance(tc, pad.types.Boolean):
-                operator_pad.set_type_constraints(
+                operator_pad.set_default_type_constraints(
                     [pad.types.Enum(options=BOOL_COMPARISON_OPERATORS)]
                 )
                 if operator_pad.get_value() not in BOOL_COMPARISON_OPERATORS:
                     operator_pad.set_value(BOOL_COMPARISON_OPERATORS[0])
             elif isinstance(tc, pad.types.Enum):
-                operator_pad.set_type_constraints(
+                operator_pad.set_default_type_constraints(
                     [pad.types.Enum(options=ENUM_COMPARISON_OPERATORS)]
                 )
                 if operator_pad.get_value() not in ENUM_COMPARISON_OPERATORS:
@@ -291,10 +257,10 @@ class Compare(Node):
                 logging.error(
                     f"Unsupported type for comparison: {tc}. No operator pad will be created."
                 )
-                operator_pad.set_type_constraints([pad.types.Enum(options=[])])
+                operator_pad.set_default_type_constraints([pad.types.Enum(options=[])])
                 operator_pad.set_value(None)
         else:
-            operator_pad.set_type_constraints([pad.types.Enum(options=[])])
+            operator_pad.set_default_type_constraints([pad.types.Enum(options=[])])
             operator_pad.set_value(None)
 
     async def run(self):

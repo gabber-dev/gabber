@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 
 class ProxyStatelessSourcePad(SourcePad, ProxyPad):
     def __init__(self, *, id: str, group: str, owner_node: "Node", other: SourcePad):
+        super().__init__()
         self._id = id
         self._group = group
         self._owner_node = owner_node
@@ -37,6 +38,14 @@ class ProxyStatelessSourcePad(SourcePad, ProxyPad):
 
     def set_type_constraints(self, constraints: list[types.BasePadType] | None) -> None:
         self._other.set_type_constraints(constraints)
+
+    def get_default_type_constraints(self):
+        return self._other.get_default_type_constraints()
+
+    def set_default_type_constraints(
+        self, constraints: list[types.BasePadType] | None
+    ) -> None:
+        self._other.set_default_type_constraints(constraints)
 
     def get_editor_type(self) -> str:
         return "StatelessSourcePad"

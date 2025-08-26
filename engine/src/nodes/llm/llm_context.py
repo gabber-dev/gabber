@@ -29,6 +29,118 @@ class LLMContext(node.Node):
             primary="ai", secondary="llm", tags=["context", "memory"]
         )
 
+    def resolve_pads(self):
+        num_inserts = cast(pad.PropertySinkPad, self.get_pad("num_inserts"))
+        if not num_inserts:
+            num_inserts = pad.PropertySinkPad(
+                id="num_inserts",
+                group="config",
+                owner_node=self,
+                default_type_constraints=[pad.types.Integer(minimum=1)],
+                value=1,
+            )
+
+        new_user_message = cast(
+            pad.StatelessSourcePad, self.get_pad("new_user_message")
+        )
+        if not new_user_message:
+            new_user_message = pad.StatelessSourcePad(
+                id="new_user_message",
+                group="new_user_message",
+                owner_node=self,
+                default_type_constraints=[pad.types.ContextMessage()],
+            )
+        max_non_system_messages = cast(
+            pad.PropertySinkPad, self.get_pad("max_non_system_messages")
+        )
+        if not max_non_system_messages:
+            max_non_system_messages = pad.PropertySinkPad(
+                id="max_non_system_messages",
+                group="max_non_system_messages",
+                owner_node=self,
+                default_type_constraints=[pad.types.Integer(minimum=0)],
+                value=64,
+            )
+
+        max_videos = cast(pad.PropertySinkPad, self.get_pad("max_videos"))
+        if not max_videos:
+            max_videos = pad.PropertySinkPad(
+                id="max_videos",
+                group="max_videos",
+                owner_node=self,
+                default_type_constraints=[pad.types.Integer(minimum=0)],
+                value=2,
+            )
+
+        max_audios = cast(pad.PropertySinkPad, self.get_pad("max_audios"))
+        if not max_audios:
+            max_audios = pad.PropertySinkPad(
+                id="max_audios",
+                group="max_audios",
+                owner_node=self,
+                default_type_constraints=[pad.types.Integer(minimum=0)],
+                value=2,
+            )
+
+        max_images = cast(pad.PropertySinkPad, self.get_pad("max_images"))
+        if not max_images:
+            max_images = pad.PropertySinkPad(
+                id="max_images",
+                group="max_images",
+                owner_node=self,
+                default_type_constraints=[pad.types.Integer(minimum=0)],
+                value=2,
+            )
+
+        system_message = cast(pad.PropertySinkPad, self.get_pad("system_message"))
+        if not system_message:
+            system_message = pad.PropertySinkPad(
+                id="system_message",
+                group="system_message",
+                owner_node=self,
+                default_type_constraints=[pad.types.ContextMessage()],
+                value=DEFAULT_SYSTEM_MESSAGE,
+            )
+
+        source = cast(pad.PropertySourcePad, self.get_pad("source"))
+        if not source:
+            source = pad.PropertySourcePad(
+                id="source",
+                group="source",
+                owner_node=self,
+                default_type_constraints=[
+                    pad.types.List(item_type_constraints=[pad.types.ContextMessage()])
+                ],
+                value=[system_message.get_value()],
+            )
+
+        source.set_value([system_message.get_value()])
+
+        insert_pads: list[pad.Pad] = []
+        for i in range(num_inserts.get_value() or 1):
+            pad_id = f"insert_{i}"
+            insert_pad = self.get_pad(pad_id)
+            if not insert_pad:
+                insert_pad = pad.StatelessSinkPad(
+                    id=pad_id,
+                    group="insert",
+                    owner_node=self,
+                    default_type_constraints=[pad.types.ContextMessage()],
+                )
+            insert_pads.append(insert_pad)
+
+        for p in self.pads:
+            if p.get_group() == "insert":
+                if p not in insert_pads:
+                    self.pads.remove(p)
+
+        self.pads = (
+            [num_inserts, max_non_system_messages, max_videos, max_audios, max_images, system_message]
+            + insert_pads
+            + [source, new_user_message]
+        )
+
+
     async def run(self):
         system_message = cast(
             pad.PropertySinkPad, self.get_pad_required("system_message")
@@ -166,140 +278,3 @@ class LLMContext(node.Node):
         tasks.append(asyncio.create_task(system_message_task()))
         await asyncio.gather(*tasks)
 
-    async def resolve_pads(self):
-        new_user_message = cast(
-            pad.StatelessSourcePad, self.get_pad("new_user_message")
-        )
-        if not new_user_message:
-            new_user_message = pad.StatelessSourcePad(
-                id="new_user_message",
-                group="new_user_message",
-                owner_node=self,
-                type_constraints=[pad.types.ContextMessage()],
-            )
-            self.pads.append(new_user_message)
-        max_non_system_messages = cast(
-            pad.PropertySinkPad, self.get_pad("max_non_system_messages")
-        )
-        if not max_non_system_messages:
-            max_non_system_messages = pad.PropertySinkPad(
-                id="max_non_system_messages",
-                group="max_non_system_messages",
-                owner_node=self,
-                type_constraints=[pad.types.Integer(minimum=0)],
-                value=64,
-            )
-            self.pads.append(max_non_system_messages)
-
-        max_videos = cast(pad.PropertySinkPad, self.get_pad("max_videos"))
-        if not max_videos:
-            max_videos = pad.PropertySinkPad(
-                id="max_videos",
-                group="max_videos",
-                owner_node=self,
-                type_constraints=[pad.types.Integer(minimum=0)],
-                value=2,
-            )
-            self.pads.append(max_videos)
-
-        max_audios = cast(pad.PropertySinkPad, self.get_pad("max_audios"))
-        if not max_audios:
-            max_audios = pad.PropertySinkPad(
-                id="max_audios",
-                group="max_audios",
-                owner_node=self,
-                type_constraints=[pad.types.Integer(minimum=0)],
-                value=2,
-            )
-            self.pads.append(max_audios)
-
-        max_images = cast(pad.PropertySinkPad, self.get_pad("max_images"))
-        if not max_images:
-            max_images = pad.PropertySinkPad(
-                id="max_images",
-                group="max_images",
-                owner_node=self,
-                type_constraints=[pad.types.Integer(minimum=0)],
-                value=2,
-            )
-            self.pads.append(max_images)
-
-        system_message = cast(pad.PropertySinkPad, self.get_pad("system_message"))
-        if not system_message:
-            system_message = pad.PropertySinkPad(
-                id="system_message",
-                group="system_message",
-                owner_node=self,
-                type_constraints=[pad.types.ContextMessage()],
-                value=DEFAULT_SYSTEM_MESSAGE,
-            )
-            self.pads.append(system_message)
-
-        insert_sink = cast(pad.StatelessSinkPad, self.get_pad("insert_0"))
-        if not insert_sink:
-            insert_sink = pad.StatelessSinkPad(
-                id="insert_0",
-                group="insert",
-                owner_node=self,
-                type_constraints=[pad.types.ContextMessage()],
-            )
-            self.pads.append(insert_sink)
-
-        source = cast(pad.PropertySourcePad, self.get_pad("source"))
-        if not source:
-            source = pad.PropertySourcePad(
-                id="source",
-                group="source",
-                owner_node=self,
-                type_constraints=[
-                    pad.types.List(item_type_constraints=[pad.types.ContextMessage()])
-                ],
-                value=[system_message.get_value()],
-            )
-            self.pads.append(source)
-
-        source.set_value([system_message.get_value()])
-
-        connected_insert_pads = [
-            p
-            for p in self.pads
-            if p.get_id().startswith("insert_")
-            and isinstance(p, pad.SinkPad)
-            and p.get_previous_pad()
-        ]
-
-        connected_insert_pads.sort(key=lambda p: int(p.get_id().split("_")[1]))
-
-        max_index = max(
-            (int(p.get_id().split("_")[1]) for p in connected_insert_pads), default=-1
-        )
-
-        new_pads = [
-            source,
-            system_message,
-            new_user_message,
-            max_non_system_messages,
-            max_images,
-            max_audios,
-            max_videos,
-        ]
-        for i in range(max_index + 2):  # +2 to include next ID and one extra
-            pad_id = f"insert_{i}"
-            existing_pad = next((p for p in self.pads if p.get_id() == pad_id), None)
-            if existing_pad and existing_pad in connected_insert_pads:
-                new_pads.append(existing_pad)
-            else:
-                new_pads.append(
-                    pad.StatelessSinkPad(
-                        id=pad_id,
-                        group="insert",
-                        owner_node=self,
-                        type_constraints=[pad.types.ContextMessage()],
-                    )
-                )
-
-        self.pads = new_pads
-
-        source.set_type_constraints(
-            [pad.types.List(item_type_constraints=[pad.types.ContextMessage()])]
-        )

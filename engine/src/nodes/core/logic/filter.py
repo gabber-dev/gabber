@@ -12,14 +12,14 @@ class Filter(Node):
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(primary="core", secondary="logic", tags=["filter"])
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         sink = cast(pad.StatelessSinkPad, self.get_pad("sink"))
         if not sink:
             sink = pad.StatelessSinkPad(
                 id="sink",
                 group="sink",
                 owner_node=self,
-                type_constraints=None,
+                default_type_constraints=None,
             )
 
         open_pad = cast(pad.PropertySinkPad, self.get_pad("open"))
@@ -28,7 +28,7 @@ class Filter(Node):
                 id="open",
                 group="open",
                 owner_node=self,
-                type_constraints=[pad.types.Boolean()],
+                default_type_constraints=[pad.types.Boolean()],
             )
 
         source = cast(pad.StatelessSourcePad, self.get_pad("source"))
@@ -37,16 +37,10 @@ class Filter(Node):
                 id="source",
                 group="source",
                 owner_node=self,
-                type_constraints=None,
+                default_type_constraints=None,
             )
 
-        prev_pad = sink.get_previous_pad()
-        if prev_pad:
-            prev_tc = prev_pad.get_type_constraints()
-            tcs = pad.types.INTERSECTION(prev_tc, sink.get_type_constraints())
-            sink.set_type_constraints(tcs)
-            source.set_type_constraints(tcs)
-
+        sink.link_types_to_pad(source)
         self.pads = [sink, open_pad, source]
 
     async def run(self):

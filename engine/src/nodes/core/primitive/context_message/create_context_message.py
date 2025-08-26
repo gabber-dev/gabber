@@ -18,13 +18,14 @@ class CreateContextMessage(Node):
     def get_metadata(cls) -> NodeMetadata:
         return NodeMetadata(primary="ai", secondary="llm", tags=["context", "message"])
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         sink_default: list[pad.types.BasePadType] | None = [
             types.AudioClip(),
             types.VideoClip(),
             types.AVClip(),
             types.String(),
             types.Video(),
+            types.TextStream(),
         ]
         role = cast(PropertySinkPad, self.get_pad("role"))
         if not role:
@@ -32,7 +33,7 @@ class CreateContextMessage(Node):
                 id="role",
                 group="role",
                 owner_node=self,
-                type_constraints=[types.ContextMessageRole()],
+                default_type_constraints=[types.ContextMessageRole()],
                 value=runtime_types.ContextMessageRole.SYSTEM,
             )
             self.pads.append(role)
@@ -43,7 +44,7 @@ class CreateContextMessage(Node):
                 id="content",
                 group="content",
                 owner_node=self,
-                type_constraints=sink_default,
+                default_type_constraints=sink_default,
             )
             self.pads.append(content_sink)
 
@@ -53,17 +54,9 @@ class CreateContextMessage(Node):
                 id="context_message",
                 group="context_message",
                 owner_node=self,
-                type_constraints=[types.ContextMessage()],
+                default_type_constraints=[types.ContextMessage()],
             )
             self.pads.append(message_source)
-
-        prev_pad = content_sink.get_previous_pad()
-        if prev_pad:
-            sink_default = pad.types.INTERSECTION(
-                prev_pad.get_type_constraints(), sink_default
-            )
-
-        content_sink.set_type_constraints(sink_default)
 
     async def run(self):
         content_sink = cast(StatelessSinkPad, self.get_pad_required("content"))
@@ -96,6 +89,13 @@ class CreateContextMessage(Node):
             elif isinstance(item.value, str):
                 content.append(
                     runtime_types.ContextMessageContentItem_Text(content=item.value)
+                )
+            elif isinstance(item.value, runtime_types.TextStream):
+                acc = ""
+                async for chunk in item.value:
+                    acc += chunk
+                content.append(
+                    runtime_types.ContextMessageContentItem_Text(content=acc)
                 )
 
             if len(content) > 0:

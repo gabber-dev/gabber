@@ -49,20 +49,20 @@ class SubGraph(node.Node):
                 id="__subgraph_id__",
                 group="subgraph",
                 owner_node=self,
-                type_constraints=[pad.types.String()],
+                default_type_constraints=[pad.types.String()],
                 value=subgraph_id,
             )
             self.pads.append(subgraph_id_pad)
         subgraph_id_pad.set_value(subgraph_id)
 
-    async def resolve_pads(self):
+    def resolve_pads(self):
         subgraph_id_pad = cast(pad.PropertySinkPad, self.get_pad("__subgraph_id__"))
         if not subgraph_id_pad:
             subgraph_id_pad = pad.PropertySinkPad(
                 id="__subgraph_id__",
                 group="subgraph",
                 owner_node=self,
-                type_constraints=[pad.types.String()],
+                default_type_constraints=[pad.types.String()],
                 value="",
             )
             self.pads.append(subgraph_id_pad)

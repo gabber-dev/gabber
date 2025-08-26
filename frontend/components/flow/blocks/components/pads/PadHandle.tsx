@@ -45,23 +45,20 @@ export function PadHandle({ data, isActive = false }: Props) {
     }
   }, [data.next_pads, data.previous_pad, direction]);
 
-  const allowedTypeNames = useMemo<string[]>(() => {
-    if (data.allowed_types) {
-      if (data.allowed_types.length > 1) {
-        return data.allowed_types.map((typeDef) => {
-          return typeDef.type as string;
-        });
-      } else {
-        const allowedType = data.allowed_types[0];
-        if (allowedType.type === "enum") {
-          const options = (allowedType.options || []) as string[];
-          const optionsString = options.join(", ");
-          return [`enum(${optionsString})`];
-        }
-        return [allowedType.type as string];
+  const allowedTypeNames = useMemo<string[] | null>(() => {
+    if (data.allowed_types === null || data.allowed_types === undefined)
+      return null;
+    if (data.allowed_types.length === 1) {
+      const allowedType = data.allowed_types[0];
+      if (allowedType.type === "enum") {
+        const options = (allowedType.options || []) as string[];
+        const optionsString = options.join(", ");
+        return [`enum(${optionsString})`];
       }
+      return [allowedType.type as string];
     }
-    return [];
+
+    return data.allowed_types.map((t) => t.type as string);
   }, [data.allowed_types]);
 
   // Get the primary data type for color coding
@@ -152,7 +149,11 @@ export function PadHandle({ data, isActive = false }: Props) {
                   Allowed:
                 </span>
                 <div className="flex flex-wrap gap-1 ml-2">
-                  {allowedTypeNames.length > 0 ? (
+                  {allowedTypeNames === null && (
+                    <span className="text-accent text-xs">ANY</span>
+                  )}
+                  {allowedTypeNames !== null &&
+                    allowedTypeNames.length > 0 &&
                     allowedTypeNames.map((name, idx) => (
                       <span
                         key={idx}
@@ -160,10 +161,11 @@ export function PadHandle({ data, isActive = false }: Props) {
                       >
                         {name}
                       </span>
-                    ))
-                  ) : (
-                    <span className="text-accent text-xs">—</span>
-                  )}
+                    ))}
+                  {allowedTypeNames !== null &&
+                    allowedTypeNames.length === 0 && (
+                      <span className="text-accent text-xs">NONE</span>
+                    )}
                 </div>
               </div>
             </div>
