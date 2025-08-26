@@ -4,17 +4,19 @@
  */
 
 import { useRepository } from "@/hooks/useRepository";
-import { ChevronDownIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { ChevronDownIcon, TrashIcon, DocumentDuplicateIcon, PencilIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
 import { AppListItem } from "./AppListItem";
 import ReactModal from "react-modal";
 import { CreateAppModal } from "./CreateAppModal";
+import toast from "react-hot-toast";
 
 export function AppList() {
   const [showModal, setShowModal] = useState(false);
   const [appsExpanded, setAppsExpanded] = useState(false);
-  const { apps, deleteApp } = useRepository();
+  const { apps, deleteApp, saveApp, forceRefreshApps } = useRepository();
   const [selectedApps, setSelectedApps] = useState<Set<string>>(new Set());
+  const [renameModal, setRenameModal] = useState<{ isOpen: boolean; appId: string; currentName: string }>({ isOpen: false, appId: "", currentName: "" });
 
   const handleDeleteSelected = async () => {
     const confirmed = window.confirm(
@@ -28,6 +30,59 @@ export function AppList() {
     }
     setSelectedApps(new Set());
   };
+
+  const handleDuplicateSelected = async () => {
+    const confirmed = window.confirm(
+      `Duplicate ${selectedApps.size} app${selectedApps.size > 1 ? "s" : ""} to your collection?`
+    );
+    if (!confirmed) return;
+
+    // Duplicate all selected apps
+    for (const appId of selectedApps) {
+      const app = apps.find(a => a.id === appId);
+      if (app) {
+        try {
+          await saveApp({
+            name: `${app.name} (Copy)`,
+            graph: app.graph
+          });
+        } catch (error) {
+          console.error("Error duplicating app:", error);
+          toast.error(`Failed to duplicate ${app.name}`);
+        }
+      }
+    }
+    setSelectedApps(new Set());
+
+    // Force refresh the apps list to show the newly duplicated items
+    await forceRefreshApps();
+
+    toast.success("Apps duplicated successfully!");
+  };
+
+  const handleRenameApp = async (appId: string, newName: string) => {
+    try {
+      const app = apps.find(a => a.id === appId);
+      if (!app) return;
+
+      await saveApp({
+        id: appId,
+        name: newName,
+        graph: app.graph
+      });
+
+      toast.success("App renamed successfully!");
+      setRenameModal({ isOpen: false, appId: "", currentName: "" });
+    } catch (error) {
+      toast.error("Failed to rename app");
+      console.error("Error renaming app:", error);
+    }
+  };
+
+  const openRenameModal = (appId: string, currentName: string) => {
+    setRenameModal({ isOpen: true, appId, currentName });
+  };
+
   const hasMoreThanFourApps = apps.length > 4;
   const displayedApps = appsExpanded ? apps : apps.slice(0, 4);
 
@@ -46,6 +101,56 @@ export function AppList() {
       >
         <CreateAppModal />
       </ReactModal>
+
+      {/* Rename Modal */}
+      <ReactModal
+        isOpen={renameModal.isOpen}
+        onRequestClose={() => setRenameModal({ isOpen: false, appId: "", currentName: "" })}
+        overlayClassName="fixed top-0 bottom-0 left-0 right-0 backdrop-blur-lg bg-blur flex justify-center items-center z-50"
+        className="w-full max-w-md bg-neutral-800 rounded-lg shadow-lg outline-none z-50"
+        shouldCloseOnOverlayClick={true}
+      >
+        <div className="p-6">
+          <h3 className="font-bangers text-xl mb-4">Rename App</h3>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.target as HTMLFormElement);
+              const newName = formData.get("name") as string;
+              if (newName.trim()) {
+                handleRenameApp(renameModal.appId, newName.trim());
+              }
+            }}
+          >
+            <div className="form-control mb-4">
+              <label className="label">
+                <span className="label-text">New Name</span>
+              </label>
+              <input
+                type="text"
+                name="name"
+                defaultValue={renameModal.currentName}
+                className="input input-bordered"
+                required
+                autoFocus
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => setRenameModal({ isOpen: false, appId: "", currentName: "" })}
+                className="btn btn-ghost"
+              >
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary">
+                Rename
+              </button>
+            </div>
+          </form>
+        </div>
+      </ReactModal>
+
       <div>
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-bangers text-2xl tracking-wider">Your Apps</h2>
@@ -54,6 +159,29 @@ export function AppList() {
           </button>
           {selectedApps.size > 0 && (
             <div className="flex gap-2">
+              <button
+                onClick={handleDuplicateSelected}
+                className="btn btn-warning btn-sm gap-2 font-vt323"
+              >
+                <DocumentDuplicateIcon className="h-4 w-4" />
+                Duplicate {selectedApps.size}
+              </button>
+              <button
+                onClick={() => {
+                  if (selectedApps.size === 1) {
+                    const appId = Array.from(selectedApps)[0];
+                    const app = apps.find(a => a.id === appId);
+                    if (app) {
+                      openRenameModal(appId, app.name);
+                    }
+                  }
+                }}
+                disabled={selectedApps.size !== 1}
+                className="btn btn-info btn-sm gap-2 font-vt323"
+              >
+                <PencilIcon className="h-4 w-4" />
+                Rename
+              </button>
               <button
                 onClick={handleDeleteSelected}
                 className="btn btn-error btn-sm gap-2 font-vt323"
