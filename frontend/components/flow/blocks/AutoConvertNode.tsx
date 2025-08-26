@@ -44,15 +44,6 @@ export function AutoConvertNode() {
     return getPrimaryDataType(outputPad.allowed_types || []);
   }, [outputPad]);
 
-  // Get colors for the data types
-  const inputColor = useMemo(() => {
-    return getDataTypeColor(inputDataType || "default");
-  }, [inputDataType]);
-
-  const outputColor = useMemo(() => {
-    return getDataTypeColor(outputDataType || "default");
-  }, [outputDataType]);
-
   // Determine if there are connections to show actual types
   const hasInputConnection = inputPad?.previous_pad !== null;
   const hasOutputConnection =
