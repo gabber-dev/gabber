@@ -52,6 +52,8 @@ class RepositoryServer:
         self.app.router.add_delete("/sub_graph/{id}", self.delete_subgraph)
         self.app.router.add_get("/example/{id}", self.get_example)
         self.app.router.add_get("/example/list", self.list_examples)
+        self.app.router.add_get("/premade_subgraph/{id}", self.get_premade_subgraph)
+        self.app.router.add_get("/premade_subgraph/list", self.list_premade_subgraphs)
         self.app.router.add_post("/app/run", self.app_run)
         self.app.router.add_post("/app/debug_connection", self.debug_connection)
 
@@ -376,6 +378,53 @@ class RepositoryServer:
         except FileNotFoundError:
             return aiohttp.web.json_response(
                 {"status": "error", "message": "App not found"}, status=404
+            )
+
+    async def list_premade_subgraphs(self, request: aiohttp.web.Request):
+        try:
+            subgraph_dir = "data/sub_graph"
+            files = await asyncio.to_thread(os.listdir, subgraph_dir)
+            subgraphs = []
+            for file in files:
+                if file.endswith(".json"):
+                    async with aiofiles.open(f"{subgraph_dir}/{file}", mode="r") as f:
+                        content = await f.read()
+                        subgraph = models.RepositorySubGraph.model_validate_json(content)
+                        subgraphs.append(subgraph)
+            sorted_by_created_at = sorted(
+                subgraphs, key=lambda x: x.created_at, reverse=True
+            )
+            response = messages.ListSubgraphsResponse(sub_graphs=sorted_by_created_at)
+            return aiohttp.web.Response(
+                body=response.model_dump_json(), content_type="application/json"
+            )
+        except Exception as e:
+            logging.error(f"Error listing premade subgraphs: {e}")
+            return aiohttp.web.json_response(
+                {"status": "error", "message": str(e)}, status=500
+            )
+
+    async def get_premade_subgraph(self, request: aiohttp.web.Request):
+        subgraph_dir = "data/sub_graph"
+        subgraph_id = request.match_info.get("id")
+        if not subgraph_id:
+            return aiohttp.web.json_response(
+                {"status": "error", "message": "Missing subgraph ID"}, status=400
+            )
+
+        try:
+            async with aiofiles.open(
+                f"{subgraph_dir}/{subgraph_id}.json", mode="r"
+            ) as json_file:
+                json_content = await json_file.read()
+            obj = models.RepositorySubGraph.model_validate_json(json_content)
+            resp = messages.GetSubgraphResponse(sub_graph=obj)
+            return aiohttp.web.Response(
+                body=resp.model_dump_json(), content_type="application/json"
+            )
+        except FileNotFoundError:
+            return aiohttp.web.json_response(
+                {"status": "error", "message": "Subgraph not found"}, status=404
             )
 
     async def app_run(self, request: aiohttp.web.Request):
