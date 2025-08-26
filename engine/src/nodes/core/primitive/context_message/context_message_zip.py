@@ -49,7 +49,13 @@ class ContextMessageZip(Node):
                 value=1,
             )
 
-        self.pads = [role, message_source, num_content_pads]
+        existing_content_pads = [
+            p
+            for p in self.pads
+            if isinstance(p, StatelessSinkPad) and p.get_group() == "content"
+        ]
+        self.pads = [role, message_source, num_content_pads] + existing_content_pads
+
         content_pads = self._resolve_content_pads()
         self.pads = [role, message_source, num_content_pads] + content_pads
 
@@ -62,14 +68,16 @@ class ContextMessageZip(Node):
             types.Video(),
             types.TextStream(),
         ]
-        num_content_pads = cast(
-            PropertySinkPad, self.get_pad_required("num_contents")
-        ).get_value() or 1
+        num_content_pads = (
+            cast(PropertySinkPad, self.get_pad_required("num_contents")).get_value()
+            or 1
+        )
         content_pads: list[pad.Pad] = []
         for i in range(num_content_pads):
             pad_id = f"content_{i}"
             content_pad = self.get_pad(pad_id)
             if not content_pad:
+                logging.info(f"NEIL Creating content pad {pad_id}")
                 content_pad = StatelessSinkPad(
                     id=pad_id,
                     group="content",
@@ -77,11 +85,6 @@ class ContextMessageZip(Node):
                     default_type_constraints=sink_default,
                 )
             content_pads.append(content_pad)
-
-        for p in self.pads:
-            if p.get_group() == "content":
-                if p not in content_pads:
-                    self.pads.remove(p)
 
         return content_pads
 
@@ -147,9 +150,7 @@ class ContextMessageZip(Node):
                         async for chunk in item.value:
                             acc += chunk
                         content.append(
-                            runtime_types.ContextMessageContentItem_Text(
-                                content=acc
-                            )
+                            runtime_types.ContextMessageContentItem_Text(content=acc)
                         )
 
                 message = runtime_types.ContextMessage(

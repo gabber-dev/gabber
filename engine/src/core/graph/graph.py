@@ -346,6 +346,7 @@ class Graph:
                 if isinstance(pad_instance, pad.PropertyPad):
                     pad_instance.set_value(deserialized_value)
 
+            node.resolve_pads()
             self.nodes.append(node)
 
         node_lookup: dict[str, Node] = {n.id: n for n in self.nodes}
