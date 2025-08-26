@@ -2,7 +2,7 @@
     "id": "services-conversational",
     "name": "Conversational w/ Remote Services",
     "created_at": "2025-08-13T13:22:09.215455",
-    "updated_at": "2025-08-22T11:29:21.780787",
+    "updated_at": "2025-08-26T14:34:53.581984",
     "graph": {
         "nodes": [
             {
@@ -154,84 +154,21 @@
                 ],
                 "editor_dimensions": [
                     356.0,
-                    427.0
+                    439.0
                 ],
                 "pads": [
                     {
-                        "id": "source",
-                        "group": "source",
-                        "type": "PropertySourcePad",
-                        "value": [
-                            {
-                                "role": "system",
-                                "content": [
-                                    {
-                                        "type": "text",
-                                        "content": "You are a helpful assistant."
-                                    }
-                                ],
-                                "tool_calls": [],
-                                "tool_call_id": null
-                            }
-                        ],
-                        "next_pads": [
-                            {
-                                "node": "subgraph_c9c66609",
-                                "pad": "llm_context"
-                            }
-                        ],
-                        "previous_pad": null,
-                        "allowed_types": [
-                            {
-                                "type": "list",
-                                "max_length": null,
-                                "item_type_constraints": [
-                                    {}
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        "id": "system_message",
-                        "group": "system_message",
+                        "id": "num_inserts",
+                        "group": "config",
                         "type": "PropertySinkPad",
-                        "value": {
-                            "role": "system",
-                            "content": [
-                                {
-                                    "type": "text",
-                                    "content": "You are a helpful assistant."
-                                }
-                            ],
-                            "tool_calls": [],
-                            "tool_call_id": null
-                        },
+                        "value": 2,
                         "next_pads": [],
-                        "previous_pad": {
-                            "node": "contextmessage_9db6e955",
-                            "pad": "context_message"
-                        },
-                        "allowed_types": [
-                            {
-                                "type": "context_message"
-                            }
-                        ]
-                    },
-                    {
-                        "id": "new_user_message",
-                        "group": "new_user_message",
-                        "type": "StatelessSourcePad",
-                        "value": null,
-                        "next_pads": [
-                            {
-                                "node": "autoconvert_08a0110c",
-                                "pad": "sink"
-                            }
-                        ],
                         "previous_pad": null,
                         "allowed_types": [
                             {
-                                "type": "context_message"
+                                "type": "integer",
+                                "maximum": null,
+                                "minimum": 1
                             }
                         ]
                     },
@@ -251,8 +188,8 @@
                         ]
                     },
                     {
-                        "id": "max_images",
-                        "group": "max_images",
+                        "id": "max_videos",
+                        "group": "max_videos",
                         "type": "PropertySinkPad",
                         "value": 2,
                         "next_pads": [],
@@ -281,8 +218,8 @@
                         ]
                     },
                     {
-                        "id": "max_videos",
-                        "group": "max_videos",
+                        "id": "max_images",
+                        "group": "max_images",
                         "type": "PropertySinkPad",
                         "value": 2,
                         "next_pads": [],
@@ -292,6 +229,32 @@
                                 "type": "integer",
                                 "maximum": null,
                                 "minimum": 0
+                            }
+                        ]
+                    },
+                    {
+                        "id": "system_message",
+                        "group": "system_message",
+                        "type": "PropertySinkPad",
+                        "value": {
+                            "role": "system",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "content": "You are a helpful assistant."
+                                }
+                            ],
+                            "tool_calls": [],
+                            "tool_call_id": null
+                        },
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "contextmessage_9db6e955",
+                            "pad": "context_message"
+                        },
+                        "allowed_types": [
+                            {
+                                "type": "context_message"
                             }
                         ]
                     },
@@ -328,11 +291,50 @@
                         ]
                     },
                     {
-                        "id": "insert_2",
-                        "group": "insert",
-                        "type": "StatelessSinkPad",
+                        "id": "source",
+                        "group": "source",
+                        "type": "PropertySourcePad",
+                        "value": [
+                            {
+                                "role": "system",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "content": "You are a helpful assistant."
+                                    }
+                                ],
+                                "tool_calls": [],
+                                "tool_call_id": null
+                            }
+                        ],
+                        "next_pads": [
+                            {
+                                "node": "subgraph_c9c66609",
+                                "pad": "llm_context"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "list",
+                                "max_length": null,
+                                "item_type_constraints": [
+                                    {}
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "new_user_message",
+                        "group": "new_user_message",
+                        "type": "StatelessSourcePad",
                         "value": null,
-                        "next_pads": [],
+                        "next_pads": [
+                            {
+                                "node": "autoconvert_08a0110c",
+                                "pad": "sink"
+                            }
+                        ],
                         "previous_pad": null,
                         "allowed_types": [
                             {
@@ -365,8 +367,8 @@
                 ],
                 "pads": [
                     {
-                        "id": "audio_sink",
-                        "group": "audio_sink",
+                        "id": "audio",
+                        "group": "audio",
                         "type": "StatelessSinkPad",
                         "value": null,
                         "next_pads": [],
@@ -381,8 +383,8 @@
                         ]
                     },
                     {
-                        "id": "video_sink",
-                        "group": "video_sink",
+                        "id": "video",
+                        "group": "video",
                         "type": "StatelessSinkPad",
                         "value": null,
                         "next_pads": [],
@@ -414,7 +416,7 @@
                 ],
                 "editor_dimensions": [
                     347.0,
-                    613.0
+                    641.0
                 ],
                 "pads": [
                     {
@@ -498,7 +500,7 @@
                         "next_pads": [
                             {
                                 "node": "output_ff7ff2f5",
-                                "pad": "audio_sink"
+                                "pad": "audio"
                             }
                         ],
                         "previous_pad": null,
@@ -633,9 +635,9 @@
                             {
                                 "type": "enum",
                                 "options": [
-                                    "assembly_ai",
+                                    "local_kyutai",
                                     "deepgram",
-                                    "local_kyutai"
+                                    "assembly_ai"
                                 ]
                             }
                         ]
@@ -652,8 +654,24 @@
                                 "type": "enum",
                                 "options": [
                                     "gabber",
-                                    "cartesia",
-                                    "elevenlabs"
+                                    "elevenlabs",
+                                    "cartesia"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "id": "tool_group",
+                        "group": "tool_group",
+                        "type": "PropertySinkPad",
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "node_reference",
+                                "node_types": [
+                                    "ToolGroup"
                                 ]
                             }
                         ]
