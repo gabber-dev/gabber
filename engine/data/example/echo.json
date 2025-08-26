@@ -2,7 +2,7 @@
     "id": "echo",
     "name": "Hello World: Echo",
     "created_at": "2025-07-29T10:41:27.850348",
-    "updated_at": "2025-07-30T13:28:27.549167",
+    "updated_at": "2025-08-26T14:42:32.572946",
     "graph": {
         "nodes": [
             {
@@ -15,7 +15,7 @@
                 ],
                 "editor_dimensions": [
                     256.0,
-                    352.0
+                    422.0
                 ],
                 "pads": [
                     {
@@ -26,7 +26,7 @@
                         "next_pads": [
                             {
                                 "node": "output_274c2131",
-                                "pad": "audio_sink"
+                                "pad": "audio"
                             }
                         ],
                         "previous_pad": null,
@@ -44,13 +44,39 @@
                         "next_pads": [
                             {
                                 "node": "output_274c2131",
-                                "pad": "video_sink"
+                                "pad": "video"
                             }
                         ],
                         "previous_pad": null,
                         "allowed_types": [
                             {
                                 "type": "video"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "audio_enabled",
+                        "group": "audio_enabled",
+                        "type": "PropertySourcePad",
+                        "value": false,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "boolean"
+                            }
+                        ]
+                    },
+                    {
+                        "id": "video_enabled",
+                        "group": "video_enabled",
+                        "type": "PropertySourcePad",
+                        "value": false,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "allowed_types": [
+                            {
+                                "type": "boolean"
                             }
                         ]
                     }
@@ -75,12 +101,12 @@
                 ],
                 "editor_dimensions": [
                     256.0,
-                    304.0
+                    300.0
                 ],
                 "pads": [
                     {
-                        "id": "audio_sink",
-                        "group": "audio_sink",
+                        "id": "audio",
+                        "group": "audio",
                         "type": "StatelessSinkPad",
                         "value": null,
                         "next_pads": [],
@@ -95,8 +121,8 @@
                         ]
                     },
                     {
-                        "id": "video_sink",
-                        "group": "video_sink",
+                        "id": "video",
+                        "group": "video",
                         "type": "StatelessSinkPad",
                         "value": null,
                         "next_pads": [],
@@ -114,7 +140,7 @@
                 "description": "Outputs audio and video to the end user",
                 "metadata": {
                     "primary": "core",
-                    "secondary": "debug",
+                    "secondary": "media",
                     "tags": [
                         "output",
                         "display"
