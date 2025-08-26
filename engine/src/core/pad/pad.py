@@ -8,7 +8,7 @@ from core import runtime_types
 from typing import TYPE_CHECKING, Any, Callable, Protocol, runtime_checkable
 
 from .request_context import RequestContext
-from .types import INTERSECTION, BasePadType
+from .types import INTERSECTION, BasePadType, NodeReference
 
 if TYPE_CHECKING:
     from core.node import Node
@@ -189,6 +189,11 @@ class SourcePad(Pad, Protocol):
         sink_pad.set_previous_pad(None)
         self._resolve_type_constraints()
         sink_pad._resolve_type_constraints()
+        if isinstance(sink_pad, PropertyPad):
+            tc = sink_pad.get_type_constraints()
+            if tc is not None and len(tc) == 1:
+                if isinstance(tc[0], NodeReference):
+                    sink_pad.set_value(None)
 
     def can_connect(self, other: "Pad") -> bool:
         if not isinstance(other, SinkPad):

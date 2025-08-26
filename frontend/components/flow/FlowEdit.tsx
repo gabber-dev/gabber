@@ -143,6 +143,7 @@ function FlowEditInner() {
             nodesDraggable={!isRunning}
             nodesConnectable={!isRunning}
             selectNodesOnDrag={false}
+            minZoom={0.1}
           >
             <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
           </ReactFlow>
