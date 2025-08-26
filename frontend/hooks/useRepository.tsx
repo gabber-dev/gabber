@@ -81,7 +81,7 @@ export function RepositoryProvider({
     try {
       const response = await listAppsImpl();
       setApps(response);
-    } catch {
+    } catch (error) {
       toast.error("Failed to load apps. Please try again later.");
     } finally {
       setAppsLoading(false);
@@ -106,8 +106,9 @@ export function RepositoryProvider({
       setApps((prev) => prev.filter((a) => a.id !== appId));
       await refreshApps();
       toast.success("App deleted successfully");
-    } catch {
+    } catch (error) {
       toast.error("Failed to delete app");
+      console.error("Error deleting app:", error);
       await refreshApps();
     }
   };
@@ -120,7 +121,7 @@ export function RepositoryProvider({
     try {
       const response = await listSubgraphsImpl();
       setSubGraphs(response);
-    } catch {
+    } catch (error) {
       toast.error("Failed to load subgraphs. Please try again later.");
     } finally {
       setSubGraphsLoading(false);
@@ -147,8 +148,9 @@ export function RepositoryProvider({
       setSubGraphs((prev) => prev.filter((sg) => sg.id !== subGraphId));
       await refreshSubGraphs();
       toast.success("Subgraph deleted successfully");
-    } catch {
+    } catch (error) {
       toast.error("Failed to delete subgraph");
+      console.error("Error deleting subgraph:", error);
       await refreshSubGraphs();
     }
   };
