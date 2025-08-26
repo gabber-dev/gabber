@@ -14,7 +14,7 @@ import toast from "react-hot-toast";
 export function AppList() {
   const [showModal, setShowModal] = useState(false);
   const [appsExpanded, setAppsExpanded] = useState(false);
-  const { apps, deleteApp, saveApp, forceRefreshApps } = useRepository();
+  const { apps, deleteApp, saveApp, refreshApps } = useRepository();
   const [selectedApps, setSelectedApps] = useState<Set<string>>(new Set());
   const [renameModal, setRenameModal] = useState<{ isOpen: boolean; appId: string; currentName: string }>({ isOpen: false, appId: "", currentName: "" });
 
@@ -54,8 +54,8 @@ export function AppList() {
     }
     setSelectedApps(new Set());
 
-    // Force refresh the apps list to show the newly duplicated items
-    await forceRefreshApps();
+    // Refresh the apps list to show the newly duplicated items
+    await refreshApps();
 
     toast.success("Apps duplicated successfully!");
   };

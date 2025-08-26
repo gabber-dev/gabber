@@ -12,7 +12,7 @@ import { getPreMadeSubGraph } from "@/lib/repository";
 import Link from "next/link";
 
 export function PreMadeSubGraphs() {
-  const { saveSubGraph, forceRefreshSubGraphs } = useRepository();
+  const { saveSubGraph, refreshSubGraphs } = useRepository();
   const [preMadeSubGraphs, setPreMadeSubGraphs] = useState<RepositorySubGraph[]>([]);
   const [selectedSubGraphs, setSelectedSubGraphs] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -63,8 +63,8 @@ export function PreMadeSubGraphs() {
     }
     setSelectedSubGraphs(new Set());
 
-    // Force refresh the subgraphs list to show the newly copied items
-    await forceRefreshSubGraphs();
+    // Refresh the subgraphs list to show the newly copied items
+    await refreshSubGraphs();
 
     toast.success("Subgraphs copied successfully!");
   };
@@ -114,7 +114,7 @@ export function PreMadeSubGraphs() {
                 <div className="card-body p-4 relative">
                   {/* Selection checkbox */}
                   <div
-                    className={`absolute top-2 left-2 z-10 w-5 h-5 rounded border-2 border-warning cursor-pointer transition-all duration-200 ${
+                    className={`absolute top-2 right-2 z-10 w-5 h-5 rounded border-2 border-warning cursor-pointer transition-all duration-200 ${
                       selectedSubGraphs.has(subGraph.id) ? "bg-warning" : "hover:bg-warning/10"
                     }`}
                     onClick={(e) => {

@@ -20,14 +20,12 @@ type RepositoryContextType = {
   saveApp: (params: SaveAppRequest) => Promise<RepositoryApp>;
   deleteApp: (appId: string) => Promise<void>;
   refreshApps: () => Promise<void>;
-  forceRefreshApps: () => Promise<void>;
 
   subGraphs: RepositorySubGraph[];
   subGraphsLoading: boolean;
   saveSubGraph: (params: SaveSubgraphRequest) => Promise<RepositorySubGraph>;
   deleteSubGraph: (subGraphId: string) => Promise<void>;
   refreshSubGraphs: () => Promise<void>;
-  forceRefreshSubGraphs: () => Promise<void>;
 
   examples: RepositoryApp[];
 };
@@ -83,29 +81,17 @@ export function RepositoryProvider({
     try {
       const response = await listAppsImpl();
       setApps(response);
-    } catch (error) {
+    } catch {
       toast.error("Failed to load apps. Please try again later.");
     } finally {
       setAppsLoading(false);
     }
   }, [appsLoading, listAppsImpl]);
 
-  const forceRefreshApps = useCallback(async () => {
-    setAppsLoading(true);
-    try {
-      const response = await listAppsImpl();
-      setApps(response);
-    } catch (error) {
-      toast.error("Failed to load apps. Please try again later.");
-    } finally {
-      setAppsLoading(false);
-    }
-  }, [listAppsImpl]);
-
   const saveApp = async (params: SaveAppRequest): Promise<RepositoryApp> => {
     try {
       const resp = await saveAppImpl(params);
-      await forceRefreshApps();
+      await refreshApps();
       return resp;
     } catch (error) {
       toast.error("Error creating app. Please refresh.");
@@ -118,12 +104,11 @@ export function RepositoryProvider({
     try {
       await deleteAppImpl(appId);
       setApps((prev) => prev.filter((a) => a.id !== appId));
-      await forceRefreshApps();
+      await refreshApps();
       toast.success("App deleted successfully");
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete app");
-      console.error("Error deleting app:", error);
-      await forceRefreshApps();
+      await refreshApps();
     }
   };
 
@@ -135,31 +120,19 @@ export function RepositoryProvider({
     try {
       const response = await listSubgraphsImpl();
       setSubGraphs(response);
-    } catch (error) {
+    } catch {
       toast.error("Failed to load subgraphs. Please try again later.");
     } finally {
       setSubGraphsLoading(false);
     }
   }, [subGraphsLoading, listSubgraphsImpl]);
 
-  const forceRefreshSubGraphs = useCallback(async () => {
-    setSubGraphsLoading(true);
-    try {
-      const response = await listSubgraphsImpl();
-      setSubGraphs(response);
-    } catch (error) {
-      toast.error("Failed to load subgraphs. Please try again later.");
-    } finally {
-      setSubGraphsLoading(false);
-    }
-  }, [listSubgraphsImpl]);
-
   const saveSubGraph = async (
     params: SaveSubgraphRequest,
   ): Promise<RepositorySubGraph> => {
     try {
       const resp = await saveSubGraphImpl(params);
-      await forceRefreshSubGraphs();
+      await refreshSubGraphs();
       return resp;
     } catch (error) {
       toast.error("Error creating subgraph. Please refresh.");
@@ -172,12 +145,11 @@ export function RepositoryProvider({
     try {
       await deleteSubGraphImpl(subGraphId);
       setSubGraphs((prev) => prev.filter((sg) => sg.id !== subGraphId));
-      await forceRefreshSubGraphs();
+      await refreshSubGraphs();
       toast.success("Subgraph deleted successfully");
-    } catch (error) {
+    } catch {
       toast.error("Failed to delete subgraph");
-      console.error("Error deleting subgraph:", error);
-      await forceRefreshSubGraphs();
+      await refreshSubGraphs();
     }
   };
 
@@ -187,14 +159,12 @@ export function RepositoryProvider({
         apps,
         appsLoading,
         refreshApps,
-        forceRefreshApps,
         saveApp: saveApp,
         deleteApp,
 
         subGraphs,
         subGraphsLoading,
         refreshSubGraphs,
-        forceRefreshSubGraphs,
         saveSubGraph,
         deleteSubGraph,
 

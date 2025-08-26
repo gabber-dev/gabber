@@ -15,7 +15,7 @@ import toast from "react-hot-toast";
 export function SubGraphList() {
   const [showModal, setShowModal] = useState(false);
   const [subGraphsExpanded, setSubGraphsExpanded] = useState(false);
-  const { subGraphs, deleteSubGraph, saveSubGraph, forceRefreshSubGraphs } = useRepository();
+  const { subGraphs, deleteSubGraph, saveSubGraph, refreshSubGraphs } = useRepository();
   const [selectedSubGraphs, setSelectedSubGraphs] = useState<Set<string>>(
     new Set(),
   );
@@ -57,8 +57,8 @@ export function SubGraphList() {
     }
     setSelectedSubGraphs(new Set());
 
-    // Force refresh the subgraphs list to show the newly duplicated items
-    await forceRefreshSubGraphs();
+    // Refresh the subgraphs list to show the newly duplicated items
+    await refreshSubGraphs();
 
     toast.success("Subgraphs duplicated successfully!");
   };
