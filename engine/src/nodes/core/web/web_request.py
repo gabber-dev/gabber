@@ -180,7 +180,8 @@ class WebRequest(Node):
             pad.PropertySinkPad, self.get_pad_required("response_type")
         )
         url_pad = cast(pad.PropertySinkPad, self.get_pad_required("url"))
-        method = cast(pad.PropertySinkPad, self.get_pad_required("method"))
+        method_pad = cast(pad.PropertySinkPad, self.get_pad_required("method"))
+        method = method_pad.get_value() or "GET"
         max_retries = cast(pad.PropertySinkPad, self.get_pad_required("max_retries"))
         authorization_type = cast(
             pad.PropertySinkPad, self.get_pad_required("authorization_type")
@@ -257,7 +258,7 @@ class WebRequest(Node):
                             )
                 else:
                     raise ErrorResponse(
-                        message=f"Unsupported HTTP method: {method}",
+                        message=f"Unsupported HTTP method: {method_pad}",
                         status_code=400,
                     )
             except Exception as e:
@@ -270,7 +271,7 @@ class WebRequest(Node):
             last_error: str | None = None
             last_error_code: int | None = None
             async with aiohttp.ClientSession() as session:
-                method = method.get_value()
+                method_pad = method_pad.get_value()
                 headers = {}
                 if authorization_type.get_value() == "API Key":
                     headers = {

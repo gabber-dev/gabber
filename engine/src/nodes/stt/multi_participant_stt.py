@@ -66,6 +66,15 @@ class MultiParticipantSTT(node.Node):
                 value=4000,
             )
 
+        force_ai_talk = cast(pad.StatelessSinkPad, self.get_pad("force_ai_talk"))
+        if force_ai_talk is None:
+            force_ai_talk = pad.StatelessSinkPad(
+                id="force_ai_talk",
+                group="force_ai_talk",
+                owner_node=self,
+                default_type_constraints=[pad.types.Trigger()],
+            )
+
         current_state = cast(pad.PropertySourcePad, self.get_pad("current_state"))
         if current_state is None:
             current_state = pad.PropertySourcePad(
@@ -75,7 +84,7 @@ class MultiParticipantSTT(node.Node):
                 default_type_constraints=[
                     pad.types.Enum(options=[e.name for e in State])
                 ],
-                value=State.WAITING_FOR_HUMAN,
+                value=State.WAITING_FOR_HUMAN.name,
             )
 
         previous_state = cast(pad.PropertySourcePad, self.get_pad("previous_state"))
@@ -87,7 +96,7 @@ class MultiParticipantSTT(node.Node):
                 default_type_constraints=[
                     pad.types.Enum(options=[e.name for e in State])
                 ],
-                value=State.WAITING_FOR_HUMAN,
+                value=State.WAITING_FOR_HUMAN.name,
             )
 
         audio_sinks: list[pad.StatelessSinkPad] = []
@@ -153,6 +162,7 @@ class MultiParticipantSTT(node.Node):
                     api_key,
                     num_participants,
                     cooldown_time_ms,
+                    force_ai_talk,
                 ]
                 + audio_sinks
                 + transcription_sources
@@ -181,6 +191,15 @@ class MultiParticipantSTT(node.Node):
         speech_ended_source = cast(
             pad.StatelessSourcePad, self.get_pad_required("speech_ended")
         )
+        current_state = cast(
+            pad.PropertySourcePad, self.get_pad_required("current_state")
+        )
+        previous_state = cast(
+            pad.PropertySourcePad, self.get_pad_required("previous_state")
+        )
+        force_ai_talk = cast(
+            pad.StatelessSinkPad, self.get_pad_required("force_ai_talk")
+        )
 
         async def create_stt_instance() -> stt.STT:
             if service.get_value() == "assembly_ai":
@@ -204,10 +223,17 @@ class MultiParticipantSTT(node.Node):
                 raise ValueError(f"Unsupported STT service: {service.get_value()}")
 
         def sm_callback(old_state: State, new_state: State) -> None:
-            logging.info("State changed from %s to %s", old_state, new_state)
+            previous_state.set_value(old_state.name)
+            current_state.set_value(new_state.name)
 
         talking_state = TalkingState()
-        state_machine = StateMachine(talking_state, cb=sm_callback)
+        state_machine = StateMachine(
+            talking_state,
+            cb=sm_callback,
+            cooldown_pad=cast(
+                pad.PropertySinkPad, self.get_pad_required("cooldown_time_ms")
+            ),
+        )
 
         async def audio_sink_task(
             sink: pad.StatelessSinkPad, stt_impl: stt.STT
@@ -229,12 +255,14 @@ class MultiParticipantSTT(node.Node):
             ctx: pad.RequestContext | None = None
             async for event in stt_impl:
                 if isinstance(event, stt.STTEvent_SpeechStarted):
+                    talking_state.set_talking(idx, True)
                     ctx = pad.RequestContext(parent=None)
                     speech_started_source.push_item(runtime_types.Trigger(), ctx)
                 elif isinstance(event, stt.STTEvent_Transcription):
                     # TODO
                     pass
                 elif isinstance(event, stt.STTEvent_EndOfTurn):
+                    talking_state.set_talking(idx, False)
                     txt = event.clip.transcription
                     if txt is None:
                         txt = ""
@@ -251,6 +279,10 @@ class MultiParticipantSTT(node.Node):
             stt_impl.close()
             await asyncio.gather(stt_run_t, audio_sink_t)
 
+        async def force_ai_talk_task() -> None:
+            async for _ in force_ai_talk:
+                state_machine.force_ai_talk()
+
         participant_tasks = []
         for i in range(len(audio_sinks)):
             participant_tasks.append(
@@ -260,7 +292,7 @@ class MultiParticipantSTT(node.Node):
             )
 
         try:
-            await asyncio.gather(*participant_tasks)
+            await asyncio.gather(*participant_tasks, force_ai_talk_task())
         except asyncio.CancelledError:
             pass
 
@@ -276,17 +308,44 @@ class StateMachine:
     def __init__(
         self,
         talking_state: "TalkingState",
+        cooldown_pad: pad.PropertySinkPad,
         cb: Callable[[State, State], None] = lambda old_state, new_state: None,
     ):
+        self._cooldown_pad = cooldown_pad
         self._talking_state = talking_state
         self._talking_state.cb = self._talking_changed
         self._state = State.WAITING_FOR_HUMAN
         self._cb = cb
+        self._cooldown_task: asyncio.Task[None] | None = None
 
     def _talking_changed(self, talking: bool) -> None:
-        pass
+        if talking:
+            self._set_state(State.TALKING)
+            if self._cooldown_task is not None:
+                self._cooldown_task.cancel()
+            self._cooldown_task = asyncio.create_task(self._cooldown_timer())
+        elif self._state == State.TALKING:
+            self._set_state(State.COOLDOWN)
 
-    pass
+    def _set_state(self, new_state: State) -> None:
+        if self._state != new_state:
+            old_state = self._state
+            self._state = new_state
+            self._cb(old_state, new_state)
+            logging.info("State changed from %s to %s", old_state, new_state)
+
+    async def _cooldown_timer(self) -> None:
+        cooldown_time_ms = self._cooldown_pad.get_value() or 4000
+        await asyncio.sleep(cooldown_time_ms / 1000.0)
+        if not self._talking_state.is_anyone_talking():
+            self._set_state(State.AI_CAN_TALK)
+        self._cooldown_task = None
+
+    def force_ai_talk(self) -> None:
+        if self._cooldown_task is not None:
+            self._cooldown_task.cancel()
+            self._cooldown_task = None
+        self._set_state(State.AI_CAN_TALK)
 
 
 class TalkingState:
