@@ -172,7 +172,6 @@ class WebRequest(Node):
         self.pads = fixed_pads + dynamic_pads
 
     async def _resolve_secret(self, secret_name: str) -> str:
-        """Resolve a secret name to its actual value using the secret provider."""
         if not isinstance(secret_name, str):
             raise ValueError("Secret name must be a string.")
         if not self.secret_provider:
