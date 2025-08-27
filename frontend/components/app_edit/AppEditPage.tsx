@@ -73,7 +73,7 @@ function AppEditPageInner() {
   return (
     <div className="relative w-full h-full flex flex-col">
       <div className="absolute top-0 left-0 right-0 bottom-16">
-        <FlowEdit />
+        <FlowEdit editable={true} />
       </div>
 
       <div className="absolute bottom-0 left-0 right-0 h-16">

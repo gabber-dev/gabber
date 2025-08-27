@@ -33,17 +33,21 @@ const edgeTypes = {
   hybrid: HybridEdge,
 };
 
-export function FlowEdit() {
+type Props = {
+  editable: boolean;
+};
+
+export function FlowEdit(props: Props) {
   return (
     <ReactFlowProvider>
       <FlowErrorBoundary>
-        <FlowEditInner />
+        <FlowEditInner {...props} />
       </FlowErrorBoundary>
     </ReactFlowProvider>
   );
 }
 
-function FlowEditInner() {
+function FlowEditInner({ editable }: Props) {
   const {
     reactFlowRepresentation,
     stateMachineEditing,
@@ -81,11 +85,13 @@ function FlowEditInner() {
 
   return (
     <div className="relative w-full h-full flex flex-col">
-      <div className="absolute top-2 right-2 flex z-10">
-        <AddBlockButton
-          onClick={() => setIsNodeLibraryOpen(!isNodeLibraryOpen)}
-        />
-      </div>
+      {editable && (
+        <div className="absolute top-2 right-2 flex z-10">
+          <AddBlockButton
+            onClick={() => setIsNodeLibraryOpen(!isNodeLibraryOpen)}
+          />
+        </div>
+      )}
 
       {/* Node Library Panel */}
       <div
