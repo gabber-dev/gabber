@@ -20,7 +20,6 @@ class WebRequest(Node):
                 default_type_constraints=[pad.types.String()],
                 value="https://example-url.test",
             )
-            self.pads.append(url)
 
         method = cast(pad.PropertySinkPad, self.get_pad("method"))
         if not method:
@@ -33,7 +32,6 @@ class WebRequest(Node):
                 ],
                 value="GET",
             )
-            self.pads.append(method)
 
         max_retries = cast(pad.PropertySinkPad, self.get_pad("max_retries"))
         if not max_retries:
@@ -44,7 +42,6 @@ class WebRequest(Node):
                 default_type_constraints=[pad.types.Integer()],
                 value=3,
             )
-            self.pads.append(max_retries)
 
         authorization_type = cast(
             pad.PropertySinkPad, self.get_pad("authorization_type")
@@ -59,7 +56,6 @@ class WebRequest(Node):
                 ],
                 value="None",
             )
-            self.pads.append(authorization_type)
 
         response_type = cast(pad.PropertySinkPad, self.get_pad("response_type"))
         if not response_type:
@@ -77,7 +73,6 @@ class WebRequest(Node):
                 ],
                 value="application/json",
             )
-            self.pads.append(response_type)
 
         bearer_token = cast(pad.PropertySinkPad, self.get_pad("bearer_token"))
         if not bearer_token:
@@ -88,7 +83,6 @@ class WebRequest(Node):
                 default_type_constraints=[pad.types.Secret(options=self.secrets)],
                 value="",
             )
-            self.pads.append(bearer_token)
 
         api_header_key = cast(pad.PropertySinkPad, self.get_pad("api_header_key"))
         if not api_header_key:
@@ -99,7 +93,6 @@ class WebRequest(Node):
                 default_type_constraints=[pad.types.String()],
                 value="",
             )
-            self.pads.append(api_header_key)
 
         api_value = cast(pad.PropertySinkPad, self.get_pad("api_value"))
         if not api_value:
@@ -110,7 +103,6 @@ class WebRequest(Node):
                 default_type_constraints=[pad.types.Secret(options=self.secrets)],
                 value="",
             )
-            self.pads.append(api_value)
 
         response = cast(pad.StatelessSourcePad, self.get_pad("response"))
         if not response:
@@ -120,7 +112,6 @@ class WebRequest(Node):
                 owner_node=self,
                 default_type_constraints=None,
             )
-            self.pads.append(response)
 
         error_response = cast(pad.StatelessSourcePad, self.get_pad("error_response"))
         if not error_response:
@@ -130,7 +121,6 @@ class WebRequest(Node):
                 owner_node=self,
                 default_type_constraints=[pad.types.String()],
             )
-            self.pads.append(error_response)
 
         request_body = cast(pad.StatelessSinkPad, self.get_pad("request_body"))
         if not request_body:
@@ -140,7 +130,6 @@ class WebRequest(Node):
                 owner_node=self,
                 default_type_constraints=[pad.types.Object()],
             )
-            self.pads.append(request_body)
 
         query_params = cast(pad.StatelessSinkPad, self.get_pad("query_params"))
         if not query_params:
@@ -150,7 +139,6 @@ class WebRequest(Node):
                 owner_node=self,
                 default_type_constraints=[pad.types.Object()],
             )
-            self.pads.append(query_params)
 
         fixed_pads: list[pad.Pad] = [
             url,
@@ -159,16 +147,10 @@ class WebRequest(Node):
             authorization_type,
             response_type,
             request_body,
+            response,
+            error_response,
             query_params,
         ]
-
-        dynamic_pads: list[pad.Pad] = []
-
-        if authorization_type.get_value() == "Bearer Token":
-            dynamic_pads.append(bearer_token)
-        elif authorization_type.get_value() == "API Key":
-            dynamic_pads.append(api_header_key)
-            dynamic_pads.append(api_value)
 
         output_tc: list[pad.types.BasePadType] = []
         if response_type.get_value() == "application/json":
@@ -178,10 +160,15 @@ class WebRequest(Node):
         else:
             output_tc = [pad.types.Object()]
 
-        response.set_type_constraints(output_tc)
+        response.set_default_type_constraints(output_tc)
 
-        dynamic_pads.append(response)
-        dynamic_pads.append(error_response)
+        dynamic_pads: list[pad.Pad] = []
+
+        if authorization_type.get_value() == "Bearer Token":
+            dynamic_pads.append(bearer_token)
+        elif authorization_type.get_value() == "API Key":
+            dynamic_pads.append(api_header_key)
+            dynamic_pads.append(api_value)
         self.pads = fixed_pads + dynamic_pads
 
     @classmethod
