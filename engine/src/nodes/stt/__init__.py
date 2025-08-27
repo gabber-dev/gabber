@@ -3,6 +3,7 @@
 
 from . import vad
 from .stt import STT
+from .multi_participant_stt import MultiParticipantSTT
 
 
-ALL_NODES = vad.ALL_NODES + [STT]
+ALL_NODES = vad.ALL_NODES + [STT, MultiParticipantSTT]

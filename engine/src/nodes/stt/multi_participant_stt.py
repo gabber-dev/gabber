@@ -56,6 +56,40 @@ class MultiParticipantSTT(node.Node):
                 value=2,
             )
 
+        cooldown_time_ms = cast(pad.PropertySinkPad, self.get_pad("cooldown_time_ms"))
+        if cooldown_time_ms is None:
+            cooldown_time_ms = pad.PropertySinkPad(
+                id="cooldown_time_ms",
+                group="cooldown_time_ms",
+                owner_node=self,
+                default_type_constraints=[pad.types.Integer()],
+                value=4000,
+            )
+
+        current_state = cast(pad.PropertySourcePad, self.get_pad("current_state"))
+        if current_state is None:
+            current_state = pad.PropertySourcePad(
+                id="current_state",
+                group="current_state",
+                owner_node=self,
+                default_type_constraints=[
+                    pad.types.Enum(options=[e.name for e in State])
+                ],
+                value=State.WAITING_FOR_HUMAN,
+            )
+
+        previous_state = cast(pad.PropertySourcePad, self.get_pad("previous_state"))
+        if previous_state is None:
+            previous_state = pad.PropertySourcePad(
+                id="previous_state",
+                group="previous_state",
+                owner_node=self,
+                default_type_constraints=[
+                    pad.types.Enum(options=[e.name for e in State])
+                ],
+                value=State.WAITING_FOR_HUMAN,
+            )
+
         audio_sinks: list[pad.StatelessSinkPad] = []
         for i in range(num_participants.get_value() or 1):
             audio_sink = cast(pad.StatelessSinkPad, self.get_pad(f"audio_{i}"))
@@ -66,7 +100,7 @@ class MultiParticipantSTT(node.Node):
                     owner_node=self,
                     default_type_constraints=[pad.types.Audio()],
                 )
-                audio_sinks.append(audio_sink)
+            audio_sinks.append(audio_sink)
 
         transcription_sources: list[pad.StatelessSourcePad] = []
         for i in range(num_participants.get_value() or 1):
@@ -80,7 +114,7 @@ class MultiParticipantSTT(node.Node):
                     owner_node=self,
                     default_type_constraints=[pad.types.String()],
                 )
-                transcription_sources.append(transcription_source)
+            transcription_sources.append(transcription_source)
 
         for p in self.pads:
             if p.get_group() == "audio" and p not in audio_sinks:
@@ -90,12 +124,12 @@ class MultiParticipantSTT(node.Node):
                 self.pads.remove(p)
 
         speech_started_source = cast(
-            pad.StatelessSourcePad, self.get_pad("speaking_started")
+            pad.StatelessSourcePad, self.get_pad("speech_started")
         )
         if speech_started_source is None:
             speech_started_source = pad.StatelessSourcePad(
-                id="speaking_started",
-                group="speaking_started",
+                id="speech_started",
+                group="speech_started",
                 owner_node=self,
                 default_type_constraints=[pad.types.Trigger()],
             )
@@ -112,7 +146,14 @@ class MultiParticipantSTT(node.Node):
         self.pads = cast(
             list[pad.Pad],
             (
-                [service, api_key, num_participants]
+                [
+                    current_state,
+                    previous_state,
+                    service,
+                    api_key,
+                    num_participants,
+                    cooldown_time_ms,
+                ]
                 + audio_sinks
                 + transcription_sources
                 + [
@@ -134,9 +175,6 @@ class MultiParticipantSTT(node.Node):
                 transcription_sources.append(cast(pad.StatelessSourcePad, p))
 
         service = cast(pad.PropertySinkPad, self.get_pad_required("service"))
-        speech_clip_source = cast(
-            pad.StatelessSourcePad, self.get_pad_required("speech_clip")
-        )
         speech_started_source = cast(
             pad.StatelessSourcePad, self.get_pad_required("speech_started")
         )
@@ -207,7 +245,6 @@ class MultiParticipantSTT(node.Node):
                         )
                         continue
                     transcription_source.push_item(txt, ctx)
-                    speech_clip_source.push_item(event.clip, ctx)
                     speech_ended_source.push_item(runtime_types.Trigger(), ctx)
                     ctx.complete()
 
