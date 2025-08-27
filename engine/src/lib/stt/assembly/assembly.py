@@ -62,7 +62,6 @@ class Assembly(STT):
                 elif msg.type == aiohttp.WSMsgType.BINARY:
                     pass
 
-                logging.info("NEIL Received message: %s", msg.data)
                 data = json.loads(msg.data)
                 msg_type = data.get("type")
                 if msg_type == "Begin":
