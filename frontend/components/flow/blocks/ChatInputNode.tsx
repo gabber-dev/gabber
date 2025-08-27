@@ -9,6 +9,8 @@ import { StatelessPad } from "./components/pads/StatelessPad";
 import { ChatBubbleLeftIcon } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
 import { useSourcePad } from "@gabber/client-react";
+import { NodeName } from "./components/NodeName";
+import { NodeId } from "./components/NodeId";
 
 export interface ChatInputNodeProps {
   data: NodeEditorRepresentation;
@@ -46,10 +48,8 @@ export function ChatInputNode({ data }: ChatInputNodeProps) {
       <div className="flex w-full items-center gap-2 bg-base-300 border-b-2 border-black p-3 rounded-t-lg drag-handle cursor-grab active:cursor-grabbing">
         <ChatBubbleLeftIcon className="h-5 w-5 text-accent" />
         <div className="flex-1">
-          <h2 className="text-lg text-primary font-medium">Chat Input</h2>
-          <div className="text-xs text-base-content/60 font-mono">
-            {data.id}
-          </div>
+          <NodeName />
+          <NodeId />
         </div>
         {/* no debug UI */}
       </div>
