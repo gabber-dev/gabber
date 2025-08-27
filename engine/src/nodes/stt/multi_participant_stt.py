@@ -3,7 +3,7 @@
 
 import asyncio
 import logging
-from typing import cast
+from typing import cast, Callable
 
 from core import node, pad, runtime_types
 from core.node import NodeMetadata
@@ -165,8 +165,11 @@ class MultiParticipantSTT(node.Node):
                 logging.error("Unsupported STT service: %s", service.get_value())
                 raise ValueError(f"Unsupported STT service: {service.get_value()}")
 
+        def sm_callback(old_state: State, new_state: State) -> None:
+            logging.info("State changed from %s to %s", old_state, new_state)
+
         talking_state = TalkingState()
-        state_machine = _StateMachine(talking_state, SilentState())
+        state_machine = StateMachine(talking_state, cb=sm_callback)
 
         async def audio_sink_task(
             sink: pad.StatelessSinkPad, stt_impl: stt.STT
@@ -185,6 +188,7 @@ class MultiParticipantSTT(node.Node):
             stt_impl = await create_stt_instance()
             stt_run_t = asyncio.create_task(stt_impl.run())
             audio_sink_t = asyncio.create_task(audio_sink_task(audio_sink, stt_impl))
+            ctx: pad.RequestContext | None = None
             async for event in stt_impl:
                 if isinstance(event, stt.STTEvent_SpeechStarted):
                     ctx = pad.RequestContext(parent=None)
@@ -202,7 +206,7 @@ class MultiParticipantSTT(node.Node):
                             "Received STTEvent_EndOfTurn without a context. This should not happen."
                         )
                         continue
-                    final_transcription_source.push_item(txt, ctx)
+                    transcription_source.push_item(txt, ctx)
                     speech_clip_source.push_item(event.clip, ctx)
                     speech_ended_source.push_item(runtime_types.Trigger(), ctx)
                     ctx.complete()
@@ -210,27 +214,39 @@ class MultiParticipantSTT(node.Node):
             stt_impl.close()
             await asyncio.gather(stt_run_t, audio_sink_t)
 
-        audio_sink_t = asyncio.create_task(audio_sink_task())
-        kyutai_event_t = asyncio.create_task(stt_event_task())
+        participant_tasks = []
+        for i in range(len(audio_sinks)):
+            participant_tasks.append(
+                asyncio.create_task(
+                    participant_task(i, audio_sinks[i], transcription_sources[i])
+                )
+            )
 
         try:
-            await asyncio.gather(stt_run_t, audio_sink_t, kyutai_event_t)
+            await asyncio.gather(*participant_tasks)
         except asyncio.CancelledError:
             pass
-        finally:
-            stt_impl.close()
-            audio_sink_t.cancel()
 
 
-class _State(Enum):
-    SILENT = 0
+class State(Enum):
+    WAITING_FOR_HUMAN = 0
     TALKING = 1
-    AI_TALKING = 2
-    IDLE = 3
+    COOLDOWN = 2
+    AI_CAN_TALK = 3
 
 
-class _StateMachine:
-    def __init__(self, talking_state: "TalkingState"):
+class StateMachine:
+    def __init__(
+        self,
+        talking_state: "TalkingState",
+        cb: Callable[[State, State], None] = lambda old_state, new_state: None,
+    ):
+        self._talking_state = talking_state
+        self._talking_state.cb = self._talking_changed
+        self._state = State.WAITING_FOR_HUMAN
+        self._cb = cb
+
+    def _talking_changed(self, talking: bool) -> None:
         pass
 
     pass
@@ -239,16 +255,15 @@ class _StateMachine:
 class TalkingState:
     def __init__(self):
         self._talking_values: dict[int, bool] = {}
+        self._talking = False
+        self.cb: Callable[[bool], None] = lambda talking: None
 
     def set_talking(self, idx: int, talking: bool) -> None:
         self._talking_values[idx] = talking
+        prev = self._talking
+        self._talking = self.is_anyone_talking()
+        if prev != self._talking:
+            self.cb(self._talking)
 
     def is_anyone_talking(self) -> bool:
         return any(self._talking_values.values())
-
-
-class _StateMachineBoolean:
-    def __init__(self, initial: bool) -> None:
-        pass
-
-    pass
