@@ -1,7 +1,6 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-import logging
 from dataclasses import dataclass
 from typing import Any, cast
 
@@ -218,15 +217,6 @@ class WebRequest(Node):
 
         async def perform_request(req: dict[str, Any], ctx: pad.RequestContext):
             url = url_pad.get_value()
-            logging.info(f"WebRequest: Making {method} request to {url}")
-            logging.info(f"WebRequest: Headers: {headers}")
-
-            # Log payload for methods that send a body
-            if method in ["POST", "PUT", "PATCH"] and req:
-                logging.info(f"WebRequest: Payload: {req}")
-            elif method == "GET" and req:
-                logging.info(f"WebRequest: Query data: {req}")
-
             try:
                 if method == "GET":
                     async with session.get(url, headers=headers) as resp:
