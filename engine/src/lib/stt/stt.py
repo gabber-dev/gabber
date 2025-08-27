@@ -33,6 +33,12 @@ class STT(ABC):
     async def __anext__(self) -> "STTEvent":
         raise StopAsyncIteration
 
+    async def run(self) -> None:
+        """
+        Run the STT engine processing loop.
+        """
+        pass
+
 
 @dataclass
 class STTEvent:
