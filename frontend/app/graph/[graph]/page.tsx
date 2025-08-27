@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { getSubGraph } from "@/lib/repository";
+import { getSubGraph, getPreMadeSubGraph } from "@/lib/repository";
 import { ClientPage } from "./client_page";
 
 export default async function Page({
@@ -12,6 +12,20 @@ export default async function Page({
   params: Promise<{ graph: string }>;
 }) {
   const { graph } = await params;
-  const subgraph = await getSubGraph(graph);
+
+  let subgraph;
+  try {
+    // First try to load as a regular user subgraph
+    subgraph = await getSubGraph(graph);
+  } catch (error) {
+    // If that fails, try to load as a pre-made subgraph
+    try {
+      subgraph = await getPreMadeSubGraph(graph);
+    } catch (premadeError) {
+      // If both fail, rethrow the original error
+      throw error;
+    }
+  }
+
   return <ClientPage initialSubGraph={subgraph} />;
 }
