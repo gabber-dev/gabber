@@ -1,6 +1,7 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
+import logging
 from dataclasses import dataclass
 from typing import Any, cast
 
@@ -171,6 +172,14 @@ class WebRequest(Node):
             dynamic_pads.append(api_value)
         self.pads = fixed_pads + dynamic_pads
 
+    async def _resolve_secret(self, secret_name: str) -> str:
+        """Resolve a secret name to its actual value using the secret provider."""
+        if not isinstance(secret_name, str):
+            raise ValueError("Secret name must be a string.")
+        if not self.secret_provider:
+            raise RuntimeError("Secret provider is not set for WebRequest.")
+        return await self.secret_provider.resolve_secret(secret_name)
+
     @classmethod
     def get_description(cls) -> str:
         return "Emits a single trigger when the run starts."
@@ -209,6 +218,15 @@ class WebRequest(Node):
 
         async def perform_request(req: dict[str, Any], ctx: pad.RequestContext):
             url = url_pad.get_value()
+            logging.info(f"WebRequest: Making {method} request to {url}")
+            logging.info(f"WebRequest: Headers: {headers}")
+
+            # Log payload for methods that send a body
+            if method in ["POST", "PUT", "PATCH"] and req:
+                logging.info(f"WebRequest: Payload: {req}")
+            elif method == "GET" and req:
+                logging.info(f"WebRequest: Query data: {req}")
+
             try:
                 if method == "GET":
                     async with session.get(url, headers=headers) as resp:
@@ -273,13 +291,17 @@ class WebRequest(Node):
             async with aiohttp.ClientSession() as session:
                 method_pad = method_pad.get_value()
                 headers = {}
+
+                # Resolve and set headers based on authorization type
                 if authorization_type.get_value() == "API Key":
+                    api_key_value = await self._resolve_secret(api_value.get_value())
                     headers = {
-                        api_header_key.get_value(): api_value.get_value(),
+                        api_header_key.get_value(): api_key_value,
                     }
                 elif authorization_type.get_value() == "Bearer Token":
+                    bearer_token_value = await self._resolve_secret(bearer_token.get_value())
                     headers = {
-                        "Authorization": f"Bearer {bearer_token.get_value()}",
+                        "Authorization": f"Bearer {bearer_token_value}",
                     }
                 retries = 0
 
