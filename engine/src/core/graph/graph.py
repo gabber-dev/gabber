@@ -353,6 +353,7 @@ class Graph:
                     node_reference_pads.append(cast(pad.PropertyPad, pad_instance))
 
                 pad_instance.set_value(deserialized_value)
+                node.resolve_pads()
 
             node.resolve_pads()
             self.nodes.append(node)
