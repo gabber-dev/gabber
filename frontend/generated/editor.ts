@@ -25,6 +25,7 @@ export type Type1 = "edit";
 export type Edit =
   | InsertNodeEdit
   | InsertSubGraphEdit
+  | InsertInlineSubGraphEdit
   | UpdateNodeEdit
   | RemoveNodeEdit
   | ConnectPadEdit
@@ -250,6 +251,33 @@ export interface InsertSubGraphEdit {
   editor_position: EditorPosition1;
   editor_dimensions?: EditorDimensions1;
   editor_name: EditorName1;
+  [k: string]: unknown;
+}
+export type TypeInline = "insert_inline_sub_graph";
+export interface InlineSubGraphConnectionIn {
+  from_node: string;
+  from_pad: string;
+  to_subgraph_pad: string;
+  [k: string]: unknown;
+}
+export interface InlineSubGraphConnectionOut {
+  from_subgraph_pad: string;
+  to_node: string;
+  to_pad: string;
+  [k: string]: unknown;
+}
+export interface InsertInlineSubGraphEdit {
+  type?: TypeInline;
+  id?: string | null;
+  subgraph_id?: string | null;
+  subgraph_name: string;
+  graph: GraphEditorRepresentation;
+  editor_position: EditorPosition1;
+  editor_dimensions?: EditorDimensions1;
+  editor_name: EditorName1;
+  inbound_connections?: InlineSubGraphConnectionIn[];
+  outbound_connections?: InlineSubGraphConnectionOut[];
+  remove_node_ids?: string[];
   [k: string]: unknown;
 }
 export interface UpdateNodeEdit {

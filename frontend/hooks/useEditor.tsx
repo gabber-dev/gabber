@@ -13,6 +13,7 @@ import {
   GraphLibraryItem_SubGraph,
   InsertNodeEdit,
   InsertSubGraphEdit,
+  InsertInlineSubGraphEdit,
   NodeEditorRepresentation,
   RemoveNodeEdit,
   Request,
@@ -66,6 +67,7 @@ type EditorContextType = {
 
   insertNode: (req: InsertNodeEdit) => void;
   insertSubGraph: (req: InsertSubGraphEdit) => void;
+  insertInlineSubGraph: (req: InsertInlineSubGraphEdit) => void;
   removeNode: (req: RemoveNodeEdit) => void;
   connectPad: (req: ConnectPadEdit) => void;
   updatePad: (req: UpdatePadEdit) => void;
@@ -176,6 +178,16 @@ export function EditorProvider({
 
   const insertSubGraph = useCallback(
     (edit: InsertSubGraphEdit) => {
+      sendRequest({
+        type: "edit",
+        edit,
+      });
+    },
+    [sendRequest],
+  );
+
+  const insertInlineSubGraph = useCallback(
+    (edit: InsertInlineSubGraphEdit) => {
       sendRequest({
         type: "edit",
         edit,
@@ -567,6 +579,7 @@ export function EditorProvider({
         onReactFlowEdgesChange,
         insertNode,
         insertSubGraph,
+        insertInlineSubGraph,
         removeNode,
         connectPad,
         updatePad,
