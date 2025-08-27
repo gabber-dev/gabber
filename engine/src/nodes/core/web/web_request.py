@@ -171,13 +171,6 @@ class WebRequest(Node):
             dynamic_pads.append(api_value)
         self.pads = fixed_pads + dynamic_pads
 
-    async def _resolve_secret(self, secret_name: str) -> str:
-        if not isinstance(secret_name, str):
-            raise ValueError("Secret name must be a string.")
-        if not self.secret_provider:
-            raise RuntimeError("Secret provider is not set for WebRequest.")
-        return await self.secret_provider.resolve_secret(secret_name)
-
     @classmethod
     def get_description(cls) -> str:
         return "Emits a single trigger when the run starts."
@@ -283,12 +276,22 @@ class WebRequest(Node):
 
                 # Resolve and set headers based on authorization type
                 if authorization_type.get_value() == "API Key":
-                    api_key_value = await self._resolve_secret(api_value.get_value())
+                    api_key_name = api_value.get_value()
+                    if not isinstance(api_key_name, str):
+                        raise ValueError("API key must be a string.")
+                    if not self.secret_provider:
+                        raise RuntimeError("Secret provider is not set for WebRequest.")
+                    api_key_value = await self.secret_provider.resolve_secret(api_key_name)
                     headers = {
                         api_header_key.get_value(): api_key_value,
                     }
                 elif authorization_type.get_value() == "Bearer Token":
-                    bearer_token_value = await self._resolve_secret(bearer_token.get_value())
+                    bearer_token_name = bearer_token.get_value()
+                    if not isinstance(bearer_token_name, str):
+                        raise ValueError("Bearer token must be a string.")
+                    if not self.secret_provider:
+                        raise RuntimeError("Secret provider is not set for WebRequest.")
+                    bearer_token_value = await self.secret_provider.resolve_secret(bearer_token_name)
                     headers = {
                         "Authorization": f"Bearer {bearer_token_value}",
                     }
