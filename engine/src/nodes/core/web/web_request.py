@@ -277,20 +277,12 @@ class WebRequest(Node):
                 # Resolve and set headers based on authorization type
                 if authorization_type.get_value() == "API Key":
                     api_key_name = api_value.get_value()
-                    if not isinstance(api_key_name, str):
-                        raise ValueError("API key must be a string.")
-                    if not self.secret_provider:
-                        raise RuntimeError("Secret provider is not set for WebRequest.")
                     api_key_value = await self.secret_provider.resolve_secret(api_key_name)
                     headers = {
                         api_header_key.get_value(): api_key_value,
                     }
                 elif authorization_type.get_value() == "Bearer Token":
                     bearer_token_name = bearer_token.get_value()
-                    if not isinstance(bearer_token_name, str):
-                        raise ValueError("Bearer token must be a string.")
-                    if not self.secret_provider:
-                        raise RuntimeError("Secret provider is not set for WebRequest.")
                     bearer_token_value = await self.secret_provider.resolve_secret(bearer_token_name)
                     headers = {
                         "Authorization": f"Bearer {bearer_token_value}",
