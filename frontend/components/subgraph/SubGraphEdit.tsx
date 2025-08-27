@@ -7,23 +7,31 @@ import { ReactFlowProvider } from "@xyflow/react";
 import { FlowEdit } from "../flow/FlowEdit";
 import { BottomBar } from "./BottomBar";
 
-export function SubGraphEdit() {
+type Props = {
+  editable: boolean;
+};
+
+export function SubGraphEdit(props: Props) {
   return (
     <ReactFlowProvider>
-      <SubGraphEditInner />
+      <SubGraphEditInner {...props} />
     </ReactFlowProvider>
   );
 }
 
-function SubGraphEditInner() {
+function SubGraphEditInner({ editable }: Props) {
   return (
     <div className="relative w-full h-full">
-      <div className="absolute top-0 left-0 right-0 bottom-16">
-        <FlowEdit />;
+      <div
+        className={`absolute top-0 left-0 right-0 ${editable ? "bottom-16" : "bottom-0"}`}
+      >
+        <FlowEdit editable={editable} />;
       </div>
-      <div className="absolute bottom-0 left-0 right-0 h-16">
-        <BottomBar />
-      </div>
+      {editable && (
+        <div className="absolute bottom-0 left-0 right-0 h-16">
+          <BottomBar />
+        </div>
+      )}
     </div>
   );
 }

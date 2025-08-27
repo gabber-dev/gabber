@@ -5,16 +5,24 @@
 
 import { RepositorySubGraph } from "@/generated/repository";
 import { useRepository } from "@/hooks/useRepository";
-import { CubeIcon, DocumentDuplicateIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
+import {
+  CubeIcon,
+  DocumentDuplicateIcon,
+  ChevronRightIcon,
+} from "@heroicons/react/24/solid";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { getPreMadeSubGraph } from "@/lib/repository";
 import Link from "next/link";
+import { listPreMadeSubGraphs } from "@/lib/repository";
 
 export function PreMadeSubGraphs() {
   const { saveSubGraph, refreshSubGraphs } = useRepository();
-  const [preMadeSubGraphs, setPreMadeSubGraphs] = useState<RepositorySubGraph[]>([]);
-  const [selectedSubGraphs, setSelectedSubGraphs] = useState<Set<string>>(new Set());
+  const [preMadeSubGraphs, setPreMadeSubGraphs] = useState<
+    RepositorySubGraph[]
+  >([]);
+  const [selectedSubGraphs, setSelectedSubGraphs] = useState<Set<string>>(
+    new Set(),
+  );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,11 +30,8 @@ export function PreMadeSubGraphs() {
       try {
         setLoading(true);
         // Load both premade subgraphs
-        const [localLLM, services] = await Promise.all([
-          getPreMadeSubGraph("conversational-local-llm"),
-          getPreMadeSubGraph("conversational-services")
-        ]);
-        setPreMadeSubGraphs([localLLM, services]);
+        const premade = await listPreMadeSubGraphs();
+        setPreMadeSubGraphs(premade);
       } catch (error) {
         console.error("Error loading premade subgraphs:", error);
         toast.error("Failed to load premade subgraphs");
@@ -41,19 +46,19 @@ export function PreMadeSubGraphs() {
   const handleCopySelected = async () => {
     const selectedArray = Array.from(selectedSubGraphs);
     const confirmed = window.confirm(
-      `Copy ${selectedArray.length} subgraph${selectedArray.length > 1 ? "s" : ""} to your collection?`
+      `Copy ${selectedArray.length} subgraph${selectedArray.length > 1 ? "s" : ""} to your collection?`,
     );
     if (!confirmed) return;
 
     // Copy all selected subgraphs
     for (const subGraphId of selectedArray) {
-      const subGraph = preMadeSubGraphs.find(sg => sg.id === subGraphId);
+      const subGraph = preMadeSubGraphs.find((sg) => sg.id === subGraphId);
       if (subGraph) {
         try {
           const newName = `${subGraph.name} (Copy)`;
           await saveSubGraph({
             name: newName,
-            graph: subGraph.graph
+            graph: subGraph.graph,
           });
         } catch (error) {
           console.error("Error copying subgraph:", error);
@@ -74,7 +79,9 @@ export function PreMadeSubGraphs() {
       <div className="relative w-full">
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="font-bangers text-2xl tracking-wider">Pre-made Sub Graphs</h2>
+            <h2 className="font-bangers text-2xl tracking-wider">
+              Pre-made Sub Graphs
+            </h2>
           </div>
           <div className="border-2 border-black border-b-4 border-r-4 rounded-xl p-4 bg-base-200">
             <div className="flex justify-center items-center py-8">
@@ -90,7 +97,9 @@ export function PreMadeSubGraphs() {
     <div className="relative w-full">
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-bangers text-2xl tracking-wider">Pre-made Sub Graphs</h2>
+          <h2 className="font-bangers text-2xl tracking-wider">
+            Pre-made Sub Graphs
+          </h2>
           {selectedSubGraphs.size > 0 && (
             <div className="flex gap-2">
               <button
@@ -108,14 +117,16 @@ export function PreMadeSubGraphs() {
             {preMadeSubGraphs.map((subGraph) => (
               <Link
                 key={subGraph.id}
-                href={`/graph/${subGraph.id}`}
+                href={`/premade_graph/${subGraph.id}`}
                 className="relative overflow-visible card bg-base-200 hover:bg-base-300 border-2 border-black border-b-4 border-r-4 transform hover:translate-y-1 active:translate-y-2 transition-all group"
               >
                 <div className="card-body p-4 relative">
                   {/* Selection checkbox */}
                   <div
                     className={`absolute top-2 right-2 z-10 w-5 h-5 rounded border-2 border-warning cursor-pointer transition-all duration-200 ${
-                      selectedSubGraphs.has(subGraph.id) ? "bg-warning" : "hover:bg-warning/10"
+                      selectedSubGraphs.has(subGraph.id)
+                        ? "bg-warning"
+                        : "hover:bg-warning/10"
                     }`}
                     onClick={(e) => {
                       e.preventDefault();

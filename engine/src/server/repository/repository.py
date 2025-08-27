@@ -389,7 +389,9 @@ class RepositoryServer:
                 if file.endswith(".json"):
                     async with aiofiles.open(f"{subgraph_dir}/{file}", mode="r") as f:
                         content = await f.read()
-                        subgraph = models.RepositorySubGraph.model_validate_json(content)
+                        subgraph = models.RepositorySubGraph.model_validate_json(
+                            content
+                        )
                         subgraphs.append(subgraph)
             sorted_by_created_at = sorted(
                 subgraphs, key=lambda x: x.created_at, reverse=True

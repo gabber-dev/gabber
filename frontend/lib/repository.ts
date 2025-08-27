@@ -88,10 +88,11 @@ export async function listExamples(): Promise<RepositoryApp[]> {
 export async function getPreMadeSubGraph(
   subgraphId: string,
 ): Promise<RepositorySubGraph> {
-  const resp = await axios.get(`${getBaseUrl()}/premade_subgraph/${subgraphId}`);
+  const resp = await axios.get(
+    `${getBaseUrl()}/premade_subgraph/${subgraphId}`,
+  );
   return (resp.data as GetSubgraphResponse).sub_graph;
 }
-
 export async function listPreMadeSubGraphs(): Promise<RepositorySubGraph[]> {
   const resp = await axios.get(`${getBaseUrl()}/premade_subgraph/list`);
   return (resp.data as ListSubgraphsResponse).sub_graphs;
