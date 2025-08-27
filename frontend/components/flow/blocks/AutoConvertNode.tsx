@@ -71,7 +71,6 @@ export function AutoConvertNode() {
       `}
       title="Auto Convert"
     >
-      {/* Input handle (sink) */}
       <Handle
         type="target"
         position={Position.Left}

@@ -17,6 +17,8 @@ import { SelfPad } from "./components/pads/SelfPad";
 import { StateMachineNode } from "@/components/state_machine/StateMachineNode";
 import { CompareNode } from "./CompareNode";
 import { JsonNode } from "./JsonNode";
+import { NodeName } from "./components/NodeName";
+import { NodeId } from "./components/NodeId";
 
 export interface BaseBlockProps {
   data: NodeEditorRepresentation;
@@ -41,14 +43,6 @@ export function BaseBlock({ data }: BaseBlockProps) {
       (p) => p.type === "PropertySourcePad" && p.id === "self",
     )[0];
   }, [data]);
-
-  const handleIdClick = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(data.id);
-    } catch (err) {
-      console.error("Failed to copy ID:", err);
-    }
-  }, [data.id]);
 
   if (data.type === "AutoConvert") {
     return <AutoConvertNode />;
@@ -82,16 +76,8 @@ export function BaseBlock({ data }: BaseBlockProps) {
       <div className="flex w-full items-center gap-2 bg-base-300 border-b-2 border-black p-3 rounded-t-lg drag-handle cursor-grab active:cursor-grabbing">
         <CubeIcon className="h-5 w-5 text-accent" />
         <div className="flex-1">
-          <h2 className="text-lg text-primary font-medium">
-            {data.editor_name}
-          </h2>
-          <div
-            className="text-xs text-base-content/60 font-mono cursor-pointer hover:text-primary transition-colors select-none"
-            onClick={handleIdClick}
-            title="Click to copy ID"
-          >
-            {data.id}
-          </div>
+          <NodeName />
+          <NodeId />
         </div>
         <div className="absolute right-0">
           {selfPad && <SelfPad data={selfPad} nodeId={data.id} />}
