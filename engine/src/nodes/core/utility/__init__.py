@@ -7,6 +7,7 @@ from .merge import Merge
 from .type_constraint import TypeConstraint
 from .unpack_object import UnpackObject
 from .noop import Noop
+from .jinja2_node import Jinja2
 
 ALL_NODES = [
     Merge,
@@ -15,4 +16,5 @@ ALL_NODES = [
     AutoConvert,
     UnpackObject,
     Noop,
+    Jinja2,
 ]
