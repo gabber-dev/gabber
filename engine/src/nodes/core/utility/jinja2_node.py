@@ -1,7 +1,6 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-import logging
 import asyncio
 from typing import cast
 
@@ -109,7 +108,6 @@ class Jinja2(Node):
         for name_pad, value_pad in property_pads:
             if name_pad.get_value() and value_pad.get_value():
                 context[name_pad.get_value()] = value_pad.get_value()
-        logging.info(f"NEIL Rendering Jinja template: {context}")
         jinja_template = Template(template)
         return jinja_template.render(**context)
 
@@ -140,9 +138,6 @@ class Jinja2(Node):
 
         async def pad_task(value_pad: pad.PropertySinkPad):
             async for item in value_pad:
-                logging.info(
-                    f"NEIL {item.value}, {value_pad.get_id()}, {value_pad.get_value()} - {[(p[0].get_value(), p[1].get_value()) for p in property_pads]}"
-                )
                 rendered = self.render_jinja(property_pads, template)
                 rendered_output.push_item(rendered, item.ctx)
                 item.ctx.complete()
