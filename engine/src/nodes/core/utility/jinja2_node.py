@@ -139,7 +139,7 @@ class Jinja2(Node):
         async def pad_task(value_pad: pad.PropertySinkPad):
             async for item in value_pad:
                 rendered = self.render_jinja(property_pads, template)
-                rendered_output.set_value(rendered)
+                rendered_output.push_item(rendered, item.ctx)
                 item.ctx.complete()
 
         tasks: list[asyncio.Task] = []

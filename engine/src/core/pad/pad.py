@@ -148,12 +148,12 @@ class SourcePad(Pad, Protocol):
                 )
                 if ctx is not None:
                     ctx.complete()
-            if isinstance(self, PropertyPad):
-                self.set_value(value)
+
+            if isinstance(np, PropertyPad):
+                np.set_value(value)
             else:
                 if notify_type:
-                    self._notify_update(value)
-
+                    np._notify_update(value)
             new_ctx = RequestContext(
                 parent=ctx, timeout=ctx._timeout_s, originator=self.get_id()
             )
