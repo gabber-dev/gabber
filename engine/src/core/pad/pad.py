@@ -146,8 +146,9 @@ class SourcePad(Pad, Protocol):
                 logging.warning(
                     f"SinkPad queue size exceeded 1000, skipping. {np.get_owner_node().id}:{np.get_id()}"
                 )
-            if ctx is not None:
-                ctx.complete()
+                if ctx is not None:
+                    ctx.complete()
+
             if isinstance(np, PropertyPad):
                 np.set_value(value)
             else:
