@@ -238,7 +238,8 @@ class Graph:
                 v = serialize.deserialize_pad_value(tcs[0], edit.value)
                 p.set_value(v)
 
-        node.resolve_pads()
+        for node in self.nodes:
+            node.resolve_pads()
 
     def to_editor(self):
         nodes: list[models.NodeEditorRepresentation] = []

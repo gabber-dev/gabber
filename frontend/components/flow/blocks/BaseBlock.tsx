@@ -19,6 +19,7 @@ import { CompareNode } from "./CompareNode";
 import { JsonNode } from "./JsonNode";
 import { NodeName } from "./components/NodeName";
 import { NodeId } from "./components/NodeId";
+import { Jinja2Node } from "./Jinja2Node";
 
 export interface BaseBlockProps {
   data: NodeEditorRepresentation;
@@ -66,6 +67,10 @@ export function BaseBlock({ data }: BaseBlockProps) {
 
   if (data.type === "Json") {
     return <JsonNode data={data} />;
+  }
+
+  if (data.type === "Jinja2") {
+    return <Jinja2Node data={data} />;
   }
 
   // Add ambient-float by default, but remove it if selected
