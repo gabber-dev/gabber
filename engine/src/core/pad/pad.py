@@ -146,23 +146,20 @@ class SourcePad(Pad, Protocol):
                 logging.warning(
                     f"SinkPad queue size exceeded 1000, skipping. {np.get_owner_node().id}:{np.get_id()}"
                 )
-                if ctx is not None:
-                    ctx.complete()
-            try:
-                if isinstance(np, PropertyPad):
-                    np.set_value(value)
-                else:
-                    if notify_type:
-                        np._notify_update(value)
-                new_ctx = RequestContext(
-                    parent=ctx, timeout=ctx._timeout_s, originator=self.get_id()
-                )
+            if ctx is not None:
+                ctx.complete()
+            if isinstance(np, PropertyPad):
+                np.set_value(value)
+            else:
+                if notify_type:
+                    np._notify_update(value)
+            new_ctx = RequestContext(
+                parent=ctx, timeout=ctx._timeout_s, originator=self.get_id()
+            )
 
-                item = Item(value=value, ctx=new_ctx)
+            item = Item(value=value, ctx=new_ctx)
 
-                q.put_nowait(item)
-            except Exception as e:
-                logging.error(f"NEIL Error in pad {self.get_id()}: {e}")
+            q.put_nowait(item)
 
         ctx.complete()
 
