@@ -3,7 +3,6 @@
 
 from typing import TYPE_CHECKING, Any, Literal
 
-
 from .pad import PropertyPad, SinkPad, SourcePad, NOTIFIABLE_TYPES
 from .types import BasePadType
 
@@ -73,6 +72,7 @@ class PropertySourcePad(SourcePad, PropertyPad):
         return self._value
 
     def set_value(self, value: Any):
+
         self._value = value
         if isinstance(value, NOTIFIABLE_TYPES):
             self._notify_update(value)

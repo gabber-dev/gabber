@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
+import traceback
+import logging
 from typing import TYPE_CHECKING, Any, Literal
 
 from . import types
@@ -74,6 +76,9 @@ class PropertySinkPad(SinkPad, PropertyPad):
         return self._value
 
     def set_value(self, value: Any):
+        if self.get_id() == "operator":
+            trace = traceback.format_stack()
+            logging.info(f"NEIL setting operator value to {value}\n{' '.join(trace)}")
         self._value = value
         if isinstance(value, NOTIFIABLE_TYPES):
             self._notify_update(value)
