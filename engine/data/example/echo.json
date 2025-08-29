@@ -2,83 +2,107 @@
     "id": "echo",
     "name": "Hello World: Echo",
     "created_at": "2025-07-29T10:41:27.850348",
-    "updated_at": "2025-08-26T14:42:32.572946",
+    "updated_at": "2025-08-29T15:55:54.226569",
     "graph": {
         "nodes": [
             {
-                "id": "publish_7d5e1852",
+                "id": "publish_570006bb",
                 "type": "Publish",
                 "editor_name": "Publish",
                 "editor_position": [
-                    164.41386010362697,
-                    456.5556994818653
+                    288.0,
+                    576.0
                 ],
                 "editor_dimensions": [
                     256.0,
-                    422.0
+                    424.0
                 ],
                 "pads": [
                     {
                         "id": "audio",
                         "group": "audio",
                         "type": "StatelessSourcePad",
-                        "value": null,
-                        "next_pads": [
+                        "default_allowed_types": [
                             {
-                                "node": "output_274c2131",
-                                "pad": "audio"
+                                "type": "audio"
                             }
                         ],
-                        "previous_pad": null,
                         "allowed_types": [
                             {
                                 "type": "audio"
                             }
-                        ]
+                        ],
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "output_f9e7d8a2",
+                                "pad": "audio"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "pad_links": []
                     },
                     {
                         "id": "video",
                         "group": "video",
                         "type": "StatelessSourcePad",
-                        "value": null,
-                        "next_pads": [
+                        "default_allowed_types": [
                             {
-                                "node": "output_274c2131",
-                                "pad": "video"
+                                "type": "video"
                             }
                         ],
-                        "previous_pad": null,
                         "allowed_types": [
                             {
                                 "type": "video"
                             }
-                        ]
+                        ],
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "output_f9e7d8a2",
+                                "pad": "video"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "pad_links": []
                     },
                     {
                         "id": "audio_enabled",
                         "group": "audio_enabled",
                         "type": "PropertySourcePad",
-                        "value": false,
-                        "next_pads": [],
-                        "previous_pad": null,
+                        "default_allowed_types": [
+                            {
+                                "type": "boolean"
+                            }
+                        ],
                         "allowed_types": [
                             {
                                 "type": "boolean"
                             }
-                        ]
+                        ],
+                        "value": false,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
                     },
                     {
                         "id": "video_enabled",
                         "group": "video_enabled",
                         "type": "PropertySourcePad",
-                        "value": false,
-                        "next_pads": [],
-                        "previous_pad": null,
+                        "default_allowed_types": [
+                            {
+                                "type": "boolean"
+                            }
+                        ],
                         "allowed_types": [
                             {
                                 "type": "boolean"
                             }
-                        ]
+                        ],
+                        "value": false,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
                     }
                 ],
                 "description": "Stream audio and video into your Gabber flow",
@@ -92,12 +116,12 @@
                 }
             },
             {
-                "id": "output_274c2131",
+                "id": "output_f9e7d8a2",
                 "type": "Output",
                 "editor_name": "Output",
                 "editor_position": [
-                    479.9251808402332,
-                    504.51789285312304
+                    696.0,
+                    660.0
                 ],
                 "editor_dimensions": [
                     256.0,
@@ -108,33 +132,45 @@
                         "id": "audio",
                         "group": "audio",
                         "type": "StatelessSinkPad",
-                        "value": null,
-                        "next_pads": [],
-                        "previous_pad": {
-                            "node": "publish_7d5e1852",
-                            "pad": "audio"
-                        },
+                        "default_allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ],
                         "allowed_types": [
                             {
                                 "type": "audio"
                             }
-                        ]
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "publish_570006bb",
+                            "pad": "audio"
+                        },
+                        "pad_links": []
                     },
                     {
                         "id": "video",
                         "group": "video",
                         "type": "StatelessSinkPad",
-                        "value": null,
-                        "next_pads": [],
-                        "previous_pad": {
-                            "node": "publish_7d5e1852",
-                            "pad": "video"
-                        },
+                        "default_allowed_types": [
+                            {
+                                "type": "video"
+                            }
+                        ],
                         "allowed_types": [
                             {
                                 "type": "video"
                             }
-                        ]
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "publish_570006bb",
+                            "pad": "video"
+                        },
+                        "pad_links": []
                     }
                 ],
                 "description": "Outputs audio and video to the end user",
