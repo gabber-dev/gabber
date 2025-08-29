@@ -254,7 +254,6 @@ class Graph:
 
     async def load_from_snapshot(self, snapshot: messages.GraphEditorRepresentation):
         self.nodes = []
-        node_reference_pads: list[pad.PropertyPad] = []
 
         for node_data in snapshot.nodes:
             node: Node
@@ -308,58 +307,29 @@ class Graph:
             node.editor_position = node_data.editor_position
             node.editor_name = node_data.editor_name
             node.editor_dimensions = node_data.editor_dimensions
-
-            secret_options = await self.secret_provider.list_secrets()
-            node.resolve_pads()
-
-            # Handle property pad values
-            for pad_data in node_data.pads:
-                if "Property" not in pad_data.type:
-                    continue
-                casted_allowed_types = cast(
-                    list[pad.types.BasePadType] | None, pad_data.allowed_types
-                )
-
-                if isinstance(casted_allowed_types, list):
-                    for tc in casted_allowed_types:
-                        if isinstance(tc, pad.types.Secret):
-                            tc.options = secret_options
-
-                deserialized_value: Any | None = None
-                node_reference_pad = False
-                if casted_allowed_types and len(casted_allowed_types) == 1:
-                    tc = casted_allowed_types[0]
-                    if not isinstance(tc, pad.types.NodeReference):
-                        deserialized_value = serialize.deserialize_pad_value(
-                            tc, pad_data.value
-                        )
-                    else:
-                        node_reference_pad = True
-                        deserialized_value = pad_data.value
-
-                pad_instance = node.get_pad(pad_data.id)
-                if not pad_instance:
-                    logging.warning(
-                        f"Pad with ID {pad_data.id} not found in node {node.id}."
-                    )
-                    continue
-
-                if not isinstance(pad_instance, pad.PropertyPad):
-                    logging.warning(
-                        f"Pad with ID {pad_data.id} in node {node.id} is not a PropertyPad."
-                    )
-                    continue
-
-                if node_reference_pad:
-                    node_reference_pads.append(cast(pad.PropertyPad, pad_instance))
-
-                pad_instance.set_value(deserialized_value)
-                node.resolve_pads()
-
-            node.resolve_pads()
+            for p in node_data.pads:
+                p_obj = create_pad_from_editor(p, owner_node=node)
+                node.pads.append(p_obj)
+            
             self.nodes.append(node)
 
         node_lookup: dict[str, Node] = {n.id: n for n in self.nodes}
+        # Handle pad links
+        for n in snapshot.nodes:
+            node_obj = node_lookup.get(n.id)
+            if not node_obj:
+                logging.error(f"Node {n.id} not found in node lookup.")
+                continue
+            for p in n.pads:
+                for link_id in p.pad_links:
+                    source_pad = node_obj.get_pad(p.id)
+                    link_pad = node_obj.get_pad(link_id)
+                    if not source_pad or not link_pad:
+                        logging.error(
+                            f"Pad {p.id} or linked pad {link_id} not found in node {n.id}."
+                        )
+                        continue
+                    source_pad.link_types_to_pad(link_pad)
 
         for node_data in snapshot.nodes:
             for pad_data in node_data.pads:
@@ -395,26 +365,32 @@ class Graph:
                     )
                     continue
                 source_pad.connect(target_pad)
-                source_node.resolve_pads()
-                target_node.resolve_pads()
 
             node_obj = node_lookup.get(node_data.id)
             if not node_obj:
                 logging.error(f"Node {node_data.id} not found in node lookup.")
                 continue
+        
+        for n in self.nodes:
+            n.resolve_pads()
 
-        for node in self.nodes:
-            node.resolve_pads()
-
-        for node in self.nodes:
-            for p in node.pads:
-                p._resolve_type_constraints()
-                node.resolve_pads()
-
-        # Resolve node reference pads
-        for p in node_reference_pads:
-            self._resolve_node_reference_property(p, p.get_value(), node_lookup)
-
+        # Populate secrets
+        secret_options = await self.secret_provider.list_secrets()
+        for n in self.nodes:
+            for p in n.pads:
+                tcs = p.get_type_constraints()
+                d_tcs = p.get_default_type_constraints()
+                if tcs and len(tcs) == 1:
+                    if isinstance(tcs[0], pad.types.Secret):
+                        tcs[0].options = secret_options
+                        if isinstance(p, pad.PropertyPad) and p.get_value() not in [s.name for s in secret_options]:
+                            p.set_value(None)
+                    elif isinstance(tcs[0], pad.types.NodeReference) and isinstance(p, pad.PropertyPad):
+                        self._resolve_node_reference_property(p, p.get_value(), node_lookup)
+                if d_tcs and len(d_tcs) == 1:
+                    if isinstance(d_tcs[0], pad.types.Secret):
+                        d_tcs[0].options = secret_options
+                
     def _resolve_node_reference_property(
         self, p: pad.PropertyPad, v: str, nodes: dict[str, Node]
     ):
@@ -448,3 +424,45 @@ class Graph:
             )
         except Exception as e:
             logging.error(f"Error running graph: {e}", exc_info=e)
+
+def create_pad_from_editor(e: models.PadEditorRepresentation, owner_node: Node) -> pad.Pad:
+    p: pad.Pad
+    default_allowed_types = cast(
+        list[pad.types.BasePadType] | None, e.default_allowed_types
+    )
+    allowed_types = cast(list[pad.types.BasePadType] | None, e.allowed_types)
+    if e.type == "PropertySourcePad":
+        p = pad.PropertySourcePad(
+            id=e.id,
+            group=e.group,
+            owner_node=owner_node,
+            default_type_constraints=default_allowed_types,
+            value=e.value,
+        )
+    elif e.type == "PropertySinkPad":
+        p = pad.PropertySinkPad(
+            id=e.id,
+            group=e.group,
+            owner_node=owner_node,
+            default_type_constraints=default_allowed_types,
+            value=e.value,
+        )
+    elif e.type == "StatelessSourcePad":
+        p = pad.StatelessSourcePad(
+            id=e.id,
+            group=e.group,
+            owner_node=owner_node,
+            default_type_constraints=default_allowed_types,
+        )
+    elif e.type == "StatelessSinkPad":
+        p = pad.StatelessSinkPad(
+            id=e.id,
+            group=e.group,
+            owner_node=owner_node,
+            default_type_constraints=default_allowed_types,
+        )
+    else:
+        raise ValueError(f"Unknown pad type: {e.type}")
+
+    p.set_type_constraints(allowed_types)
+    return p
