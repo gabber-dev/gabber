@@ -259,9 +259,6 @@ class Compare(Node):
                 )
                 operator_pad.set_default_type_constraints([pad.types.Enum(options=[])])
                 operator_pad.set_value(None)
-        else:
-            operator_pad.set_default_type_constraints([pad.types.Enum(options=[])])
-            operator_pad.set_value(None)
 
     async def run(self):
         condition_pads = self._get_condition_pads()

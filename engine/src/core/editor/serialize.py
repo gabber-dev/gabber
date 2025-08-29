@@ -96,7 +96,6 @@ def pad_editor_rep(p: pad.Pad):
         next_pads=next_pads,
         previous_pad=previous_pad,
         allowed_types=allowed_types,
-        default_types=cast(list[pad.types.PadType], p.get_default_type_constraints()),
     )
 
 
