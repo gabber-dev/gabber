@@ -88,6 +88,9 @@ def pad_editor_rep(p: pad.Pad):
     allowed_types: list[pad.types.PadType] | None = cast(
         list[pad.types.PadType], p.get_type_constraints()
     )
+    default_allowed_types: list[pad.types.PadType] | None = cast(
+        list[pad.types.PadType], p.get_default_type_constraints()
+    )
     return PadEditorRepresentation(
         id=p.get_id(),
         group=p.get_group(),
@@ -96,6 +99,8 @@ def pad_editor_rep(p: pad.Pad):
         next_pads=next_pads,
         previous_pad=previous_pad,
         allowed_types=allowed_types,
+        default_allowed_types=default_allowed_types,
+        pad_links=[l.get_id() for l in p._pad_links],
     )
 
 

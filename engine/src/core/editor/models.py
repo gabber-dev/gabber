@@ -140,10 +140,12 @@ class PadEditorRepresentation(BaseModel):
     id: str
     group: str
     type: str
+    default_allowed_types: list[types.PadType] | None  = None
+    allowed_types: list[types.PadType] | None = None
     value: Any | None = None
     next_pads: list[PadReference]
     previous_pad: PadReference | None = None
-    allowed_types: list[types.PadType] | None = None
+    pad_links: list[str] = []
 
     class Config:
         # Enable arbitrary types to allow Any
