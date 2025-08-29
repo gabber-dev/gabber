@@ -116,7 +116,6 @@ class Filter(Node):
                     [pad.types.Enum(options=STRING_COMPARISON_OPERATORS)]
                 )
                 if operator_pad.get_value() not in STRING_COMPARISON_OPERATORS:
-                    logging.info(f"NEIL operator value {operator_pad.get_value()} not in {STRING_COMPARISON_OPERATORS}")
                     operator_pad.set_value(STRING_COMPARISON_OPERATORS[0])
             elif isinstance(tc, pad.types.Integer):
                 operator_pad.set_default_type_constraints(
