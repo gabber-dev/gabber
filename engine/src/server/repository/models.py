@@ -25,3 +25,8 @@ class RepositoryApp(BaseModel):
 class AppRunConnectionDetails(BaseModel):
     url: str
     token: str
+
+
+class AppExport(BaseModel):
+    app: RepositoryApp
+    subgraphs: list[RepositorySubGraph]

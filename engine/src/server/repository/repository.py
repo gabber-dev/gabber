@@ -56,6 +56,8 @@ class RepositoryServer:
         self.app.router.add_get("/premade_subgraph/list", self.list_premade_subgraphs)
         self.app.router.add_post("/app/run", self.app_run)
         self.app.router.add_post("/app/debug_connection", self.debug_connection)
+        self.app.router.add_post("/app/import", self.import_app)
+        self.app.router.add_get("/app/{id}/export", self.export_app)
 
     async def ensure_dir(self, dir_path: str):
         await asyncio.to_thread(os.makedirs, dir_path, exist_ok=True)
@@ -177,6 +179,221 @@ class RepositoryServer:
             )
         except Exception as e:
             logging.error(f"Error deleting app: {e}")
+            return aiohttp.web.json_response(
+                {"status": "error", "message": str(e)}, status=500
+            )
+
+    async def import_app(self, request: aiohttp.web.Request):
+        try:
+            data = await request.json()
+            export = models.AppExport.model_validate(data)
+            sub_graph_dir = f"{self.file_path}/sub_graph"
+            mapping: dict[str, str] = {}
+            for sg in export.subgraphs:
+                original_id = sg.id
+                new_id = original_id
+                while True:
+                    try:
+                        await asyncio.to_thread(
+                            os.stat, f"{sub_graph_dir}/{new_id}.json"
+                        )
+                        new_id += " duplicate"
+                    except FileNotFoundError:
+                        break
+                existing_names = set()
+                try:
+                    files = await asyncio.to_thread(os.listdir, sub_graph_dir)
+                except FileNotFoundError:
+                    await self.ensure_dir(sub_graph_dir)
+                    files = []
+                for file in files:
+                    if file.endswith(".json") and file[:-5] != new_id:
+                        async with aiofiles.open(f"{sub_graph_dir}/{file}", "r") as f:
+                            content = await f.read()
+                            existing_sg = models.RepositorySubGraph.model_validate_json(
+                                content
+                            )
+                            existing_names.add(existing_sg.name)
+                name = sg.name
+                while name in existing_names:
+                    name += " duplicate"
+                sg.id = new_id
+                sg.name = name
+                sg.created_at = datetime.datetime.now()
+                sg.updated_at = datetime.datetime.now()
+                save_path = f"{sub_graph_dir}/{sg.id}.json"
+                await self.ensure_dir(sub_graph_dir)
+                async with aiofiles.open(save_path, "w") as f:
+                    await f.write(sg.model_dump_json())
+                if original_id != new_id:
+                    mapping[original_id] = new_id
+            app = export.app
+            app_dir = f"{self.file_path}/app"
+            original_app_id = app.id
+            new_app_id = original_app_id
+            while True:
+                try:
+                    await asyncio.to_thread(os.stat, f"{app_dir}/{new_app_id}.json")
+                    new_app_id += " duplicate"
+                except FileNotFoundError:
+                    break
+            existing_names = set()
+            try:
+                files = await asyncio.to_thread(os.listdir, app_dir)
+            except FileNotFoundError:
+                await self.ensure_dir(app_dir)
+                files = []
+            for file in files:
+                if file.endswith(".json"):
+                    async with aiofiles.open(f"{app_dir}/{file}", "r") as f:
+                        content = await f.read()
+                        existing_app = models.RepositoryApp.model_validate_json(content)
+                        existing_names.add(existing_app.name)
+            name = app.name
+            while name in existing_names:
+                name += " duplicate"
+            app.id = new_app_id
+            app.name = name
+            app.created_at = datetime.datetime.now()
+            app.updated_at = datetime.datetime.now()
+            if mapping:
+                graph_json = app.graph.model_dump_json()
+                for old, new in mapping.items():
+                    graph_json = graph_json.replace(f'"{old}"', f'"{new}"')
+                graph_dict = json.loads(graph_json)
+                app.graph = GraphEditorRepresentation.model_validate(graph_dict)
+            save_path = f"{app_dir}/{app.id}.json"
+            await self.ensure_dir(app_dir)
+            async with aiofiles.open(save_path, "w") as f:
+                await f.write(app.model_dump_json())
+
+            # Check for missing premade subgraphs
+            def extract_subgraph_ids(graph: GraphEditorRepresentation) -> set[str]:
+                ids = set()
+                for node in graph.nodes:
+                    if node.type != "SubGraph":
+                        continue
+
+                    id_pads = [p for p in node.pads if p.id == "__subgraph_id__"]
+                    if len(id_pads) == 0:
+                        raise ValueError("No __subgraph_id__ pad found")
+
+                    if len(id_pads) > 1:
+                        raise ValueError("Multiple __subgraph_id__ pads found")
+
+                    val = id_pads[0].value
+                    if not val:
+                        raise ValueError("__subgraph_id__ pad has no value")
+
+                    ids.add(val)
+                return ids
+
+            subgraph_ids = extract_subgraph_ids(app.graph)
+            for sg_id in subgraph_ids:
+                custom_path = f"{self.file_path}/sub_graph/{sg_id}.json"
+                if await asyncio.to_thread(os.path.exists, custom_path):
+                    continue
+                premade_path = f"data/sub_graph/{sg_id}.json"
+                if not await asyncio.to_thread(os.path.exists, premade_path):
+                    return aiohttp.web.json_response(
+                        {
+                            "status": "error",
+                            "message": f"Premade subgraph {sg_id} doesn't exist",
+                        },
+                        status=400,
+                    )
+
+            response = messages.SaveAppResponse(app=app)
+            return aiohttp.web.Response(
+                body=response.model_dump_json(), content_type="application/json"
+            )
+        except Exception as e:
+            logging.error(f"Error importing app: {e}", exc_info=True)
+            return aiohttp.web.json_response(
+                {"status": "error", "message": str(e)}, status=400
+            )
+
+    async def export_app(self, request: aiohttp.web.Request):
+        app_id = request.match_info.get("id")
+        if not app_id:
+            return aiohttp.web.json_response(
+                {"status": "error", "message": "Missing app ID"}, status=400
+            )
+
+        try:
+            async with aiofiles.open(
+                f"{self.file_path}/app/{app_id}.json", mode="r"
+            ) as json_file:
+                json_content = await json_file.read()
+
+            obj = models.RepositoryApp.model_validate_json(json_content)
+            for node in obj.graph.nodes:
+                for p in node.pads:
+                    if p.allowed_types:
+                        for at in p.allowed_types:
+                            if at.type == "secret":
+                                at.options = []
+                    if p.default_allowed_types:
+                        for at in p.default_allowed_types:
+                            if at.type == "secret":
+                                at.options = []
+
+            # Extract potential subgraph IDs
+            def extract_subgraph_ids(graph: GraphEditorRepresentation) -> set[str]:
+                ids = set()
+                for node in graph.nodes:
+                    if node.type != "SubGraph":
+                        continue
+
+                    id_pads = [p for p in node.pads if p.id == "__subgraph_id__"]
+                    if len(id_pads) == 0:
+                        raise ValueError("No __subgraph_id__ pad found")
+
+                    if len(id_pads) > 1:
+                        raise ValueError("Multiple __subgraph_id__ pads found")
+
+                    val = id_pads[0].value
+                    if not val:
+                        raise ValueError("__subgraph_id__ pad has no value")
+
+                    ids.add(val)
+                return ids
+
+            subgraph_ids = extract_subgraph_ids(obj.graph)
+            subgraphs = []
+            for sg_id in subgraph_ids:
+                path = f"{self.file_path}/sub_graph/{sg_id}.json"
+                if not await asyncio.to_thread(os.path.exists, path):
+                    continue
+                async with aiofiles.open(path, mode="r") as f:
+                    content = await f.read()
+
+                sg = models.RepositorySubGraph.model_validate_json(content)
+
+                for node in sg.graph.nodes:
+                    for p in node.pads:
+                        if p.allowed_types:
+                            for at in p.allowed_types:
+                                if at.type == "secret":
+                                    at.options = []
+                        if p.default_allowed_types:
+                            for at in p.default_allowed_types:
+                                if at.type == "secret":
+                                    at.options = []
+
+                subgraphs.append(sg)
+
+            export_obj = models.AppExport(app=obj, subgraphs=subgraphs)
+            resp = messages.ExportAppResponse(export=export_obj)
+            return aiohttp.web.Response(
+                body=resp.model_dump_json(), content_type="application/json"
+            )
+        except FileNotFoundError:
+            return aiohttp.web.json_response(
+                {"status": "error", "message": "App not found"}, status=404
+            )
+        except Exception as e:
+            logging.error(f"Error exporting app: {e}", exc_info=True)
             return aiohttp.web.json_response(
                 {"status": "error", "message": str(e)}, status=500
             )

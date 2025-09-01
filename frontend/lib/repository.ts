@@ -5,10 +5,13 @@
 
 import { GraphEditorRepresentation } from "@/generated/editor";
 import {
+  AppExport,
   CreateAppRunResponse,
   DebugConnectionResponse,
+  ExportAppResponse,
   GetAppResponse,
   GetSubgraphResponse,
+  ImportAppResponse,
   ListAppsResponse,
   ListSubgraphsResponse,
   RepositoryApp,
@@ -120,4 +123,14 @@ export async function createDebugConnection({
     app_run,
   });
   return resp.data;
+}
+
+export async function importApp(app: AppExport): Promise<ImportAppResponse> {
+  const resp = await axios.post(`${getBaseUrl()}/app/import`, app);
+  return resp.data as ImportAppResponse;
+}
+
+export async function exportApp(appId: string): Promise<ExportAppResponse> {
+  const resp = await axios.get(`${getBaseUrl()}/app/${appId}/export`);
+  return resp.data as ExportAppResponse;
 }

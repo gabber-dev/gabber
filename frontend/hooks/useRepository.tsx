@@ -67,11 +67,11 @@ export function RepositoryProvider({
   examples,
 }: Props) {
   const [apps, setApps] = useState<RepositoryApp[]>(initialApps);
-  const [appsLoading, setAppsLoading] = useState<boolean>(true);
+  const [appsLoading, setAppsLoading] = useState<boolean>(false);
 
   const [subGraphs, setSubGraphs] =
     useState<RepositorySubGraph[]>(initialSubGraphs);
-  const [subGraphsLoading, setSubGraphsLoading] = useState<boolean>(true);
+  const [subGraphsLoading, setSubGraphsLoading] = useState<boolean>(false);
 
   const refreshApps = useCallback(async () => {
     if (appsLoading) {
@@ -82,6 +82,7 @@ export function RepositoryProvider({
       const response = await listAppsImpl();
       setApps(response);
     } catch (error) {
+      console.error("Error loading apps:", error);
       toast.error("Failed to load apps. Please try again later.");
     } finally {
       setAppsLoading(false);
@@ -122,6 +123,7 @@ export function RepositoryProvider({
       const response = await listSubgraphsImpl();
       setSubGraphs(response);
     } catch (error) {
+      console.error("Error loading subgraphs:", error);
       toast.error("Failed to load subgraphs. Please try again later.");
     } finally {
       setSubGraphsLoading(false);

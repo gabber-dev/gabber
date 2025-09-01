@@ -7,7 +7,12 @@ from pydantic import BaseModel, Field
 
 from core.editor import models
 
-from .models import AppRunConnectionDetails, RepositoryApp, RepositorySubGraph
+from .models import (
+    AppRunConnectionDetails,
+    RepositoryApp,
+    RepositorySubGraph,
+    AppExport,
+)
 
 
 class SaveSubgraphRequest(BaseModel):
@@ -34,8 +39,17 @@ class DebugConnectionRequest(BaseModel):
     app_run: str
 
 
+class ImportAppRequest(BaseModel):
+    type: Literal["import_app"] = "import_app"
+    export: AppExport
+
+
 Request = Annotated[
-    SaveSubgraphRequest | SaveAppRequest | CreateAppRunRequest | DebugConnectionRequest,
+    SaveSubgraphRequest
+    | SaveAppRequest
+    | CreateAppRunRequest
+    | DebugConnectionRequest
+    | ImportAppRequest,
     Field(discriminator="type", description="Request to perform on the graph editor"),
 ]
 
@@ -82,6 +96,15 @@ class DebugConnectionResponse(BaseModel):
     graph: models.GraphEditorRepresentation
 
 
+class ImportAppResponse(BaseModel):
+    type: Literal["import_app"] = "import_app"
+
+
+class ExportAppResponse(BaseModel):
+    type: Literal["export_app"] = "export_app"
+    export: AppExport
+
+
 Response = Annotated[
     SaveSubgraphResponse
     | SaveAppResponse
@@ -90,6 +113,8 @@ Response = Annotated[
     | GetSubgraphResponse
     | ListSubgraphsResponse
     | CreateAppRunResponse
-    | DebugConnectionResponse,
+    | DebugConnectionResponse
+    | ImportAppResponse
+    | ExportAppResponse,
     Field(discriminator="type", description="Response from the graph editor"),
 ]
