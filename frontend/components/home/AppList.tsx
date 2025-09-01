@@ -101,19 +101,19 @@ export function AppList() {
 
   const handleFileChange = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
-      console.log("NEIL File input changed");
       try {
         const file = e.target.files?.[0];
         if (file && file.type === "application/json") {
           const fileContent = await file.text();
           await importApp(JSON.parse(fileContent));
+          await refreshApps();
         }
       } catch (error) {
         console.error("Error importing app:", error);
         toast.error("Failed to import app");
       }
     },
-    [],
+    [refreshApps],
   );
 
   const hasMoreThanFourApps = apps.length > 4;
