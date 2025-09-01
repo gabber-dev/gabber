@@ -117,10 +117,7 @@ export type EditorDimensions3 = [unknown, unknown] | null;
 export type Id4 = string;
 export type Group = string;
 export type Type11 = string;
-export type Node3 = string;
-export type Pad3 = string;
-export type NextPads = PadReference[];
-export type AllowedTypes =
+export type DefaultAllowedTypes =
   | (
       | String
       | Integer
@@ -184,6 +181,35 @@ export type ObjectSchema = {
 } | null;
 export type Type32 = "node_reference";
 export type NodeTypes = string[];
+export type AllowedTypes =
+  | (
+      | String
+      | Integer
+      | Float
+      | Boolean
+      | Enum
+      | Secret
+      | BoundingBox
+      | Point
+      | Audio
+      | Video
+      | Trigger
+      | AudioClip
+      | VideoClip
+      | AVClip
+      | TextStream
+      | ContextMessage
+      | ContextMessageRole
+      | List
+      | Schema
+      | Object
+      | NodeReference
+    )[]
+  | null;
+export type Node3 = string;
+export type Pad3 = string;
+export type NextPads = PadReference[];
+export type PadLinks = string[];
 export type Pads = PadEditorRepresentation[];
 export type Description = string | null;
 export type Primary = string;
@@ -319,15 +345,12 @@ export interface PadEditorRepresentation {
   id: Id4;
   group: Group;
   type: Type11;
+  default_allowed_types?: DefaultAllowedTypes;
+  allowed_types?: AllowedTypes;
   value?: unknown;
   next_pads: NextPads;
   previous_pad?: PadReference | null;
-  allowed_types?: AllowedTypes;
-  [k: string]: unknown;
-}
-export interface PadReference {
-  node: Node3;
-  pad: Pad3;
+  pad_links?: PadLinks;
   [k: string]: unknown;
 }
 export interface String {
@@ -434,6 +457,11 @@ export interface Object {
 export interface NodeReference {
   type?: Type32;
   node_types: NodeTypes;
+  [k: string]: unknown;
+}
+export interface PadReference {
+  node: Node3;
+  pad: Pad3;
   [k: string]: unknown;
 }
 export interface NodeMetadata {

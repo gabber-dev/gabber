@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import {
   ReactFlow,
   Background,
@@ -18,7 +18,7 @@ import { FlowErrorBoundary } from "./ErrorBoundary";
 import { useEditor } from "@/hooks/useEditor";
 import { useRun } from "@/hooks/useRun";
 import { BaseBlock } from "./blocks/BaseBlock";
-import { PlusIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, ShareIcon } from "@heroicons/react/24/outline";
 import { NodeLibrary } from "./NodeLibrary";
 
 import { HybridEdge } from "./edges/HybridEdge";
@@ -28,6 +28,9 @@ import { getPrimaryDataType } from "./blocks/components/pads/utils/dataTypeColor
 import ReactModal from "react-modal";
 import { StateMachineGraphEdit } from "../state_machine/StateMachineGraphEdit";
 import { StateMachineProvider } from "../state_machine/useStateMachine";
+import { usePathname, useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import { exportApp } from "@/lib/repository";
 
 const edgeTypes = {
   hybrid: HybridEdge,
@@ -86,7 +89,8 @@ function FlowEditInner({ editable }: Props) {
   return (
     <div className="relative w-full h-full flex flex-col">
       {editable && (
-        <div className="absolute top-2 right-2 flex z-10">
+        <div className="absolute top-2 right-2 flex z-10 gap-2">
+          <ExportButton />
           <AddBlockButton
             onClick={() => setIsNodeLibraryOpen(!isNodeLibraryOpen)}
           />
@@ -185,6 +189,45 @@ function AddBlockButton({ onClick }: { onClick: () => void }) {
     >
       <PlusIcon className="h-4 w-4" />
       Add Node
+    </button>
+  );
+}
+
+function ExportButton() {
+  const path = usePathname();
+  const appId = path.split("/app/")[1];
+
+  const onClick = useCallback(async () => {
+    try {
+      const { export: appExport } = await exportApp(appId);
+      const blob = new Blob([JSON.stringify(appExport, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${appExport.app.name || "app"}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error exporting app", error);
+      toast.error("Error exporting app");
+    }
+    console.log("Exporting", appId, path);
+  }, [appId, path]);
+
+  if (!path.startsWith("/app/")) {
+    return null;
+  }
+
+  return (
+    <button
+      onClick={onClick}
+      className="btn btn-sm gap-2 font-vt323 tracking-wider btn-primary"
+    >
+      <ShareIcon className="h-4 w-4" />
     </button>
   );
 }

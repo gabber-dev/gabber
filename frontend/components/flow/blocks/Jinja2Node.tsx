@@ -7,7 +7,6 @@ import { useEditor } from "@/hooks/useEditor";
 import { BaseBlockProps } from "./BaseBlock";
 import { usePropertyPad } from "./components/pads/hooks/usePropertyPad";
 import { CubeIcon } from "@heroicons/react/24/outline";
-import { useStatelessPad } from "./components/pads/hooks/useStatelessPad";
 import { NodeName } from "./components/NodeName";
 import { NodeId } from "./components/NodeId";
 import { PropertyPad } from "./components/pads/PropertyPad";
