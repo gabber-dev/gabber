@@ -16,11 +16,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Room } from 'livekit-client';
+import { DataPacket_Kind, RemoteParticipant, Room } from 'livekit-client';
 import { PropertyPad, SinkPad, SourcePad } from './pad/Pad';
 import { LocalAudioTrack, LocalVideoTrack, LocalTrack } from './LocalTrack';
 import { Subscription } from './Subscription';
-import { Value1 as PadTriggeredValue } from './generated/runtime';
+import { Value1 as PadTriggeredValue, Payload, RuntimeRequest, RuntimeResponse } from './generated/runtime';
 import { Publication } from './Publication';
 
 export interface EngineHandler {
@@ -31,6 +31,8 @@ export class Engine  {
   private livekitRoom: Room;
   private handler?: EngineHandler;
   private lastEmittedConnectionState: ConnectionState = "disconnected";
+  private runtimeRequestIdCounter: number = 1;
+  private pendingRequests: Map<string, {res: (response: any) => void, rej: (error: string) => void}> = new Map();
 
   constructor(params: {handler?: EngineHandler}) {
     console.debug("Creating new Engine instance");
@@ -130,16 +132,34 @@ export class Engine  {
     return new Subscription({nodeId: params.outputOrPublishNodeId, livekitRoom: this.livekitRoom});
   }
 
+  public async runtimeRequest(params: {payload: Payload, nodeId: string | null, padId: string | null}): Promise<RuntimeResponse> {
+    const { payload, nodeId, padId } = params;
+    let topic = "runtime:"
+    if (nodeId) {
+      topic += `${nodeId}`;
+    }
+
+    if(padId) {
+      topic += `:${padId}`;
+    }
+
+    const requestId = (this.runtimeRequestIdCounter++).toString();
+    const req: RuntimeRequest = {
+      req_id: requestId,
+      payload,
+    }
+  }
+
   public getSourcePad<DataType extends PadTriggeredValue>(nodeId: string, padId: string): SourcePad<DataType> {
-    return new SourcePad<DataType>({ nodeId, padId, livekitRoom: this.livekitRoom });
+    return new SourcePad<DataType>({ nodeId, padId, livekitRoom: this.livekitRoom, engine: this });
   }
 
   public getSinkPad<DataType extends PadTriggeredValue>(nodeId: string, padId: string): SinkPad<DataType> {
-    return new SinkPad<DataType>({ nodeId, padId, livekitRoom: this.livekitRoom });
+    return new SinkPad<DataType>({ nodeId, padId, livekitRoom: this.livekitRoom, engine: this });
   }
 
   public getPropertyPad<DataType extends PadTriggeredValue>(nodeId: string, padId: string): PropertyPad<DataType> {
-    return new PropertyPad<DataType>({ nodeId, padId, livekitRoom: this.livekitRoom });
+    return new PropertyPad<DataType>({ nodeId, padId, livekitRoom: this.livekitRoom, engine: this });
   }
 
   private setupRoomEventListeners(): void {
@@ -158,7 +178,44 @@ export class Engine  {
     this.livekitRoom.on('participantDisconnected', (participant) => {
       this.emitConnectionStateChange();
     });
+
+    this.livekitRoom.on('dataReceived', this.onData);
   }
+
+  private onData(data: Uint8Array, _: RemoteParticipant | undefined, __: DataPacket_Kind | undefined, topic: string | undefined): void {
+        if (topic !== this.channelTopic) {
+            const msg = JSON.parse(new TextDecoder().decode(data));
+            return; // Ignore data not on this pad's channel
+        }
+        const msg = JSON.parse(new TextDecoder().decode(data));
+        if (msg.type === "ack") {
+            console.log("Received ACK for request:", msg.req_id);
+        } else if (msg.type === "complete") {
+            console.log("Received COMPLETE for request:", msg.req_id);
+            if(msg.error) {
+                console.error("Error in request:", msg.error);
+                const pendingRequest = this.pendingRequests.get(msg.req_id);
+                if (pendingRequest) {
+                    pendingRequest.rej(msg.error);
+                }
+            } else {
+                const pendingRequest = this.pendingRequests.get(msg.req_id);
+                if (pendingRequest) {
+                    pendingRequest.res(msg.payload);
+                }
+            }
+            this.pendingRequests.delete(msg.req_id);
+        } else if (msg.type === "event") {
+            const castedMsg: RuntimeEvent = msg
+            const payload = castedMsg.payload;
+            if(payload.type === "value") {
+                for (const handler of this.handlers) {
+                    const value = payload.value as DataType;
+                    handler(value);
+                }
+            }
+        }
+    }
 }
 
 export type GetLocalTrackOptions_Webcam = {

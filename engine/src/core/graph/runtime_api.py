@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
-import time
 from typing import Annotated, Any, Literal
 from pydantic import BaseModel, Field
 from livekit import rtc
@@ -29,8 +28,6 @@ class RuntimeApi:
         class QueueItem:
             payload: BaseModel
             participant: rtc.RemoteParticipant | None
-            node_id: str | None
-            pad_id: str | None
 
         dc_queue = asyncio.Queue[QueueItem | None]()
 
@@ -59,11 +56,11 @@ class RuntimeApi:
                     payload=RuntimeEvent(
                         payload=RuntimeEventPayload_Value(
                             value=ev_value,
+                            node_id=p.get_owner_node().id,
+                            pad_id=p.get_id(),
                         )
                     ),
                     participant=None,
-                    node_id=p.get_owner_node().id,
-                    pad_id=p.get_id(),
                 )
             )
 
@@ -71,57 +68,39 @@ class RuntimeApi:
             p._add_update_handler(on_pad)
 
         def on_data(packet: rtc.DataPacket):
-            if not packet.topic or not packet.topic.startswith("runtime:"):
+            if not packet.topic or not packet.topic.startswith("runtime_api"):
                 return
 
             request = RuntimeRequest.model_validate_json(packet.data)
             req_id = request.req_id
             ack_resp = RuntimeRequestAck(req_id=req_id)
             complete_resp = RuntimeResponse(req_id=req_id)
-            node_id: str | None = None
-            pad_id: str | None = None
-            split_topic = packet.topic.split(":")
-            if len(split_topic) >= 2:
-                node_id = split_topic[1]
-            if len(split_topic) >= 3:
-                pad_id = split_topic[2]
 
             dc_queue.put_nowait(
-                QueueItem(
-                    payload=ack_resp,
-                    participant=packet.participant,
-                    node_id=node_id,
-                    pad_id=pad_id,
-                )
+                QueueItem(payload=ack_resp, participant=packet.participant)
             )
 
             if request.payload.type == "lock_publisher":
                 payload = request.payload
                 existing_lock = self._publish_locks.get(payload.publish_node)
-                if existing_lock and existing_lock.is_locked():
+                if not packet.participant:
+                    complete_resp.error = "Participant is required."
+                    dc_queue.put_nowait(
+                        QueueItem(payload=complete_resp, participant=packet.participant)
+                    )
+                    return
+
+                if existing_lock and (
+                    existing_lock.is_locked()
+                    or existing_lock._participant_id != packet.participant.identity
+                ):
                     complete_resp.payload = RuntimeResponsePayload_LockPublisher(
                         success=False
                     )
                     dc_queue.put_nowait(
-                        QueueItem(
-                            payload=complete_resp,
-                            participant=packet.participant,
-                            node_id=node_id,
-                            pad_id=pad_id,
-                        )
+                        QueueItem(payload=complete_resp, participant=packet.participant)
                     )
 
-                if not packet.participant:
-                    complete_resp.error = "Participant is required."
-                    dc_queue.put_nowait(
-                        QueueItem(
-                            payload=complete_resp,
-                            participant=packet.participant,
-                            node_id=node_id,
-                            pad_id=pad_id,
-                        )
-                    )
-                    return
                 self._publish_locks[payload.publish_node] = PublishLock(
                     self.room, packet.participant.identity, payload.publish_node
                 )
@@ -131,29 +110,15 @@ class RuntimeApi:
                 return
 
             if request.payload.type == "push_value":
-                if not node_id or not pad_id:
-                    complete_resp.error = "Node ID and Pad ID are required."
-                    dc_queue.put_nowait(
-                        QueueItem(
-                            payload=complete_resp,
-                            participant=packet.participant,
-                            node_id=node_id,
-                            pad_id=pad_id,
-                        )
-                    )
-                    return
                 payload = request.payload
+                node_id = payload.node_id
+                pad_id = payload.pad_id
                 pad_obj = node_pad_lookup.get((node_id, pad_id))
                 if not pad_obj:
                     logging.error(f"Pad {pad_id} in node {node_id} not found.")
                     complete_resp.error = f"Pad {pad_id} in node {node_id} not found."
                     dc_queue.put_nowait(
-                        QueueItem(
-                            payload=complete_resp,
-                            participant=packet.participant,
-                            node_id=node_id,
-                            pad_id=pad_id,
-                        )
+                        QueueItem(payload=complete_resp, participant=packet.participant)
                     )
                     return
                 if not isinstance(pad_obj, pad.SourcePad):
@@ -162,12 +127,7 @@ class RuntimeApi:
                         f"Pad {pad_id} in node {node_id} is not a SourcePad."
                     )
                     dc_queue.put_nowait(
-                        QueueItem(
-                            payload=complete_resp,
-                            participant=packet.participant,
-                            node_id=node_id,
-                            pad_id=pad_id,
-                        )
+                        QueueItem(payload=complete_resp, participant=packet.participant)
                     )
                     return
 
@@ -180,12 +140,7 @@ class RuntimeApi:
                         f"Pad {pad_id} in node {node_id} has no type constraints."
                     )
                     dc_queue.put_nowait(
-                        QueueItem(
-                            payload=complete_resp,
-                            participant=packet.participant,
-                            node_id=node_id,
-                            pad_id=pad_id,
-                        )
+                        QueueItem(payload=complete_resp, participant=packet.participant)
                     )
                     return
 
@@ -197,29 +152,14 @@ class RuntimeApi:
                 pad_obj.push_item(value, ctx)
                 ctx.add_done_callback(
                     lambda _: dc_queue.put_nowait(
-                        QueueItem(
-                            payload=complete_resp,
-                            participant=packet.participant,
-                            node_id=node_id,
-                            pad_id=pad_id,
-                        )
+                        QueueItem(payload=complete_resp, participant=packet.participant)
                     )
                 )
                 ctx.complete()
             elif request.payload.type == "get_value":
-                if not node_id or not pad_id:
-                    complete_resp.error = "Node ID and Pad ID are required."
-                    dc_queue.put_nowait(
-                        QueueItem(
-                            payload=complete_resp,
-                            participant=packet.participant,
-                            node_id=node_id,
-                            pad_id=pad_id,
-                        )
-                    )
-                    return
-
                 payload = request.payload
+                node_id = payload.node_id
+                pad_id = payload.pad_id
                 pad_obj = node_pad_lookup.get((node_id, pad_id))
                 if not isinstance(pad_obj, pad.PropertyPad):
                     logging.error(
@@ -229,12 +169,7 @@ class RuntimeApi:
                         f"Pad {pad_id} in node {node_id} is not a PropertyPad."
                     )
                     dc_queue.put_nowait(
-                        QueueItem(
-                            payload=complete_resp,
-                            participant=packet.participant,
-                            node_id=node_id,
-                            pad_id=pad_id,
-                        )
+                        QueueItem(payload=complete_resp, participant=packet.participant)
                     )
                     return
 
@@ -248,24 +183,14 @@ class RuntimeApi:
                     type="get_value", value=value
                 )
                 dc_queue.put_nowait(
-                    QueueItem(
-                        payload=complete_resp,
-                        participant=packet.participant,
-                        node_id=node_id,
-                        pad_id=pad_id,
-                    )
+                    QueueItem(payload=complete_resp, participant=packet.participant)
                 )
 
             else:
                 logging.error(f"Unknown request type: {request.payload.type}")
                 complete_resp.error = f"Unknown request type: {request.payload.type}"
                 dc_queue.put_nowait(
-                    QueueItem(
-                        payload=complete_resp,
-                        participant=packet.participant,
-                        node_id=node_id,
-                        pad_id=pad_id,
-                    )
+                    QueueItem(payload=complete_resp, participant=packet.participant)
                 )
 
         self.room.on("data_received", on_data)
@@ -285,7 +210,7 @@ class RuntimeApi:
                     await self.room.local_participant.publish_data(
                         payload_bytes,
                         destination_identities=destination_identities,
-                        topic=f"runtime:{item.node_id}:{item.pad_id}",
+                        topic="runtime_api",
                     )
                 except Exception as e:
                     logging.error(f"Error sending data packet: {e}", exc_info=e)
@@ -344,6 +269,8 @@ PadTriggeredValue = Annotated[
 class RuntimeEventPayload_Value(BaseModel):
     type: Literal["value"] = "value"
     value: PadTriggeredValue
+    node_id: str
+    pad_id: str
 
 
 RuntimeEventPayload = Annotated[
@@ -360,10 +287,14 @@ class RuntimeEvent(BaseModel):
 class RuntimeRequestPayload_PushValue(BaseModel):
     type: Literal["push_value"] = "push_value"
     value: Any = None
+    node_id: str
+    pad_id: str
 
 
 class RuntimeRequestPayload_GetValue(BaseModel):
     type: Literal["get_value"] = "get_value"
+    node_id: str
+    pad_id: str
 
 
 class RuntimeRequestPayload_LockPublisher(BaseModel):

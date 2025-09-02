@@ -10,15 +10,20 @@ export type ReqId = string;
 /**
  * Request to push data to a pad
  */
-export type Payload = RuntimeRequestPayload_PushValue | RuntimeRequestPayload_GetValue;
+export type Payload =
+  | RuntimeRequestPayload_PushValue
+  | RuntimeRequestPayload_GetValue
+  | RuntimeRequestPayload_LockPublisher;
 export type Type1 = "push_value";
 export type Type2 = "get_value";
-export type Type3 = "event";
+export type Type3 = "lock_publisher";
+export type PublishNode = string;
+export type Type4 = "event";
 /**
  * Payload for the runtime event
  */
 export type Payload1 = RuntimeEventPayload_Value;
-export type Type4 = "value";
+export type Type5 = "value";
 /**
  * Type of the pad triggered value
  */
@@ -30,28 +35,32 @@ export type Value1 =
   | PadTriggeredValue_Trigger
   | PadTriggeredValue_AudioClip
   | PadTriggeredValue_VideoClip;
-export type Type5 = "string";
+export type Type6 = "string";
 export type Value2 = string;
-export type Type6 = "integer";
+export type Type7 = "integer";
 export type Value3 = number;
-export type Type7 = "float";
+export type Type8 = "float";
 export type Value4 = number;
-export type Type8 = "boolean";
+export type Type9 = "boolean";
 export type Value5 = boolean;
-export type Type9 = "trigger";
-export type Type10 = "audio_clip";
+export type Type10 = "trigger";
+export type Type11 = "audio_clip";
 export type Transcript = string;
 export type Duration = number;
-export type Type11 = "video_clip";
+export type Type12 = "video_clip";
 export type Duration1 = number;
-export type Type12 = "ack";
+export type Type13 = "ack";
 export type ReqId1 = string;
-export type Type13 = "complete";
+export type Type14 = "complete";
 export type ReqId2 = string;
 export type Error = string | null;
-export type Payload2 = (RuntimeResponsePayload_PushValue | RuntimeResponsePayload_GetValue) | null;
-export type Type14 = "push_value";
-export type Type15 = "get_value";
+export type Payload2 =
+  | (RuntimeResponsePayload_PushValue | RuntimeResponsePayload_GetValue | RuntimeResponsePayload_LockPublisher)
+  | null;
+export type Type15 = "push_value";
+export type Type16 = "get_value";
+export type Type17 = "lock_publisher";
+export type Success = boolean;
 
 export interface RuntimeRequest {
   type?: Type;
@@ -71,69 +80,79 @@ export interface RuntimeRequestPayload_GetValue {
   type?: Type2;
   [k: string]: unknown;
 }
-export interface RuntimeEvent {
+export interface RuntimeRequestPayload_LockPublisher {
   type?: Type3;
+  publish_node: PublishNode;
+  [k: string]: unknown;
+}
+export interface RuntimeEvent {
+  type?: Type4;
   payload: Payload1;
   [k: string]: unknown;
 }
 export interface RuntimeEventPayload_Value {
-  type?: Type4;
+  type?: Type5;
   value: Value1;
   [k: string]: unknown;
 }
 export interface PadTriggeredValue_String {
-  type?: Type5;
+  type?: Type6;
   value: Value2;
   [k: string]: unknown;
 }
 export interface PadTriggeredValue_Integer {
-  type?: Type6;
+  type?: Type7;
   value: Value3;
   [k: string]: unknown;
 }
 export interface PadTriggeredValue_Float {
-  type?: Type7;
+  type?: Type8;
   value: Value4;
   [k: string]: unknown;
 }
 export interface PadTriggeredValue_Boolean {
-  type?: Type8;
+  type?: Type9;
   value: Value5;
   [k: string]: unknown;
 }
 export interface PadTriggeredValue_Trigger {
-  type?: Type9;
+  type?: Type10;
   [k: string]: unknown;
 }
 export interface PadTriggeredValue_AudioClip {
-  type?: Type10;
+  type?: Type11;
   transcript: Transcript;
   duration: Duration;
   [k: string]: unknown;
 }
 export interface PadTriggeredValue_VideoClip {
-  type?: Type11;
+  type?: Type12;
   duration: Duration1;
   [k: string]: unknown;
 }
 export interface RuntimeRequestAck {
-  type?: Type12;
+  type?: Type13;
   req_id: ReqId1;
   [k: string]: unknown;
 }
 export interface RuntimeResponse {
-  type?: Type13;
+  type?: Type14;
   req_id: ReqId2;
   error?: Error;
   payload?: Payload2;
   [k: string]: unknown;
 }
 export interface RuntimeResponsePayload_PushValue {
-  type?: Type14;
+  type?: Type15;
   [k: string]: unknown;
 }
 export interface RuntimeResponsePayload_GetValue {
-  type?: Type15;
+  type?: Type16;
   value?: unknown;
+  [k: string]: unknown;
+}
+export interface RuntimeResponsePayload_LockPublisher {
+  type?: Type17;
+  success: Success;
   [k: string]: unknown;
 }

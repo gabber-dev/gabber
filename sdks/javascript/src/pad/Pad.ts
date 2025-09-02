@@ -18,11 +18,13 @@
 
 import { DataPacket_Kind, RemoteParticipant, Room } from "livekit-client";
 import { RuntimeRequest, RuntimeRequestPayload_PushValue, RuntimeEvent, RuntimeRequestPayload_GetValue, Value1 as PadTriggeredValue } from "../generated/runtime"
+import { Engine } from "../Engine";
 
 type PadParams = {
     nodeId: string;
     padId: string;
     livekitRoom: Room;
+    engine: Engine
 }
 
 export class BasePad<DataType extends PadTriggeredValue> {
@@ -31,11 +33,11 @@ export class BasePad<DataType extends PadTriggeredValue> {
     private _padId: string;
     protected livekitRoom: Room;
     private requestIdCounter: number = 0;
-    protected pendingRequests: Map<string, {res: (response: any) => void, rej: (error: string) => void}> = new Map();
-    protected channelTopic: string;
+    protected engine: Engine;
 
-    constructor({ nodeId, padId, livekitRoom }: PadParams) {
+    constructor({ nodeId, padId, livekitRoom, engine }: PadParams) {
         console.debug("Creating new BasePad instance for node", nodeId, "pad", padId);
+        this.engine = engine;
         this._nodeId = nodeId;
         this._padId = padId;
         this.livekitRoom = livekitRoom;
@@ -43,7 +45,6 @@ export class BasePad<DataType extends PadTriggeredValue> {
         this.onData = this.onData.bind(this);
         this.destroy = this.destroy.bind(this);
         this.livekitRoom.on('dataReceived', this.onData);
-        this.channelTopic = "runtime:" + this._nodeId + ":" + this._padId;
     }
 
     public on(event: "value", handler: (data: DataType) => void): void {
@@ -58,7 +59,6 @@ export class BasePad<DataType extends PadTriggeredValue> {
         console.debug("Destroying pad", this.nodeId, this.padId);
         this.livekitRoom.off('dataReceived', this.onData);
         this.handlers = [];
-        this.pendingRequests.clear();
     }
 
     public get nodeId(): string {
