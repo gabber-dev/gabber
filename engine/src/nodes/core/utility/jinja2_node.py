@@ -75,6 +75,7 @@ class Jinja2(Node):
                         pad.types.Integer(),
                         pad.types.Float(),
                         pad.types.Boolean(),
+                        pad.types.Enum(),
                     ],
                     value="",
                 )

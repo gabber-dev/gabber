@@ -115,5 +115,13 @@ class AutoConvert(Node):
                                 await asyncio.sleep(delta)
                             source.push_item(vf, item.ctx)
                             prev_timestamp = vf.timestamp
+            elif isinstance(source_type, pad.types.TextStream):
+                if isinstance(item.value, str):
+                    ts = runtime_types.TextStream()
+                    source.push_item(ts, item.ctx)
+                    ts.push_text(item.value)
+                    ts.eos()
+                elif isinstance(item.value, runtime_types.TextStream):
+                    source.push_item(item.value, item.ctx)
 
             item.ctx.complete()
