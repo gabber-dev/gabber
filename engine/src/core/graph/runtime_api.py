@@ -4,17 +4,21 @@
 import asyncio
 from typing import Annotated, Any, Literal
 from pydantic import BaseModel, Field
-from livekit import rtc
+from livekit import rtc, api
 from dataclasses import dataclass
 from core import node, pad, runtime_types
 import logging
 from core.editor import serialize
 from core.node import Node
+from nodes.core.media.publish import Publish
 
 
 class RuntimeApi:
-    def __init__(self, *, room: rtc.Room, nodes: list[node.Node]):
+    def __init__(
+        self, *, room: rtc.Room, room_api: api.LiveKitAPI, nodes: list[node.Node]
+    ):
         self.room = room
+        self.room_api = room_api
         self.nodes = nodes
         self._publish_locks: dict[str, PublishLock]
 
@@ -104,9 +108,21 @@ class RuntimeApi:
                         QueueItem(payload=complete_resp, participant=packet.participant)
                     )
 
+                pub_node = [n for n in self.nodes if n.id == payload.publish_node]
+                if len(pub_node) != 1 or not isinstance(pub_node[0], Publish):
+                    complete_resp.error = "Publish node not found."
+                    dc_queue.put_nowait(
+                        QueueItem(payload=complete_resp, participant=packet.participant)
+                    )
+                    return
+
                 self._publish_locks[payload.publish_node] = PublishLock(
-                    self.room, packet.participant.identity, payload.publish_node
+                    self.room,
+                    packet.participant.identity,
+                    payload.publish_node,
+                    pub_node[0],
                 )
+
                 complete_resp.payload = RuntimeResponsePayload_LockPublisher(
                     success=True
                 )
@@ -354,15 +370,19 @@ class RuntimeResponse(BaseModel):
 
 
 class PublishLock:
-    def __init__(self, room: rtc.Room, participant_id: str, publish_node: str):
+    def __init__(
+        self, room: rtc.Room, participant_id: str, publish_node: str, node: Publish
+    ):
         self._participant_id = participant_id
         self._publish_node = publish_node
         self._room = room
+        self._node = node
         self._room.on("track_published", self._on_track_published)
         self._room.on("track_unpublished", self._on_track_unpublished)
         self._unlock_tasks: list[asyncio.Task] = []
         self._done = False
         self._unlock_tasks.append(asyncio.create_task(self._unlock_after(10.0)))
+        self._node.set_allowed_participant(participant_id)
 
     def _on_track_published(
         self, pub: rtc.RemoteTrackPublication, part: rtc.RemoteParticipant
@@ -414,6 +434,7 @@ class PublishLock:
         self._room.off("track_unpublished", self._on_track_unpublished)
 
         await asyncio.sleep(delay)
+        self._node.unset_allowed_participant(self._participant_id)
         self._done = True
 
 

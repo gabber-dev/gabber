@@ -69,7 +69,16 @@ class Publish(node.Node):
             video_enabled,
         ]
 
+    def set_allowed_participant(self, identity: str):
+        self._allowed_participant = identity
+
+    def unset_allowed_participant(self, identity: str):
+        self._allowed_participant = (
+            None if self._allowed_participant == identity else self._allowed_participant
+        )
+
     async def run(self):
+        self._allowed_participant: str | None = None
         audio_source = cast(pad.StatelessSourcePad, self.get_pad_required("audio"))
         video_source = cast(pad.StatelessSourcePad, self.get_pad_required("video"))
         audio_enabled = cast(
@@ -90,9 +99,13 @@ class Publish(node.Node):
         async def video_consume():
             nonlocal last_video_frame_time
             while True:
+                if not self._allowed_participant:
+                    await asyncio.sleep(0.5)
+
                 video_stream = await video_stream_provider(
                     self.room, f"{self.id}:video"
                 )
+
                 async for frame in video_stream:
                     last_video_frame_time = time.time()
                     timestamp_s = frame.timestamp_us / 1_000_000.0
@@ -113,6 +126,9 @@ class Publish(node.Node):
         async def audio_consume():
             nonlocal last_audio_frame_time
             while True:
+                if not self._allowed_participant:
+                    await asyncio.sleep(0.5)
+
                 audio_stream = await audio_stream_provider(
                     self.room, f"{self.id}:audio"
                 )

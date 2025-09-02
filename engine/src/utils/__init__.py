@@ -119,6 +119,7 @@ class EmojiRemover:
         return self.emoji_pattern.sub("", text)
 
 
+# TODO: validate lock in runtime_api
 async def audio_stream_provider(room: rtc.Room, track_name: str):
     while True:
         await asyncio.sleep(0.2)
@@ -126,8 +127,6 @@ async def audio_stream_provider(room: rtc.Room, track_name: str):
             if participant.kind == rtc.ParticipantKind.PARTICIPANT_KIND_AGENT:
                 continue
             for track_pub in participant.track_publications.values():
-                # This track is not yet subscribed, when it is subscribed it will
-                # call the on_track_subscribed callback
                 if track_pub.track is None:
                     continue
 
@@ -149,6 +148,7 @@ async def audio_stream_provider(room: rtc.Room, track_name: str):
                 return stream
 
 
+# TODO: validate lock in runtime_api
 async def video_stream_provider(room: rtc.Room, track_name: str):
     while True:
         await asyncio.sleep(0.2)
