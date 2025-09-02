@@ -135,11 +135,17 @@ class LLMContext(node.Node):
                     self.pads.remove(p)
 
         self.pads = (
-            [num_inserts, max_non_system_messages, max_videos, max_audios, max_images, system_message]
+            [
+                num_inserts,
+                max_non_system_messages,
+                max_videos,
+                max_audios,
+                max_images,
+                system_message,
+            ]
             + insert_pads
             + [source, new_user_message]
         )
-
 
     async def run(self):
         system_message = cast(
@@ -277,4 +283,3 @@ class LLMContext(node.Node):
 
         tasks.append(asyncio.create_task(system_message_task()))
         await asyncio.gather(*tasks)
-

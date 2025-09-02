@@ -1,6 +1,7 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
+import logging
 import asyncio
 from typing import cast
 
@@ -61,22 +62,23 @@ class ContextMessage(Node):
                 ),
             )
 
+        message_source.set_value(
+            runtime_types.ContextMessage(
+                role=runtime_types.ContextMessageRole.SYSTEM,
+                content=[
+                    runtime_types.ContextMessageContentItem_Text(
+                        content=content_sink.get_value()
+                    )
+                ],
+                tool_calls=[],
+            )
+        )
+
         self.pads = [
             role,
             content_sink,
             message_source,
         ]
-
-        val = content_sink.get_value()
-        if val is None:
-            val = ""
-        message_source.set_value(
-            runtime_types.ContextMessage(
-                role=runtime_types.ContextMessageRole.SYSTEM,
-                content=[runtime_types.ContextMessageContentItem_Text(content=val)],
-                tool_calls=[],
-            )
-        )
 
     async def run(self):
         content_sink = cast(PropertySinkPad, self.get_pad_required("content"))
