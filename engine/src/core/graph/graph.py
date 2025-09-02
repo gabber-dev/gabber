@@ -310,7 +310,7 @@ class Graph:
             for p in node_data.pads:
                 p_obj = create_pad_from_editor(p, owner_node=node)
                 node.pads.append(p_obj)
-            
+
             self.nodes.append(node)
 
         node_lookup: dict[str, Node] = {n.id: n for n in self.nodes}
@@ -370,7 +370,7 @@ class Graph:
             if not node_obj:
                 logging.error(f"Node {node_data.id} not found in node lookup.")
                 continue
-        
+
         for n in self.nodes:
             n.resolve_pads()
 
@@ -383,14 +383,20 @@ class Graph:
                 if tcs and len(tcs) == 1:
                     if isinstance(tcs[0], pad.types.Secret):
                         tcs[0].options = secret_options
-                        if isinstance(p, pad.PropertyPad) and p.get_value() not in [s.name for s in secret_options]:
+                        if isinstance(p, pad.PropertyPad) and p.get_value() not in [
+                            s.name for s in secret_options
+                        ]:
                             p.set_value(None)
-                    elif isinstance(tcs[0], pad.types.NodeReference) and isinstance(p, pad.PropertyPad):
-                        self._resolve_node_reference_property(p, p.get_value(), node_lookup)
+                    elif isinstance(tcs[0], pad.types.NodeReference) and isinstance(
+                        p, pad.PropertyPad
+                    ):
+                        self._resolve_node_reference_property(
+                            p, p.get_value(), node_lookup
+                        )
                 if d_tcs and len(d_tcs) == 1:
                     if isinstance(d_tcs[0], pad.types.Secret):
                         d_tcs[0].options = secret_options
-                
+
     def _resolve_node_reference_property(
         self, p: pad.PropertyPad, v: str, nodes: dict[str, Node]
     ):
@@ -425,27 +431,36 @@ class Graph:
         except Exception as e:
             logging.error(f"Error running graph: {e}", exc_info=e)
 
-def create_pad_from_editor(e: models.PadEditorRepresentation, owner_node: Node) -> pad.Pad:
+
+def create_pad_from_editor(
+    e: models.PadEditorRepresentation, owner_node: Node
+) -> pad.Pad:
     p: pad.Pad
     default_allowed_types = cast(
         list[pad.types.BasePadType] | None, e.default_allowed_types
     )
     allowed_types = cast(list[pad.types.BasePadType] | None, e.allowed_types)
     if e.type == "PropertySourcePad":
+        v: Any = None
+        if allowed_types and len(allowed_types) == 1:
+            v = serialize.deserialize_pad_value(allowed_types[0], e.value)
         p = pad.PropertySourcePad(
             id=e.id,
             group=e.group,
             owner_node=owner_node,
             default_type_constraints=default_allowed_types,
-            value=e.value,
+            value=v,
         )
     elif e.type == "PropertySinkPad":
+        v: Any = None
+        if allowed_types and len(allowed_types) == 1:
+            v = serialize.deserialize_pad_value(allowed_types[0], e.value)
         p = pad.PropertySinkPad(
             id=e.id,
             group=e.group,
             owner_node=owner_node,
             default_type_constraints=default_allowed_types,
-            value=e.value,
+            value=v,
         )
     elif e.type == "StatelessSourcePad":
         p = pad.StatelessSourcePad(
