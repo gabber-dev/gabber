@@ -156,15 +156,15 @@ export class Engine  {
     return prom;
   }
 
-  public getSourcePad<DataType extends PadTriggeredValue>(nodeId: string, padId: string): SourcePad<DataType> {
+  public getSourcePad<DataType extends PadValue>(nodeId: string, padId: string): SourcePad<DataType> {
     return new SourcePad<DataType>({ nodeId, padId, livekitRoom: this.livekitRoom, engine: this });
   }
 
-  public getSinkPad<DataType extends PadTriggeredValue>(nodeId: string, padId: string): SinkPad<DataType> {
+  public getSinkPad<DataType extends PadValue>(nodeId: string, padId: string): SinkPad<DataType> {
     return new SinkPad<DataType>({ nodeId, padId, livekitRoom: this.livekitRoom, engine: this });
   }
 
-  public getPropertyPad<DataType extends PadTriggeredValue>(nodeId: string, padId: string): PropertyPad<DataType> {
+  public getPropertyPad<DataType extends PadValue>(nodeId: string, padId: string): PropertyPad<DataType> {
     return new PropertyPad<DataType>({ nodeId, padId, livekitRoom: this.livekitRoom, engine: this });
   }
 
@@ -188,7 +188,7 @@ export class Engine  {
     this.livekitRoom.on('dataReceived', this.onData);
   }
 
-  _addPadValueHandler(nodeId: string, padId: string, handler: (data: PadTriggeredValue) => void): void {
+  _addPadValueHandler(nodeId: string, padId: string, handler: (data: PadValue) => void): void {
     const key = `${nodeId}:${padId}`;
     if (!this.padValueHandlers.has(key)) {
       this.padValueHandlers.set(key, []);
@@ -196,7 +196,7 @@ export class Engine  {
     this.padValueHandlers.get(key)!.push(handler);
   }
 
-  _removePadValueHandler(nodeId: string, padId: string, handler: (data: PadTriggeredValue) => void): void {
+  _removePadValueHandler(nodeId: string, padId: string, handler: (data: PadValue) => void): void {
     const key = `${nodeId}:${padId}`;
     const handlers = this.padValueHandlers.get(key);
     if (handlers) {
