@@ -18,6 +18,27 @@ class RuntimeApi:
         self.nodes = nodes
         self._publish_locks: dict[str, PublishLock]
 
+    def _trigger_value_from_pad_value(self, value: Any):
+        v = serialize.serialize_pad_value(value)
+        ev_value: PadValue
+        if isinstance(v, int):
+            ev_value = PadValue_Integer(value=v)
+        elif isinstance(v, float):
+            ev_value = PadValue_Float(value=v)
+        elif isinstance(v, str):
+            ev_value = PadValue_String(value=v)
+        elif isinstance(v, bool):
+            ev_value = PadValue_Boolean(value=v)
+        elif isinstance(value, runtime_types.AudioClip):
+            trans = value.transcription if value.transcription else ""
+            ev_value = PadValue_AudioClip(transcript=trans, duration=value.duration)
+        elif isinstance(value, runtime_types.VideoClip):
+            ev_value = PadValue_VideoClip(duration=value.duration)
+        else:
+            ev_value = PadValue_Trigger()
+
+        return ev_value
+
     async def run(self):
         node_pad_lookup: dict[tuple[str, str], pad.Pad] = {
             (n.id, p.get_id()): p for n in self.nodes for p in n.pads
@@ -32,25 +53,7 @@ class RuntimeApi:
         dc_queue = asyncio.Queue[QueueItem | None]()
 
         def on_pad(p: pad.Pad, value: Any):
-            v = serialize.serialize_pad_value(value)
-            ev_value: PadTriggeredValue | None = None
-            if isinstance(v, int):
-                ev_value = PadTriggeredValue_Integer(value=v)
-            elif isinstance(v, float):
-                ev_value = PadTriggeredValue_Float(value=v)
-            elif isinstance(v, str):
-                ev_value = PadTriggeredValue_String(value=v)
-            elif isinstance(v, bool):
-                ev_value = PadTriggeredValue_Boolean(value=v)
-            elif isinstance(value, runtime_types.AudioClip):
-                trans = value.transcription if value.transcription else ""
-                ev_value = PadTriggeredValue_AudioClip(
-                    transcript=trans, duration=value.duration
-                )
-            elif isinstance(value, runtime_types.VideoClip):
-                ev_value = PadTriggeredValue_VideoClip(duration=value.duration)
-            else:
-                ev_value = PadTriggeredValue_Trigger()
+            ev_value = self._trigger_value_from_pad_value(value)
             dc_queue.put_nowait(
                 QueueItem(
                     payload=RuntimeEvent(
@@ -219,56 +222,56 @@ class RuntimeApi:
         self.room.off("data_received", on_data)
 
 
-class PadTriggeredValue_String(BaseModel):
+class PadValue_String(BaseModel):
     type: Literal["string"] = "string"
     value: str
 
 
-class PadTriggeredValue_Boolean(BaseModel):
+class PadValue_Boolean(BaseModel):
     type: Literal["boolean"] = "boolean"
     value: bool
 
 
-class PadTriggeredValue_Integer(BaseModel):
+class PadValue_Integer(BaseModel):
     type: Literal["integer"] = "integer"
     value: int
 
 
-class PadTriggeredValue_Float(BaseModel):
+class PadValue_Float(BaseModel):
     type: Literal["float"] = "float"
     value: float
 
 
-class PadTriggeredValue_Trigger(BaseModel):
+class PadValue_Trigger(BaseModel):
     type: Literal["trigger"] = "trigger"
 
 
-class PadTriggeredValue_AudioClip(BaseModel):
+class PadValue_AudioClip(BaseModel):
     type: Literal["audio_clip"] = "audio_clip"
     transcript: str
     duration: float
 
 
-class PadTriggeredValue_VideoClip(BaseModel):
+class PadValue_VideoClip(BaseModel):
     type: Literal["video_clip"] = "video_clip"
     duration: float
 
 
-PadTriggeredValue = Annotated[
-    PadTriggeredValue_String
-    | PadTriggeredValue_Integer
-    | PadTriggeredValue_Float
-    | PadTriggeredValue_Boolean
-    | PadTriggeredValue_Trigger
-    | PadTriggeredValue_AudioClip
-    | PadTriggeredValue_VideoClip,
+PadValue = Annotated[
+    PadValue_String
+    | PadValue_Integer
+    | PadValue_Float
+    | PadValue_Boolean
+    | PadValue_Trigger
+    | PadValue_AudioClip
+    | PadValue_VideoClip,
     Field(discriminator="type", description="Type of the pad triggered value"),
 ]
 
 
 class RuntimeEventPayload_Value(BaseModel):
     type: Literal["value"] = "value"
-    value: PadTriggeredValue
+    value: PadValue
     node_id: str
     pad_id: str
 
@@ -327,7 +330,7 @@ class RuntimeResponsePayload_PushValue(BaseModel):
 
 class RuntimeResponsePayload_GetValue(BaseModel):
     type: Literal["get_value"] = "get_value"
-    value: Any | None = None
+    value: PadValue
 
 
 class RuntimeResponsePayload_LockPublisher(BaseModel):
@@ -412,3 +415,11 @@ class PublishLock:
 
         await asyncio.sleep(delay)
         self._done = True
+
+
+# For easier generation
+class DummyType(BaseModel):
+    req: RuntimeRequest
+    resp: RuntimeResponse
+    ev: RuntimeEvent
+    pad_value: PadValue

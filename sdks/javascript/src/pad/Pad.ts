@@ -16,8 +16,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DataPacket_Kind, RemoteParticipant, Room } from "livekit-client";
-import { RuntimeRequest, RuntimeRequestPayload_PushValue, RuntimeEvent, RuntimeRequestPayload_GetValue, Value1 as PadTriggeredValue } from "../generated/runtime"
+import { Room } from "livekit-client";
+import { PadValue, RuntimeRequest, RuntimeRequestPayload_PushValue } from "../generated/runtime"
 import { Engine } from "../Engine";
 
 type PadParams = {
@@ -27,7 +27,7 @@ type PadParams = {
     engine: Engine
 }
 
-export class BasePad<DataType extends PadTriggeredValue> {
+export class BasePad<DataType extends PadValue> {
     protected handlers: Array<(data: DataType) => void> = [];
     private _nodeId: string;
     private _padId: string;
@@ -83,7 +83,7 @@ export class BasePad<DataType extends PadTriggeredValue> {
             payload: {
                 type: "get_value",
                 node_id: this.nodeId,
-                property_pad_id: this.padId,
+                pad_id: this.padId,
             },
             nodeId: this.nodeId,
             padId: this.padId
@@ -98,7 +98,7 @@ export class BasePad<DataType extends PadTriggeredValue> {
     }
 }
 
-export class SourcePad<DataType extends PadTriggeredValue> extends BasePad<DataType> {
+export class SourcePad<DataType extends PadValue> extends BasePad<DataType> {
     constructor(params: PadParams) {
         super(params);
         this.pushValue = this.pushValue.bind(this);
@@ -127,13 +127,13 @@ export class SourcePad<DataType extends PadTriggeredValue> extends BasePad<DataT
     }
 }
 
-export class SinkPad<DataType extends PadTriggeredValue> extends BasePad<DataType> {
+export class SinkPad<DataType extends PadValue> extends BasePad<DataType> {
     constructor(params: PadParams) {
         super(params);
     }
 }
 
-export class PropertyPad<DataType extends PadTriggeredValue> extends BasePad<DataType> {
+export class PropertyPad<DataType extends PadValue> extends BasePad<DataType> {
     constructor(params: PadParams) {
         super(params);
     }
