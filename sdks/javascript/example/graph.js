@@ -17,11 +17,6 @@
  */
 
 var GRAPH = {
-    "id": "9f8ff127-8962-4428-ae46-e834b46ce9c3 duplicate",
-    "name": "Test",
-    "created_at": "2025-09-01T15:52:14.809668",
-    "updated_at": "2025-09-01T16:05:42.010420",
-    "graph": {
         "nodes": [
             {
                 "id": "publish_webcam",
@@ -647,5 +642,4 @@ var GRAPH = {
                 }
             }
         ]
-    }
 }

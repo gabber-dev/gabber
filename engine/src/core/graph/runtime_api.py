@@ -76,7 +76,6 @@ class RuntimeApi:
                 return
 
             request = RuntimeRequest.model_validate_json(packet.data)
-            logging.info("NEIL on_data: %s", request)
             req_id = request.req_id
             ack_resp = RuntimeRequestAck(req_id=req_id)
             complete_resp = RuntimeResponse(req_id=req_id)
@@ -381,32 +380,29 @@ class PublishLock:
         self._publish_node = publish_node
         self._room = room
         self._node = node
-        self._room.on("track_published", self._on_track_published)
-        self._room.on("track_unpublished", self._on_track_unpublished)
         self._unlock_tasks: list[asyncio.Task] = []
         self._done = False
-        self._unlock_tasks.append(asyncio.create_task(self._unlock_after(10.0)))
         self._node.set_allowed_participant(participant_id)
+        self._loop_t = asyncio.create_task(self._lock_loop())
 
-    def _on_track_published(
-        self, pub: rtc.RemoteTrackPublication, part: rtc.RemoteParticipant
-    ):
-        if not self._check_relevant(pub, part):
-            return
+    async def _lock_loop(self):
+        # Give participant 10 seconds to publish their track
+        await asyncio.sleep(10.0)
+        while True:
+            is_publishing = False
+            for rp in self._room.remote_participants.values():
+                for t in rp.track_publications.values():
+                    if self._check_relevant(t, rp):
+                        is_publishing = True
 
-        for t in self._unlock_tasks:
-            t.cancel()
+            if is_publishing:
+                await asyncio.sleep(2.0)
+                continue
 
-        self._unlock_tasks = []
+            break
 
-    def _on_track_unpublished(
-        self, pub: rtc.RemoteTrackPublication, part: rtc.RemoteParticipant
-    ):
-        if not self._check_relevant(pub, part):
-            return
-
-        t = asyncio.create_task(self._unlock_after(5.0))
-        self._unlock_tasks.append(t)
+        self._node.unset_allowed_participant(self._participant_id)
+        self._done = True
 
     def _check_relevant(
         self, pub: rtc.RemoteTrackPublication, part: rtc.RemoteParticipant
@@ -427,19 +423,8 @@ class PublishLock:
 
         return True
 
-    async def is_locked(self) -> bool:
+    def is_locked(self) -> bool:
         return not self._done
-
-    async def _unlock_after(self, delay: float):
-        if self._done:
-            return
-
-        self._room.off("track_published", self._on_track_published)
-        self._room.off("track_unpublished", self._on_track_unpublished)
-
-        await asyncio.sleep(delay)
-        self._node.unset_allowed_participant(self._participant_id)
-        self._done = True
 
 
 # For easier generation

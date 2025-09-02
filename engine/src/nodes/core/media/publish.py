@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
+import logging
 from typing import cast
 import time
 
@@ -76,6 +77,13 @@ class Publish(node.Node):
         self._allowed_participant = (
             None if self._allowed_participant == identity else self._allowed_participant
         )
+        for rp in self.room.remote_participants.values():
+            for track in rp.track_publications.values():
+                if (
+                    track.name.startswith(f"{self.id}:")
+                    and rp.identity != self._allowed_participant
+                ):
+                    track.set_subscribed(False)
 
     async def run(self):
         self._allowed_participant: str | None = None

@@ -132,8 +132,9 @@ export type Type24 = "save_app";
 export type Id4 = string | null;
 export type Name2 = string;
 export type Type25 = "create_app_run";
+export type RunId = string;
 export type Type26 = "create_debug_connection";
-export type AppRun = string;
+export type RunId1 = string;
 export type Type27 = "import_app";
 export type Id5 = string;
 export type Name3 = string;
@@ -169,7 +170,6 @@ export type SubGraphs = RepositorySubGraph[];
 export type Type34 = "create_app_run";
 export type Url = string;
 export type Token = string;
-export type Id7 = string;
 export type Type35 = "debug_connection";
 export type Type36 = "import_app";
 export type Type37 = "export_app";
@@ -334,12 +334,13 @@ export interface SaveAppRequest {
 }
 export interface CreateAppRunRequest {
   type?: Type25;
+  run_id: RunId;
   graph: GraphEditorRepresentation;
   [k: string]: unknown;
 }
 export interface DebugConnectionRequest {
   type?: Type26;
-  app_run: AppRun;
+  run_id: RunId1;
   [k: string]: unknown;
 }
 export interface ImportAppRequest {
@@ -401,7 +402,6 @@ export interface ListSubgraphsResponse {
 export interface CreateAppRunResponse {
   type?: Type34;
   connection_details: AppRunConnectionDetails;
-  id: Id7;
   [k: string]: unknown;
 }
 export interface AppRunConnectionDetails {

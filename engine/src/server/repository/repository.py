@@ -652,14 +652,14 @@ class RepositoryServer:
         internal_livekit_url = os.environ.get("LIVEKIT_URL", livekit_url)
         livekit_api_key = "devkey"
         livekit_api_secret = "secret"
-        room_name = str(uuid4())
         req = messages.CreateAppRunRequest.model_validate(await request.json())
 
         at = api.AccessToken(livekit_api_key, livekit_api_secret)
         at = at.with_grants(
             api.VideoGrants(
                 room_join=True,
-                room=room_name,
+                room=req.run_id,
+                room_create=False,
                 can_publish=True,
                 can_subscribe=True,
             )
@@ -669,22 +669,24 @@ class RepositoryServer:
             api_key=livekit_api_key,
             api_secret=livekit_api_secret,
         )
-        await lkapi.room.create_room(create=api.CreateRoomRequest(name=room_name))
-        await lkapi.agent_dispatch.create_dispatch(
-            req=api.CreateAgentDispatchRequest(
-                room=room_name,
-                agent_name="gabber-engine",
-                metadata=req.model_dump_json(),
+        try:
+            await lkapi.room.create_room(
+                create=api.CreateRoomRequest(
+                    name=req.run_id,
+                    agents=[
+                        api.RoomAgentDispatch(
+                            agent_name="gabber-engine", metadata=req.model_dump_json()
+                        )
+                    ],
+                )
             )
-        )
+        except Exception as e:
+            logging.error(f"Error creating app run: {e}")
         connection_details = models.AppRunConnectionDetails(
             url=livekit_url,
             token=at.to_jwt(),
         )
-        response = messages.CreateAppRunResponse(
-            connection_details=connection_details,
-            id=room_name,
-        )
+        response = messages.CreateAppRunResponse(connection_details=connection_details)
         return aiohttp.web.Response(
             body=response.model_dump_json(), content_type="application/json"
         )
@@ -699,7 +701,7 @@ class RepositoryServer:
         at = at.with_grants(
             api.VideoGrants(
                 room_join=True,
-                room=req.app_run,
+                room=req.run_id,
                 can_publish=False,
                 can_publish_data=True,
                 can_subscribe=True,
@@ -716,7 +718,7 @@ class RepositoryServer:
             api_key=livekit_api_key,
             api_secret=livekit_api_secret,
         )
-        dispatches = await lkapi.agent_dispatch.list_dispatch(room_name=req.app_run)
+        dispatches = await lkapi.agent_dispatch.list_dispatch(room_name=req.run_id)
         if not dispatches:
             return aiohttp.web.json_response(
                 {"status": "error", "message": "No dispatch found for the room"},

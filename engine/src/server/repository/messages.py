@@ -31,12 +31,13 @@ class SaveAppRequest(BaseModel):
 
 class CreateAppRunRequest(BaseModel):
     type: Literal["create_app_run"] = "create_app_run"
+    run_id: str
     graph: models.GraphEditorRepresentation
 
 
 class DebugConnectionRequest(BaseModel):
     type: Literal["create_debug_connection"] = "create_debug_connection"
-    app_run: str
+    run_id: str
 
 
 class ImportAppRequest(BaseModel):
@@ -87,7 +88,6 @@ class ListSubgraphsResponse(BaseModel):
 class CreateAppRunResponse(BaseModel):
     type: Literal["create_app_run"] = "create_app_run"
     connection_details: AppRunConnectionDetails
-    id: str
 
 
 class DebugConnectionResponse(BaseModel):

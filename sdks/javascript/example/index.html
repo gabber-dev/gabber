@@ -75,7 +75,7 @@
 
         async function connect() {
             let res = await fetch("http://localhost:8001/app/run", {
-                method: "POST", body: JSON.stringify(GRAPH),
+                method: "POST", body: JSON.stringify({ graph: GRAPH, run_id: "test-run" }),
                 headers: {
                     "Content-Type": "application/json"
                 }
