@@ -53,6 +53,7 @@ ALL_PAD_TYPES = [
     pad.types.Enum(),
 ]
 
+
 class Filter(Node):
     @classmethod
     def get_metadata(cls) -> NodeMetadata:
@@ -77,7 +78,6 @@ class Filter(Node):
                 default_type_constraints=ALL_PAD_TYPES,
             )
 
-
         operator = cast(pad.PropertySinkPad, self.get_pad("operator"))
         if not operator:
             operator = pad.PropertySinkPad(
@@ -97,7 +97,7 @@ class Filter(Node):
                 default_type_constraints=ALL_PAD_TYPES,
                 value="",
             )
-            
+
         sink.link_types_to_pad(source)
         sink.link_types_to_pad(compare_value)
         self._resolve_operators(sink, operator)
@@ -156,10 +156,17 @@ class Filter(Node):
 
         async def process_sink():
             async for item in sink:
+                logging.info(f"NEIL Filter received item: {item.value} --- IGNORE ---")
                 tcs_a = sink.get_type_constraints()
                 tcs_b = compare_pad.get_type_constraints()
                 if tcs_a and len(tcs_a) == 1 and tcs_b and len(tcs_b) == 1:
-                    if self.compare_values(item.value, tcs_a[0], compare_pad.get_value(), tcs_b[0], operator_pad.get_value()):
+                    if self.compare_values(
+                        item.value,
+                        tcs_a[0],
+                        compare_pad.get_value(),
+                        tcs_b[0],
+                        operator_pad.get_value(),
+                    ):
                         source.push_item(item.value, item.ctx)
                 item.ctx.complete()
 
@@ -174,7 +181,12 @@ class Filter(Node):
         )
 
     def compare_values(
-        self, a: Any, tc_a: pad.types.BasePadType, b: Any, tc_b: pad.types.BasePadType, op: str
+        self,
+        a: Any,
+        tc_a: pad.types.BasePadType,
+        b: Any,
+        tc_b: pad.types.BasePadType,
+        op: str,
     ) -> bool:
         if not isinstance(tc_a, type(tc_b)):
             logging.error(f"Type mismatch between tc_a and tc_b: {tc_a} vs {tc_b}")

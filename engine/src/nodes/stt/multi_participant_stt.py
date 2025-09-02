@@ -223,8 +223,9 @@ class MultiParticipantSTT(node.Node):
                 raise ValueError(f"Unsupported STT service: {service.get_value()}")
 
         def sm_callback(old_state: State, new_state: State) -> None:
-            previous_state.set_value(old_state.name)
-            current_state.set_value(new_state.name)
+            ctx = pad.RequestContext(parent=None)
+            previous_state.push_item(old_state.name, ctx)
+            current_state.push_item(new_state.name, ctx)
 
         talking_state = TalkingState()
         state_machine = StateMachine(
@@ -332,7 +333,6 @@ class StateMachine:
             old_state = self._state
             self._state = new_state
             self._cb(old_state, new_state)
-            logging.info("State changed from %s to %s", old_state, new_state)
 
     async def _cooldown_timer(self) -> None:
         cooldown_time_ms = self._cooldown_pad.get_value() or 4000
