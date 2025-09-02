@@ -208,41 +208,39 @@ export class Engine  {
   }
 
   private onData(data: Uint8Array, _: RemoteParticipant | undefined, __: DataPacket_Kind | undefined, topic: string | undefined): void {
-    console.log("NEIL topic", topic)
-        if (topic !== "runtime_api") {
-            const msg = JSON.parse(new TextDecoder().decode(data));
-            return; // Ignore data not on this pad's channel
-        }
+    if (topic !== "runtime_api") {
         const msg = JSON.parse(new TextDecoder().decode(data));
-        console.log("NEIL on data", msg)
-        if (msg.type === "ack") {
-            console.log("Received ACK for request:", msg.req_id);
-        } else if (msg.type === "complete") {
-            console.log("Received COMPLETE for request:", msg.req_id);
-            if(msg.error) {
-                console.error("Error in request:", msg.error);
-                const pendingRequest = this.pendingRequests.get(msg.req_id);
-                if (pendingRequest) {
-                    pendingRequest.rej(msg.error);
-                }
-            } else {
-                const pendingRequest = this.pendingRequests.get(msg.req_id);
-                if (pendingRequest) {
-                    pendingRequest.res(msg.payload);
-                }
+        return; // Ignore data not on this pad's channel
+    }
+    const msg = JSON.parse(new TextDecoder().decode(data));
+    if (msg.type === "ack") {
+        console.log("Received ACK for request:", msg.req_id);
+    } else if (msg.type === "complete") {
+        console.log("Received COMPLETE for request:", msg.req_id);
+        if(msg.error) {
+            console.error("Error in request:", msg.error);
+            const pendingRequest = this.pendingRequests.get(msg.req_id);
+            if (pendingRequest) {
+                pendingRequest.rej(msg.error);
             }
-            this.pendingRequests.delete(msg.req_id);
-        } else if (msg.type === "event") {
-            const castedMsg: RuntimeEvent = msg
-            const payload = castedMsg.payload;
-            const nodeId = payload.node_id;
-            const padId = payload.pad_id;
-            const handlers = this.padValueHandlers.get(`${nodeId}:${padId}`);
-            for(const handler of handlers || []) {
-              handler(payload.value);
+        } else {
+            const pendingRequest = this.pendingRequests.get(msg.req_id);
+            if (pendingRequest) {
+                pendingRequest.res(msg.payload);
             }
+        }
+        this.pendingRequests.delete(msg.req_id);
+    } else if (msg.type === "event") {
+        const castedMsg: RuntimeEvent = msg
+        const payload = castedMsg.payload;
+        const nodeId = payload.node_id;
+        const padId = payload.pad_id;
+        const handlers = this.padValueHandlers.get(`${nodeId}:${padId}`);
+        for(const handler of handlers || []) {
+          handler(payload.value);
         }
     }
+  }
 }
 
 export type GetLocalTrackOptions_Webcam = {
