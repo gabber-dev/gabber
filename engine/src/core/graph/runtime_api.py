@@ -17,7 +17,7 @@ class RuntimeApi:
     def __init__(self, *, room: rtc.Room, nodes: list[node.Node]):
         self.room = room
         self.nodes = nodes
-        self._publish_locks: dict[str, PublishLock]
+        self._publish_locks: dict[str, PublishLock] = {}
 
     def _trigger_value_from_pad_value(self, value: Any):
         v = serialize.serialize_pad_value(value)
@@ -95,6 +95,9 @@ class RuntimeApi:
                     )
                     return
 
+                if existing_lock and not existing_lock.is_locked():
+                    self._publish_locks.pop(payload.publish_node)
+
                 if existing_lock and (
                     existing_lock.is_locked()
                     or existing_lock._participant_id != packet.participant.identity
@@ -105,6 +108,7 @@ class RuntimeApi:
                     dc_queue.put_nowait(
                         QueueItem(payload=complete_resp, participant=packet.participant)
                     )
+                    return
 
                 pub_node = [n for n in self.nodes if n.id == payload.publish_node]
                 if len(pub_node) != 1 or not isinstance(pub_node[0], Publish):
@@ -124,9 +128,10 @@ class RuntimeApi:
                 complete_resp.payload = RuntimeResponsePayload_LockPublisher(
                     success=True
                 )
-                return
-
-            if request.payload.type == "push_value":
+                dc_queue.put_nowait(
+                    QueueItem(payload=complete_resp, participant=packet.participant)
+                )
+            elif request.payload.type == "push_value":
                 payload = request.payload
                 node_id = payload.node_id
                 pad_id = payload.pad_id

@@ -101,9 +101,10 @@ class Publish(node.Node):
             while True:
                 if not self._allowed_participant:
                     await asyncio.sleep(0.5)
+                    continue
 
                 video_stream = await video_stream_provider(
-                    self.room, f"{self.id}:video"
+                    self.room, f"{self.id}:video", self._allowed_participant
                 )
 
                 async for frame in video_stream:
@@ -128,9 +129,10 @@ class Publish(node.Node):
             while True:
                 if not self._allowed_participant:
                     await asyncio.sleep(0.5)
+                    continue
 
                 audio_stream = await audio_stream_provider(
-                    self.room, f"{self.id}:audio"
+                    self.room, f"{self.id}:audio", self._allowed_participant
                 )
                 async for frame in audio_stream:
                     last_audio_frame_time = time.time()

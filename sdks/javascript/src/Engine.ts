@@ -20,7 +20,7 @@ import { DataPacket_Kind, RemoteParticipant, Room } from 'livekit-client';
 import { PropertyPad, SinkPad, SourcePad } from './pad/Pad';
 import { LocalAudioTrack, LocalVideoTrack, LocalTrack } from './LocalTrack';
 import { Subscription } from './Subscription';
-import { PadValue, Payload, RuntimeEvent, RuntimeRequest, RuntimeResponsePayload } from './generated/runtime';
+import { PadValue, Payload, RuntimeEvent, RuntimeRequest, RuntimeRequestPayload_LockPublisher, RuntimeResponsePayload } from './generated/runtime';
 import { Publication } from './Publication';
 
 export interface EngineHandler {
@@ -108,6 +108,15 @@ export class Engine  {
   }
 
   public async publishToNode(params: PublishParams): Promise<Publication> {
+    const lockPayload: RuntimeRequestPayload_LockPublisher = {
+      type: "lock_publisher",
+      publish_node: params.publishNodeId
+    }
+    const pubLock = await this.runtimeRequest({payload: lockPayload})
+    if(!pubLock.success) {
+      throw new Error("Publisher node already locked");
+    }
+
     if(params.localTrack.type === 'audio') {
       const track = params.localTrack as LocalAudioTrack;
       const mediaStreamTrack = track.mediaStream.getAudioTracks()[0];
@@ -115,6 +124,7 @@ export class Engine  {
         throw new Error('No audio track available to publish.');
       }
       const trackName = params.publishNodeId + ":audio";
+
       await this.livekitRoom.localParticipant.publishTrack(mediaStreamTrack, {name: trackName});
       return new Publication({ nodeId: params.publishNodeId, livekitRoom: this.livekitRoom, trackName });
     } else if (params.localTrack.type === 'video') {

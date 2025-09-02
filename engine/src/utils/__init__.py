@@ -120,13 +120,15 @@ class EmojiRemover:
 
 
 # TODO: validate lock in runtime_api
-async def audio_stream_provider(room: rtc.Room, track_name: str):
+async def audio_stream_provider(room: rtc.Room, track_name: str, participant: str):
     while True:
         await asyncio.sleep(0.2)
-        for participant in room.remote_participants.values():
-            if participant.kind == rtc.ParticipantKind.PARTICIPANT_KIND_AGENT:
+        for p in room.remote_participants.values():
+            if p.kind == rtc.ParticipantKind.PARTICIPANT_KIND_AGENT:
                 continue
-            for track_pub in participant.track_publications.values():
+            if p.identity != participant:
+                continue
+            for track_pub in p.track_publications.values():
                 if track_pub.track is None:
                     continue
 
@@ -149,13 +151,15 @@ async def audio_stream_provider(room: rtc.Room, track_name: str):
 
 
 # TODO: validate lock in runtime_api
-async def video_stream_provider(room: rtc.Room, track_name: str):
+async def video_stream_provider(room: rtc.Room, track_name: str, participant: str):
     while True:
         await asyncio.sleep(0.2)
-        for participant in room.remote_participants.values():
-            if participant.kind == rtc.ParticipantKind.PARTICIPANT_KIND_AGENT:
+        for p in room.remote_participants.values():
+            if p.kind == rtc.ParticipantKind.PARTICIPANT_KIND_AGENT:
                 continue
-            for track_pub in participant.track_publications.values():
+            if p.identity != participant:
+                continue
+            for track_pub in p.track_publications.values():
                 if track_pub.track is None:
                     continue
 
