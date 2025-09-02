@@ -4,7 +4,7 @@
 import asyncio
 from typing import Annotated, Any, Literal
 from pydantic import BaseModel, Field
-from livekit import rtc, api
+from livekit import rtc
 from dataclasses import dataclass
 from core import node, pad, runtime_types
 import logging
@@ -14,25 +14,22 @@ from nodes.core.media.publish import Publish
 
 
 class RuntimeApi:
-    def __init__(
-        self, *, room: rtc.Room, room_api: api.LiveKitAPI, nodes: list[node.Node]
-    ):
+    def __init__(self, *, room: rtc.Room, nodes: list[node.Node]):
         self.room = room
-        self.room_api = room_api
         self.nodes = nodes
         self._publish_locks: dict[str, PublishLock]
 
     def _trigger_value_from_pad_value(self, value: Any):
         v = serialize.serialize_pad_value(value)
         ev_value: PadValue
-        if isinstance(v, int):
+        if isinstance(v, bool):
+            ev_value = PadValue_Boolean(value=v)
+        elif isinstance(v, int):
             ev_value = PadValue_Integer(value=v)
         elif isinstance(v, float):
             ev_value = PadValue_Float(value=v)
         elif isinstance(v, str):
             ev_value = PadValue_String(value=v)
-        elif isinstance(v, bool):
-            ev_value = PadValue_Boolean(value=v)
         elif isinstance(value, runtime_types.AudioClip):
             trans = value.transcription if value.transcription else ""
             ev_value = PadValue_AudioClip(transcript=trans, duration=value.duration)
@@ -79,6 +76,7 @@ class RuntimeApi:
                 return
 
             request = RuntimeRequest.model_validate_json(packet.data)
+            logging.info("NEIL on_data: %s", request)
             req_id = request.req_id
             ack_resp = RuntimeRequestAck(req_id=req_id)
             complete_resp = RuntimeResponse(req_id=req_id)
@@ -193,13 +191,14 @@ class RuntimeApi:
                     return
 
                 value = pad_obj.get_value()
+                value_obj = self._trigger_value_from_pad_value(value)
 
                 # Don't get node references
                 if isinstance(value, Node):
                     return
 
                 complete_resp.payload = RuntimeResponsePayload_GetValue(
-                    type="get_value", value=value
+                    type="get_value", value=value_obj
                 )
                 dc_queue.put_nowait(
                     QueueItem(payload=complete_resp, participant=packet.participant)

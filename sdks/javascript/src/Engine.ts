@@ -41,6 +41,7 @@ export class Engine  {
     this.handler = params.handler;
     this.connect = this.connect.bind(this);
     this.disconnect = this.disconnect.bind(this);
+    this.onData = this.onData.bind(this);
     this.getLocalTrack = this.getLocalTrack.bind(this);
     this.publishToNode = this.publishToNode.bind(this);
     this.subscribeToNode = this.subscribeToNode.bind(this);
@@ -133,17 +134,9 @@ export class Engine  {
     return new Subscription({nodeId: params.outputOrPublishNodeId, livekitRoom: this.livekitRoom});
   }
 
-  public async runtimeRequest(params: {payload: Payload, nodeId: string | null, padId: string | null}): Promise<RuntimeResponsePayload> {
-    const { payload, nodeId, padId } = params;
-    let topic = "runtime:"
-    if (nodeId) {
-      topic += `${nodeId}`;
-    }
-
-    if(padId) {
-      topic += `:${padId}`;
-    }
-
+  public async runtimeRequest(params: {payload: Payload}): Promise<RuntimeResponsePayload> {
+    const { payload } = params;
+    let topic = "runtime_api"
     const requestId = (this.runtimeRequestIdCounter++).toString();
     const req: RuntimeRequest = {
       req_id: requestId,
@@ -205,11 +198,13 @@ export class Engine  {
   }
 
   private onData(data: Uint8Array, _: RemoteParticipant | undefined, __: DataPacket_Kind | undefined, topic: string | undefined): void {
+    console.log("NEIL topic", topic)
         if (topic !== "runtime_api") {
             const msg = JSON.parse(new TextDecoder().decode(data));
             return; // Ignore data not on this pad's channel
         }
         const msg = JSON.parse(new TextDecoder().decode(data));
+        console.log("NEIL on data", msg)
         if (msg.type === "ack") {
             console.log("Received ACK for request:", msg.req_id);
         } else if (msg.type === "complete") {

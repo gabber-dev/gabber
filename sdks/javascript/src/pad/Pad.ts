@@ -32,7 +32,6 @@ export class BasePad<DataType extends PadValue> {
     private _nodeId: string;
     private _padId: string;
     protected livekitRoom: Room;
-    private requestIdCounter: number = 0;
     protected engine: Engine;
 
     constructor({ nodeId, padId, livekitRoom, engine }: PadParams) {
@@ -79,9 +78,7 @@ export class BasePad<DataType extends PadValue> {
                 type: "get_value",
                 node_id: this.nodeId,
                 pad_id: this.padId,
-            },
-            nodeId: this.nodeId,
-            padId: this.padId
+            }
         });
         if(resp?.type !== "get_value") {
             throw new Error(`Unexpected response type: ${resp?.type}`);
@@ -108,9 +105,7 @@ export class SourcePad<DataType extends PadValue> extends BasePad<DataType> {
             value: (value as any)
         };
         await this.engine.runtimeRequest({
-            payload,
-            nodeId: this.nodeId,
-            padId: this.padId
+            payload
         });
     }
 }
