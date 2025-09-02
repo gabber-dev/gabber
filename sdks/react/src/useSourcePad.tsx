@@ -16,15 +16,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { PadTriggeredValue, SourcePad } from "@gabber/client";
+import { PadValue, SourcePad } from "@gabber/client";
 import { useEngineInternal } from "./useEngine";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-type UseSourcePadType<DataType extends PadTriggeredValue> = {
+type UseSourcePadType<DataType extends PadValue> = {
     pushValue: (v: DataType) => Promise<void>;
 }
 
-export function useSourcePad<DataType extends PadTriggeredValue>(nodeId: string, padId: string): UseSourcePadType<DataType> {
+export function useSourcePad<DataType extends PadValue>(nodeId: string, padId: string): UseSourcePadType<DataType> {
     const { engineRef } = useEngineInternal();
     const padRef = useRef<SourcePad<DataType> | undefined>(undefined);
     if (!padRef.current) {

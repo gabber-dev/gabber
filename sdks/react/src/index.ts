@@ -21,4 +21,4 @@ export { usePropertyPad } from './usePropertyPad';
 export { useSourcePad } from './useSourcePad';
 export { usePad } from './usePad';
 
-export type { ConnectionDetails, ConnectionState, LocalAudioTrack, LocalTrack, LocalVideoTrack, GetLocalTrackOptions, Publication, RemoteAudioTrack, RemoteVideoTrack, RemoteTrack } from '@gabber/client'
+export type { ConnectionDetails, ConnectionState, LocalAudioTrack, LocalTrack, LocalVideoTrack, GetLocalTrackOptions, Publication, RemoteAudioTrack, RemoteVideoTrack, RemoteTrack, PadValue, PadValue_AudioClip, PadValue_Boolean, PadValue_Float, PadValue_Integer, PadValue_String, PadValue_VideoClip } from '@gabber/client'
