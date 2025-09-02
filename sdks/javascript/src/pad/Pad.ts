@@ -17,7 +17,7 @@
  */
 
 import { Room } from "livekit-client";
-import { PadValue, RuntimeRequest, RuntimeRequestPayload_PushValue } from "../generated/runtime"
+import { PadValue, RuntimeRequestPayload_PushValue } from "../generated/runtime"
 import { Engine } from "../Engine";
 
 type PadParams = {
@@ -41,7 +41,6 @@ export class BasePad<DataType extends PadValue> {
         this._nodeId = nodeId;
         this._padId = padId;
         this.livekitRoom = livekitRoom;
-        this.get_request_id = this.get_request_id.bind(this);
         this.destroy = this.destroy.bind(this);
     }
 
@@ -74,11 +73,7 @@ export class BasePad<DataType extends PadValue> {
         this._padId = value;
     }
 
-    protected get_request_id(): string {
-        return this.nodeId + "_" + this.padId + "_" + this.requestIdCounter++;
-    }
-
-    protected async _getValue(): Promise<DataType> {
+    protected async _getValue(): Promise<PadValue> {
         const resp = await this.engine.runtimeRequest({
             payload: {
                 type: "get_value",
@@ -108,22 +103,15 @@ export class SourcePad<DataType extends PadValue> extends BasePad<DataType> {
         const payload: RuntimeRequestPayload_PushValue = {
             type: "push_value",
             node_id: this.nodeId,
+            pad_id: this.padId,
             source_pad_id: this.padId,
             value: (value as any)
         };
-        const req_id = this.get_request_id();
-        const request: RuntimeRequest = {
-            type: "request",
-            req_id: req_id,
-            payload: payload
-        };
-        const requestJson = JSON.stringify(request);
-        const requestBytes = new TextEncoder().encode(requestJson);
-        const prom = new Promise<void>(async (res, rej) => {
-            this.pendingRequests.set(req_id, {res, rej});
-            await this.livekitRoom.localParticipant.publishData(requestBytes, {topic: this.channelTopic});
+        await this.engine.runtimeRequest({
+            payload,
+            nodeId: this.nodeId,
+            padId: this.padId
         });
-        return prom;
     }
 }
 
@@ -138,7 +126,7 @@ export class PropertyPad<DataType extends PadValue> extends BasePad<DataType> {
         super(params);
     }
 
-    public async getValue(): Promise<DataType> {
+    public async getValue(): Promise<PadValue> {
         return this._getValue();
     }
 }

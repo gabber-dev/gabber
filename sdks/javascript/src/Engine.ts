@@ -20,7 +20,7 @@ import { DataPacket_Kind, RemoteParticipant, Room } from 'livekit-client';
 import { PropertyPad, SinkPad, SourcePad } from './pad/Pad';
 import { LocalAudioTrack, LocalVideoTrack, LocalTrack } from './LocalTrack';
 import { Subscription } from './Subscription';
-import { Value1 as PadTriggeredValue, Payload, Payload2, RuntimeEvent, RuntimeRequest, RuntimeResponse, RuntimeResponsePayload_GetValue } from './generated/runtime';
+import { Value1 as PadTriggeredValue, Payload, RuntimeEvent, RuntimeRequest, RuntimeResponsePayload } from './generated/runtime';
 import { Publication } from './Publication';
 
 export interface EngineHandler {
@@ -133,7 +133,7 @@ export class Engine  {
     return new Subscription({nodeId: params.outputOrPublishNodeId, livekitRoom: this.livekitRoom});
   }
 
-  public async runtimeRequest(params: {payload: Payload, nodeId: string | null, padId: string | null}): Promise<Payload2> {
+  public async runtimeRequest(params: {payload: Payload, nodeId: string | null, padId: string | null}): Promise<RuntimeResponsePayload> {
     const { payload, nodeId, padId } = params;
     let topic = "runtime:"
     if (nodeId) {
@@ -149,7 +149,7 @@ export class Engine  {
       req_id: requestId,
       payload,
     }
-    const prom = new Promise<Payload2>((res, rej) => {
+    const prom = new Promise<RuntimeResponsePayload>((res, rej) => {
       this.pendingRequests.set(requestId, { res, rej });
       this.livekitRoom.localParticipant.publishData(new TextEncoder().encode(JSON.stringify(req)), { topic });
     });

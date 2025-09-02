@@ -22,6 +22,13 @@ export type NodeId1 = string;
 export type PadId1 = string;
 export type Type3 = "lock_publisher";
 export type PublishNode = string;
+/**
+ * Request to push data to a pad
+ */
+export type RuntimeRequestPayload =
+  | RuntimeRequestPayload_PushValue
+  | RuntimeRequestPayload_GetValue
+  | RuntimeRequestPayload_LockPublisher;
 export type Type4 = "complete";
 export type ReqId1 = string;
 export type Error = string | null;
@@ -57,6 +64,13 @@ export type Type13 = "video_clip";
 export type Duration1 = number;
 export type Type14 = "lock_publisher";
 export type Success = boolean;
+/**
+ * Payload for the runtime request complete
+ */
+export type RuntimeResponsePayload =
+  | RuntimeResponsePayload_PushValue
+  | RuntimeResponsePayload_GetValue
+  | RuntimeResponsePayload_LockPublisher;
 export type Type15 = "event";
 /**
  * Payload for the runtime event
@@ -77,6 +91,10 @@ export type Value6 =
 export type NodeId2 = string;
 export type PadId2 = string;
 /**
+ * Payload for the runtime event
+ */
+export type RuntimeEventPayload = RuntimeEventPayload_Value;
+/**
  * Type of the pad triggered value
  */
 export type PadValue =
@@ -90,8 +108,11 @@ export type PadValue =
 
 export interface DummyType {
   req: RuntimeRequest;
+  runtime_request_payload: RuntimeRequestPayload;
   resp: RuntimeResponse;
+  runtime_response_payload: RuntimeResponsePayload;
   ev: RuntimeEvent;
+  runtime_event_payload: RuntimeEventPayload;
   pad_value: PadValue;
   [k: string]: unknown;
 }

@@ -420,6 +420,9 @@ class PublishLock:
 # For easier generation
 class DummyType(BaseModel):
     req: RuntimeRequest
+    runtime_request_payload: RuntimeRequestPayload
     resp: RuntimeResponse
+    runtime_response_payload: RuntimeResponsePayload
     ev: RuntimeEvent
+    runtime_event_payload: RuntimeEventPayload
     pad_value: PadValue
