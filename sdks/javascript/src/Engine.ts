@@ -20,7 +20,7 @@ import { DataPacket_Kind, RemoteParticipant, Room } from 'livekit-client';
 import { PropertyPad, SinkPad, SourcePad } from './pad/Pad';
 import { LocalAudioTrack, LocalVideoTrack, LocalTrack } from './LocalTrack';
 import { Subscription } from './Subscription';
-import { Value1 as PadTriggeredValue, Payload, RuntimeRequest, RuntimeResponse } from './generated/runtime';
+import { Value1 as PadTriggeredValue, Payload, Payload2, RuntimeEvent, RuntimeRequest, RuntimeResponse, RuntimeResponsePayload_GetValue } from './generated/runtime';
 import { Publication } from './Publication';
 
 export interface EngineHandler {
@@ -33,6 +33,7 @@ export class Engine  {
   private lastEmittedConnectionState: ConnectionState = "disconnected";
   private runtimeRequestIdCounter: number = 1;
   private pendingRequests: Map<string, {res: (response: any) => void, rej: (error: string) => void}> = new Map();
+  private padValueHandlers: Map<string, Array<(data: PadTriggeredValue) => void>> = new Map();
 
   constructor(params: {handler?: EngineHandler}) {
     console.debug("Creating new Engine instance");
@@ -132,7 +133,7 @@ export class Engine  {
     return new Subscription({nodeId: params.outputOrPublishNodeId, livekitRoom: this.livekitRoom});
   }
 
-  public async runtimeRequest(params: {payload: Payload, nodeId: string | null, padId: string | null}): Promise<RuntimeResponse> {
+  public async runtimeRequest(params: {payload: Payload, nodeId: string | null, padId: string | null}): Promise<Payload2> {
     const { payload, nodeId, padId } = params;
     let topic = "runtime:"
     if (nodeId) {
@@ -148,6 +149,11 @@ export class Engine  {
       req_id: requestId,
       payload,
     }
+    const prom = new Promise<Payload2>((res, rej) => {
+      this.pendingRequests.set(requestId, { res, rej });
+      this.livekitRoom.localParticipant.publishData(new TextEncoder().encode(JSON.stringify(req)), { topic });
+    });
+    return prom;
   }
 
   public getSourcePad<DataType extends PadTriggeredValue>(nodeId: string, padId: string): SourcePad<DataType> {
@@ -182,8 +188,24 @@ export class Engine  {
     this.livekitRoom.on('dataReceived', this.onData);
   }
 
+  _addPadValueHandler(nodeId: string, padId: string, handler: (data: PadTriggeredValue) => void): void {
+    const key = `${nodeId}:${padId}`;
+    if (!this.padValueHandlers.has(key)) {
+      this.padValueHandlers.set(key, []);
+    }
+    this.padValueHandlers.get(key)!.push(handler);
+  }
+
+  _removePadValueHandler(nodeId: string, padId: string, handler: (data: PadTriggeredValue) => void): void {
+    const key = `${nodeId}:${padId}`;
+    const handlers = this.padValueHandlers.get(key);
+    if (handlers) {
+      this.padValueHandlers.set(key, handlers.filter(h => h !== handler));
+    }
+  }
+
   private onData(data: Uint8Array, _: RemoteParticipant | undefined, __: DataPacket_Kind | undefined, topic: string | undefined): void {
-        if (topic !== this.channelTopic) {
+        if (topic !== "runtime_api") {
             const msg = JSON.parse(new TextDecoder().decode(data));
             return; // Ignore data not on this pad's channel
         }
@@ -208,11 +230,11 @@ export class Engine  {
         } else if (msg.type === "event") {
             const castedMsg: RuntimeEvent = msg
             const payload = castedMsg.payload;
-            if(payload.type === "value") {
-                for (const handler of this.handlers) {
-                    const value = payload.value as DataType;
-                    handler(value);
-                }
+            const nodeId = payload.node_id;
+            const padId = payload.pad_id;
+            const handlers = this.padValueHandlers.get(`${nodeId}:${padId}`);
+            for(const handler of handlers || []) {
+              handler(payload.value);
             }
         }
     }

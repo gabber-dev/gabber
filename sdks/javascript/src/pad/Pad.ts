@@ -42,9 +42,7 @@ export class BasePad<DataType extends PadTriggeredValue> {
         this._padId = padId;
         this.livekitRoom = livekitRoom;
         this.get_request_id = this.get_request_id.bind(this);
-        this.onData = this.onData.bind(this);
         this.destroy = this.destroy.bind(this);
-        this.livekitRoom.on('dataReceived', this.onData);
     }
 
     public on(event: "value", handler: (data: DataType) => void): void {
@@ -57,7 +55,6 @@ export class BasePad<DataType extends PadTriggeredValue> {
 
     public destroy(): void {
         console.debug("Destroying pad", this.nodeId, this.padId);
-        this.livekitRoom.off('dataReceived', this.onData);
         this.handlers = [];
     }
 
@@ -81,60 +78,23 @@ export class BasePad<DataType extends PadTriggeredValue> {
         return this.nodeId + "_" + this.padId + "_" + this.requestIdCounter++;
     }
 
-    private onData(data: Uint8Array, _: RemoteParticipant | undefined, __: DataPacket_Kind | undefined, topic: string | undefined): void {
-        if (topic !== this.channelTopic) {
-            const msg = JSON.parse(new TextDecoder().decode(data));
-            return; // Ignore data not on this pad's channel
-        }
-        const msg = JSON.parse(new TextDecoder().decode(data));
-        if (msg.type === "ack") {
-            console.log("Received ACK for request:", msg.req_id);
-        } else if (msg.type === "complete") {
-            console.log("Received COMPLETE for request:", msg.req_id);
-            if(msg.error) {
-                console.error("Error in request:", msg.error);
-                const pendingRequest = this.pendingRequests.get(msg.req_id);
-                if (pendingRequest) {
-                    pendingRequest.rej(msg.error);
-                }
-            } else {
-                const pendingRequest = this.pendingRequests.get(msg.req_id);
-                if (pendingRequest) {
-                    pendingRequest.res(msg.payload);
-                }
-            }
-            this.pendingRequests.delete(msg.req_id);
-        } else if (msg.type === "event") {
-            const castedMsg: RuntimeEvent = msg
-            const payload = castedMsg.payload;
-            if(payload.type === "value") {
-                for (const handler of this.handlers) {
-                    const value = payload.value as DataType;
-                    handler(value);
-                }
-            }
-        }
-    }
-
     protected async _getValue(): Promise<DataType> {
-        const payload: RuntimeRequestPayload_GetValue = {
-            type: "get_value",
-            node_id: this.nodeId,
-            property_pad_id: this.padId,
-        };
-        const req_id = this.get_request_id();
-        const request: RuntimeRequest = {
-            type: "request",
-            req_id: req_id,
-            payload: payload
-        };
-        const requestJson = JSON.stringify(request);
-        const requestBytes = new TextEncoder().encode(requestJson);
-        const prom = new Promise<DataType>(async (res, rej) => {
-            this.pendingRequests.set(req_id, {res, rej});
-            await this.livekitRoom.localParticipant.publishData(requestBytes, {topic: this.channelTopic});
+        const resp = await this.engine.runtimeRequest({
+            payload: {
+                type: "get_value",
+                node_id: this.nodeId,
+                property_pad_id: this.padId,
+            },
+            nodeId: this.nodeId,
+            padId: this.padId
         });
-        return prom;
+        if(resp?.type !== "get_value") {
+            throw new Error(`Unexpected response type: ${resp?.type}`);
+        }
+        if(resp.value === undefined) {
+            throw new Error("No value in response");
+        }
+        return resp.value;
     }
 }
 
