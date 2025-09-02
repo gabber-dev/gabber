@@ -20,7 +20,7 @@ import { DataPacket_Kind, RemoteParticipant, Room } from 'livekit-client';
 import { PropertyPad, SinkPad, SourcePad } from './pad/Pad';
 import { LocalAudioTrack, LocalVideoTrack, LocalTrack } from './LocalTrack';
 import { Subscription } from './Subscription';
-import { Value1 as PadTriggeredValue, Payload, RuntimeEvent, RuntimeRequest, RuntimeResponsePayload } from './generated/runtime';
+import { PadValue, Payload, RuntimeEvent, RuntimeRequest, RuntimeResponsePayload } from './generated/runtime';
 import { Publication } from './Publication';
 
 export interface EngineHandler {
@@ -33,7 +33,7 @@ export class Engine  {
   private lastEmittedConnectionState: ConnectionState = "disconnected";
   private runtimeRequestIdCounter: number = 1;
   private pendingRequests: Map<string, {res: (response: any) => void, rej: (error: string) => void}> = new Map();
-  private padValueHandlers: Map<string, Array<(data: PadTriggeredValue) => void>> = new Map();
+  private padValueHandlers: Map<string, Array<(data: PadValue) => void>> = new Map();
 
   constructor(params: {handler?: EngineHandler}) {
     console.debug("Creating new Engine instance");
