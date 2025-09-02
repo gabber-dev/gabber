@@ -127,7 +127,7 @@ export class Engine  {
   }
 
   public async subscribeToNode(params: SubscribeParams): Promise<Subscription> {
-    return new Subscription({nodeId: params.outputNodeId, livekitRoom: this.livekitRoom});
+    return new Subscription({nodeId: params.outputOrPublishNodeId, livekitRoom: this.livekitRoom});
   }
 
   public getSourcePad<DataType extends PadTriggeredValue>(nodeId: string, padId: string): SourcePad<DataType> {
@@ -193,7 +193,7 @@ export type PublishParams = {
 }
 
 export type SubscribeParams = {
-  outputNodeId: string;
+  outputOrPublishNodeId: string;
 }
 
 export type ConnectionState = 'disconnected' | 'connecting' | 'waiting_for_engine' | 'connected';

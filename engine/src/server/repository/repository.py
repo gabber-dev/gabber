@@ -14,6 +14,7 @@ import aiohttp.web
 import aiohttp_cors
 from aiohttp import web
 from livekit import api
+from utils import short_uuid
 
 from core.editor.models import GraphEditorRepresentation
 
@@ -662,7 +663,7 @@ class RepositoryServer:
                 can_publish=True,
                 can_subscribe=True,
             )
-        ).with_identity("human")
+        ).with_identity(f"human-{short_uuid()}")
         lkapi = api.LiveKitAPI(
             url=internal_livekit_url,
             api_key=livekit_api_key,

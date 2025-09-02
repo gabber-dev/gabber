@@ -16,4 +16,636 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-var GRAPH = {"id":"9d9d03a0-ceb1-4a86-8adb-db8c6dac721e","name":"Test","created_at":"2025-07-29T10:41:27.850348","updated_at":"2025-07-31T21:02:06.917899","graph":{"nodes":[{"id":"button_trigger","type":"ButtonTrigger","editor_name":"ButtonTrigger","editor_position":[101.88358469430148,927.248333831101],"editor_dimensions":[256.0,127.0],"pads":[{"id":"trigger","group":"trigger","type":"StatelessSourcePad","value":null,"next_pads":[{"node":"string_9f058283","pad":"emit"}],"previous_pad":null,"allowed_types":[{"type":"trigger"}]}],"description":"Manually activate a trigger to run an action","metadata":{"primary":"core","secondary":"debug","tags":["trigger","manual"]}},{"id":"publish_webcam","type":"Publish","editor_name":"Publish","editor_position":[109.7099305195002,23.499966705841306],"editor_dimensions":[256.0,352.0],"pads":[{"id":"audio","group":"audio","type":"StatelessSourcePad","value":null,"next_pads":[{"node":"output_webcam","pad":"audio_sink"}],"previous_pad":null,"allowed_types":[{"type":"audio"}]},{"id":"video","group":"video","type":"StatelessSourcePad","value":null,"next_pads":[{"node":"output_webcam","pad":"video_sink"}],"previous_pad":null,"allowed_types":[{"type":"video"}]}],"description":"Stream audio and video into your Gabber flow","metadata":{"primary":"core","secondary":"media","tags":["input","stream"]}},{"id":"publish_screen","type":"Publish","editor_name":"Publish","editor_position":[108.47100377957915,406.3283293414585],"editor_dimensions":[256.0,352.0],"pads":[{"id":"audio","group":"audio","type":"StatelessSourcePad","value":null,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"audio"}]},{"id":"video","group":"video","type":"StatelessSourcePad","value":null,"next_pads":[{"node":"output_screen","pad":"video_sink"}],"previous_pad":null,"allowed_types":[{"type":"video"}]}],"description":"Stream audio and video into your Gabber flow","metadata":{"primary":"core","secondary":"media","tags":["input","stream"]}},{"id":"string_9f058283","type":"String","editor_name":"String","editor_position":[544.7532910309255,836.4110514847531],"editor_dimensions":[256.0,271.0],"pads":[{"id":"set","group":"set","type":"StatelessSinkPad","value":null,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"string","max_length":null,"min_length":null}]},{"id":"emit","group":"emit","type":"StatelessSinkPad","value":null,"next_pads":[],"previous_pad":{"node":"button_trigger","pad":"trigger"},"allowed_types":[{"type":"trigger"}]},{"id":"value","group":"value","type":"PropertySourcePad","value":"After","next_pads":[{"node":"string_property","pad":"set"}],"previous_pad":null,"allowed_types":[{"type":"string","max_length":null,"min_length":null}]},{"id":"changed","group":"changed","type":"StatelessSourcePad","value":null,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"string","max_length":null,"min_length":null}]}],"description":"Stores and manages string values","metadata":{"primary":"core","secondary":"primitive","tags":["storage","string"]}},{"id":"string_property","type":"String","editor_name":"String","editor_position":[970.6082093787946,833.3423670343453],"editor_dimensions":[256.0,271.0],"pads":[{"id":"set","group":"set","type":"StatelessSinkPad","value":null,"next_pads":[],"previous_pad":{"node":"string_9f058283","pad":"value"},"allowed_types":[{"type":"string","max_length":null,"min_length":null}]},{"id":"emit","group":"emit","type":"StatelessSinkPad","value":null,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"trigger"}]},{"id":"value","group":"value","type":"PropertySourcePad","value":"Before","next_pads":[],"previous_pad":null,"allowed_types":[{"type":"string","max_length":null,"min_length":null}]},{"id":"changed","group":"changed","type":"StatelessSourcePad","value":null,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"string","max_length":null,"min_length":null}]}],"description":"Stores and manages string values","metadata":{"primary":"core","secondary":"primitive","tags":["storage","string"]}},{"id":"output_webcam","type":"Output","editor_name":"Output","editor_position":[449.90754521472036,58.745804696548085],"editor_dimensions":[256.0,304.0],"pads":[{"id":"audio_sink","group":"audio_sink","type":"StatelessSinkPad","value":null,"next_pads":[],"previous_pad":{"node":"publish_webcam","pad":"audio"},"allowed_types":[{"type":"audio"}]},{"id":"video_sink","group":"video_sink","type":"StatelessSinkPad","value":null,"next_pads":[],"previous_pad":{"node":"publish_webcam","pad":"video"},"allowed_types":[{"type":"video"}]}],"description":"Outputs audio and video to the end user","metadata":{"primary":"core","secondary":"debug","tags":["output","display"]}},{"id":"output_screen","type":"Output","editor_name":"Output","editor_position":[453.134598807877,436.6290762089664],"editor_dimensions":[256.0,304.0],"pads":[{"id":"audio_sink","group":"audio_sink","type":"StatelessSinkPad","value":null,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"audio"}]},{"id":"video_sink","group":"video_sink","type":"StatelessSinkPad","value":null,"next_pads":[],"previous_pad":{"node":"publish_screen","pad":"video"},"allowed_types":[{"type":"video"}]}],"description":"Outputs audio and video to the end user","metadata":{"primary":"core","secondary":"debug","tags":["output","display"]}}]}}
+var GRAPH = {
+    "id": "9f8ff127-8962-4428-ae46-e834b46ce9c3 duplicate",
+    "name": "Test",
+    "created_at": "2025-09-01T15:52:14.809668",
+    "updated_at": "2025-09-01T16:05:42.010420",
+    "graph": {
+        "nodes": [
+            {
+                "id": "publish_webcam",
+                "type": "Publish",
+                "editor_name": "Publish",
+                "editor_position": [
+                    -360.0,
+                    -360.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    422.0
+                ],
+                "pads": [
+                    {
+                        "id": "audio",
+                        "group": "audio",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "video",
+                        "group": "video",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "video"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "video"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "output_webcam",
+                                "pad": "video"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "audio_enabled",
+                        "group": "audio_enabled",
+                        "type": "PropertySourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "boolean"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "boolean"
+                            }
+                        ],
+                        "value": false,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "video_enabled",
+                        "group": "video_enabled",
+                        "type": "PropertySourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "boolean"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "boolean"
+                            }
+                        ],
+                        "value": false,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    }
+                ],
+                "description": "Stream audio and video into your Gabber flow",
+                "metadata": {
+                    "primary": "core",
+                    "secondary": "media",
+                    "tags": [
+                        "input",
+                        "stream"
+                    ]
+                }
+            },
+            {
+                "id": "publish_screen",
+                "type": "Publish",
+                "editor_name": "Publish",
+                "editor_position": [
+                    -360.0,
+                    120.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    422.0
+                ],
+                "pads": [
+                    {
+                        "id": "audio",
+                        "group": "audio",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "video",
+                        "group": "video",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "video"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "video"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "output_screen",
+                                "pad": "video"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "audio_enabled",
+                        "group": "audio_enabled",
+                        "type": "PropertySourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "boolean"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "boolean"
+                            }
+                        ],
+                        "value": false,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "video_enabled",
+                        "group": "video_enabled",
+                        "type": "PropertySourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "boolean"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "boolean"
+                            }
+                        ],
+                        "value": false,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    }
+                ],
+                "description": "Stream audio and video into your Gabber flow",
+                "metadata": {
+                    "primary": "core",
+                    "secondary": "media",
+                    "tags": [
+                        "input",
+                        "stream"
+                    ]
+                }
+            },
+            {
+                "id": "button_trigger",
+                "type": "ButtonTrigger",
+                "editor_name": "ButtonTrigger",
+                "editor_position": [
+                    -372.0,
+                    708.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    127.0
+                ],
+                "pads": [
+                    {
+                        "id": "trigger",
+                        "group": "trigger",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "string_79eca3e1",
+                                "pad": "emit"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "pad_links": []
+                    }
+                ],
+                "description": "Manually activate a trigger to run an action",
+                "metadata": {
+                    "primary": "core",
+                    "secondary": "utility",
+                    "tags": [
+                        "trigger",
+                        "debug"
+                    ]
+                }
+            },
+            {
+                "id": "output_webcam",
+                "type": "Output",
+                "editor_name": "Output",
+                "editor_position": [
+                    132.0,
+                    -264.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    300.0
+                ],
+                "pads": [
+                    {
+                        "id": "audio",
+                        "group": "audio",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "video",
+                        "group": "video",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "video"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "video"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "publish_webcam",
+                            "pad": "video"
+                        },
+                        "pad_links": []
+                    }
+                ],
+                "description": "Outputs audio and video to the end user",
+                "metadata": {
+                    "primary": "core",
+                    "secondary": "media",
+                    "tags": [
+                        "output",
+                        "display"
+                    ]
+                }
+            },
+            {
+                "id": "output_screen",
+                "type": "Output",
+                "editor_name": "Output",
+                "editor_position": [
+                    132.0,
+                    240.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    300.0
+                ],
+                "pads": [
+                    {
+                        "id": "audio",
+                        "group": "audio",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "video",
+                        "group": "video",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "video"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "video"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "publish_screen",
+                            "pad": "video"
+                        },
+                        "pad_links": []
+                    }
+                ],
+                "description": "Outputs audio and video to the end user",
+                "metadata": {
+                    "primary": "core",
+                    "secondary": "media",
+                    "tags": [
+                        "output",
+                        "display"
+                    ]
+                }
+            },
+            {
+                "id": "string_79eca3e1",
+                "type": "String",
+                "editor_name": "String",
+                "editor_position": [
+                    24.0,
+                    660.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    223.0
+                ],
+                "pads": [
+                    {
+                        "id": "set",
+                        "group": "set",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "emit",
+                        "group": "emit",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "button_trigger",
+                            "pad": "trigger"
+                        },
+                        "pad_links": []
+                    },
+                    {
+                        "id": "value",
+                        "group": "value",
+                        "type": "PropertySourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ],
+                        "value": "Second",
+                        "next_pads": [
+                            {
+                                "node": "string_property",
+                                "pad": "set"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "changed",
+                        "group": "changed",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    }
+                ],
+                "description": "Stores and manages string values",
+                "metadata": {
+                    "primary": "core",
+                    "secondary": "primitive",
+                    "tags": [
+                        "storage",
+                        "string"
+                    ]
+                }
+            },
+            {
+                "id": "string_property",
+                "type": "String",
+                "editor_name": "String",
+                "editor_position": [
+                    456.0,
+                    648.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    223.0
+                ],
+                "pads": [
+                    {
+                        "id": "set",
+                        "group": "set",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "string_79eca3e1",
+                            "pad": "value"
+                        },
+                        "pad_links": []
+                    },
+                    {
+                        "id": "emit",
+                        "group": "emit",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "value",
+                        "group": "value",
+                        "type": "PropertySourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ],
+                        "value": "First",
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "changed",
+                        "group": "changed",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    }
+                ],
+                "description": "Stores and manages string values",
+                "metadata": {
+                    "primary": "core",
+                    "secondary": "primitive",
+                    "tags": [
+                        "storage",
+                        "string"
+                    ]
+                }
+            }
+        ]
+    }
+}

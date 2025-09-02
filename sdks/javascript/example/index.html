@@ -96,7 +96,7 @@
                 publishNodeId: "publish_webcam",
             });
             console.log("Webcam published:", webcamPublication);
-            document.getElementById("webcam-button").style.display = "none";
+            // document.getElementById("webcam-button").style.display = "none";
             document.getElementById("webcam-sub-button").style.display = "block";
             document.getElementById("unpublish-webcam").style.display = "block";
         }
@@ -144,13 +144,13 @@
         }
 
         async function subscribeWebcam() {
-            const subscription = await engine.subscribeToNode({ outputNodeId: "output_webcam" });
+            const subscription = await engine.subscribeToNode({ outputOrPublishNodeId: "output_webcam" });
             const remoteTrack = await subscription.waitForVideoTrack();
             remoteTrack.attachToElement(document.getElementById("remote_webcam"));
         }
 
         async function subscribeScreenshare() {
-            const subscription = await engine.subscribeToNode({ outputNodeId: "output_screen" });
+            const subscription = await engine.subscribeToNode({ outputOrPublishNodeId: "output_screen" });
             const remoteTrack = await subscription.waitForVideoTrack();
             remoteTrack.attachToElement(document.getElementById("remote_screenshare"));
         }

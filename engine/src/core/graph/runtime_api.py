@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
+import time
 from typing import Annotated, Any, Literal
 from pydantic import BaseModel, Field
 from livekit import rtc
@@ -16,6 +17,7 @@ class RuntimeApi:
     def __init__(self, *, room: rtc.Room, nodes: list[node.Node]):
         self.room = room
         self.nodes = nodes
+        self._publish_locks: dict[str, PublishLock]
 
     async def run(self):
         node_pad_lookup: dict[tuple[str, str], pad.Pad] = {
@@ -72,16 +74,18 @@ class RuntimeApi:
             if not packet.topic or not packet.topic.startswith("runtime:"):
                 return
 
-            split_topic = packet.topic.split(":")
-            if len(split_topic) < 3:
-                logging.error(f"Invalid topic format: {packet.topic}")
-                return
-
-            node_id = split_topic[1]
-            pad_id = split_topic[2]
             request = RuntimeRequest.model_validate_json(packet.data)
             req_id = request.req_id
             ack_resp = RuntimeRequestAck(req_id=req_id)
+            complete_resp = RuntimeResponse(req_id=req_id)
+            node_id: str | None = None
+            pad_id: str | None = None
+            split_topic = packet.topic.split(":")
+            if len(split_topic) >= 2:
+                node_id = split_topic[1]
+            if len(split_topic) >= 3:
+                pad_id = split_topic[2]
+
             dc_queue.put_nowait(
                 QueueItem(
                     payload=ack_resp,
@@ -90,8 +94,54 @@ class RuntimeApi:
                     pad_id=pad_id,
                 )
             )
-            complete_resp = RuntimeResponse(req_id=req_id)
+
+            if request.payload.type == "lock_publisher":
+                payload = request.payload
+                existing_lock = self._publish_locks.get(payload.publish_node)
+                if existing_lock and existing_lock.is_locked():
+                    complete_resp.payload = RuntimeResponsePayload_LockPublisher(
+                        success=False
+                    )
+                    dc_queue.put_nowait(
+                        QueueItem(
+                            payload=complete_resp,
+                            participant=packet.participant,
+                            node_id=node_id,
+                            pad_id=pad_id,
+                        )
+                    )
+
+                if not packet.participant:
+                    complete_resp.error = "Participant is required."
+                    dc_queue.put_nowait(
+                        QueueItem(
+                            payload=complete_resp,
+                            participant=packet.participant,
+                            node_id=node_id,
+                            pad_id=pad_id,
+                        )
+                    )
+                    return
+                self._publish_locks[payload.publish_node] = PublishLock(
+                    self.room, packet.participant.identity, payload.publish_node
+                )
+                complete_resp.payload = RuntimeResponsePayload_LockPublisher(
+                    success=True
+                )
+                return
+
             if request.payload.type == "push_value":
+                if not node_id or not pad_id:
+                    complete_resp.error = "Node ID and Pad ID are required."
+                    dc_queue.put_nowait(
+                        QueueItem(
+                            payload=complete_resp,
+                            participant=packet.participant,
+                            node_id=node_id,
+                            pad_id=pad_id,
+                        )
+                    )
+                    return
                 payload = request.payload
                 pad_obj = node_pad_lookup.get((node_id, pad_id))
                 if not pad_obj:
@@ -157,6 +207,18 @@ class RuntimeApi:
                 )
                 ctx.complete()
             elif request.payload.type == "get_value":
+                if not node_id or not pad_id:
+                    complete_resp.error = "Node ID and Pad ID are required."
+                    dc_queue.put_nowait(
+                        QueueItem(
+                            payload=complete_resp,
+                            participant=packet.participant,
+                            node_id=node_id,
+                            pad_id=pad_id,
+                        )
+                    )
+                    return
+
                 payload = request.payload
                 pad_obj = node_pad_lookup.get((node_id, pad_id))
                 if not isinstance(pad_obj, pad.PropertyPad):
@@ -193,6 +255,7 @@ class RuntimeApi:
                         pad_id=pad_id,
                     )
                 )
+
             else:
                 logging.error(f"Unknown request type: {request.payload.type}")
                 complete_resp.error = f"Unknown request type: {request.payload.type}"
@@ -303,8 +366,15 @@ class RuntimeRequestPayload_GetValue(BaseModel):
     type: Literal["get_value"] = "get_value"
 
 
+class RuntimeRequestPayload_LockPublisher(BaseModel):
+    type: Literal["lock_publisher"] = "lock_publisher"
+    publish_node: str
+
+
 RuntimeRequestPayload = Annotated[
-    RuntimeRequestPayload_PushValue | RuntimeRequestPayload_GetValue,
+    RuntimeRequestPayload_PushValue
+    | RuntimeRequestPayload_GetValue
+    | RuntimeRequestPayload_LockPublisher,
     Field(discriminator="type", description="Request to push data to a pad"),
 ]
 
@@ -329,8 +399,15 @@ class RuntimeResponsePayload_GetValue(BaseModel):
     value: Any | None = None
 
 
+class RuntimeResponsePayload_LockPublisher(BaseModel):
+    type: Literal["lock_publisher"] = "lock_publisher"
+    success: bool
+
+
 RuntimeResponsePayload = Annotated[
-    RuntimeResponsePayload_PushValue | RuntimeResponsePayload_GetValue,
+    RuntimeResponsePayload_PushValue
+    | RuntimeResponsePayload_GetValue
+    | RuntimeResponsePayload_LockPublisher,
     Field(discriminator="type", description="Payload for the runtime request complete"),
 ]
 
@@ -340,3 +417,67 @@ class RuntimeResponse(BaseModel):
     req_id: str
     error: str | None = None
     payload: RuntimeResponsePayload | None = None
+
+
+class PublishLock:
+    def __init__(self, room: rtc.Room, participant_id: str, publish_node: str):
+        self._participant_id = participant_id
+        self._publish_node = publish_node
+        self._room = room
+        self._room.on("track_published", self._on_track_published)
+        self._room.on("track_unpublished", self._on_track_unpublished)
+        self._unlock_tasks: list[asyncio.Task] = []
+        self._done = False
+        self._unlock_tasks.append(asyncio.create_task(self._unlock_after(10.0)))
+
+    def _on_track_published(
+        self, pub: rtc.RemoteTrackPublication, part: rtc.RemoteParticipant
+    ):
+        if not self._check_relevant(pub, part):
+            return
+
+        for t in self._unlock_tasks:
+            t.cancel()
+
+        self._unlock_tasks = []
+
+    def _on_track_unpublished(
+        self, pub: rtc.RemoteTrackPublication, part: rtc.RemoteParticipant
+    ):
+        if not self._check_relevant(pub, part):
+            return
+
+        t = asyncio.create_task(self._unlock_after(5.0))
+        self._unlock_tasks.append(t)
+
+    def _check_relevant(
+        self, pub: rtc.RemoteTrackPublication, part: rtc.RemoteParticipant
+    ) -> bool:
+        if self._done:
+            return False
+
+        name_split = pub.name.split(":")
+        if len(name_split) <= 1:
+            logging.warning(f"Published track with invalid name: {pub.name}")
+            return False
+
+        if name_split[0] != self._publish_node:
+            return False
+
+        if part.identity != self._participant_id:
+            return False
+
+        return True
+
+    async def is_locked(self) -> bool:
+        return not self._done
+
+    async def _unlock_after(self, delay: float):
+        if self._done:
+            return
+
+        self._room.off("track_published", self._on_track_published)
+        self._room.off("track_unpublished", self._on_track_unpublished)
+
+        await asyncio.sleep(delay)
+        self._done = True
