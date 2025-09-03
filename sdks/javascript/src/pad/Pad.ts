@@ -35,7 +35,6 @@ export class BasePad<DataType extends PadValue> {
     protected engine: Engine;
 
     constructor({ nodeId, padId, livekitRoom, engine }: PadParams) {
-        console.debug("Creating new BasePad instance for node", nodeId, "pad", padId);
         this.engine = engine;
         this._nodeId = nodeId;
         this._padId = padId;
@@ -52,7 +51,6 @@ export class BasePad<DataType extends PadValue> {
     }
 
     public destroy(): void {
-        console.debug("Destroying pad", this.nodeId, this.padId);
         this.handlers = [];
     }
 
