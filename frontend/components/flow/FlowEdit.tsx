@@ -11,6 +11,8 @@ import {
   ReactFlowProvider,
   Node,
   Edge,
+  useReactFlow,
+  FinalConnectionState,
 } from "@xyflow/react";
 
 import "@xyflow/react/dist/base.css";
@@ -28,9 +30,10 @@ import { getPrimaryDataType } from "./blocks/components/pads/utils/dataTypeColor
 import ReactModal from "react-modal";
 import { StateMachineGraphEdit } from "../state_machine/StateMachineGraphEdit";
 import { StateMachineProvider } from "../state_machine/useStateMachine";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import toast from "react-hot-toast";
 import { exportApp } from "@/lib/repository";
+import { QuickAddModal } from "./quick_add/QuickAddModal";
 
 const edgeTypes = {
   hybrid: HybridEdge,
@@ -63,6 +66,15 @@ function FlowEditInner({ editable }: Props) {
   const { connectionState } = useRun();
   const isRunning =
     connectionState === "connected" || connectionState === "connecting";
+  const { screenToFlowPosition } = useReactFlow();
+  const [quickAdd, setQuickAdd] = useState<
+    | {
+        source_node: string;
+        source_pad: string;
+        add_position: { x: number; y: number };
+      }
+    | undefined
+  >(undefined);
 
   const [isNodeLibraryOpen, setIsNodeLibraryOpen] = useState(false);
 
@@ -85,6 +97,25 @@ function FlowEditInner({ editable }: Props) {
       };
     });
   }, [reactFlowRepresentation.edges, reactFlowRepresentation.nodes]);
+
+  const onConnectEnd = useCallback(
+    (event: MouseEvent | TouchEvent, connectionState: FinalConnectionState) => {
+      if (!connectionState.isValid) {
+        const { clientX, clientY } =
+          "changedTouches" in event ? event.changedTouches[0] : event;
+        const position = screenToFlowPosition({
+          x: clientX,
+          y: clientY,
+        });
+        setQuickAdd({
+          source_node: connectionState.fromNode?.id || "",
+          source_pad: connectionState.fromHandle?.id || "",
+          add_position: position,
+        });
+      }
+    },
+    [screenToFlowPosition],
+  );
 
   return (
     <div className="relative w-full h-full flex flex-col">
@@ -137,6 +168,7 @@ function FlowEditInner({ editable }: Props) {
             }}
             onEdgesChange={onReactFlowEdgesChange}
             onConnect={onReactFlowConnect}
+            onConnectEnd={onConnectEnd}
             edgeTypes={edgeTypes}
             connectionLineComponent={CustomConnectionLine}
             fitView
@@ -176,6 +208,21 @@ function FlowEditInner({ editable }: Props) {
             <StateMachineGraphEdit />
           </div>
         </StateMachineProvider>
+      </ReactModal>
+      <ReactModal
+        isOpen={Boolean(quickAdd)}
+        onRequestClose={() => setQuickAdd(undefined)}
+        overlayClassName="fixed top-0 bottom-0 left-0 right-0 backdrop-blur-lg bg-blur flex justify-center items-center z-11"
+        shouldCloseOnOverlayClick={true}
+      >
+        <QuickAddModal
+          source_node={quickAdd?.source_node || ""}
+          source_pad={quickAdd?.source_pad || ""}
+          add_position={quickAdd?.add_position || { x: 0, y: 0 }}
+          close={() => {
+            setQuickAdd(undefined);
+          }}
+        />
       </ReactModal>
     </div>
   );

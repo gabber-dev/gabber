@@ -8,12 +8,14 @@
 import {
   ConnectPadEdit,
   DisconnectPadEdit,
+  EligibleLibraryItem,
   GraphEditorRepresentation,
   GraphLibraryItem_Node,
   GraphLibraryItem_SubGraph,
   InsertNodeEdit,
   InsertSubGraphEdit,
   NodeEditorRepresentation,
+  QueryEligibleNodeLibraryItemsRequest,
   RemoveNodeEdit,
   Request,
   Response,
@@ -40,6 +42,7 @@ import React, {
 } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import toast from "react-hot-toast";
+import { v4 } from "uuid";
 
 type ReactFlowRepresentation = {
   nodes: Node<NodeEditorRepresentation>[];
@@ -70,6 +73,10 @@ type EditorContextType = {
   connectPad: (req: ConnectPadEdit) => void;
   updatePad: (req: UpdatePadEdit) => void;
   updateNode: (req: UpdateNodeEdit) => void;
+
+  queryEligibleLibraryItems: (
+    req: QueryEligibleNodeLibraryItemsRequest,
+  ) => Promise<EligibleLibraryItem[]>;
 
   clearAllSelection: () => void;
 };
@@ -169,6 +176,7 @@ export function EditorProvider({
       sendRequest({
         type: "edit",
         edit,
+        req_id: v4(),
       });
     },
     [sendRequest],
@@ -179,6 +187,7 @@ export function EditorProvider({
       sendRequest({
         type: "edit",
         edit,
+        req_id: v4(),
       });
     },
     [sendRequest],
@@ -189,6 +198,7 @@ export function EditorProvider({
       sendRequest({
         type: "edit",
         edit,
+        req_id: v4(),
       });
     },
     [sendRequest],
@@ -199,7 +209,15 @@ export function EditorProvider({
       sendRequest({
         type: "edit",
         edit,
+        req_id: v4(),
       });
+    },
+    [sendRequest],
+  );
+
+  const queryEligibleLibraryItems = useCallback(
+    async (req: QueryEligibleNodeLibraryItemsRequest) => {
+      sendRequest(req);
     },
     [sendRequest],
   );
@@ -257,6 +275,7 @@ export function EditorProvider({
           sendRequest({
             type: "edit",
             edit: pendingEdit,
+            req_id: v4(),
           });
           pendingEdits.current.delete(key);
         }
@@ -289,6 +308,7 @@ export function EditorProvider({
       sendRequest({
         type: "edit",
         edit,
+        req_id: v4(),
       });
 
       // Update selection state if node ID is changing
@@ -337,9 +357,10 @@ export function EditorProvider({
       sendRequest({
         type: "load_from_snapshot",
         graph: localRepresentation,
+        req_id: v4(),
       });
 
-      sendRequest({ type: "get_node_library" });
+      sendRequest({ type: "get_node_library", req_id: v4() });
     }
   }, [localRepresentation, prevReadyState, readyState, sendRequest]);
 
@@ -350,7 +371,9 @@ export function EditorProvider({
       const resp = (lastJsonMessage as Response).response;
       if (resp.type === "node_library") {
         setNodeLibrary(resp.node_library || []);
-      } else if (resp.type === "full_graph") {
+      } else if (resp.type === "load_from_snapshot") {
+        setLocalRepresentation(resp.graph);
+      } else if (resp.type === "edit") {
         setLocalRepresentation(resp.graph);
       }
     } catch (error) {
@@ -386,7 +409,7 @@ export function EditorProvider({
               editor_position: [change.position?.x, change.position?.y],
               editor_dimensions: null,
             };
-            requests.push({ type: "edit", edit });
+            requests.push({ type: "edit", edit, req_id: v4() });
           }
           setReactFlowRepresentation((prev) => ({
             ...prev,
@@ -405,6 +428,7 @@ export function EditorProvider({
               type: "remove_node",
               node_id: nodeId,
             } as RemoveNodeEdit,
+            req_id: v4(),
           });
           prev.nodes = prev.nodes.filter((n) => n.id !== nodeId);
         } else if (change.type === "add") {
@@ -433,7 +457,7 @@ export function EditorProvider({
             editor_position: null,
             editor_dimensions: [newDims.width, newDims.height],
           };
-          requests.push({ type: "edit", edit });
+          requests.push({ type: "edit", edit, req_id: v4() });
           for (const node of prev?.nodes || []) {
             if (node.id === nodeId) {
               node.editor_dimensions = [newDims?.width, newDims?.height];
@@ -496,6 +520,7 @@ export function EditorProvider({
               connected_node: targetNodeId,
               connected_pad: targetPadId,
             } as DisconnectPadEdit,
+            req_id: v4(),
           });
         } else if (change.type === "add") {
         }
@@ -519,7 +544,7 @@ export function EditorProvider({
         connected_node: connection.target || "ERROR",
         connected_pad: connection.targetHandle || "ERROR",
       };
-      sendRequest({ type: "edit", edit });
+      sendRequest({ type: "edit", edit, req_id: v4() });
     },
     [sendRequest],
   );

@@ -18,6 +18,10 @@ class EditType(str, Enum):
     CONNECT_PAD = "connect_pad"
     DISCONNECT_PAD = "disconnect_pad"
     UPDATE_PAD = "update_pad"
+    CREATE_PORTAL = "create_portal"
+    ADD_PORTAL_END = "add_portal_end"
+    UPDATE_PORTAL = "update_portal"
+    UPDATE_PORTAL_END = "update_portal_end"
 
 
 class InsertNodeEdit(BaseModel):
@@ -75,6 +79,32 @@ class UpdatePadEdit(BaseModel):
     value: Any = Field(..., description="New value for the pad")
 
 
+class CreatePortalEdit(BaseModel):
+    type: Literal[EditType.CREATE_PORTAL] = EditType.CREATE_PORTAL
+    source_node: str
+    source_pad: str
+    editor_position: tuple[float, float]
+
+
+class AddPortalEndEdit(BaseModel):
+    type: Literal[EditType.ADD_PORTAL_END] = EditType.ADD_PORTAL_END
+    portal_id: str
+    editor_position: tuple[float, float]
+
+
+class UpdatePortalEdit(BaseModel):
+    type: Literal[EditType.UPDATE_PORTAL] = EditType.UPDATE_PORTAL
+    portal_id: str
+    editor_position: tuple[float, float]
+
+
+class UpdatePortalEndEdit(BaseModel):
+    type: Literal[EditType.UPDATE_PORTAL_END] = EditType.UPDATE_PORTAL_END
+    portal_id: str
+    portal_end_id: str
+    editor_position: tuple[float, float]
+
+
 Edit = Annotated[
     InsertNodeEdit
     | InsertSubGraphEdit
@@ -82,7 +112,11 @@ Edit = Annotated[
     | RemoveNodeEdit
     | ConnectPadEdit
     | DisconnectPadEdit
-    | UpdatePadEdit,
+    | UpdatePadEdit
+    | CreatePortalEdit
+    | AddPortalEndEdit
+    | UpdatePortalEdit
+    | UpdatePortalEndEdit,
     Field(
         discriminator="type", description="Type of edit to perform on the graph editor"
     ),
@@ -91,6 +125,7 @@ Edit = Annotated[
 
 class GraphEditorRepresentation(BaseModel):
     nodes: list["NodeEditorRepresentation"]
+    portals: list["Portal"] | None = []
 
 
 K = TypeVar("K", bound=Node, covariant=True)
@@ -140,7 +175,7 @@ class PadEditorRepresentation(BaseModel):
     id: str
     group: str
     type: str
-    default_allowed_types: list[types.PadType] | None  = None
+    default_allowed_types: list[types.PadType] | None = None
     allowed_types: list[types.PadType] | None = None
     value: Any | None = None
     next_pads: list[PadReference]
@@ -161,3 +196,22 @@ class NodeEditorRepresentation(BaseModel):
     pads: list[PadEditorRepresentation]
     description: str | None = None
     metadata: NodeMetadata
+
+
+class Portal(BaseModel):
+    id: str
+    name: str
+    source_node: str
+    source_pad: str
+    editor_position: tuple[float, float]
+    ends: list["PortalEnd"] = []
+
+
+class PortalEnd(BaseModel):
+    id: str
+    editor_position: tuple[float, float]
+
+
+class EligibleLibraryItem(BaseModel):
+    library_item: GraphLibraryItem
+    pads: list[PadEditorRepresentation]
