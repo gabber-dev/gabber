@@ -97,17 +97,17 @@ class RuntimeApi:
                 if existing_lock and not existing_lock.is_locked():
                     self._publish_locks.pop(payload.publish_node)
 
-                if existing_lock and (
-                    existing_lock.is_locked()
-                    or existing_lock._participant_id != packet.participant.identity
-                ):
-                    complete_resp.payload = RuntimeResponsePayload_LockPublisher(
-                        success=False
-                    )
-                    dc_queue.put_nowait(
-                        QueueItem(payload=complete_resp, participant=packet.participant)
-                    )
-                    return
+                if existing_lock and existing_lock.is_locked():
+                    if existing_lock.participant_id != packet.participant.identity:
+                        complete_resp.payload = RuntimeResponsePayload_LockPublisher(
+                            success=False
+                        )
+                        dc_queue.put_nowait(
+                            QueueItem(
+                                payload=complete_resp, participant=packet.participant
+                            )
+                        )
+                        return
 
                 pub_node = [n for n in self.nodes if n.id == payload.publish_node]
                 if len(pub_node) != 1 or not isinstance(pub_node[0], Publish):
@@ -376,7 +376,7 @@ class PublishLock:
     def __init__(
         self, room: rtc.Room, participant_id: str, publish_node: str, node: Publish
     ):
-        self._participant_id = participant_id
+        self.participant_id = participant_id
         self._publish_node = publish_node
         self._room = room
         self._node = node
@@ -401,7 +401,7 @@ class PublishLock:
 
             break
 
-        self._node.unset_allowed_participant(self._participant_id)
+        self._node.unset_allowed_participant(self.participant_id)
         self._done = True
 
     def _check_relevant(
@@ -418,7 +418,7 @@ class PublishLock:
         if name_split[0] != self._publish_node:
             return False
 
-        if part.identity != self._participant_id:
+        if part.identity != self.participant_id:
             return False
 
         return True

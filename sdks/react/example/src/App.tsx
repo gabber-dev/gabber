@@ -1,34 +1,91 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { createOrJoinApp } from "./lib"
-import { ConnectionDetails, EngineProvider, LocalAudioTrack, LocalVideoTrack, RemoteAudioTrack, RemoteVideoTrack, useEngine } from "@gabber/client-react"
+import { createOrJoinApp } from './lib';
+import {
+  EngineProvider,
+  LocalAudioTrack,
+  LocalVideoTrack,
+  RemoteAudioTrack,
+  RemoteVideoTrack,
+  useEngine,
+} from '@gabber/client-react';
+import { Subscription } from '@gabber/client';
+
+const BTN_CLASS = 'bg-blue-500 text-white px-4 py-2 rounded cursor-pointer m-2';
 
 function App() {
   return (
     <EngineProvider>
-      <button onClick={async () => {
-        await createOrJoinApp({ runId: "test-run" })
-      }}>Connect</button>
+      <ConnectButton />
+      <div className='flex gap-2'>
+        <PublishNode nodeId="publish_0" />
+        <PublishNode nodeId="publish_1" />
+      </div>
+      <div className='flex flex-col'>
+        <DebugLink runId='test-run' />
+        <TickerNode />
+      </div>
     </EngineProvider>
   );
 }
 
-function AppInner() {
-  const {publishToNode, subscribeToNode, connect, getLocalTrack} = useEngine();
+function ConnectButton() {
+  const { connect, disconnect, connectionState } = useEngine();
+
+  return (
+    <button
+      className={BTN_CLASS}
+      onClick={async () => {
+        if (connectionState === 'connected') {
+          disconnect();
+        } else {
+          const dets = await createOrJoinApp({ runId: 'test-run' });
+          connect(dets);
+        }
+      }}
+    >
+      {connectionState === 'connected' ? 'Disconnect' : 'Connect'}
+    </button>
+  );
 }
 
-function PublishNode({nodeId}: {nodeId: string}) {
-  const { publishToNode, getLocalTrack, subscribeToNode } = useEngine();
+function DebugLink({runId}: {runId: string}) {
+  const { connectionState } = useEngine();
+
+  return (
+    <div className='flex gap-2'>
+      <span className='text-gray-500'>Debug Link:</span>
+      <a
+        className='text-blue-500 underline'
+        href={`http://localhost:3000/app/${runId}/debug`}
+      >
+        {`https://gabber.dev/app/${runId}/debug`}
+      </a>
+      <span className='text-gray-500'>{`Connection State: ${connectionState}`}</span>
+    </div>
+  );
+}
+
+function TickerNode() {
+  const { connectionState } = useEngine();
+
+  return (
+    <div className='flex gap-2'>
+      <span className='text-gray-500'>Ticker Info:</span>
+      <span className='text-gray-500'>{`Connection State: ${connectionState}`}</span>
+    </div>
+  );
+}
+
+function PublishNode({ nodeId }: { nodeId: string }) {
+  const { publishToNode, getLocalTrack, subscribeToNode, connectionState } = useEngine();
   const [localVideoTrack, setLocalVideoTrack] = useState<LocalVideoTrack | null>(null);
-  const [localAudioTrack, setLocalAudioTrack] = useState<LocalAudioTrack | null>(null);
   const [remoteVideoTrack, setRemoteVideoTrack] = useState<RemoteVideoTrack | null>(null);
   const [remoteAudioTrack, setRemoteAudioTrack] = useState<RemoteAudioTrack | null>(null);
   const [videoPublication, setVideoPublication] = useState<any>(null);
   const [audioPublication, setAudioPublication] = useState<any>(null);
-  const [subscription, setSubscription] = useState<any>(null);
-  const localVideoEl = useRef<HTMLVideoElement>(null);
-  const localAudioEl = useRef<HTMLAudioElement>(null);
-  const remoteVideoEl = useRef<HTMLVideoElement>(null);
-  const remoteAudioEl = useRef<HTMLAudioElement>(null);
+  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  const videoEl = useRef<HTMLVideoElement>(null);
+  const audioEl = useRef<HTMLAudioElement>(null);
 
   const publishVideoTrack = useCallback(async () => {
     if (videoPublication) {
@@ -37,15 +94,15 @@ function PublishNode({nodeId}: {nodeId: string}) {
       setLocalVideoTrack(null);
       setVideoPublication(null);
     } else {
-      const lvt = (await getLocalTrack({ type: "webcam" })) as LocalVideoTrack;
+      const lvt = (await getLocalTrack({ type: 'webcam' })) as LocalVideoTrack;
       const pub = await publishToNode({ localTrack: lvt, publishNodeId: nodeId });
       setLocalVideoTrack(lvt);
       setVideoPublication(pub);
-      lvt.attachToElement(localVideoEl.current!);
-      if (localVideoEl.current) {
-        localVideoEl.current.muted = true;
-        localVideoEl.current.playsInline = true;
-        localVideoEl.current.autoplay = true;
+      lvt.attachToElement(videoEl.current!);
+      if (videoEl.current) {
+        videoEl.current.muted = true;
+        videoEl.current.playsInline = true;
+        videoEl.current.autoplay = true;
       }
     }
   }, [getLocalTrack, publishToNode, nodeId, videoPublication, localVideoTrack]);
@@ -53,55 +110,49 @@ function PublishNode({nodeId}: {nodeId: string}) {
   const publishAudioTrack = useCallback(async () => {
     if (audioPublication) {
       audioPublication.unpublish();
-      localAudioTrack?.detachAll();
-      setLocalAudioTrack(null);
       setAudioPublication(null);
     } else {
-      const lat = (await getLocalTrack({ type: "mic" })) as LocalAudioTrack;
+      const lat = (await getLocalTrack({ type: 'microphone' })) as LocalAudioTrack;
       const pub = await publishToNode({ localTrack: lat, publishNodeId: nodeId });
-      setLocalAudioTrack(lat);
       setAudioPublication(pub);
-      lat.attachToElement(localAudioEl.current!);
-      if (localAudioEl.current) {
-        localAudioEl.current.muted = true;
-        localAudioEl.current.autoplay = true;
-      }
     }
-  }, [getLocalTrack, publishToNode, nodeId, audioPublication, localAudioTrack]);
+  }, [getLocalTrack, publishToNode, nodeId, audioPublication]);
 
   const subscribe = useCallback(async () => {
     if (subscription) {
-      subscription.unsubscribe();
-      remoteVideoTrack?.detachAll();
+      subscription.cleanup();
+      remoteVideoTrack?.detachFromElement(videoEl.current!);
+      remoteAudioTrack?.detachFromElement(audioEl.current!);
       setRemoteVideoTrack(null);
+      setRemoteAudioTrack(null);
       setSubscription(null);
     } else {
       const sub = await subscribeToNode({ outputOrPublishNodeId: nodeId });
-      const rvt = await sub.waitForVideoTrack()
-      const rat = await sub.waitForAudioTrack()
+      const rvt = await sub.waitForVideoTrack();
+      const rat = await sub.waitForAudioTrack();
       setRemoteVideoTrack(rvt);
       setRemoteAudioTrack(rat);
       setSubscription(sub);
-      rvt.attachToElement(remoteVideoEl.current!);
-      if (remoteVideoEl.current) {
-        remoteVideoEl.current.playsInline = true;
-        remoteVideoEl.current.autoplay = true;
-      }
+      rvt.attachToElement(videoEl.current!);
+      rat.attachToElement(audioEl.current!);
     }
-  }, [subscribeToNode, nodeId, subscription, remoteVideoTrack]);
+  }, [subscribeToNode, nodeId, subscription, remoteVideoTrack, remoteAudioTrack]);
 
   return (
-    <div>
-      <h3>Publish Node</h3>
-      <h4>Local</h4>
-      <video ref={localVideoEl} />
-      <audio ref={localAudioEl} />
-      <button onClick={publishVideoTrack}>{videoPublication ? 'Unpublish Video' : 'Publish Video'}</button>
-      <button onClick={publishAudioTrack}>{audioPublication ? 'Unpublish Audio' : 'Publish Audio'}</button>
-      <h4>Remote</h4>
-      <video ref={remoteVideoEl} />
-      <audio ref={remoteAudioEl} />
-      <button onClick={subscribeVideoTrack}>{subscription ? 'Unsubscribe Video' : 'Subscribe to Video'}</button>
+    <div className=''>
+      <video className='bg-black w-full aspect-video' ref={videoEl} />
+      <audio ref={audioEl} />
+      {connectionState === 'connected' && (
+        <div className='flex gap-2'>
+          <button className={BTN_CLASS} onClick={publishVideoTrack}>
+            {videoPublication ? 'Unpublish Video' : 'Publish Video'}
+          </button>
+          <button className={BTN_CLASS} onClick={publishAudioTrack}>
+            {audioPublication ? 'Unpublish Audio' : 'Publish Audio'}
+          </button>
+          <button className={BTN_CLASS} onClick={subscribe}>{subscription ? 'Unsubscribe' : 'Subscribe'}</button>
+        </div>
+      )}
     </div>
   );
 }

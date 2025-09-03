@@ -696,6 +696,7 @@ class RepositoryServer:
         internal_livekit_url = os.environ.get("LIVEKIT_URL", livekit_url)
         livekit_api_key = "devkey"
         livekit_api_secret = "secret"
+        logging.info("NEIL Debug connection request received: %s", await request.json())
         req = messages.DebugConnectionRequest.model_validate(await request.json())
         at = api.AccessToken(livekit_api_key, livekit_api_secret)
         at = at.with_grants(

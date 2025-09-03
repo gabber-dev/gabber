@@ -9,11 +9,11 @@ import { ClientPage } from "./client_page";
 export default async function Page({
   params,
 }: {
-  params: Promise<{ app_run: string }>;
+  params: Promise<{ run_id: string }>;
 }) {
-  const { app_run } = await params;
+  const { run_id } = await params;
   const { graph, connection_details } = await createDebugConnection({
-    app_run,
+    run_id,
   });
   return <ClientPage graph={graph} connectionDetails={connection_details} />;
 }

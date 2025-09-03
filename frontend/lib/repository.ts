@@ -114,13 +114,13 @@ export async function createAppRun({
 }
 
 export async function createDebugConnection({
-  app_run,
+  run_id,
 }: {
-  app_run: string;
+  run_id: string;
 }): Promise<DebugConnectionResponse> {
   const resp = await axios.post(`${getBaseUrl()}/app/debug_connection`, {
     type: "create_debug_connection",
-    app_run,
+    run_id,
   });
   return resp.data;
 }
