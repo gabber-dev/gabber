@@ -138,13 +138,15 @@ function PublishNode({ nodeId }: { nodeId: string }) {
       setSubscription(null);
     } else {
       const sub = await subscribeToNode({ outputOrPublishNodeId: nodeId });
-      const rvt = await sub.waitForVideoTrack();
-      const rat = await sub.waitForAudioTrack();
-      setRemoteVideoTrack(rvt);
-      setRemoteAudioTrack(rat);
+      sub.waitForVideoTrack().then((rvt) => {
+        setRemoteVideoTrack(rvt);
+        rvt.attachToElement(videoEl.current!);
+      });
+      sub.waitForAudioTrack().then((rat) => {
+        setRemoteAudioTrack(rat);
+        rat.attachToElement(audioEl.current!);
+      });
       setSubscription(sub);
-      rvt.attachToElement(videoEl.current!);
-      rat.attachToElement(audioEl.current!);
     }
   }, [subscribeToNode, nodeId, subscription, remoteVideoTrack, remoteAudioTrack]);
 
