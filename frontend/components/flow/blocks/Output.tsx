@@ -24,7 +24,9 @@ export function Output() {
       return;
     }
     subscribed.current = true;
-    const subscription = await subscribeToNode({ outputNodeId: nodeId });
+    const subscription = await subscribeToNode({
+      outputOrPublishNodeId: nodeId,
+    });
     subscription.waitForAudioTrack().then((track) => {
       track.attachToElement(audioRef.current!);
       audioRef.current!.play();
