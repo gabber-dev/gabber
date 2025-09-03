@@ -58,6 +58,8 @@ function DebugLink({runId}: {runId: string}) {
       <a
         className='text-blue-500 underline'
         href={`http://localhost:3000/debug/${runId}`}
+        target='_blank'
+        rel="noreferrer"
       >
         {`https://gabber.dev/debug/${runId}`}
       </a>
