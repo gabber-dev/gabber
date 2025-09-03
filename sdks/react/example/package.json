@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@gabber/client-react": "0.0.14",
+    "@gabber/client-react": "file:../gabber-client-react-0.0.15.tgz",
     "@tailwindcss/cli": "^4.1.12",
     "@tailwindcss/postcss": "^4.1.12",
     "@testing-library/dom": "^10.4.1",

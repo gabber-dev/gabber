@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { createOrJoinApp } from './lib';
 import {
   EngineProvider,
@@ -7,6 +7,7 @@ import {
   RemoteAudioTrack,
   RemoteVideoTrack,
   useEngine,
+  usePropertyPad,
 } from '@gabber/client-react';
 import { Subscription } from '@gabber/client';
 
@@ -56,9 +57,9 @@ function DebugLink({runId}: {runId: string}) {
       <span className='text-gray-500'>Debug Link:</span>
       <a
         className='text-blue-500 underline'
-        href={`http://localhost:3000/app/${runId}/debug`}
+        href={`http://localhost:3000/debug/${runId}`}
       >
-        {`https://gabber.dev/app/${runId}/debug`}
+        {`https://gabber.dev/debug/${runId}`}
       </a>
       <span className='text-gray-500'>{`Connection State: ${connectionState}`}</span>
     </div>
@@ -66,12 +67,21 @@ function DebugLink({runId}: {runId: string}) {
 }
 
 function TickerNode() {
-  const { connectionState } = useEngine();
+  const { currentValue } = usePropertyPad("ticker_0", "tick")
+
+  const renderValue = useMemo(() => {
+    if (currentValue === "loading") {
+      return currentValue;
+    }
+    if(currentValue.type !== "integer") {
+      return "N/A";
+    }
+    return currentValue.value;
+  }, [currentValue])
 
   return (
     <div className='flex gap-2'>
-      <span className='text-gray-500'>Ticker Info:</span>
-      <span className='text-gray-500'>{`Connection State: ${connectionState}`}</span>
+      <span className='text-gray-500'>Tick: {renderValue}</span>
     </div>
   );
 }

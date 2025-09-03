@@ -36,10 +36,15 @@ export class BasePad<DataType extends PadValue> {
 
     constructor({ nodeId, padId, livekitRoom, engine }: PadParams) {
         this.engine = engine;
+
         this._nodeId = nodeId;
         this._padId = padId;
         this.livekitRoom = livekitRoom;
         this.destroy = this.destroy.bind(this);
+        this.on_pad_value_event = this.on_pad_value_event.bind(this);
+        this.engine._addPadValueHandler(nodeId, padId, (value) => {
+            this.on_pad_value_event(value);
+        });
     }
 
     public on(event: "value", handler: (data: DataType) => void): void {
@@ -52,6 +57,11 @@ export class BasePad<DataType extends PadValue> {
 
     public destroy(): void {
         this.handlers = [];
+        this.engine._removePadValueHandler(this.nodeId, this.padId, this.on_pad_value_event);
+    }
+
+    private on_pad_value_event(value: PadValue) {
+        this.handlers.forEach(handler => handler(value as DataType));
     }
 
     public get nodeId(): string {

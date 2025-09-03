@@ -34,6 +34,8 @@
         let screensharePublication = null;
         let webcamLocalTrack = null;
         let screenshareLocalTrack = null;
+        let stringPropertyPad = null;
+        let tickerPad = null;
         let handler = {
             onConnectionStateChange: (state) => {
                 engineConnectionState = state;
@@ -71,6 +73,11 @@
         stringPropertyPad = engine.getPropertyPad("string_property", "value");
         stringPropertyPad.on("value", (value) => {
             console.log("String property value:", value);
+        });
+
+        tickerPad = engine.getPropertyPad("ticker_0", "tick");
+        tickerPad.on("value", (value) => {
+            console.log("Ticker value:", value);
         });
 
         async function connect() {
