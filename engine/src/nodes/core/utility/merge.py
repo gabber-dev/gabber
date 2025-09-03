@@ -43,7 +43,7 @@ class Merge(Node):
             pad_id = f"sink_{i}"
             sp = self.get_pad(pad_id)
             if not sp:
-                sp = pad.PropertySinkPad(
+                sp = pad.StatelessSinkPad(
                     id=pad_id,
                     owner_node=self,
                     default_type_constraints=None,
@@ -54,7 +54,7 @@ class Merge(Node):
 
         for p in self.pads:
             if p.get_id().startswith("sink_") and p not in sink_pads:
-                if isinstance(p, pad.PropertySinkPad):
+                if isinstance(p, pad.StatelessSinkPad):
                     p.unlink_types_from_pad(source_pad)
 
         pads: list[pad.Pad] = [num_sink_pads, source_pad] + sink_pads
