@@ -61,7 +61,6 @@ export function usePropertyPad<DataType extends PadValue>(nodeId: string, padId:
 
 
     useEffect(() => {
-        console.log("NEIL got last value", lastValue)
         if (lastValue && connectionState === "connected") {
             setCurrentValue(lastValue as DataType);
         } else if(connectionState !== "connected") {
