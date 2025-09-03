@@ -508,12 +508,14 @@ export function EditorProvider({
           }
         }
       }
-      const req: EditRequest = {
-        type: "edit",
-        edits,
-        req_id: v4(),
-      };
-      sendRequest(req);
+      if (edits.length > 0) {
+        const req: EditRequest = {
+          type: "edit",
+          edits,
+          req_id: v4(),
+        };
+        sendRequest(req);
+      }
     },
     [localRepresentation, reactFlowRepresentation, sendRequest],
   );
