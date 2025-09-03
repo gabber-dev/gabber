@@ -68,7 +68,7 @@ class Graph:
                     id=item.id,
                     secret_provider=self.secret_provider,
                     secrets=self.secrets,
-                    library_items=self.library_items,
+                    library_items=[li for li in self.library_items if li != item],
                 )
                 self.virtual_nodes.append(
                     (
@@ -89,16 +89,12 @@ class Graph:
     ) -> messages.Response | None:
         if request.type == messages.RequestType.LOAD_FROM_SNAPSHOT:
             await self.load_from_snapshot(request.graph)
-            return messages.Response(
-                response=messages.LoadFromSnapshotResponse(
-                    graph=self.to_editor(), req_id=request.req_id
-                )
+            return messages.LoadFromSnapshotResponse(
+                graph=self.to_editor(), req_id=request.req_id
             )
         elif request.type == messages.RequestType.GET_NODE_LIBRARY:
-            return messages.Response(
-                response=messages.NodeLibraryResponse(
-                    node_library=self.library_items, req_id=request.req_id
-                )
+            return messages.NodeLibraryResponse(
+                node_library=self.library_items, req_id=request.req_id
             )
         elif request.type == messages.RequestType.EDIT:
             try:
@@ -108,14 +104,10 @@ class Graph:
                     f"Error handling edit in graph: {self.id}-{request.edit}: {e}",
                     exc_info=e,
                 )
-            return messages.Response(
-                response=messages.EditResponse(
-                    graph=self.to_editor(), req_id=request.req_id
-                )
-            )
+            return messages.EditResponse(graph=self.to_editor(), req_id=request.req_id)
         elif request.type == messages.RequestType.QUERY_ELIGIBLE_NODE_LIBRARY_ITEMS:
             response = await self._handle_query_eligible_node_library_items(request)
-            return messages.Response(response=response)
+            return response
 
     async def _handle_edit(self, request: messages.Edit):
         try:

@@ -111,10 +111,15 @@ class QueryEligibleNodeLibraryItemsResponse(BaseModel):
     )
 
 
-class Response(BaseModel):
-    response: (
-        EditResponse
-        | LoadFromSnapshotResponse
-        | NodeLibraryResponse
-        | QueryEligibleNodeLibraryItemsResponse
-    ) = Field(discriminator="type", description="Change to apply to the graph editor")
+Response = Annotated[
+    EditResponse
+    | LoadFromSnapshotResponse
+    | NodeLibraryResponse
+    | QueryEligibleNodeLibraryItemsResponse,
+    Field(discriminator="type", description="Response from the graph editor"),
+]
+
+
+class DummyModel(BaseModel):
+    request: Request
+    response: Response

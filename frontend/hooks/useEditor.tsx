@@ -132,6 +132,17 @@ export function EditorProvider({
     ReadyState.UNINSTANTIATED,
   );
 
+  const pendingRequests = useRef<
+    Map<
+      string,
+      {
+        resolve: (value: Response) => void;
+        reject: (reason?: Error) => void;
+        timeoutId: number;
+      }
+    >
+  >(new Map());
+
   useEffect(() => {
     if (readyState !== prevReadyState) {
       setPrevReadyState(readyState);
@@ -160,13 +171,34 @@ export function EditorProvider({
 
   const isConnected = readyState === ReadyState.OPEN;
 
+  useEffect(() => {
+    if (readyState === ReadyState.CLOSED) {
+      for (const [_, pending] of pendingRequests.current.entries()) {
+        clearTimeout(pending.timeoutId);
+        pending.reject(new Error("WebSocket connection closed"));
+      }
+      pendingRequests.current.clear();
+    }
+  }, [readyState]);
+
   const sendRequest = useCallback(
     (request: Request) => {
-      if (isConnected) {
-        sendMessage(JSON.stringify(request));
-      } else {
+      if (!isConnected) {
         console.warn("WebSocket is not connected. Cannot send request.");
+        return Promise.reject(new Error("WebSocket not connected"));
       }
+      if (!request.req_id) {
+        request.req_id = v4();
+      }
+      const req_id = request.req_id;
+      sendMessage(JSON.stringify(request));
+      return new Promise<Response>((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          pendingRequests.current.delete(req_id);
+          reject(new Error("Request timed out after 5 seconds"));
+        }, 5000) as unknown as number;
+        pendingRequests.current.set(req_id, { resolve, reject, timeoutId });
+      });
     },
     [isConnected, sendMessage],
   );
@@ -217,7 +249,9 @@ export function EditorProvider({
 
   const queryEligibleLibraryItems = useCallback(
     async (req: QueryEligibleNodeLibraryItemsRequest) => {
-      sendRequest(req);
+      req.req_id = v4();
+      const resp = await sendRequest(req);
+      return resp.eligible_items as EligibleLibraryItem[];
     },
     [sendRequest],
   );
@@ -368,13 +402,25 @@ export function EditorProvider({
     if (!lastJsonMessage) return;
 
     try {
-      const resp = (lastJsonMessage as Response).response;
+      const resp = lastJsonMessage as Response;
+      const req_id = resp.req_id || "";
+
       if (resp.type === "node_library") {
         setNodeLibrary(resp.node_library || []);
       } else if (resp.type === "load_from_snapshot") {
         setLocalRepresentation(resp.graph);
       } else if (resp.type === "edit") {
         setLocalRepresentation(resp.graph);
+      } else if (resp.type === "query_eligible_node_library_items") {
+        // No global state update needed for per-query responses
+      }
+
+      const pending = pendingRequests.current.get(req_id);
+      console.log("NEIL pending request", pending, req_id, resp);
+      if (pending) {
+        clearTimeout(pending.timeoutId);
+        pendingRequests.current.delete(req_id);
+        pending.resolve(resp);
       }
     } catch (error) {
       console.error(
@@ -598,6 +644,7 @@ export function EditorProvider({
         updateNode,
         clearAllSelection,
         setStateMachineEditing,
+        queryEligibleLibraryItems,
       }}
     >
       {children}

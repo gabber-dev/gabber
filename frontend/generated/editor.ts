@@ -279,9 +279,9 @@ export type ReqId3 = string;
 export type SourceNode2 = string;
 export type SourcePad2 = string;
 /**
- * Change to apply to the graph editor
+ * Response from the graph editor
  */
-export type Response1 =
+export type Response =
   | EditResponse
   | LoadFromSnapshotResponse
   | NodeLibraryResponse
@@ -334,6 +334,11 @@ export type DirectEligibleItems = EligibleLibraryItem[];
  */
 export type AutoconvertEligibleItems = (GraphLibraryItem_Node | GraphLibraryItem_SubGraph)[];
 
+export interface DummyModel {
+  request: Request;
+  response: Response;
+  [k: string]: unknown;
+}
 export interface GetNodeLibraryRequest {
   type?: Type;
   req_id: ReqId;
@@ -604,10 +609,6 @@ export interface QueryEligibleNodeLibraryItemsRequest {
   req_id: ReqId3;
   source_node: SourceNode2;
   source_pad: SourcePad2;
-  [k: string]: unknown;
-}
-export interface Response {
-  response: Response1;
   [k: string]: unknown;
 }
 export interface EditResponse {
