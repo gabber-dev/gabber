@@ -208,9 +208,10 @@ export class Engine  {
   }
 
   private onData(data: Uint8Array, _: RemoteParticipant | undefined, __: DataPacket_Kind | undefined, topic: string | undefined): void {
+    const test_msg = JSON.parse(new TextDecoder().decode(data));
+    console.log("Received data on topic:", topic, test_msg);
     if (topic !== "runtime_api") {
-        const msg = JSON.parse(new TextDecoder().decode(data));
-        return; // Ignore data not on this pad's channel
+      return; // Ignore data not on this pad's channel
     }
     const msg = JSON.parse(new TextDecoder().decode(data));
     if (msg.type === "ack") {
@@ -233,11 +234,13 @@ export class Engine  {
     } else if (msg.type === "event") {
         const castedMsg: RuntimeEvent = msg
         const payload = castedMsg.payload;
-        const nodeId = payload.node_id;
-        const padId = payload.pad_id;
-        const handlers = this.padValueHandlers.get(`${nodeId}:${padId}`);
-        for(const handler of handlers || []) {
-          handler(payload.value);
+        if(payload.type === "value") {
+          const nodeId = payload.node_id;
+          const padId = payload.pad_id;
+          const handlers = this.padValueHandlers.get(`${nodeId}:${padId}`);
+          for(const handler of handlers || []) {
+            handler(payload.value);
+          }
         }
     }
   }

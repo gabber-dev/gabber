@@ -22,6 +22,7 @@ import {
   SaveSubgraphResponse,
 } from "@/generated/repository";
 import axios from "axios";
+import { v4 } from "uuid";
 
 function getBaseUrl() {
   if (typeof window !== "undefined") {
@@ -109,6 +110,7 @@ export async function createAppRun({
   const resp = await axios.post(`${getBaseUrl()}/app/run`, {
     type: "create_app_run",
     graph,
+    run_id: v4(),
   });
   return resp.data;
 }
