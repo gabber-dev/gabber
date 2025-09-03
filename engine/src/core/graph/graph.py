@@ -97,13 +97,14 @@ class Graph:
                 node_library=self.library_items, req_id=request.req_id
             )
         elif request.type == messages.RequestType.EDIT:
-            try:
-                await self._handle_edit(request.edit)
-            except Exception as e:
-                logging.error(
-                    f"Error handling edit in graph: {self.id}-{request.edit}: {e}",
-                    exc_info=e,
-                )
+            for e in request.edits:
+                try:
+                    await self._handle_edit(e)
+                except Exception as exc:
+                    logging.error(
+                        f"Error handling edit in graph: {self.id}-{e}: {exc}",
+                        exc_info=exc,
+                    )
             return messages.EditResponse(graph=self.to_editor(), req_id=request.req_id)
         elif request.type == messages.RequestType.QUERY_ELIGIBLE_NODE_LIBRARY_ITEMS:
             response = await self._handle_query_eligible_node_library_items(request)

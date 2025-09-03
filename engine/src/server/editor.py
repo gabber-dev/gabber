@@ -107,6 +107,7 @@ class GraphEditorSession:
 
     async def handle_message(self, message: messages.Request):
         # Make this async if graph.handle_request needs to be async
+        logging.info(f"NEIL Received message: {message}")
         response = await self.graph.handle_request(message)
 
         # If you need to send a response back to the client

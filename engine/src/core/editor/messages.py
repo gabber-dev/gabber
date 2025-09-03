@@ -41,8 +41,8 @@ class GetNodeLibraryRequest(BaseModel):
 class EditRequest(BaseModel):
     type: Literal[RequestType.EDIT] = RequestType.EDIT
     req_id: str
-    edit: Edit = Field(
-        discriminator="type", description="Edit request to perform on the graph editor"
+    edits: list[Edit] = Field(
+        default_factory=list, description="Edit requests to perform on the graph editor"
     )
 
 
@@ -123,3 +123,4 @@ Response = Annotated[
 class DummyModel(BaseModel):
     request: Request
     response: Response
+    edit: Edit

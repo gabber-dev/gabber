@@ -25,21 +25,6 @@ export type Filter = string | null;
 export type IncludeMetadata = boolean;
 export type Type1 = "edit";
 export type ReqId1 = string;
-/**
- * Edit request to perform on the graph editor
- */
-export type Edit =
-  | InsertNodeEdit
-  | InsertSubGraphEdit
-  | UpdateNodeEdit
-  | RemoveNodeEdit
-  | ConnectPadEdit
-  | DisconnectPadEdit
-  | UpdatePadEdit
-  | CreatePortalEdit
-  | AddPortalEndEdit
-  | UpdatePortalEdit
-  | UpdatePortalEndEdit;
 export type Type2 = "insert_node";
 export type Id = string | null;
 export type NodeType = string;
@@ -144,6 +129,22 @@ export type PortalEndId = string;
  * @maxItems 2
  */
 export type EditorPosition6 = [unknown, unknown];
+/**
+ * Edit requests to perform on the graph editor
+ */
+export type Edits = (
+  | InsertNodeEdit
+  | InsertSubGraphEdit
+  | UpdateNodeEdit
+  | RemoveNodeEdit
+  | ConnectPadEdit
+  | DisconnectPadEdit
+  | UpdatePadEdit
+  | CreatePortalEdit
+  | AddPortalEndEdit
+  | UpdatePortalEdit
+  | UpdatePortalEndEdit
+)[];
 export type Type13 = "load_from_snapshot";
 export type Id3 = string;
 export type Type14 = string;
@@ -333,10 +334,26 @@ export type DirectEligibleItems = EligibleLibraryItem[];
  * List of autoconvert eligible items from the node library
  */
 export type AutoconvertEligibleItems = (GraphLibraryItem_Node | GraphLibraryItem_SubGraph)[];
+/**
+ * Type of edit to perform on the graph editor
+ */
+export type Edit =
+  | InsertNodeEdit
+  | InsertSubGraphEdit
+  | UpdateNodeEdit
+  | RemoveNodeEdit
+  | ConnectPadEdit
+  | DisconnectPadEdit
+  | UpdatePadEdit
+  | CreatePortalEdit
+  | AddPortalEndEdit
+  | UpdatePortalEdit
+  | UpdatePortalEndEdit;
 
 export interface DummyModel {
   request: Request;
   response: Response;
+  edit: Edit;
   [k: string]: unknown;
 }
 export interface GetNodeLibraryRequest {
@@ -349,7 +366,7 @@ export interface GetNodeLibraryRequest {
 export interface EditRequest {
   type?: Type1;
   req_id: ReqId1;
-  edit: Edit;
+  edits?: Edits;
   [k: string]: unknown;
 }
 export interface InsertNodeEdit {

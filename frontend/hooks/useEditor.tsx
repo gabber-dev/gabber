@@ -8,6 +8,8 @@
 import {
   ConnectPadEdit,
   DisconnectPadEdit,
+  Edit,
+  EditRequest,
   EligibleLibraryItem,
   GraphEditorRepresentation,
   GraphLibraryItem_Node,
@@ -207,7 +209,7 @@ export function EditorProvider({
     (edit: InsertNodeEdit) => {
       sendRequest({
         type: "edit",
-        edit,
+        edits: [edit],
         req_id: v4(),
       });
     },
@@ -218,7 +220,7 @@ export function EditorProvider({
     (edit: InsertSubGraphEdit) => {
       sendRequest({
         type: "edit",
-        edit,
+        edits: [edit],
         req_id: v4(),
       });
     },
@@ -229,7 +231,7 @@ export function EditorProvider({
     (edit: RemoveNodeEdit) => {
       sendRequest({
         type: "edit",
-        edit,
+        edits: [edit],
         req_id: v4(),
       });
     },
@@ -240,7 +242,7 @@ export function EditorProvider({
     (edit: ConnectPadEdit) => {
       sendRequest({
         type: "edit",
-        edit,
+        edits: [edit],
         req_id: v4(),
       });
     },
@@ -308,13 +310,13 @@ export function EditorProvider({
         if (pendingEdit) {
           sendRequest({
             type: "edit",
-            edit: pendingEdit,
+            edits: [pendingEdit],
             req_id: v4(),
           });
           pendingEdits.current.delete(key);
         }
         debounceTimers.current.delete(key);
-      }, 175) as unknown as number;
+      }, 250) as unknown as number;
 
       debounceTimers.current.set(key, timer);
     },
@@ -341,7 +343,7 @@ export function EditorProvider({
     (edit: UpdateNodeEdit) => {
       sendRequest({
         type: "edit",
-        edit,
+        edits: [edit],
         req_id: v4(),
       });
 
@@ -438,7 +440,7 @@ export function EditorProvider({
         console.warn("No previous representation available");
         return;
       }
-      const requests: Request[] = [];
+      const edits: Edit[] = [];
       for (const change of changes) {
         if (change.type === "position") {
           reactFlowRepresentation.nodes = applyNodeChanges(
@@ -447,15 +449,14 @@ export function EditorProvider({
           );
 
           if (!change.dragging) {
-            const edit: UpdateNodeEdit = {
+            edits.push({
               type: "update_node",
               id: change.id,
               editor_name: null,
               new_id: null,
               editor_position: [change.position?.x, change.position?.y],
               editor_dimensions: null,
-            };
-            requests.push({ type: "edit", edit, req_id: v4() });
+            });
           }
           setReactFlowRepresentation((prev) => ({
             ...prev,
@@ -468,13 +469,9 @@ export function EditorProvider({
           });
         } else if (change.type === "remove") {
           const nodeId = change.id;
-          requests.push({
-            type: "edit",
-            edit: {
-              type: "remove_node",
-              node_id: nodeId,
-            } as RemoveNodeEdit,
-            req_id: v4(),
+          edits.push({
+            type: "remove_node",
+            node_id: nodeId,
           });
           prev.nodes = prev.nodes.filter((n) => n.id !== nodeId);
         } else if (change.type === "add") {
@@ -503,7 +500,7 @@ export function EditorProvider({
             editor_position: null,
             editor_dimensions: [newDims.width, newDims.height],
           };
-          requests.push({ type: "edit", edit, req_id: v4() });
+          edits.push(edit);
           for (const node of prev?.nodes || []) {
             if (node.id === nodeId) {
               node.editor_dimensions = [newDims?.width, newDims?.height];
@@ -511,9 +508,12 @@ export function EditorProvider({
           }
         }
       }
-      for (const req of requests) {
-        sendRequest(req);
-      }
+      const req: EditRequest = {
+        type: "edit",
+        edits,
+        req_id: v4(),
+      };
+      sendRequest(req);
     },
     [localRepresentation, reactFlowRepresentation, sendRequest],
   );
@@ -526,7 +526,7 @@ export function EditorProvider({
         console.warn("No previous representation available");
         return;
       }
-      const requests: Request[] = [];
+      const edits: Edit[] = [];
       for (const change of changes) {
         if (change.type === "select") {
           setReactFlowRepresentation((prev) => {
@@ -557,16 +557,12 @@ export function EditorProvider({
           }
           targetPad.previous_pad = null;
 
-          requests.push({
-            type: "edit",
-            edit: {
-              type: "disconnect_pad",
-              node: sourceNodeId,
-              pad: sourcePadId,
-              connected_node: targetNodeId,
-              connected_pad: targetPadId,
-            } as DisconnectPadEdit,
-            req_id: v4(),
+          edits.push({
+            type: "disconnect_pad",
+            node: sourceNodeId,
+            pad: sourcePadId,
+            connected_node: targetNodeId,
+            connected_pad: targetPadId,
           });
         } else if (change.type === "add") {
         }
@@ -574,8 +570,8 @@ export function EditorProvider({
       if (dirty) {
         setLocalRepresentation({ ...prev });
       }
-      for (const req of requests) {
-        sendRequest(req);
+      for (const e of edits) {
+        sendRequest({ type: "edit", edits: [e], req_id: v4() });
       }
     },
     [localRepresentation, sendRequest],
@@ -590,7 +586,7 @@ export function EditorProvider({
         connected_node: connection.target || "ERROR",
         connected_pad: connection.targetHandle || "ERROR",
       };
-      sendRequest({ type: "edit", edit, req_id: v4() });
+      sendRequest({ type: "edit", edits: [edit], req_id: v4() });
     },
     [sendRequest],
   );
