@@ -10,6 +10,7 @@ import React, {
   useCallback,
   useContext,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import toast from "react-hot-toast";
@@ -60,13 +61,15 @@ function Inner({
 }) {
   const { connect, disconnect, connectionState } = useEngine();
   const [starting, setStarting] = useState(false);
+  const startingRef = useRef(false);
 
   const startRun = useCallback(
     async (params: { graph: GraphEditorRepresentation }) => {
-      if (starting) {
+      if (startingRef.current) {
         console.warn("Run is already starting, ignoring new start request.");
         return;
       }
+      startingRef.current = true;
       setStarting(true);
       try {
         const res = await generateConnectionDetailsImpl({
@@ -78,8 +81,9 @@ function Inner({
         toast.error("Failed to start run. Please try again.");
       }
       setStarting(false);
+      startingRef.current = false;
     },
-    [connect, generateConnectionDetailsImpl, starting],
+    [connect, generateConnectionDetailsImpl],
   );
 
   const stopRun = useCallback(async () => {

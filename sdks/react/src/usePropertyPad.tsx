@@ -16,17 +16,17 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { PadTriggeredValue, PropertyPad } from "@gabber/client";
+import { PadValue, PropertyPad } from "@gabber/client";
 import { useEngine, useEngineInternal } from "./useEngine";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePad } from "./usePad";
 import { ConnectionState } from "@gabber/client";
 
-type UsePropertyPadType<DataType extends PadTriggeredValue> = {
+type UsePropertyPadType<DataType extends PadValue> = {
     currentValue: DataType | "loading";
 }
 
-export function usePropertyPad<DataType extends PadTriggeredValue>(nodeId: string, padId: string): UsePropertyPadType<DataType> {
+export function usePropertyPad<DataType extends PadValue>(nodeId: string, padId: string): UsePropertyPadType<DataType> {
     const { engineRef } = useEngineInternal();
     const { connectionState } = useEngine();
     const padRef = useRef<PropertyPad<DataType>>(undefined);
@@ -42,7 +42,7 @@ export function usePropertyPad<DataType extends PadTriggeredValue>(nodeId: strin
         if (padLoadingRef.current) return; // Prevent multiple calls
         padLoadingRef.current = true;
         try {
-            const value = await padRef.current!.getValue();
+            const value = (await padRef.current!.getValue()) as DataType;
             setCurrentValue(value);
         } catch (error) {
             console.error("Failed to load pad value:", error);
@@ -61,6 +61,7 @@ export function usePropertyPad<DataType extends PadTriggeredValue>(nodeId: strin
 
 
     useEffect(() => {
+        console.log("NEIL got last value", lastValue)
         if (lastValue && connectionState === "connected") {
             setCurrentValue(lastValue as DataType);
         } else if(connectionState !== "connected") {

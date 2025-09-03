@@ -22,6 +22,7 @@ import {
   SaveSubgraphResponse,
 } from "@/generated/repository";
 import axios from "axios";
+import { v4 } from "uuid";
 
 function getBaseUrl() {
   if (typeof window !== "undefined") {
@@ -109,18 +110,19 @@ export async function createAppRun({
   const resp = await axios.post(`${getBaseUrl()}/app/run`, {
     type: "create_app_run",
     graph,
+    run_id: v4(),
   });
   return resp.data;
 }
 
 export async function createDebugConnection({
-  app_run,
+  run_id,
 }: {
-  app_run: string;
+  run_id: string;
 }): Promise<DebugConnectionResponse> {
   const resp = await axios.post(`${getBaseUrl()}/app/debug_connection`, {
     type: "create_debug_connection",
-    app_run,
+    run_id,
   });
   return resp.data;
 }

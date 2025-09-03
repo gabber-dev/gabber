@@ -156,7 +156,6 @@ class Filter(Node):
 
         async def process_sink():
             async for item in sink:
-                logging.info(f"NEIL Filter received item: {item.value} --- IGNORE ---")
                 tcs_a = sink.get_type_constraints()
                 tcs_b = compare_pad.get_type_constraints()
                 if tcs_a and len(tcs_a) == 1 and tcs_b and len(tcs_b) == 1:

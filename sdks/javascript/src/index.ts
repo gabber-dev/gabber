@@ -37,11 +37,11 @@ export type { RemoteTrack, RemoteAudioTrack, RemoteVideoTrack } from './RemoteTr
 export type { SourcePad, SinkPad, PropertyPad } from './pad/Pad';
 
 export type { 
-    Value1 as PadTriggeredValue,
-    PadTriggeredValue_AudioClip,
-    PadTriggeredValue_VideoClip,
-    PadTriggeredValue_Boolean,
-    PadTriggeredValue_Float,
-    PadTriggeredValue_Integer,
-    PadTriggeredValue_String,
+    PadValue_VideoClip,
+    PadValue_AudioClip,
+    PadValue_Boolean,
+    PadValue_Float,
+    PadValue_Integer,
+    PadValue_String,
+    PadValue,
 } from './generated/runtime';

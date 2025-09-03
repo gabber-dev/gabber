@@ -10,6 +10,7 @@ from .runtime_api import (
     RuntimeRequest,
     RuntimeRequestAck,
     RuntimeResponse,
+    DummyType,
 )
 
 from .graph_library import (
@@ -23,4 +24,5 @@ __all__ = [
     "RuntimeRequest",
     "RuntimeRequestAck",
     "RuntimeResponse",
+    "DummyType",
 ]

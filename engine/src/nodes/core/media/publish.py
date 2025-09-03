@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
+import logging
 from typing import cast
 import time
 
@@ -69,7 +70,23 @@ class Publish(node.Node):
             video_enabled,
         ]
 
+    def set_allowed_participant(self, identity: str):
+        self._allowed_participant = identity
+
+    def unset_allowed_participant(self, identity: str):
+        self._allowed_participant = (
+            None if self._allowed_participant == identity else self._allowed_participant
+        )
+        for rp in self.room.remote_participants.values():
+            for track in rp.track_publications.values():
+                if (
+                    track.name.startswith(f"{self.id}:")
+                    and rp.identity != self._allowed_participant
+                ):
+                    track.set_subscribed(False)
+
     async def run(self):
+        self._allowed_participant: str | None = None
         audio_source = cast(pad.StatelessSourcePad, self.get_pad_required("audio"))
         video_source = cast(pad.StatelessSourcePad, self.get_pad_required("video"))
         audio_enabled = cast(
@@ -90,9 +107,14 @@ class Publish(node.Node):
         async def video_consume():
             nonlocal last_video_frame_time
             while True:
+                if not self._allowed_participant:
+                    await asyncio.sleep(0.5)
+                    continue
+
                 video_stream = await video_stream_provider(
-                    self.room, f"{self.id}:video"
+                    self.room, f"{self.id}:video", self._allowed_participant
                 )
+
                 async for frame in video_stream:
                     last_video_frame_time = time.time()
                     timestamp_s = frame.timestamp_us / 1_000_000.0
@@ -113,8 +135,12 @@ class Publish(node.Node):
         async def audio_consume():
             nonlocal last_audio_frame_time
             while True:
+                if not self._allowed_participant:
+                    await asyncio.sleep(0.5)
+                    continue
+
                 audio_stream = await audio_stream_provider(
-                    self.room, f"{self.id}:audio"
+                    self.room, f"{self.id}:audio", self._allowed_participant
                 )
                 async for frame in audio_stream:
                     last_audio_frame_time = time.time()

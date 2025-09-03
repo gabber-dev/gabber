@@ -27,7 +27,6 @@ generate:
 	engine/.venv/bin/python engine/src/main.py generate-state-machine-schema | json2ts -o frontend/generated/stateMachine.ts
 
 	engine/.venv/bin/python engine/src/main.py generate-runtime-schema | json2ts -o sdks/javascript/src/generated/runtime.ts
-	engine/.venv/bin/python engine/src/main.py generate-runtime-schema | json2ts -o sdks/react/src/generated/runtime.ts
 
 frontend:
 	cd frontend && \

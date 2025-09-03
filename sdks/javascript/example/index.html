@@ -34,6 +34,8 @@
         let screensharePublication = null;
         let webcamLocalTrack = null;
         let screenshareLocalTrack = null;
+        let stringPropertyPad = null;
+        let tickerPad = null;
         let handler = {
             onConnectionStateChange: (state) => {
                 engineConnectionState = state;
@@ -73,9 +75,14 @@
             console.log("String property value:", value);
         });
 
+        tickerPad = engine.getPropertyPad("ticker_0", "tick");
+        tickerPad.on("value", (value) => {
+            console.log("Ticker value:", value);
+        });
+
         async function connect() {
             let res = await fetch("http://localhost:8001/app/run", {
-                method: "POST", body: JSON.stringify(GRAPH),
+                method: "POST", body: JSON.stringify({ graph: GRAPH, run_id: "test-run" }),
                 headers: {
                     "Content-Type": "application/json"
                 }
@@ -144,13 +151,13 @@
         }
 
         async function subscribeWebcam() {
-            const subscription = await engine.subscribeToNode({ outputNodeId: "output_webcam" });
+            const subscription = await engine.subscribeToNode({ outputOrPublishNodeId: "output_webcam" });
             const remoteTrack = await subscription.waitForVideoTrack();
             remoteTrack.attachToElement(document.getElementById("remote_webcam"));
         }
 
         async function subscribeScreenshare() {
-            const subscription = await engine.subscribeToNode({ outputNodeId: "output_screen" });
+            const subscription = await engine.subscribeToNode({ outputOrPublishNodeId: "output_screen" });
             const remoteTrack = await subscription.waitForVideoTrack();
             remoteTrack.attachToElement(document.getElementById("remote_screenshare"));
         }
@@ -172,7 +179,7 @@
         <div>
             <video id="remote_webcam" width="320" height="240" controls>
             </video>
-            <button id="webcam-sub-button" onclick="subscribeWebcam()" style="display: none;">
+            <button id="webcam-sub-button" onclick="subscribeWebcam()" style="display: block;">
                 Subscribe Webcam</button>
 
         </div>

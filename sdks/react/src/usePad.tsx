@@ -16,15 +16,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { PadTriggeredValue, SourcePad } from "@gabber/client";
+import { PadValue, SourcePad } from "@gabber/client";
 import { useEngineInternal } from "./useEngine";
 import { useEffect, useRef, useState } from "react";
 
 type UsePadType = {
-    lastValue: PadTriggeredValue | undefined;
+    lastValue: PadValue | undefined;
 }
 
-export function usePad<DataType extends PadTriggeredValue>(nodeId: string, padId: string): UsePadType {
+export function usePad<DataType extends PadValue>(nodeId: string, padId: string): UsePadType {
     const [lastValue, setLastValue] = useState<DataType | undefined>(undefined);
     const { engineRef } = useEngineInternal();
     const padRef = useRef<SourcePad<DataType> | undefined>(undefined);
@@ -33,6 +33,7 @@ export function usePad<DataType extends PadTriggeredValue>(nodeId: string, padId
     useEffect(() => {
         if(!padRef.current) {
             padRef.current = engineRef.current.getSourcePad<DataType>(nodeId, padId);
+            console.log("NEIL current pad ref", padRef.current)
             padHandlerRef.current = (value: DataType) => {
                 setLastValue(value);
             }
