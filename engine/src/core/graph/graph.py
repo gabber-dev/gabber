@@ -371,10 +371,24 @@ class Graph:
                 logging.error(f"Node {node_data.id} not found in node lookup.")
                 continue
 
+        # resolve node references
+        for n in self.nodes:
+            for p in n.pads:
+                tcs = p.get_type_constraints()
+                if p.get_id() == "self":
+                    logging.info("NEIL self pad %s", tcs)
+                if tcs and len(tcs) == 1:
+                    if isinstance(tcs[0], pad.types.NodeReference) and isinstance(
+                        p, pad.PropertyPad
+                    ):
+                        self._resolve_node_reference_property(
+                            p, p.get_value(), node_lookup
+                        )
+
         for n in self.nodes:
             n.resolve_pads()
 
-        # Populate secrets
+        # resolve secret options
         secret_options = await self.secret_provider.list_secrets()
         for n in self.nodes:
             for p in n.pads:
@@ -387,12 +401,6 @@ class Graph:
                             s.name for s in secret_options
                         ]:
                             p.set_value(None)
-                    elif isinstance(tcs[0], pad.types.NodeReference) and isinstance(
-                        p, pad.PropertyPad
-                    ):
-                        self._resolve_node_reference_property(
-                            p, p.get_value(), node_lookup
-                        )
                 if d_tcs and len(d_tcs) == 1:
                     if isinstance(d_tcs[0], pad.types.Secret):
                         d_tcs[0].options = secret_options
@@ -400,6 +408,7 @@ class Graph:
     def _resolve_node_reference_property(
         self, p: pad.PropertyPad, v: str, nodes: dict[str, Node]
     ):
+        logging.info("NEIL resolving node ref pad %s", v)
         if not isinstance(p, pad.SourcePad):
             return
 

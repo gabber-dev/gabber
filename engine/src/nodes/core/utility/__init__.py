@@ -8,6 +8,7 @@ from .type_constraint import TypeConstraint
 from .unpack_object import UnpackObject
 from .noop import Noop
 from .jinja2_node import Jinja2
+from . import portal
 
 ALL_NODES = [
     Merge,
@@ -17,4 +18,4 @@ ALL_NODES = [
     UnpackObject,
     Noop,
     Jinja2,
-]
+] + portal.ALL_NODES
