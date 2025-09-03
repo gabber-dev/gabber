@@ -33,7 +33,6 @@ export function usePad<DataType extends PadValue>(nodeId: string, padId: string)
     useEffect(() => {
         if(!padRef.current) {
             padRef.current = engineRef.current.getSourcePad<DataType>(nodeId, padId);
-            console.log("NEIL current pad ref", padRef.current)
             padHandlerRef.current = (value: DataType) => {
                 setLastValue(value);
             }
