@@ -47,13 +47,21 @@ class Graph:
 
         self.nodes: list[Node] = []
 
+        self.virtual_nodes: list[tuple[Node, GraphLibraryItem]] = []
+
         self._node_cls_lookup: dict[str, Type[Node]] = {}
         self._sub_graph_cls_lookup: dict[str, GraphLibraryItem_SubGraph] = {}
         for item in self.library_items:
             if isinstance(item, GraphLibraryItem_Node):
                 self._node_cls_lookup[item.name] = item.node_type
+                n = self._node_cls_lookup[item.name](
+                    secret_provider=self.secret_provider, secrets=[]
+                )
+                n.resolve_pads()
+                self.virtual_nodes.append((n, item))
             elif isinstance(item, GraphLibraryItem_SubGraph):
-                self._sub_graph_cls_lookup[item.id] = item
+                # TODO
+                pass
 
     def get_node(self, node_id: str) -> Node | None:
         return next((n for n in self.nodes if n.id == node_id), None)
@@ -63,24 +71,26 @@ class Graph:
     ) -> messages.Response | None:
         if request.type == messages.RequestType.LOAD_FROM_SNAPSHOT:
             await self.load_from_snapshot(request.graph)
-            return messages.Response(
-                response=messages.FullGraphResponse(graph=self.to_editor())
+            return messages.LoadFromSnapshotResponse(
+                graph=self.to_editor(), req_id=request.req_id
             )
         elif request.type == messages.RequestType.GET_NODE_LIBRARY:
-            return messages.Response(
-                response=messages.NodeLibraryResponse(node_library=self.library_items)
+            return messages.NodeLibraryResponse(
+                node_library=self.library_items, req_id=request.req_id
             )
         elif request.type == messages.RequestType.EDIT:
-            try:
-                await self._handle_edit(request.edit)
-            except Exception as e:
-                logging.error(
-                    f"Error handling edit in graph: {self.id}-{request.edit}: {e}",
-                    exc_info=e,
-                )
-            return messages.Response(
-                response=messages.FullGraphResponse(graph=self.to_editor())
-            )
+            for e in request.edits:
+                try:
+                    await self._handle_edit(e)
+                except Exception as exc:
+                    logging.error(
+                        f"Error handling edit in graph: {self.id}-{e}: {exc}",
+                        exc_info=exc,
+                    )
+            return messages.EditResponse(graph=self.to_editor(), req_id=request.req_id)
+        elif request.type == messages.RequestType.QUERY_ELIGIBLE_NODE_LIBRARY_ITEMS:
+            response = await self._handle_query_eligible_node_library_items(request)
+            return response
 
     async def _handle_edit(self, request: messages.Edit):
         try:
@@ -103,6 +113,39 @@ class Graph:
             logging.error(
                 f"Error handling edit in graph: {self.id}-{request}", exc_info=e
             )
+
+    async def _handle_query_eligible_node_library_items(
+        self, req: messages.QueryEligibleNodeLibraryItemsRequest
+    ):
+        source_node = next((n for n in self.nodes if n.id == req.source_node), None)
+        if not source_node:
+            raise ValueError(f"Source node with ID {req.source_node} not found.")
+
+        source_pad = source_node.get_pad(req.source_pad)
+        if not source_pad:
+            raise ValueError(f"Source pad with ID {req.source_pad} not found.")
+
+        if not isinstance(source_pad, pad.SourcePad):
+            raise ValueError(f"Source pad with ID {req.source_pad} is not a SourcePad.")
+
+        res: list[models.EligibleLibraryItem] = []
+
+        for vn, li in self.virtual_nodes:
+            connectable_pads = [
+                p
+                for p in vn.pads
+                if source_pad.can_connect(p) and isinstance(p, pad.SinkPad)
+            ]
+            pads: list[models.PadEditorRepresentation] = []
+            for p in connectable_pads:
+                pads.append(serialize.pad_editor_rep(p))
+
+            if pads:
+                res.append(models.EligibleLibraryItem(library_item=li, pads=pads))
+
+        return messages.QueryEligibleNodeLibraryItemsResponse(
+            direct_eligible_items=res, autoconvert_eligible_items=[], req_id=req.req_id
+        )
 
     async def _handle_insert_node(self, edit: InsertNodeEdit):
         node_cls = self._node_cls_lookup[edit.node_type]
@@ -371,10 +414,22 @@ class Graph:
                 logging.error(f"Node {node_data.id} not found in node lookup.")
                 continue
 
+        # resolve node references
+        for n in self.nodes:
+            for p in n.pads:
+                tcs = p.get_type_constraints()
+                if tcs and len(tcs) == 1:
+                    if isinstance(tcs[0], pad.types.NodeReference) and isinstance(
+                        p, pad.PropertyPad
+                    ):
+                        self._resolve_node_reference_property(
+                            p, p.get_value(), node_lookup
+                        )
+
         for n in self.nodes:
             n.resolve_pads()
 
-        # Populate secrets
+        # resolve secret options
         secret_options = await self.secret_provider.list_secrets()
         for n in self.nodes:
             for p in n.pads:
@@ -387,12 +442,6 @@ class Graph:
                             s.name for s in secret_options
                         ]:
                             p.set_value(None)
-                    elif isinstance(tcs[0], pad.types.NodeReference) and isinstance(
-                        p, pad.PropertyPad
-                    ):
-                        self._resolve_node_reference_property(
-                            p, p.get_value(), node_lookup
-                        )
                 if d_tcs and len(d_tcs) == 1:
                     if isinstance(d_tcs[0], pad.types.Secret):
                         d_tcs[0].options = secret_options

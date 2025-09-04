@@ -128,20 +128,37 @@ export type Primary = string;
 export type Secondary = string;
 export type Tags = string[];
 export type Nodes = NodeEditorRepresentation[];
-export type Type24 = "save_app";
-export type Id4 = string | null;
+export type Portals = Portal[] | null;
+export type Id4 = string;
 export type Name2 = string;
+export type SourceNode = string;
+export type SourcePad = string;
+/**
+ * @minItems 2
+ * @maxItems 2
+ */
+export type EditorPosition1 = [unknown, unknown];
+export type Id5 = string;
+/**
+ * @minItems 2
+ * @maxItems 2
+ */
+export type EditorPosition2 = [unknown, unknown];
+export type Ends = PortalEnd[];
+export type Type24 = "save_app";
+export type Id6 = string | null;
+export type Name3 = string;
 export type Type25 = "create_app_run";
 export type RunId = string;
 export type Type26 = "create_debug_connection";
 export type RunId1 = string;
 export type Type27 = "import_app";
-export type Id5 = string;
-export type Name3 = string;
+export type Id7 = string;
+export type Name4 = string;
 export type CreatedAt1 = string;
 export type UpdatedAt1 = string;
-export type Id6 = string;
-export type Name4 = string;
+export type Id8 = string;
+export type Name5 = string;
 export type CreatedAt2 = string;
 export type UpdatedAt2 = string;
 export type Subgraphs = RepositorySubGraph[];
@@ -183,6 +200,7 @@ export interface SaveSubgraphRequest {
 }
 export interface GraphEditorRepresentation {
   nodes: Nodes;
+  portals?: Portals;
   [k: string]: unknown;
 }
 export interface NodeEditorRepresentation {
@@ -325,10 +343,24 @@ export interface NodeMetadata {
   tags?: Tags;
   [k: string]: unknown;
 }
+export interface Portal {
+  id: Id4;
+  name: Name2;
+  source_node: SourceNode;
+  source_pad: SourcePad;
+  editor_position: EditorPosition1;
+  ends?: Ends;
+  [k: string]: unknown;
+}
+export interface PortalEnd {
+  id: Id5;
+  editor_position: EditorPosition2;
+  [k: string]: unknown;
+}
 export interface SaveAppRequest {
   type?: Type24;
-  id?: Id4;
-  name: Name2;
+  id?: Id6;
+  name: Name3;
   graph: GraphEditorRepresentation;
   [k: string]: unknown;
 }
@@ -354,16 +386,16 @@ export interface AppExport {
   [k: string]: unknown;
 }
 export interface RepositoryApp {
-  id: Id5;
-  name: Name3;
+  id: Id7;
+  name: Name4;
   created_at: CreatedAt1;
   updated_at: UpdatedAt1;
   graph: GraphEditorRepresentation;
   [k: string]: unknown;
 }
 export interface RepositorySubGraph {
-  id: Id6;
-  name: Name4;
+  id: Id8;
+  name: Name5;
   created_at: CreatedAt2;
   updated_at: UpdatedAt2;
   graph: GraphEditorRepresentation;

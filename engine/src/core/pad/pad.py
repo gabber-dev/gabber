@@ -199,6 +199,11 @@ class SourcePad(Pad, Protocol):
                 if isinstance(tc[0], NodeReference):
                     sink_pad.set_value(None)
 
+    def disconnect_all(self) -> None:
+        for np in self.get_next_pads():
+            np.set_previous_pad(None)
+        self.set_next_pads([])
+
     def can_connect(self, other: "Pad") -> bool:
         if not isinstance(other, SinkPad):
             return False

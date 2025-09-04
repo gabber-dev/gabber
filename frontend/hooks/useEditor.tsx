@@ -7,13 +7,16 @@
 
 import {
   ConnectPadEdit,
-  DisconnectPadEdit,
+  Edit,
+  EditRequest,
+  EligibleLibraryItem,
   GraphEditorRepresentation,
   GraphLibraryItem_Node,
   GraphLibraryItem_SubGraph,
   InsertNodeEdit,
   InsertSubGraphEdit,
   NodeEditorRepresentation,
+  QueryEligibleNodeLibraryItemsRequest,
   RemoveNodeEdit,
   Request,
   Response,
@@ -40,6 +43,7 @@ import React, {
 } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import toast from "react-hot-toast";
+import { v4 } from "uuid";
 
 type ReactFlowRepresentation = {
   nodes: Node<NodeEditorRepresentation>[];
@@ -71,6 +75,13 @@ type EditorContextType = {
   updatePad: (req: UpdatePadEdit) => void;
   updateNode: (req: UpdateNodeEdit) => void;
 
+  queryEligibleLibraryItems: ({
+    sourceNode,
+    sourcePad,
+  }: {
+    sourceNode: string;
+    sourcePad: string;
+  }) => Promise<EligibleLibraryItem[]>;
   clearAllSelection: () => void;
 };
 
@@ -125,6 +136,17 @@ export function EditorProvider({
     ReadyState.UNINSTANTIATED,
   );
 
+  const pendingRequests = useRef<
+    Map<
+      string,
+      {
+        resolve: (value: Response) => void;
+        reject: (reason?: Error) => void;
+        timeoutId: number;
+      }
+    >
+  >(new Map());
+
   useEffect(() => {
     if (readyState !== prevReadyState) {
       setPrevReadyState(readyState);
@@ -153,13 +175,34 @@ export function EditorProvider({
 
   const isConnected = readyState === ReadyState.OPEN;
 
+  useEffect(() => {
+    if (readyState === ReadyState.CLOSED) {
+      for (const [_, pending] of pendingRequests.current.entries()) {
+        clearTimeout(pending.timeoutId);
+        pending.reject(new Error("WebSocket connection closed"));
+      }
+      pendingRequests.current.clear();
+    }
+  }, [readyState]);
+
   const sendRequest = useCallback(
     (request: Request) => {
-      if (isConnected) {
-        sendMessage(JSON.stringify(request));
-      } else {
+      if (!isConnected) {
         console.warn("WebSocket is not connected. Cannot send request.");
+        return Promise.reject(new Error("WebSocket not connected"));
       }
+      if (!request.req_id) {
+        request.req_id = v4();
+      }
+      const req_id = request.req_id;
+      sendMessage(JSON.stringify(request));
+      return new Promise<Response>((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          pendingRequests.current.delete(req_id);
+          reject(new Error("Request timed out after 5 seconds"));
+        }, 5000) as unknown as number;
+        pendingRequests.current.set(req_id, { resolve, reject, timeoutId });
+      });
     },
     [isConnected, sendMessage],
   );
@@ -168,7 +211,8 @@ export function EditorProvider({
     (edit: InsertNodeEdit) => {
       sendRequest({
         type: "edit",
-        edit,
+        edits: [edit],
+        req_id: v4(),
       });
     },
     [sendRequest],
@@ -178,7 +222,8 @@ export function EditorProvider({
     (edit: InsertSubGraphEdit) => {
       sendRequest({
         type: "edit",
-        edit,
+        edits: [edit],
+        req_id: v4(),
       });
     },
     [sendRequest],
@@ -188,7 +233,8 @@ export function EditorProvider({
     (edit: RemoveNodeEdit) => {
       sendRequest({
         type: "edit",
-        edit,
+        edits: [edit],
+        req_id: v4(),
       });
     },
     [sendRequest],
@@ -198,8 +244,23 @@ export function EditorProvider({
     (edit: ConnectPadEdit) => {
       sendRequest({
         type: "edit",
-        edit,
+        edits: [edit],
+        req_id: v4(),
       });
+    },
+    [sendRequest],
+  );
+
+  const queryEligibleLibraryItems = useCallback(
+    async (params: { sourceNode: string; sourcePad: string }) => {
+      const req: QueryEligibleNodeLibraryItemsRequest = {
+        source_node: params.sourceNode,
+        source_pad: params.sourcePad,
+        req_id: v4(),
+        type: "query_eligible_node_library_items",
+      };
+      const resp = await sendRequest(req);
+      return resp.direct_eligible_items as EligibleLibraryItem[];
     },
     [sendRequest],
   );
@@ -256,12 +317,13 @@ export function EditorProvider({
         if (pendingEdit) {
           sendRequest({
             type: "edit",
-            edit: pendingEdit,
+            edits: [pendingEdit],
+            req_id: v4(),
           });
           pendingEdits.current.delete(key);
         }
         debounceTimers.current.delete(key);
-      }, 175) as unknown as number;
+      }, 250) as unknown as number;
 
       debounceTimers.current.set(key, timer);
     },
@@ -288,7 +350,8 @@ export function EditorProvider({
     (edit: UpdateNodeEdit) => {
       sendRequest({
         type: "edit",
-        edit,
+        edits: [edit],
+        req_id: v4(),
       });
 
       // Update selection state if node ID is changing
@@ -337,9 +400,10 @@ export function EditorProvider({
       sendRequest({
         type: "load_from_snapshot",
         graph: localRepresentation,
+        req_id: v4(),
       });
 
-      sendRequest({ type: "get_node_library" });
+      sendRequest({ type: "get_node_library", req_id: v4() });
     }
   }, [localRepresentation, prevReadyState, readyState, sendRequest]);
 
@@ -347,11 +411,25 @@ export function EditorProvider({
     if (!lastJsonMessage) return;
 
     try {
-      const resp = (lastJsonMessage as Response).response;
+      const resp = lastJsonMessage as Response;
+      const req_id = resp.req_id || "";
+
       if (resp.type === "node_library") {
         setNodeLibrary(resp.node_library || []);
-      } else if (resp.type === "full_graph") {
+      } else if (resp.type === "load_from_snapshot") {
         setLocalRepresentation(resp.graph);
+      } else if (resp.type === "edit") {
+        setLocalRepresentation(resp.graph);
+      } else if (resp.type === "query_eligible_node_library_items") {
+        // No global state update needed for per-query responses
+      }
+
+      const pending = pendingRequests.current.get(req_id);
+      console.log("NEIL pending request", pending, req_id, resp);
+      if (pending) {
+        clearTimeout(pending.timeoutId);
+        pendingRequests.current.delete(req_id);
+        pending.resolve(resp);
       }
     } catch (error) {
       console.error(
@@ -369,7 +447,7 @@ export function EditorProvider({
         console.warn("No previous representation available");
         return;
       }
-      const requests: Request[] = [];
+      const edits: Edit[] = [];
       for (const change of changes) {
         if (change.type === "position") {
           reactFlowRepresentation.nodes = applyNodeChanges(
@@ -378,15 +456,14 @@ export function EditorProvider({
           );
 
           if (!change.dragging) {
-            const edit: UpdateNodeEdit = {
+            edits.push({
               type: "update_node",
               id: change.id,
               editor_name: null,
               new_id: null,
               editor_position: [change.position?.x, change.position?.y],
               editor_dimensions: null,
-            };
-            requests.push({ type: "edit", edit });
+            });
           }
           setReactFlowRepresentation((prev) => ({
             ...prev,
@@ -399,12 +476,9 @@ export function EditorProvider({
           });
         } else if (change.type === "remove") {
           const nodeId = change.id;
-          requests.push({
-            type: "edit",
-            edit: {
-              type: "remove_node",
-              node_id: nodeId,
-            } as RemoveNodeEdit,
+          edits.push({
+            type: "remove_node",
+            node_id: nodeId,
           });
           prev.nodes = prev.nodes.filter((n) => n.id !== nodeId);
         } else if (change.type === "add") {
@@ -433,7 +507,7 @@ export function EditorProvider({
             editor_position: null,
             editor_dimensions: [newDims.width, newDims.height],
           };
-          requests.push({ type: "edit", edit });
+          edits.push(edit);
           for (const node of prev?.nodes || []) {
             if (node.id === nodeId) {
               node.editor_dimensions = [newDims?.width, newDims?.height];
@@ -441,7 +515,12 @@ export function EditorProvider({
           }
         }
       }
-      for (const req of requests) {
+      if (edits.length > 0) {
+        const req: EditRequest = {
+          type: "edit",
+          edits,
+          req_id: v4(),
+        };
         sendRequest(req);
       }
     },
@@ -456,7 +535,7 @@ export function EditorProvider({
         console.warn("No previous representation available");
         return;
       }
-      const requests: Request[] = [];
+      const edits: Edit[] = [];
       for (const change of changes) {
         if (change.type === "select") {
           setReactFlowRepresentation((prev) => {
@@ -487,15 +566,12 @@ export function EditorProvider({
           }
           targetPad.previous_pad = null;
 
-          requests.push({
-            type: "edit",
-            edit: {
-              type: "disconnect_pad",
-              node: sourceNodeId,
-              pad: sourcePadId,
-              connected_node: targetNodeId,
-              connected_pad: targetPadId,
-            } as DisconnectPadEdit,
+          edits.push({
+            type: "disconnect_pad",
+            node: sourceNodeId,
+            pad: sourcePadId,
+            connected_node: targetNodeId,
+            connected_pad: targetPadId,
           });
         } else if (change.type === "add") {
         }
@@ -503,8 +579,8 @@ export function EditorProvider({
       if (dirty) {
         setLocalRepresentation({ ...prev });
       }
-      for (const req of requests) {
-        sendRequest(req);
+      for (const e of edits) {
+        sendRequest({ type: "edit", edits: [e], req_id: v4() });
       }
     },
     [localRepresentation, sendRequest],
@@ -519,7 +595,7 @@ export function EditorProvider({
         connected_node: connection.target || "ERROR",
         connected_pad: connection.targetHandle || "ERROR",
       };
-      sendRequest({ type: "edit", edit });
+      sendRequest({ type: "edit", edits: [edit], req_id: v4() });
     },
     [sendRequest],
   );
@@ -573,6 +649,7 @@ export function EditorProvider({
         updateNode,
         clearAllSelection,
         setStateMachineEditing,
+        queryEligibleLibraryItems,
       }}
     >
       {children}
