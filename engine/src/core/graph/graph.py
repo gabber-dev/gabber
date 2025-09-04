@@ -235,6 +235,8 @@ class Graph:
         for n in connected_nodes:
             n.resolve_pads()
 
+        self.portals = [p for p in self.portals if p.source_node != node_to_remove]
+
     async def _handle_connect_pad(self, edit: ConnectPadEdit):
         source_node = next((n for n in self.nodes if n.id == edit.node), None)
         target_node = next((n for n in self.nodes if n.id == edit.connected_node), None)
@@ -334,7 +336,6 @@ class Graph:
         portal = next((p for p in self.portals if p.id == edit.portal_id), None)
         if not portal:
             raise ValueError(f"Portal with ID {edit.portal_id} not found.")
-        logging.info("NEIL portal ends before delete: %s", portal.ends)
         portal_end = next((e for e in portal.ends if e.id == edit.portal_end_id), None)
         if not portal_end:
             raise ValueError(f"Portal end with ID {edit.portal_end_id} not found.")

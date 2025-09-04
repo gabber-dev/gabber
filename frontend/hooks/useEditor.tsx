@@ -517,7 +517,6 @@ export function EditorProvider({
       }
 
       const pending = pendingRequests.current.get(req_id);
-      console.log("NEIL pending request", pending, req_id, resp);
       if (pending) {
         clearTimeout(pending.timeoutId);
         pendingRequests.current.delete(req_id);
@@ -988,8 +987,6 @@ function graphToReact(
       },
     };
     portalStarts.push(startNode);
-
-    console.log("NEIL portal", portal, sourceNode, sourcePad);
 
     for (const pe of portal.ends || []) {
       for (const np of pe.next_pads || []) {

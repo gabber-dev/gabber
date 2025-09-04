@@ -25,16 +25,22 @@ export interface BaseBlockProps {
 
 export function PortalStart({ data }: BaseBlockProps) {
   const { portal, dataColor, sourcePad } = data;
-  const { createPortalEnd } = useEditor();
+  const { createPortalEnd, portalHighlights, highlightPortal } = useEditor();
+
+  const isHighlighted = portalHighlights.portal === portal.id;
+
   return (
     <div
       className="w-8 h-8 rounded-full relative group"
-      style={{
-        background: dataColor.background,
-      }}
+      style={{ background: dataColor.background }}
+      onMouseEnter={() => highlightPortal(portal.id)}
+      onMouseLeave={() => highlightPortal(undefined)}
     >
+      {isHighlighted && (
+        <div className="absolute inset-0 rounded-full border-dashed border-4 -left-2 -top-2 -bottom-2 -right-2 pointer-events-none transition-all duration-200 ease-in-out animate-[spin_3s_linear_infinite]" />
+      )}
       <Handle
-        id={"target"}
+        id="target"
         type="target"
         position={Position.Left}
         style={{
