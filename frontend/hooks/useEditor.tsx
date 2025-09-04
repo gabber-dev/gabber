@@ -58,7 +58,6 @@ import {
   getDataTypeColor,
   getPrimaryDataType,
 } from "@/components/flow/blocks/components/pads/utils/dataTypeColors";
-import next from "next";
 
 type ReactFlowRepresentation = {
   nodes: Node[];
@@ -76,6 +75,8 @@ type EditorContextType = {
   unsavedChanges: boolean;
   saving: boolean;
   stateMachineEditing?: string;
+  portalHighlights: { portal: string; portalEnds: Set<string> };
+  highlightPortal: (portalId: string | undefined) => void;
   setStateMachineEditing: (stateMachineId: string | undefined) => void;
   saveChanges: () => Promise<void>;
 
@@ -138,6 +139,10 @@ export function EditorProvider({
     edges: [],
   });
   const [stateMachineEditing, setStateMachineEditing] = useState<
+    string | undefined
+  >(undefined);
+
+  const [highlightedPortal, setHighlightedPortal] = useState<
     string | undefined
   >(undefined);
 
@@ -355,7 +360,6 @@ export function EditorProvider({
 
   const pendingEdits = useRef<Map<string, UpdatePadEdit>>(new Map());
   const debounceTimers = useRef<Map<string, number>>(new Map());
-
   const updatePad = useCallback(
     (edit: UpdatePadEdit) => {
       const key = `${edit.node}-${edit.pad}`;
@@ -871,6 +875,21 @@ export function EditorProvider({
     }
   }, [localRepresentation, saveImpl, saving]);
 
+  const portalHighlights = useMemo(() => {
+    const ends = new Set<string>();
+    if (highlightedPortal) {
+      for (const p of localRepresentation?.portals || []) {
+        if (p.id === highlightedPortal) {
+          for (const pe of p.ends || []) {
+            ends.add(pe.id || "");
+          }
+          break;
+        }
+      }
+    }
+    return { portal: highlightedPortal || "", portalEnds: ends };
+  }, [highlightedPortal, localRepresentation]);
+
   return (
     <EditorContext.Provider
       value={{
@@ -883,6 +902,7 @@ export function EditorProvider({
         saving,
         debug,
         stateMachineEditing,
+        portalHighlights,
         saveChanges,
         onReactFlowConnect,
         onReactFlowNodesChange,
@@ -899,6 +919,7 @@ export function EditorProvider({
         deletePortalEnd,
         updatePortal,
         updatePortalEnd,
+        highlightPortal: setHighlightedPortal,
         clearAllSelection,
         setStateMachineEditing,
         queryEligibleLibraryItems,
