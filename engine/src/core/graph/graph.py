@@ -46,6 +46,7 @@ class Graph:
         self.library_items = library_items
 
         self.nodes: list[Node] = []
+        self.portals: list[models.Portal] = []
 
         self.virtual_nodes: list[tuple[Node, GraphLibraryItem]] = []
 
@@ -108,6 +109,20 @@ class Graph:
                 await self._handle_disconnect_pad(request)
             elif request.type == EditType.UPDATE_PAD:
                 await self._handle_update_pad(request)
+            elif request.type == EditType.CREATE_PORTAL:
+                await self._handle_create_portal(request)
+            elif request.type == EditType.CREATE_PORTAL_END:
+                await self._handle_create_portal_end(request)
+            elif request.type == EditType.DELETE_PORTAL:
+                await self._handle_delete_portal(request)
+            elif request.type == EditType.DELETE_PORTAL_END:
+                await self._handle_delete_portal_end(request)
+            elif request.type == EditType.UPDATE_PORTAL:
+                await self._handle_update_portal(request)
+            elif request.type == EditType.UPDATE_PORTAL_END:
+                await self._handle_update_portal_end(request)
+            else:
+                logging.warning(f"Unknown edit type: {request.type}")
 
         except Exception as e:
             logging.error(
@@ -220,6 +235,8 @@ class Graph:
         for n in connected_nodes:
             n.resolve_pads()
 
+        self.portals = [p for p in self.portals if p.source_node != node_to_remove]
+
     async def _handle_connect_pad(self, edit: ConnectPadEdit):
         source_node = next((n for n in self.nodes if n.id == edit.node), None)
         target_node = next((n for n in self.nodes if n.id == edit.connected_node), None)
@@ -261,6 +278,9 @@ class Graph:
         if not isinstance(target_pad, pad.SinkPad):
             raise ValueError("Target pad is not a sink pad type.")
 
+        logging.info(
+            f"Disconnecting pads: {source_node.id}.{source_pad.get_id()} -> {target_node.id}.{target_pad.get_id()}"
+        )
         source_pad.disconnect(target_pad)
         source_node.resolve_pads()
         target_node.resolve_pads()
@@ -284,6 +304,87 @@ class Graph:
         for node in self.nodes:
             node.resolve_pads()
 
+    async def _handle_create_portal(self, edit: models.CreatePortalEdit):
+        portal = models.Portal(
+            id=f"portal_{short_uuid()}",
+            name=f"{edit.source_node}:{edit.source_pad}",
+            editor_position=edit.editor_position,
+            ends=[],
+            source_node=edit.source_node,
+            source_pad=edit.source_pad,
+        )
+        self.portals.append(portal)
+
+    async def _handle_create_portal_end(self, edit: models.CreatePortalEndEdit):
+        portal = next((p for p in self.portals if p.id == edit.portal_id), None)
+        if not portal:
+            raise ValueError(f"Portal with ID {edit.portal_id} not found.")
+        portal_end = models.PortalEnd(
+            id=f"portal_end_{short_uuid()}",
+            editor_position=edit.editor_position,
+            next_pads=[],
+        )
+        portal.ends.append(portal_end)
+
+    async def _handle_delete_portal(self, edit: models.DeletePortalEdit):
+        portal = next((p for p in self.portals if p.id == edit.portal_id), None)
+        if not portal:
+            raise ValueError(f"Portal with ID {edit.portal_id} not found.")
+        self.portals = [p for p in self.portals if p.id != edit.portal_id]
+
+    async def _handle_delete_portal_end(self, edit: models.DeletePortalEndEdit):
+        portal = next((p for p in self.portals if p.id == edit.portal_id), None)
+        if not portal:
+            raise ValueError(f"Portal with ID {edit.portal_id} not found.")
+        portal_end = next((e for e in portal.ends if e.id == edit.portal_end_id), None)
+        if not portal_end:
+            raise ValueError(f"Portal end with ID {edit.portal_end_id} not found.")
+
+        portal.ends = [e for e in portal.ends if e.id != edit.portal_end_id]
+        nps = portal_end.next_pads
+        source_node = next((n for n in self.nodes if n.id == portal.source_node), None)
+        if not source_node:
+            logging.warning(
+                f"Source node with ID {portal.source_node} not found when deleting portal end."
+            )
+            return
+
+        for np in nps:
+            target_node = next((n for n in self.nodes if n.id == np.node), None)
+            if not target_node:
+                logging.warning(
+                    f"Target node with ID {np.node} not found when deleting portal end."
+                )
+                continue
+            target_pad = cast(pad.SinkPad, target_node.get_pad(np.pad))
+            if not target_pad:
+                logging.warning(
+                    f"Target pad with ID {np.pad} not found in node {np.node} when deleting portal end."
+                )
+                continue
+
+            target_pad.disconnect()
+
+            target_node.resolve_pads()
+
+        source_node.resolve_pads()
+
+    async def _handle_update_portal(self, edit: models.UpdatePortalEdit):
+        portal = next((p for p in self.portals if p.id == edit.portal_id), None)
+        if not portal:
+            raise ValueError(f"Portal with ID {edit.portal_id} not found.")
+        portal.editor_position = edit.editor_position
+
+    async def _handle_update_portal_end(self, edit: models.UpdatePortalEndEdit):
+        portal = next((p for p in self.portals if p.id == edit.portal_id), None)
+        if not portal:
+            raise ValueError(f"Portal with ID {edit.portal_id} not found.")
+        portal_end = next((e for e in portal.ends if e.id == edit.portal_end_id), None)
+        if not portal_end:
+            raise ValueError(f"Portal end with ID {edit.portal_end_id} not found.")
+        portal_end.editor_position = edit.editor_position
+        portal_end.next_pads = edit.next_pads
+
     def to_editor(self):
         nodes: list[models.NodeEditorRepresentation] = []
         for node in self.nodes:
@@ -293,7 +394,7 @@ class Graph:
             except Exception as e:
                 logging.error(f"Error serializing node {node.id}: {e}", exc_info=e)
                 continue
-        return models.GraphEditorRepresentation(nodes=nodes)
+        return models.GraphEditorRepresentation(nodes=nodes, portals=self.portals)
 
     async def load_from_snapshot(self, snapshot: messages.GraphEditorRepresentation):
         self.nodes = []
@@ -445,6 +546,9 @@ class Graph:
                 if d_tcs and len(d_tcs) == 1:
                     if isinstance(d_tcs[0], pad.types.Secret):
                         d_tcs[0].options = secret_options
+
+        if snapshot.portals:
+            self.portals = snapshot.portals
 
     def _resolve_node_reference_property(
         self, p: pad.PropertyPad, v: str, nodes: dict[str, Node]

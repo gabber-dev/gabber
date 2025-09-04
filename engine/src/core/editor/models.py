@@ -19,7 +19,9 @@ class EditType(str, Enum):
     DISCONNECT_PAD = "disconnect_pad"
     UPDATE_PAD = "update_pad"
     CREATE_PORTAL = "create_portal"
-    ADD_PORTAL_END = "add_portal_end"
+    CREATE_PORTAL_END = "create_portal_end"
+    DELETE_PORTAL = "delete_portal"
+    DELETE_PORTAL_END = "delete_portal_end"
     UPDATE_PORTAL = "update_portal"
     UPDATE_PORTAL_END = "update_portal_end"
 
@@ -86,8 +88,8 @@ class CreatePortalEdit(BaseModel):
     editor_position: tuple[float, float]
 
 
-class AddPortalEndEdit(BaseModel):
-    type: Literal[EditType.ADD_PORTAL_END] = EditType.ADD_PORTAL_END
+class CreatePortalEndEdit(BaseModel):
+    type: Literal[EditType.CREATE_PORTAL_END] = EditType.CREATE_PORTAL_END
     portal_id: str
     editor_position: tuple[float, float]
 
@@ -103,6 +105,18 @@ class UpdatePortalEndEdit(BaseModel):
     portal_id: str
     portal_end_id: str
     editor_position: tuple[float, float]
+    next_pads: list["PadReference"]
+
+
+class DeletePortalEdit(BaseModel):
+    type: Literal[EditType.DELETE_PORTAL] = EditType.DELETE_PORTAL
+    portal_id: str
+
+
+class DeletePortalEndEdit(BaseModel):
+    type: Literal[EditType.DELETE_PORTAL_END] = EditType.DELETE_PORTAL_END
+    portal_id: str
+    portal_end_id: str
 
 
 Edit = Annotated[
@@ -114,7 +128,9 @@ Edit = Annotated[
     | DisconnectPadEdit
     | UpdatePadEdit
     | CreatePortalEdit
-    | AddPortalEndEdit
+    | CreatePortalEndEdit
+    | DeletePortalEdit
+    | DeletePortalEndEdit
     | UpdatePortalEdit
     | UpdatePortalEndEdit,
     Field(
@@ -198,18 +214,19 @@ class NodeEditorRepresentation(BaseModel):
     metadata: NodeMetadata
 
 
+class PortalEnd(BaseModel):
+    id: str
+    editor_position: tuple[float, float]
+    next_pads: list[PadReference]
+
+
 class Portal(BaseModel):
     id: str
     name: str
     source_node: str
     source_pad: str
     editor_position: tuple[float, float]
-    ends: list["PortalEnd"] = []
-
-
-class PortalEnd(BaseModel):
-    id: str
-    editor_position: tuple[float, float]
+    ends: list[PortalEnd] = []
 
 
 class EligibleLibraryItem(BaseModel):

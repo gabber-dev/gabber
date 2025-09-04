@@ -3,14 +3,12 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   ReactFlow,
   Background,
   BackgroundVariant,
   ReactFlowProvider,
-  Node,
-  Edge,
   useReactFlow,
   FinalConnectionState,
 } from "@xyflow/react";
@@ -26,14 +24,20 @@ import { NodeLibrary } from "./NodeLibrary";
 import { HybridEdge } from "./edges/HybridEdge";
 import { CustomConnectionLine } from "./edges/CustomConnectionLine";
 
-import { getPrimaryDataType } from "./blocks/components/pads/utils/dataTypeColors";
 import ReactModal from "react-modal";
 import { StateMachineGraphEdit } from "../state_machine/StateMachineGraphEdit";
 import { StateMachineProvider } from "../state_machine/useStateMachine";
 import { usePathname } from "next/navigation";
 import toast from "react-hot-toast";
 import { exportApp } from "@/lib/repository";
-import { QuickAddModal } from "./quick_add/QuickAddModal";
+import { QuickAddModal, QuickAddProps } from "./quick_add/QuickAddModal";
+import { PortalStart } from "./blocks/PortalStart";
+import { PortalEnd as PortalEndComponent } from "./blocks/PortalEnd";
+import {
+  NodeEditorRepresentation,
+  PadEditorRepresentation,
+  PortalEnd,
+} from "@/generated/editor";
 
 const edgeTypes = {
   hybrid: HybridEdge,
@@ -67,36 +71,11 @@ function FlowEditInner({ editable }: Props) {
   const isRunning =
     connectionState === "connected" || connectionState === "connecting";
   const { screenToFlowPosition } = useReactFlow();
-  const [quickAdd, setQuickAdd] = useState<
-    | {
-        source_node: string;
-        source_pad: string;
-        add_position: { x: number; y: number };
-      }
-    | undefined
-  >(undefined);
+  const [quickAdd, setQuickAdd] = useState<QuickAddProps | undefined>(
+    undefined,
+  );
 
   const [isNodeLibraryOpen, setIsNodeLibraryOpen] = useState(false);
-
-  const styledEdges = useMemo(() => {
-    return reactFlowRepresentation.edges.map((edge: Edge) => {
-      const sourceNode = reactFlowRepresentation.nodes.find(
-        (node: Node) => node.id === edge.source,
-      );
-      const sourcePad = sourceNode?.data.pads.find(
-        (pad) => pad.id === edge.sourceHandle,
-      );
-      const dataType = getPrimaryDataType(sourcePad?.allowed_types || []);
-      return {
-        ...edge,
-        type: "hybrid",
-        data: {
-          ...edge.data,
-          dataType,
-        },
-      };
-    });
-  }, [reactFlowRepresentation.edges, reactFlowRepresentation.nodes]);
 
   const onConnectEnd = useCallback(
     (event: MouseEvent | TouchEvent, connectionState: FinalConnectionState) => {
@@ -107,11 +86,27 @@ function FlowEditInner({ editable }: Props) {
           x: clientX,
           y: clientY,
         });
-        setQuickAdd({
-          source_node: connectionState.fromNode?.id || "",
-          source_pad: connectionState.fromHandle?.id || "",
-          add_position: position,
-        });
+        if (connectionState.fromNode?.type === "node") {
+          setQuickAdd({
+            sourceNode: connectionState.fromNode?.id || "",
+            sourcePad: connectionState.fromHandle?.id || "",
+            addPosition: position,
+            close: () => setQuickAdd(undefined),
+          });
+        } else if (connectionState.fromNode?.type === "portal_end") {
+          const { data } = connectionState.fromNode || {};
+          const { sourceNode, sourcePad } = data || {};
+          setQuickAdd({
+            sourceNode: (sourceNode as NodeEditorRepresentation).id || "",
+            sourcePad: (sourcePad as PadEditorRepresentation).id || "",
+            addPosition: position,
+            close: () => setQuickAdd(undefined),
+            portalInfo: {
+              portalId: data.sourcePortalId as string,
+              portalEnd: data.portalEnd as PortalEnd,
+            },
+          });
+        }
       }
     },
     [screenToFlowPosition],
@@ -119,6 +114,7 @@ function FlowEditInner({ editable }: Props) {
 
   return (
     <div className="relative w-full h-full flex flex-col">
+      <div ref={(el) => ReactModal.setAppElement(el as HTMLDivElement)} />
       {editable && (
         <div className="absolute top-2 right-2 flex z-10 gap-2">
           <ExportButton />
@@ -154,8 +150,8 @@ function FlowEditInner({ editable }: Props) {
         <FlowErrorBoundary>
           <ReactFlow
             className=""
-            nodes={reactFlowRepresentation.nodes as Node[]}
-            edges={styledEdges as Edge[]}
+            nodes={reactFlowRepresentation.nodes}
+            edges={reactFlowRepresentation.edges}
             onNodesChange={(changes) => {
               // Close node library if a node is selected
               const selectionChange = changes.find(
@@ -172,7 +168,11 @@ function FlowEditInner({ editable }: Props) {
             edgeTypes={edgeTypes}
             connectionLineComponent={CustomConnectionLine}
             fitView
-            nodeTypes={{ default: BaseBlock }}
+            nodeTypes={{
+              node: BaseBlock,
+              portal_start: PortalStart,
+              portal_end: PortalEndComponent,
+            }}
             snapGrid={[12, 12]}
             snapToGrid={true}
             defaultEdgeOptions={{
@@ -213,17 +213,10 @@ function FlowEditInner({ editable }: Props) {
         isOpen={Boolean(quickAdd)}
         onRequestClose={() => setQuickAdd(undefined)}
         overlayClassName="fixed top-0 bottom-0 left-0 right-0 backdrop-blur-xs bg-blur flex justify-center items-center z-11"
-        className="bg-base-200 rounded-lg shadow-lg outline-none p-4 h-2/3 w-100"
+        className="bg-base-200 rounded-lg overflow-hidden shadow-lg outline-none h-2/3 w-100"
         shouldCloseOnOverlayClick={true}
       >
-        <QuickAddModal
-          sourceNode={quickAdd?.source_node || ""}
-          sourcePad={quickAdd?.source_pad || ""}
-          addPosition={quickAdd?.add_position || { x: 0, y: 0 }}
-          close={() => {
-            setQuickAdd(undefined);
-          }}
-        />
+        {quickAdd && <QuickAddModal {...quickAdd} />}
       </ReactModal>
     </div>
   );

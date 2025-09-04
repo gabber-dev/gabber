@@ -79,9 +79,6 @@ class EnumSwitchProperty(Node):
             (p for p in value_pads if p.get_id() == str(sink_pad.get_value())), None
         )
         if not vp:
-            logging.warning(
-                f"EnumSwitchProperty: No value pad found for sink value {sink_pad.get_value()}"
-            )
             return None
         else:
             return vp.get_value()

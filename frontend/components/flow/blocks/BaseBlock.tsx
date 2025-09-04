@@ -4,7 +4,7 @@
  */
 
 import { NodeEditorRepresentation } from "@/generated/editor";
-import { useMemo, useCallback } from "react";
+import { useMemo } from "react";
 import { StatelessPad } from "./components/pads/StatelessPad";
 import { PropertyPad } from "./components/pads/PropertyPad";
 import { CubeIcon } from "@heroicons/react/24/outline";

@@ -1,13 +1,17 @@
-import { EligibleLibraryItem } from "@/generated/editor";
+import { EligibleLibraryItem, PortalEnd } from "@/generated/editor";
 import { useEditor } from "@/hooks/useEditor";
-import { it } from "node:test";
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { v4 } from "uuid";
 
-type Props = {
+type PortalInfo = {
+  portalId: string;
+  portalEnd: PortalEnd;
+};
+export type QuickAddProps = {
   sourceNode: string;
   sourcePad: string;
+  portalInfo?: PortalInfo;
   addPosition: { x: number; y: number };
   close: () => void;
 };
@@ -15,9 +19,10 @@ export function QuickAddModal({
   sourceNode,
   sourcePad,
   addPosition,
+  portalInfo,
   close,
-}: Props) {
-  const { queryEligibleLibraryItems, addLibraryItem } = useEditor();
+}: QuickAddProps) {
+  const { queryEligibleLibraryItems } = useEditor();
   const [eligibleItems, setEligibleItems] = useState<
     EligibleLibraryItem[] | undefined
   >(undefined);
@@ -69,7 +74,16 @@ export function QuickAddModal({
     ) || [];
 
   return (
-    <div className="flex flex-col h-full w-full">
+    <div className="flex flex-col h-full w-full p-2">
+      <div className="w-full flex items-center justify-center">
+        <CreatePortalButton
+          addPosition={addPosition}
+          fromNodeId={sourceNode}
+          fromPadId={sourcePad}
+          close={close}
+        />
+      </div>
+      <div className="divider">Eligible Nodes</div>
       <div>
         <button
           className="btn btn-sm btn-circle absolute right-2 top-2"
@@ -77,9 +91,6 @@ export function QuickAddModal({
         >
           ✕
         </button>
-        <h2 className="text-lg font-bold">Quick Add</h2>
-        <p className="text-sm">Source Node: {sourceNode}</p>
-        <p className="text-sm mb-4">Source Pad: {sourcePad}</p>
         <input
           ref={inputRef}
           type="text"
@@ -103,6 +114,7 @@ export function QuickAddModal({
                   sourceNodeId={sourceNode}
                   sourcePadId={sourcePad}
                   addPosition={addPosition}
+                  portalInfo={portalInfo}
                   close={close}
                 />
               </li>
@@ -119,6 +131,7 @@ type EligibleItemProps = {
   sourceNodeId: string;
   sourcePadId: string;
   addPosition: { x: number; y: number };
+  portalInfo?: PortalInfo;
   close: () => void;
 };
 
@@ -127,9 +140,10 @@ function EligibleItem({
   sourceNodeId,
   sourcePadId,
   addPosition,
+  portalInfo,
   close,
 }: EligibleItemProps) {
-  const { insertNode, connectPad } = useEditor();
+  const { insertNode, connectPad, updatePortalEnd } = useEditor();
   return (
     <div>
       <div className="flex items-center">
@@ -161,6 +175,18 @@ function EligibleItem({
                   connected_node: id,
                   connected_pad: pad.id,
                 });
+                if (portalInfo) {
+                  updatePortalEnd({
+                    type: "update_portal_end",
+                    portal_id: portalInfo.portalId,
+                    portal_end_id: portalInfo.portalEnd.id,
+                    next_pads: [
+                      ...portalInfo.portalEnd.next_pads,
+                      { node: id, pad: pad.id },
+                    ],
+                    editor_position: portalInfo.portalEnd.editor_position,
+                  });
+                }
                 close();
               }
             }}
@@ -171,5 +197,35 @@ function EligibleItem({
         ))}
       </div>
     </div>
+  );
+}
+
+function CreatePortalButton({
+  addPosition,
+  fromNodeId,
+  fromPadId,
+  close,
+}: {
+  addPosition: { x: number; y: number };
+  fromNodeId: string;
+  fromPadId: string;
+  close: () => void;
+}) {
+  const { createPortal } = useEditor();
+  return (
+    <button
+      onClick={() => {
+        createPortal({
+          editor_position: [addPosition?.x || 0, addPosition?.y || 0],
+          source_node: fromNodeId,
+          source_pad: fromPadId,
+          type: "create_portal",
+        });
+        close();
+      }}
+      className="btn btn-primary btn-sm gap-2"
+    >
+      Create Portal
+    </button>
   );
 }
