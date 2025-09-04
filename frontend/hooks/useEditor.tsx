@@ -11,6 +11,7 @@ import {
   CreatePortalEndEdit,
   DeletePortalEdit,
   DeletePortalEndEdit,
+  DisconnectPadEdit,
   Edit,
   EditRequest,
   EligibleLibraryItem,
@@ -57,6 +58,7 @@ import {
   getDataTypeColor,
   getPrimaryDataType,
 } from "@/components/flow/blocks/components/pads/utils/dataTypeColors";
+import next from "next";
 
 type ReactFlowRepresentation = {
   nodes: Node[];
@@ -702,36 +704,73 @@ export function EditorProvider({
           });
         } else if (change.type === "remove") {
           const fullId = change.id;
-          const [sourceNodeId, sourcePadId, targetNodeId, targetPadId] =
-            fullId.split("-");
-
-          dirty = true;
-          const sourceNode = prev?.nodes.find((n) => n.id === sourceNodeId);
-          const sourcePad = sourceNode?.pads?.find((p) => p.id === sourcePadId);
-          if (!sourcePad) {
-            console.warn("Source pad not found for edge removal:", fullId);
-            continue;
-          }
-          sourcePad.next_pads = sourcePad?.next_pads?.filter(
-            (p) => p.node !== targetNodeId || p.pad !== targetPadId,
+          const edge = reactFlowRepresentation.edges.find(
+            (e) => e.id === fullId,
+          );
+          const sourceNodeRf = reactFlowRepresentation.nodes.find(
+            (n) => n.id === edge?.source,
+          );
+          const targetNodeRf = reactFlowRepresentation.nodes.find(
+            (n) => n.id === edge?.target,
           );
 
-          const targetNode = prev?.nodes.find((n) => n.id === targetNodeId);
-          const targetPad = targetNode?.pads?.find((p) => p.id === targetPadId);
-          if (!targetPad) {
-            console.warn("Target pad not found for edge removal:", fullId);
+          if (!sourceNodeRf || !targetNodeRf) {
+            console.warn(
+              "Could not find nodes or pads for edge removal:",
+              fullId,
+            );
             continue;
           }
-          targetPad.previous_pad = null;
 
-          if (sourceNode?.type === "node" && targetNode?.type === "node") {
+          dirty = true;
+
+          if (sourceNodeRf?.type === "node" && targetNodeRf?.type === "node") {
+            console.log("NEIL Disconnecting pads", {
+              sourceNodeRf,
+              targetNodeRf,
+            });
             edits.push({
+              type: "disconnect_pad",
+              node: sourceNodeRf.id,
+              pad: edge?.sourceHandle || "",
+              connected_node: targetNodeRf.id,
+              connected_pad: edge?.targetHandle || "",
+            });
+          } else if (
+            sourceNodeRf?.type === "node" &&
+            targetNodeRf?.type === "portal_start"
+          ) {
+            edits.push({
+              type: "delete_portal",
+              portal_id: targetNodeRf.id,
+            });
+          } else if (
+            sourceNodeRf?.type === "portal_end" &&
+            targetNodeRf?.type === "node"
+          ) {
+            const updatePortalEnd: UpdatePortalEndEdit = {
+              type: "update_portal_end",
+              portal_id: sourceNodeRf.data.sourcePortalId as string,
+              portal_end_id: (sourceNodeRf.data.portalEnd as PortalEnd)
+                .id as string,
+              next_pads: (
+                sourceNodeRf.data.portalEnd as PortalEnd
+              ).next_pads.filter(
+                (p: { node: string; pad: string }) =>
+                  p.node !== targetNodeId || p.pad !== targetPadId,
+              ),
+              editor_position: (sourceNodeRf.data.portalEnd as PortalEnd)
+                .editor_position,
+            };
+            const disconnectEdit: DisconnectPadEdit = {
               type: "disconnect_pad",
               node: sourceNodeId,
               pad: sourcePadId,
               connected_node: targetNodeId,
               connected_pad: targetPadId,
-            });
+            };
+            // edits.push(updatePortalEnd);
+            // edits.push(disconnectEdit);
           }
         } else if (change.type === "add") {
         }
@@ -743,7 +782,7 @@ export function EditorProvider({
         sendRequest({ type: "edit", edits: [e], req_id: v4() });
       }
     },
-    [localRepresentation, sendRequest],
+    [localRepresentation, reactFlowRepresentation.nodes, sendRequest],
   );
 
   const onReactFlowConnect = useCallback(
