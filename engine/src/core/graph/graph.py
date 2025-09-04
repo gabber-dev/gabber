@@ -418,8 +418,6 @@ class Graph:
         for n in self.nodes:
             for p in n.pads:
                 tcs = p.get_type_constraints()
-                if p.get_id() == "self":
-                    logging.info("NEIL self pad %s", tcs)
                 if tcs and len(tcs) == 1:
                     if isinstance(tcs[0], pad.types.NodeReference) and isinstance(
                         p, pad.PropertyPad
@@ -451,7 +449,6 @@ class Graph:
     def _resolve_node_reference_property(
         self, p: pad.PropertyPad, v: str, nodes: dict[str, Node]
     ):
-        logging.info("NEIL resolving node ref pad %s", v)
         if not isinstance(p, pad.SourcePad):
             return
 
