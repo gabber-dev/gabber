@@ -7,7 +7,6 @@
 
 import {
   ConnectPadEdit,
-  DisconnectPadEdit,
   Edit,
   EditRequest,
   EligibleLibraryItem,
@@ -76,10 +75,13 @@ type EditorContextType = {
   updatePad: (req: UpdatePadEdit) => void;
   updateNode: (req: UpdateNodeEdit) => void;
 
-  queryEligibleLibraryItems: (
-    req: QueryEligibleNodeLibraryItemsRequest,
-  ) => Promise<EligibleLibraryItem[]>;
-
+  queryEligibleLibraryItems: ({
+    sourceNode,
+    sourcePad,
+  }: {
+    sourceNode: string;
+    sourcePad: string;
+  }) => Promise<EligibleLibraryItem[]>;
   clearAllSelection: () => void;
 };
 
@@ -250,10 +252,15 @@ export function EditorProvider({
   );
 
   const queryEligibleLibraryItems = useCallback(
-    async (req: QueryEligibleNodeLibraryItemsRequest) => {
-      req.req_id = v4();
+    async (params: { sourceNode: string; sourcePad: string }) => {
+      const req: QueryEligibleNodeLibraryItemsRequest = {
+        source_node: params.sourceNode,
+        source_pad: params.sourcePad,
+        req_id: v4(),
+        type: "query_eligible_node_library_items",
+      };
       const resp = await sendRequest(req);
-      return resp.eligible_items as EligibleLibraryItem[];
+      return resp.direct_eligible_items as EligibleLibraryItem[];
     },
     [sendRequest],
   );
