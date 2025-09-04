@@ -213,7 +213,7 @@ function FlowEditInner({ editable }: Props) {
         isOpen={Boolean(quickAdd)}
         onRequestClose={() => setQuickAdd(undefined)}
         overlayClassName="fixed top-0 bottom-0 left-0 right-0 backdrop-blur-xs bg-blur flex justify-center items-center z-11"
-        className="bg-base-200 rounded-lg shadow-lg outline-none p-4 h-2/3 w-100"
+        className="bg-base-200 rounded-lg overflow-hidden shadow-lg outline-none h-2/3 w-100"
         shouldCloseOnOverlayClick={true}
       >
         <QuickAddModal

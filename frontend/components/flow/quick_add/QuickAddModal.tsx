@@ -1,6 +1,5 @@
 import { EligibleLibraryItem } from "@/generated/editor";
 import { useEditor } from "@/hooks/useEditor";
-import { it } from "node:test";
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { v4 } from "uuid";
@@ -17,7 +16,7 @@ export function QuickAddModal({
   addPosition,
   close,
 }: Props) {
-  const { queryEligibleLibraryItems, addLibraryItem } = useEditor();
+  const { queryEligibleLibraryItems } = useEditor();
   const [eligibleItems, setEligibleItems] = useState<
     EligibleLibraryItem[] | undefined
   >(undefined);
@@ -69,7 +68,11 @@ export function QuickAddModal({
     ) || [];
 
   return (
-    <div className="flex flex-col h-full w-full">
+    <div className="flex flex-col h-full w-full p-2">
+      <div className="w-full flex items-center justify-center">
+        <CreatePortalButton />
+      </div>
+      <div className="divider">Eligible Nodes</div>
       <div>
         <button
           className="btn btn-sm btn-circle absolute right-2 top-2"
@@ -77,9 +80,6 @@ export function QuickAddModal({
         >
           ✕
         </button>
-        <h2 className="text-lg font-bold">Quick Add</h2>
-        <p className="text-sm">Source Node: {sourceNode}</p>
-        <p className="text-sm mb-4">Source Pad: {sourcePad}</p>
         <input
           ref={inputRef}
           type="text"
@@ -171,5 +171,14 @@ function EligibleItem({
         ))}
       </div>
     </div>
+  );
+}
+
+function CreatePortalButton() {
+  const {} = useEditor();
+  return (
+    <button onClick={() => {}} className="btn btn-primary btn-sm gap-2">
+      Create Portal
+    </button>
   );
 }
