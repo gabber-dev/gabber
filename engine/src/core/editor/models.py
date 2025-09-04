@@ -214,19 +214,19 @@ class NodeEditorRepresentation(BaseModel):
     metadata: NodeMetadata
 
 
+class PortalEnd(BaseModel):
+    id: str
+    editor_position: tuple[float, float]
+    next_pads: list[PadReference]
+
+
 class Portal(BaseModel):
     id: str
     name: str
     source_node: str
     source_pad: str
     editor_position: tuple[float, float]
-    ends: list["PortalEnd"] = []
-
-
-class PortalEnd(BaseModel):
-    id: str
-    editor_position: tuple[float, float]
-    next_pads: list[PadReference]
+    ends: list[PortalEnd] = []
 
 
 class EligibleLibraryItem(BaseModel):
