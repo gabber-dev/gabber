@@ -331,7 +331,39 @@ class Graph:
         portal = next((p for p in self.portals if p.id == edit.portal_id), None)
         if not portal:
             raise ValueError(f"Portal with ID {edit.portal_id} not found.")
+        logging.info("NEIL portal ends before delete: %s", portal.ends)
+        portal_end = next((e for e in portal.ends if e.id == edit.portal_end_id), None)
+        if not portal_end:
+            raise ValueError(f"Portal end with ID {edit.portal_end_id} not found.")
+
         portal.ends = [e for e in portal.ends if e.id != edit.portal_end_id]
+        nps = portal_end.next_pads
+        source_node = next((n for n in self.nodes if n.id == portal.source_node), None)
+        if not source_node:
+            logging.warning(
+                f"Source node with ID {portal.source_node} not found when deleting portal end."
+            )
+            return
+
+        for np in nps:
+            target_node = next((n for n in self.nodes if n.id == np.node), None)
+            if not target_node:
+                logging.warning(
+                    f"Target node with ID {np.node} not found when deleting portal end."
+                )
+                continue
+            target_pad = cast(pad.SinkPad, target_node.get_pad(np.pad))
+            if not target_pad:
+                logging.warning(
+                    f"Target pad with ID {np.pad} not found in node {np.node} when deleting portal end."
+                )
+                continue
+
+            target_pad.disconnect()
+
+            target_node.resolve_pads()
+
+        source_node.resolve_pads()
 
     async def _handle_update_portal(self, edit: models.UpdatePortalEdit):
         portal = next((p for p in self.portals if p.id == edit.portal_id), None)

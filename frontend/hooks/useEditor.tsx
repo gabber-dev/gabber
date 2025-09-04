@@ -598,11 +598,43 @@ export function EditorProvider({
           });
         } else if (change.type === "remove") {
           const nodeId = change.id;
-          edits.push({
-            type: "remove_node",
-            node_id: nodeId,
-          });
-          prev.nodes = prev.nodes.filter((n) => n.id !== nodeId);
+          const node = prev.nodes.find((n) => n.id === change.id);
+          if (node) {
+            edits.push({
+              type: "remove_node",
+              node_id: nodeId,
+            });
+            prev.nodes = prev.nodes.filter((n) => n.id !== nodeId);
+          } else {
+            const portalStart = (prev.portals || []).find(
+              (p) => p.id === change.id,
+            );
+            if (portalStart) {
+              edits.push({
+                type: "delete_portal",
+                portal_id: change.id,
+              });
+            } else {
+              let portalEnd: PortalEnd | undefined;
+              let portalStart: Portal | undefined;
+              for (const p of prev.portals || []) {
+                for (const pe of p.ends || []) {
+                  if (pe.id === change.id) {
+                    portalStart = p;
+                    portalEnd = pe;
+                    break;
+                  }
+                }
+              }
+              if (portalEnd && portalStart) {
+                edits.push({
+                  type: "delete_portal_end",
+                  portal_id: portalStart.id,
+                  portal_end_id: portalEnd.id,
+                });
+              }
+            }
+          }
         } else if (change.type === "add") {
         } else if (change.type === "dimensions") {
           // Handle node dimension changes
@@ -692,13 +724,15 @@ export function EditorProvider({
           }
           targetPad.previous_pad = null;
 
-          edits.push({
-            type: "disconnect_pad",
-            node: sourceNodeId,
-            pad: sourcePadId,
-            connected_node: targetNodeId,
-            connected_pad: targetPadId,
-          });
+          if (sourceNode?.type === "node" && targetNode?.type === "node") {
+            edits.push({
+              type: "disconnect_pad",
+              node: sourceNodeId,
+              pad: sourcePadId,
+              connected_node: targetNodeId,
+              connected_pad: targetPadId,
+            });
+          }
         } else if (change.type === "add") {
         }
       }
