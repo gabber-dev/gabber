@@ -20,6 +20,7 @@ import {
   InsertNodeEdit,
   InsertSubGraphEdit,
   NodeEditorRepresentation,
+  PadEditorRepresentation,
   Portal,
   PortalEnd,
   QueryEligibleNodeLibraryItemsRequest,
@@ -165,6 +166,8 @@ export function EditorProvider({
       }
     >
   >(new Map());
+
+  const reactFlowRef = useRef(reactFlowRepresentation);
 
   useEffect(() => {
     if (readyState !== prevReadyState) {
@@ -714,6 +717,44 @@ export function EditorProvider({
 
   const onReactFlowConnect = useCallback(
     (connection: Connection) => {
+      const { nodes } = reactFlowRepresentation;
+      const sourceRfNode = nodes.find((n) => n.id === connection.source);
+      if (sourceRfNode?.type === "portal_end") {
+        const sourcePortalId = sourceRfNode.data.sourcePortalId as string;
+        const portalEnd = sourceRfNode.data.portalEnd as PortalEnd;
+        const sourceNode = sourceRfNode.data
+          .sourceNode as NodeEditorRepresentation;
+        const sourcePad = sourceRfNode.data
+          .sourcePad as PadEditorRepresentation;
+
+        const connectEdit: ConnectPadEdit = {
+          type: "connect_pad",
+          node: sourceNode?.id || "ERROR",
+          pad: sourcePad?.id || "ERROR",
+          connected_node: connection.target || "ERROR",
+          connected_pad: connection.targetHandle || "ERROR",
+        };
+        const portalEndEdit: UpdatePortalEndEdit = {
+          type: "update_portal_end",
+          portal_id: sourcePortalId,
+          portal_end_id: portalEnd.id,
+          next_pads: [
+            ...(portalEnd.next_pads || []),
+            {
+              node: connection.target || "ERROR",
+              pad: connection.targetHandle || "ERROR",
+            },
+          ],
+          editor_position: portalEnd.editor_position,
+        };
+        sendRequest({
+          type: "edit",
+          edits: [connectEdit, portalEndEdit],
+          req_id: v4(),
+        });
+        console.log("Connection from portal_end not supported");
+        return;
+      }
       const edit: ConnectPadEdit = {
         type: "connect_pad",
         node: connection.source || "ERROR",
@@ -723,7 +764,7 @@ export function EditorProvider({
       };
       sendRequest({ type: "edit", edits: [edit], req_id: v4() });
     },
-    [sendRequest],
+    [reactFlowRepresentation, sendRequest],
   );
 
   const unsavedChanges = useMemo(() => {
