@@ -56,7 +56,6 @@ import {
   getDataTypeColor,
   getPrimaryDataType,
 } from "@/components/flow/blocks/components/pads/utils/dataTypeColors";
-import { get } from "http";
 
 type ReactFlowRepresentation = {
   nodes: Node[];
@@ -208,6 +207,7 @@ export function EditorProvider({
   const sendRequest = useCallback(
     (request: Request) => {
       if (!isConnected) {
+        console.error("NEIL not connected", request);
         console.warn("WebSocket is not connected. Cannot send request.");
         return Promise.reject(new Error("WebSocket not connected"));
       }
@@ -607,6 +607,10 @@ export function EditorProvider({
         } else if (change.type === "dimensions") {
           // Handle node dimension changes
           const nodeId = change.id;
+          const node = prev.nodes.find((n) => n.id === nodeId);
+          if (!node) {
+            continue;
+          }
           const newDims = change.dimensions;
           if (!newDims) {
             continue;
@@ -844,6 +848,8 @@ function graphToReact(
     };
     portalStarts.push(startNode);
 
+    console.log("NEIL portal", portal, sourceNode, sourcePad);
+
     for (const pe of portal.ends || []) {
       for (const np of pe.next_pads || []) {
         const edgeId = `${sourceNode?.id || "ERROR"}-${
@@ -863,14 +869,17 @@ function graphToReact(
           height: 40,
         },
         data: {
-          ...pe,
+          portalEnd: pe,
           sourcePortalId: portal.id,
+          sourceNode,
           sourcePad,
           dataColor,
         },
       });
     }
   }
+
+  console.log("NEIL skipEdges", skipEdges);
 
   const edges: Edge[] = [];
   for (const node of representation.nodes) {
@@ -922,8 +931,8 @@ function graphToReact(
         const edgeId = `${sourceNode.id}-${sourcePad.id}-${targetNode.id}-${targetPad.id}`;
         edges.push({
           id: edgeId,
-          source: sourceNode.id,
-          sourceHandle: sourcePad.id,
+          source: pe.id,
+          sourceHandle: "source",
           target: targetNode.id,
           targetHandle: targetPad.id,
           data: {

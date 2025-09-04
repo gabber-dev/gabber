@@ -30,9 +30,14 @@ import { StateMachineProvider } from "../state_machine/useStateMachine";
 import { usePathname } from "next/navigation";
 import toast from "react-hot-toast";
 import { exportApp } from "@/lib/repository";
-import { QuickAddModal } from "./quick_add/QuickAddModal";
+import { QuickAddModal, QuickAddProps } from "./quick_add/QuickAddModal";
 import { PortalStart } from "./blocks/PortalStart";
-import { PortalEnd } from "./blocks/PortalEnd";
+import { PortalEnd as PortalEndComponent } from "./blocks/PortalEnd";
+import {
+  NodeEditorRepresentation,
+  PadEditorRepresentation,
+  PortalEnd,
+} from "@/generated/editor";
 
 const edgeTypes = {
   hybrid: HybridEdge,
@@ -66,14 +71,9 @@ function FlowEditInner({ editable }: Props) {
   const isRunning =
     connectionState === "connected" || connectionState === "connecting";
   const { screenToFlowPosition } = useReactFlow();
-  const [quickAdd, setQuickAdd] = useState<
-    | {
-        source_node: string;
-        source_pad: string;
-        add_position: { x: number; y: number };
-      }
-    | undefined
-  >(undefined);
+  const [quickAdd, setQuickAdd] = useState<QuickAddProps | undefined>(
+    undefined,
+  );
 
   const [isNodeLibraryOpen, setIsNodeLibraryOpen] = useState(false);
 
@@ -86,11 +86,27 @@ function FlowEditInner({ editable }: Props) {
           x: clientX,
           y: clientY,
         });
-        setQuickAdd({
-          source_node: connectionState.fromNode?.id || "",
-          source_pad: connectionState.fromHandle?.id || "",
-          add_position: position,
-        });
+        if (connectionState.fromNode?.type === "node") {
+          setQuickAdd({
+            sourceNode: connectionState.fromNode?.id || "",
+            sourcePad: connectionState.fromHandle?.id || "",
+            addPosition: position,
+            close: () => setQuickAdd(undefined),
+          });
+        } else if (connectionState.fromNode?.type === "portal_end") {
+          const { data } = connectionState.fromNode || {};
+          const { sourceNode, sourcePad } = data || {};
+          setQuickAdd({
+            sourceNode: (sourceNode as NodeEditorRepresentation).id || "",
+            sourcePad: (sourcePad as PadEditorRepresentation).id || "",
+            addPosition: position,
+            close: () => setQuickAdd(undefined),
+            portalInfo: {
+              portalId: data.sourcePortalId as string,
+              portalEnd: data.portalEnd as PortalEnd,
+            },
+          });
+        }
       }
     },
     [screenToFlowPosition],
@@ -155,7 +171,7 @@ function FlowEditInner({ editable }: Props) {
             nodeTypes={{
               node: BaseBlock,
               portal_start: PortalStart,
-              portal_end: PortalEnd,
+              portal_end: PortalEndComponent,
             }}
             snapGrid={[12, 12]}
             snapToGrid={true}
@@ -200,14 +216,7 @@ function FlowEditInner({ editable }: Props) {
         className="bg-base-200 rounded-lg overflow-hidden shadow-lg outline-none h-2/3 w-100"
         shouldCloseOnOverlayClick={true}
       >
-        <QuickAddModal
-          sourceNode={quickAdd?.source_node || ""}
-          sourcePad={quickAdd?.source_pad || ""}
-          addPosition={quickAdd?.add_position || { x: 0, y: 0 }}
-          close={() => {
-            setQuickAdd(undefined);
-          }}
-        />
+        {quickAdd && <QuickAddModal {...quickAdd} />}
       </ReactModal>
     </div>
   );

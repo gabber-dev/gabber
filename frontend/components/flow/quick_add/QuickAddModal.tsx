@@ -1,12 +1,17 @@
-import { EligibleLibraryItem } from "@/generated/editor";
+import { EligibleLibraryItem, PortalEnd } from "@/generated/editor";
 import { useEditor } from "@/hooks/useEditor";
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { v4 } from "uuid";
 
-type Props = {
+type PortalInfo = {
+  portalId: string;
+  portalEnd: PortalEnd;
+};
+export type QuickAddProps = {
   sourceNode: string;
   sourcePad: string;
+  portalInfo?: PortalInfo;
   addPosition: { x: number; y: number };
   close: () => void;
 };
@@ -14,8 +19,9 @@ export function QuickAddModal({
   sourceNode,
   sourcePad,
   addPosition,
+  portalInfo,
   close,
-}: Props) {
+}: QuickAddProps) {
   const { queryEligibleLibraryItems } = useEditor();
   const [eligibleItems, setEligibleItems] = useState<
     EligibleLibraryItem[] | undefined
@@ -108,6 +114,7 @@ export function QuickAddModal({
                   sourceNodeId={sourceNode}
                   sourcePadId={sourcePad}
                   addPosition={addPosition}
+                  portalInfo={portalInfo}
                   close={close}
                 />
               </li>
@@ -124,6 +131,7 @@ type EligibleItemProps = {
   sourceNodeId: string;
   sourcePadId: string;
   addPosition: { x: number; y: number };
+  portalInfo?: PortalInfo;
   close: () => void;
 };
 
@@ -132,9 +140,10 @@ function EligibleItem({
   sourceNodeId,
   sourcePadId,
   addPosition,
+  portalInfo,
   close,
 }: EligibleItemProps) {
-  const { insertNode, connectPad } = useEditor();
+  const { insertNode, connectPad, updatePortalEnd } = useEditor();
   return (
     <div>
       <div className="flex items-center">
@@ -166,6 +175,18 @@ function EligibleItem({
                   connected_node: id,
                   connected_pad: pad.id,
                 });
+                if (portalInfo) {
+                  updatePortalEnd({
+                    type: "update_portal_end",
+                    portal_id: portalInfo.portalId,
+                    portal_end_id: portalInfo.portalEnd.id,
+                    next_pads: [
+                      ...portalInfo.portalEnd.next_pads,
+                      { node: id, pad: pad.id },
+                    ],
+                    editor_position: portalInfo.portalEnd.editor_position,
+                  });
+                }
                 close();
               }
             }}
