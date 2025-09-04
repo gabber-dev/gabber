@@ -3,12 +3,41 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { Portal, PortalEnd as PortalEndModel } from "@/generated/editor";
+import { PadEditorRepresentation, Portal } from "@/generated/editor";
+import { Handle, Position } from "@xyflow/react";
+import { DataTypeColor } from "./components/pads/utils/dataTypeColors";
 
 export interface BaseBlockProps {
-  data: PortalEndModel;
+  data: {
+    portal: Portal;
+    dataColor: DataTypeColor;
+    sourcePad: PadEditorRepresentation;
+  };
 }
 
 export function PortalEnd({ data }: BaseBlockProps) {
-  return <div>Portal End</div>;
+  const { portal, dataColor, sourcePad } = data;
+  return (
+    <div
+      className="w-8 h-8 rounded-full relative group"
+      style={{
+        background: dataColor.background,
+      }}
+    >
+      <Handle
+        id={"target"}
+        type="target"
+        position={Position.Left}
+        style={{
+          borderRadius: "9999px",
+          boxSizing: "border-box",
+          margin: 0,
+          padding: 0,
+          transform: "translate(0%, -50%)",
+          background: "transparent",
+          opacity: 1,
+        }}
+      />
+    </div>
+  );
 }

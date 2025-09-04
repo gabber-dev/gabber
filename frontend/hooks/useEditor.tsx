@@ -19,6 +19,9 @@ import {
   GraphLibraryItem_SubGraph,
   InsertNodeEdit,
   InsertSubGraphEdit,
+  NodeEditorRepresentation,
+  Portal,
+  PortalEnd,
   QueryEligibleNodeLibraryItemsRequest,
   RemoveNodeEdit,
   Request,
@@ -49,7 +52,11 @@ import React, {
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import toast from "react-hot-toast";
 import { v4 } from "uuid";
-import { getPrimaryDataType } from "@/components/flow/blocks/components/pads/utils/dataTypeColors";
+import {
+  getDataTypeColor,
+  getPrimaryDataType,
+} from "@/components/flow/blocks/components/pads/utils/dataTypeColors";
+import { get } from "http";
 
 type ReactFlowRepresentation = {
   nodes: Node[];
@@ -190,7 +197,7 @@ export function EditorProvider({
 
   useEffect(() => {
     if (readyState === ReadyState.CLOSED) {
-      for (const [_, pending] of pendingRequests.current.entries()) {
+      for (const [, pending] of pendingRequests.current.entries()) {
         clearTimeout(pending.timeoutId);
         pending.reject(new Error("WebSocket connection closed"));
       }
@@ -535,14 +542,50 @@ export function EditorProvider({
           );
 
           if (!change.dragging) {
-            edits.push({
-              type: "update_node",
-              id: change.id,
-              editor_name: null,
-              new_id: null,
-              editor_position: [change.position?.x, change.position?.y],
-              editor_dimensions: null,
-            });
+            const node = prev.nodes.find((n) => n.id === change.id);
+
+            if (node) {
+              edits.push({
+                type: "update_node",
+                id: change.id,
+                editor_name: null,
+                new_id: null,
+                editor_position: [change.position?.x, change.position?.y],
+                editor_dimensions: null,
+              });
+            } else {
+              const portalStart = (prev.portals || []).find(
+                (p) => p.id === change.id,
+              );
+              if (portalStart) {
+                edits.push({
+                  type: "update_portal",
+                  portal_id: change.id,
+                  editor_position: [change.position?.x, change.position?.y],
+                });
+              } else {
+                let portalEnd: PortalEnd | undefined;
+                let portalStart: Portal | undefined;
+                for (const p of prev.portals || []) {
+                  for (const pe of p.ends || []) {
+                    if (pe.id === change.id) {
+                      portalStart = p;
+                      portalEnd = pe;
+                      break;
+                    }
+                  }
+                }
+                if (portalEnd && portalStart) {
+                  edits.push({
+                    type: "update_portal_end",
+                    portal_id: portalStart.id,
+                    portal_end_id: portalEnd.id,
+                    editor_position: [change.position?.x, change.position?.y],
+                    next_pads: portalEnd.next_pads,
+                  });
+                }
+              }
+            }
           }
           setReactFlowRepresentation((prev) => ({
             ...prev,
@@ -753,48 +796,78 @@ export function useEditor() {
 function graphToReact(
   representation: GraphEditorRepresentation,
 ): ReactFlowRepresentation {
-  const nodes: Node[] = representation.nodes.map((node) => ({
-    id: node.id,
-    type: "node",
-    position: {
-      x: (node.editor_position?.[0] || 0) as number,
-      y: (node.editor_position?.[1] || 0) as number,
-    },
-    measured: {
-      width: (node.editor_dimensions?.[0] || 10) as number,
-      height: (node.editor_dimensions?.[1] || 10) as number,
-    },
-    data: node,
-  }));
+  const nodeLookup = new Map<string, NodeEditorRepresentation>();
+  const nodes: Node[] = [];
+  for (const node of representation.nodes) {
+    const rfNode: Node = {
+      id: node.id,
+      type: "node",
+      position: {
+        x: (node.editor_position?.[0] || 0) as number,
+        y: (node.editor_position?.[1] || 0) as number,
+      },
+      measured: {
+        width: (node.editor_dimensions?.[0] || 10) as number,
+        height: (node.editor_dimensions?.[1] || 10) as number,
+      },
+      data: node,
+    };
+    nodes.push(rfNode);
+    nodeLookup.set(node.id, node);
+  }
 
-  const portalStarts: Node[] = (representation.portals || []).map((portal) => ({
-    id: portal.id,
-    type: "portal_start",
-    position: {
-      x: (portal.editor_position?.[0] || 0) as number,
-      y: (portal.editor_position?.[1] || 0) as number,
-    },
-    measured: {
-      width: 150,
-      height: 40,
-    },
-    data: portal,
-  }));
+  const portalStarts: Node[] = [];
   const portalEnds: Node[] = [];
+  const skipEdges = new Set<string>();
   for (const portal of representation.portals || []) {
-    for (const end of portal.ends || []) {
+    const sourceNode = nodeLookup.get(portal.source_node || "");
+    const sourcePad = sourceNode?.pads?.find((p) => p.id === portal.source_pad);
+    const dataColor = getDataTypeColor(
+      getPrimaryDataType(sourcePad?.allowed_types || []) || "default",
+    );
+    const startNode = {
+      id: portal.id,
+      type: "portal_start",
+      position: {
+        x: (portal.editor_position?.[0] || 0) as number,
+        y: (portal.editor_position?.[1] || 0) as number,
+      },
+      measured: {
+        width: 150,
+        height: 40,
+      },
+      data: {
+        portal,
+        sourcePad,
+        dataColor,
+      },
+    };
+    portalStarts.push(startNode);
+
+    for (const pe of portal.ends || []) {
+      for (const np of pe.next_pads || []) {
+        const edgeId = `${sourceNode?.id || "ERROR"}-${
+          sourcePad?.id || "ERROR"
+        }-${np.node}-${np.pad}`;
+        skipEdges.add(edgeId);
+      }
       portalEnds.push({
-        id: end.id,
+        id: pe.id,
         type: "portal_end",
         position: {
-          x: (end.editor_position?.[0] || 0) as number,
-          y: (end.editor_position?.[1] || 0) as number,
+          x: (pe.editor_position?.[0] || 0) as number,
+          y: (pe.editor_position?.[1] || 0) as number,
         },
         measured: {
           width: 150,
           height: 40,
         },
-        data: { ...end, portal_name: portal.name, portal_id: portal.id },
+        data: {
+          ...pe,
+          sourcePortalId: portal.id,
+          sourcePad,
+          dataColor,
+        },
       });
     }
   }
@@ -805,6 +878,13 @@ function graphToReact(
     for (const pad of node.pads) {
       if (!pad.next_pads) continue;
       for (const connectedPad of pad.next_pads) {
+        if (
+          skipEdges.has(
+            `${node.id}-${pad.id}-${connectedPad.node}-${connectedPad.pad}`,
+          )
+        ) {
+          continue;
+        }
         const edgeId = `${node.id}-${pad.id}-${connectedPad.node}-${connectedPad.pad}`;
         edges.push({
           id: edgeId,
@@ -819,6 +899,41 @@ function graphToReact(
       }
     }
   }
+
+  for (const portal of representation.portals || []) {
+    const sourceNode = nodeLookup.get(portal.source_node || "");
+    const sourcePad = sourceNode?.pads?.find((p) => p.id === portal.source_pad);
+    if (!sourceNode || !sourcePad) continue;
+    edges.push({
+      id: `${sourceNode.id}-${sourcePad.id}-${portal.id}-${portal.id}`,
+      source: sourceNode.id,
+      sourceHandle: sourcePad.id,
+      target: portal.id,
+      targetHandle: "target",
+      data: {
+        dataType: getPrimaryDataType(sourcePad.allowed_types || []),
+      },
+    });
+    for (const pe of portal.ends || []) {
+      for (const np of pe.next_pads || []) {
+        const targetNode = nodeLookup.get(np.node);
+        const targetPad = targetNode?.pads?.find((p) => p.id === np.pad);
+        if (!targetNode || !targetPad) continue;
+        const edgeId = `${sourceNode.id}-${sourcePad.id}-${targetNode.id}-${targetPad.id}`;
+        edges.push({
+          id: edgeId,
+          source: sourceNode.id,
+          sourceHandle: sourcePad.id,
+          target: targetNode.id,
+          targetHandle: targetPad.id,
+          data: {
+            dataType: getPrimaryDataType(sourcePad.allowed_types || []),
+          },
+        });
+      }
+    }
+  }
+
   const allNodes = [...nodes, ...portalStarts, ...portalEnds];
 
   return { nodes: allNodes, edges };
