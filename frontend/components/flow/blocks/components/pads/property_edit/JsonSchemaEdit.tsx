@@ -19,7 +19,7 @@ export function JsonSchemaEdit({ nodeId, padId }: PropertyEditProps) {
 
   return (
     <>
-      <div ref={(el) => ReactModal.setAppElement(el as any)} />
+      <div ref={(el) => ReactModal.setAppElement(el as HTMLDivElement)} />
       <button onClick={() => setShowModal(true)} className="btn">
         Edit JSON Schema
       </button>

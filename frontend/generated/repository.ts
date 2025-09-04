@@ -144,6 +144,7 @@ export type Id5 = string;
  * @maxItems 2
  */
 export type EditorPosition2 = [unknown, unknown];
+export type NextPads1 = PadReference[];
 export type Ends = PortalEnd[];
 export type Type24 = "save_app";
 export type Id6 = string | null;
@@ -355,6 +356,7 @@ export interface Portal {
 export interface PortalEnd {
   id: Id5;
   editor_position: EditorPosition2;
+  next_pads: NextPads1;
   [k: string]: unknown;
 }
 export interface SaveAppRequest {

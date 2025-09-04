@@ -3,14 +3,12 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   ReactFlow,
   Background,
   BackgroundVariant,
   ReactFlowProvider,
-  Node,
-  Edge,
   useReactFlow,
   FinalConnectionState,
 } from "@xyflow/react";
@@ -26,7 +24,6 @@ import { NodeLibrary } from "./NodeLibrary";
 import { HybridEdge } from "./edges/HybridEdge";
 import { CustomConnectionLine } from "./edges/CustomConnectionLine";
 
-import { getPrimaryDataType } from "./blocks/components/pads/utils/dataTypeColors";
 import ReactModal from "react-modal";
 import { StateMachineGraphEdit } from "../state_machine/StateMachineGraphEdit";
 import { StateMachineProvider } from "../state_machine/useStateMachine";
@@ -34,6 +31,8 @@ import { usePathname } from "next/navigation";
 import toast from "react-hot-toast";
 import { exportApp } from "@/lib/repository";
 import { QuickAddModal } from "./quick_add/QuickAddModal";
+import { PortalStart } from "./blocks/PortalStart";
+import { PortalEnd } from "./blocks/PortalEnd";
 
 const edgeTypes = {
   hybrid: HybridEdge,
@@ -78,26 +77,6 @@ function FlowEditInner({ editable }: Props) {
 
   const [isNodeLibraryOpen, setIsNodeLibraryOpen] = useState(false);
 
-  const styledEdges = useMemo(() => {
-    return reactFlowRepresentation.edges.map((edge: Edge) => {
-      const sourceNode = reactFlowRepresentation.nodes.find(
-        (node: Node) => node.id === edge.source,
-      );
-      const sourcePad = sourceNode?.data.pads.find(
-        (pad) => pad.id === edge.sourceHandle,
-      );
-      const dataType = getPrimaryDataType(sourcePad?.allowed_types || []);
-      return {
-        ...edge,
-        type: "hybrid",
-        data: {
-          ...edge.data,
-          dataType,
-        },
-      };
-    });
-  }, [reactFlowRepresentation.edges, reactFlowRepresentation.nodes]);
-
   const onConnectEnd = useCallback(
     (event: MouseEvent | TouchEvent, connectionState: FinalConnectionState) => {
       if (!connectionState.isValid) {
@@ -119,6 +98,7 @@ function FlowEditInner({ editable }: Props) {
 
   return (
     <div className="relative w-full h-full flex flex-col">
+      <div ref={(el) => ReactModal.setAppElement(el as HTMLDivElement)} />
       {editable && (
         <div className="absolute top-2 right-2 flex z-10 gap-2">
           <ExportButton />
@@ -154,8 +134,8 @@ function FlowEditInner({ editable }: Props) {
         <FlowErrorBoundary>
           <ReactFlow
             className=""
-            nodes={reactFlowRepresentation.nodes as Node[]}
-            edges={styledEdges as Edge[]}
+            nodes={reactFlowRepresentation.nodes}
+            edges={reactFlowRepresentation.edges}
             onNodesChange={(changes) => {
               // Close node library if a node is selected
               const selectionChange = changes.find(
@@ -172,7 +152,11 @@ function FlowEditInner({ editable }: Props) {
             edgeTypes={edgeTypes}
             connectionLineComponent={CustomConnectionLine}
             fitView
-            nodeTypes={{ default: BaseBlock }}
+            nodeTypes={{
+              node: BaseBlock,
+              portal_start: PortalStart,
+              portal_end: PortalEnd,
+            }}
             snapGrid={[12, 12]}
             snapToGrid={true}
             defaultEdgeOptions={{

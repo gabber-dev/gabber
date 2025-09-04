@@ -7,6 +7,10 @@
 
 import {
   ConnectPadEdit,
+  CreatePortalEdit,
+  CreatePortalEndEdit,
+  DeletePortalEdit,
+  DeletePortalEndEdit,
   Edit,
   EditRequest,
   EligibleLibraryItem,
@@ -15,13 +19,14 @@ import {
   GraphLibraryItem_SubGraph,
   InsertNodeEdit,
   InsertSubGraphEdit,
-  NodeEditorRepresentation,
   QueryEligibleNodeLibraryItemsRequest,
   RemoveNodeEdit,
   Request,
   Response,
   UpdateNodeEdit,
   UpdatePadEdit,
+  UpdatePortalEdit,
+  UpdatePortalEndEdit,
 } from "@/generated/editor";
 import {
   applyEdgeChanges,
@@ -44,9 +49,10 @@ import React, {
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import toast from "react-hot-toast";
 import { v4 } from "uuid";
+import { getPrimaryDataType } from "@/components/flow/blocks/components/pads/utils/dataTypeColors";
 
 type ReactFlowRepresentation = {
-  nodes: Node<NodeEditorRepresentation>[];
+  nodes: Node[];
   edges: Edge[];
 };
 
@@ -74,6 +80,13 @@ type EditorContextType = {
   connectPad: (req: ConnectPadEdit) => void;
   updatePad: (req: UpdatePadEdit) => void;
   updateNode: (req: UpdateNodeEdit) => void;
+
+  createPortal: (req: CreatePortalEdit) => void;
+  createPortalEnd: (req: CreatePortalEndEdit) => void;
+  deletePortal: (req: DeletePortalEdit) => void;
+  deletePortalEnd: (req: DeletePortalEndEdit) => void;
+  updatePortal: (req: UpdatePortalEdit) => void;
+  updatePortalEnd: (req: UpdatePortalEndEdit) => void;
 
   queryEligibleLibraryItems: ({
     sourceNode,
@@ -242,6 +255,72 @@ export function EditorProvider({
 
   const connectPad = useCallback(
     (edit: ConnectPadEdit) => {
+      sendRequest({
+        type: "edit",
+        edits: [edit],
+        req_id: v4(),
+      });
+    },
+    [sendRequest],
+  );
+
+  const createPortal = useCallback(
+    (edit: CreatePortalEdit) => {
+      sendRequest({
+        type: "edit",
+        edits: [edit],
+        req_id: v4(),
+      });
+    },
+    [sendRequest],
+  );
+
+  const createPortalEnd = useCallback(
+    (edit: CreatePortalEndEdit) => {
+      sendRequest({
+        type: "edit",
+        edits: [edit],
+        req_id: v4(),
+      });
+    },
+    [sendRequest],
+  );
+
+  const updatePortal = useCallback(
+    (edit: UpdatePortalEdit) => {
+      sendRequest({
+        type: "edit",
+        edits: [edit],
+        req_id: v4(),
+      });
+    },
+    [sendRequest],
+  );
+
+  const updatePortalEnd = useCallback(
+    (edit: UpdatePortalEndEdit) => {
+      sendRequest({
+        type: "edit",
+        edits: [edit],
+        req_id: v4(),
+      });
+    },
+    [sendRequest],
+  );
+
+  const deletePortal = useCallback(
+    (edit: DeletePortalEdit) => {
+      sendRequest({
+        type: "edit",
+        edits: [edit],
+        req_id: v4(),
+      });
+    },
+    [sendRequest],
+  );
+
+  const deletePortalEnd = useCallback(
+    (edit: DeletePortalEndEdit) => {
       sendRequest({
         type: "edit",
         edits: [edit],
@@ -647,6 +726,12 @@ export function EditorProvider({
         connectPad,
         updatePad,
         updateNode,
+        createPortal,
+        createPortalEnd,
+        deletePortal,
+        deletePortalEnd,
+        updatePortal,
+        updatePortalEnd,
         clearAllSelection,
         setStateMachineEditing,
         queryEligibleLibraryItems,
@@ -668,21 +753,51 @@ export function useEditor() {
 function graphToReact(
   representation: GraphEditorRepresentation,
 ): ReactFlowRepresentation {
-  const nodes: Node<NodeEditorRepresentation>[] = representation.nodes.map(
-    (node) => ({
-      id: node.id,
-      type: "default",
-      position: {
-        x: (node.editor_position?.[0] || 0) as number,
-        y: (node.editor_position?.[1] || 0) as number,
-      },
-      measured: {
-        width: (node.editor_dimensions?.[0] || 10) as number,
-        height: (node.editor_dimensions?.[1] || 10) as number,
-      },
-      data: node,
-    }),
-  );
+  const nodes: Node[] = representation.nodes.map((node) => ({
+    id: node.id,
+    type: "node",
+    position: {
+      x: (node.editor_position?.[0] || 0) as number,
+      y: (node.editor_position?.[1] || 0) as number,
+    },
+    measured: {
+      width: (node.editor_dimensions?.[0] || 10) as number,
+      height: (node.editor_dimensions?.[1] || 10) as number,
+    },
+    data: node,
+  }));
+
+  const portalStarts: Node[] = (representation.portals || []).map((portal) => ({
+    id: portal.id,
+    type: "portal_start",
+    position: {
+      x: (portal.editor_position?.[0] || 0) as number,
+      y: (portal.editor_position?.[1] || 0) as number,
+    },
+    measured: {
+      width: 150,
+      height: 40,
+    },
+    data: portal,
+  }));
+  const portalEnds: Node[] = [];
+  for (const portal of representation.portals || []) {
+    for (const end of portal.ends || []) {
+      portalEnds.push({
+        id: end.id,
+        type: "portal_end",
+        position: {
+          x: (end.editor_position?.[0] || 0) as number,
+          y: (end.editor_position?.[1] || 0) as number,
+        },
+        measured: {
+          width: 150,
+          height: 40,
+        },
+        data: { ...end, portal_name: portal.name, portal_id: portal.id },
+      });
+    }
+  }
 
   const edges: Edge[] = [];
   for (const node of representation.nodes) {
@@ -697,10 +812,14 @@ function graphToReact(
           sourceHandle: pad.id,
           target: connectedPad.node,
           targetHandle: connectedPad.pad,
+          data: {
+            dataType: getPrimaryDataType(pad.allowed_types || []),
+          },
         });
       }
     }
   }
+  const allNodes = [...nodes, ...portalStarts, ...portalEnds];
 
-  return { nodes, edges };
+  return { nodes: allNodes, edges };
 }

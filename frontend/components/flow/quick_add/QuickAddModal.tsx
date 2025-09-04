@@ -70,7 +70,12 @@ export function QuickAddModal({
   return (
     <div className="flex flex-col h-full w-full p-2">
       <div className="w-full flex items-center justify-center">
-        <CreatePortalButton />
+        <CreatePortalButton
+          addPosition={addPosition}
+          fromNodeId={sourceNode}
+          fromPadId={sourcePad}
+          close={close}
+        />
       </div>
       <div className="divider">Eligible Nodes</div>
       <div>
@@ -174,10 +179,31 @@ function EligibleItem({
   );
 }
 
-function CreatePortalButton() {
-  const {} = useEditor();
+function CreatePortalButton({
+  addPosition,
+  fromNodeId,
+  fromPadId,
+  close,
+}: {
+  addPosition: { x: number; y: number };
+  fromNodeId: string;
+  fromPadId: string;
+  close: () => void;
+}) {
+  const { createPortal } = useEditor();
   return (
-    <button onClick={() => {}} className="btn btn-primary btn-sm gap-2">
+    <button
+      onClick={() => {
+        createPortal({
+          editor_position: [addPosition?.x || 0, addPosition?.y || 0],
+          source_node: fromNodeId,
+          source_pad: fromPadId,
+          type: "create_portal",
+        });
+        close();
+      }}
+      className="btn btn-primary btn-sm gap-2"
+    >
       Create Portal
     </button>
   );
