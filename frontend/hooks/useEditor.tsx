@@ -167,8 +167,6 @@ export function EditorProvider({
     >
   >(new Map());
 
-  const reactFlowRef = useRef(reactFlowRepresentation);
-
   useEffect(() => {
     if (readyState !== prevReadyState) {
       setPrevReadyState(readyState);
@@ -210,7 +208,6 @@ export function EditorProvider({
   const sendRequest = useCallback(
     (request: Request) => {
       if (!isConnected) {
-        console.error("NEIL not connected", request);
         console.warn("WebSocket is not connected. Cannot send request.");
         return Promise.reject(new Error("WebSocket not connected"));
       }
@@ -919,8 +916,6 @@ function graphToReact(
       });
     }
   }
-
-  console.log("NEIL skipEdges", skipEdges);
 
   const edges: Edge[] = [];
   for (const node of representation.nodes) {
