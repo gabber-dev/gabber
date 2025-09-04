@@ -1,7 +1,9 @@
 import { EligibleLibraryItem } from "@/generated/editor";
 import { useEditor } from "@/hooks/useEditor";
+import { it } from "node:test";
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { v4 } from "uuid";
 
 type Props = {
   sourceNode: string;
@@ -93,27 +95,15 @@ export function QuickAddModal({
         ) : filteredItems.length === 0 ? (
           <p className="text-center">No matching items found.</p>
         ) : (
-          <ul className="menu bg-base-200 rounded-box">
+          <ul className="bg-base-200 rounded-box">
             {filteredItems.map((item, idx) => (
-              <li key={idx}>
+              <li key={idx} className="p-2 hover:bg-base-300">
                 <EligibleItem
                   item={item}
-                  onPadClick={(padId: string) => {
-                    addLibraryItem({
-                      libraryItemId: item.library_item.id,
-                      sourceNodeId: sourceNode,
-                      sourcePadId: sourcePad,
-                      targetPadId: padId,
-                      position: addPosition,
-                    })
-                      .then(() => {
-                        close();
-                      })
-                      .catch((error) => {
-                        console.error("Error adding library item:", error);
-                        toast.error("Failed to add item");
-                      });
-                  }}
+                  sourceNodeId={sourceNode}
+                  sourcePadId={sourcePad}
+                  addPosition={addPosition}
+                  close={close}
                 />
               </li>
             ))}
@@ -126,20 +116,55 @@ export function QuickAddModal({
 
 type EligibleItemProps = {
   item: EligibleLibraryItem;
-  onPadClick: (padId: string) => void;
+  sourceNodeId: string;
+  sourcePadId: string;
+  addPosition: { x: number; y: number };
+  close: () => void;
 };
 
-function EligibleItem({ item, onPadClick }: EligibleItemProps) {
+function EligibleItem({
+  item,
+  sourceNodeId,
+  sourcePadId,
+  addPosition,
+  close,
+}: EligibleItemProps) {
+  const { insertNode, connectPad } = useEditor();
   return (
     <div>
-      <h3 className="font-semibold">{item.library_item.name}</h3>
-      <p className="text-sm">Type: {item.library_item.type}</p>
-      <div className="flex flex-wrap gap-2 mt-2">
+      <div className="flex items-center">
+        <h3 className="font-semibold">{item.library_item.name}</h3>
+        <span className="ml-2 text-xs italic text-gray-500">
+          ({item.library_item.type})
+        </span>
+      </div>
+      <div className="flex flex-wrap gap-1 mt-1">
         {item.pads.map((pad) => (
           <button
             key={pad.id}
+            onClick={() => {
+              if (item.library_item.type === "node") {
+                const id =
+                  `${item.library_item.name}_${v4().toString().slice(0, 8)}`.toLowerCase();
+                insertNode({
+                  id: id,
+                  data: { label: pad.id },
+                  editor_position: [addPosition.x, addPosition.y],
+                  editor_name: item.library_item.name,
+                  node_type: item.library_item.name,
+                  type: "insert_node",
+                });
+                connectPad({
+                  node: sourceNodeId,
+                  pad: sourcePadId,
+                  type: "connect_pad",
+                  connected_node: id,
+                  connected_pad: pad.id,
+                });
+                close();
+              }
+            }}
             className="btn btn-xs btn-primary"
-            onClick={() => onPadClick(pad.id)}
           >
             {pad.id}
           </button>

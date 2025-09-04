@@ -148,8 +148,11 @@ class Graph:
         res: list[models.EligibleLibraryItem] = []
 
         for vn, li in self.virtual_nodes:
-            logging.info("NEIL checking virtual node %s", vn.pads)
-            connectable_pads = [p for p in vn.pads if source_pad.can_connect(p)]
+            connectable_pads = [
+                p
+                for p in vn.pads
+                if source_pad.can_connect(p) and isinstance(p, pad.SinkPad)
+            ]
             pads: list[models.PadEditorRepresentation] = []
             for p in connectable_pads:
                 pads.append(serialize.pad_editor_rep(p))
