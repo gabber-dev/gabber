@@ -21,6 +21,7 @@ export function QuickAddModal({
   >(undefined);
   const [searchQuery, setSearchQuery] = useState("");
   const loadingRef = useRef(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const fetchItems = useCallback(async () => {
     if (!sourceNode || !sourcePad) return;
@@ -44,6 +45,10 @@ export function QuickAddModal({
   useEffect(() => {
     fetchItems();
   }, [fetchItems, queryEligibleLibraryItems, sourceNode, sourcePad]);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
 
   function fuzzyMatch(str: string, query: string): boolean {
     str = str.toLowerCase();
@@ -74,6 +79,7 @@ export function QuickAddModal({
         <p className="text-sm">Source Node: {sourceNode}</p>
         <p className="text-sm mb-4">Source Pad: {sourcePad}</p>
         <input
+          ref={inputRef}
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
