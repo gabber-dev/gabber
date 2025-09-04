@@ -725,10 +725,6 @@ export function EditorProvider({
           dirty = true;
 
           if (sourceNodeRf?.type === "node" && targetNodeRf?.type === "node") {
-            console.log("NEIL Disconnecting pads", {
-              sourceNodeRf,
-              targetNodeRf,
-            });
             edits.push({
               type: "disconnect_pad",
               node: sourceNodeRf.id,
@@ -748,17 +744,25 @@ export function EditorProvider({
             sourceNodeRf?.type === "portal_end" &&
             targetNodeRf?.type === "node"
           ) {
+            const portalEnd = sourceNodeRf.data.portalEnd as PortalEnd;
+            const sourceNodeId = (
+              sourceNodeRf.data.sourceNode as NodeEditorRepresentation
+            ).id;
+            const sourcePadId = (
+              sourceNodeRf.data.sourcePad as PadEditorRepresentation
+            ).id;
+            const newNextPads = (portalEnd.next_pads || []).filter(
+              (p) =>
+                p.node !== targetNodeRf.id ||
+                p.pad !== edge?.targetHandle ||
+                "",
+            );
             const updatePortalEnd: UpdatePortalEndEdit = {
               type: "update_portal_end",
               portal_id: sourceNodeRf.data.sourcePortalId as string,
               portal_end_id: (sourceNodeRf.data.portalEnd as PortalEnd)
                 .id as string,
-              next_pads: (
-                sourceNodeRf.data.portalEnd as PortalEnd
-              ).next_pads.filter(
-                (p: { node: string; pad: string }) =>
-                  p.node !== targetNodeId || p.pad !== targetPadId,
-              ),
+              next_pads: newNextPads,
               editor_position: (sourceNodeRf.data.portalEnd as PortalEnd)
                 .editor_position,
             };
@@ -766,11 +770,11 @@ export function EditorProvider({
               type: "disconnect_pad",
               node: sourceNodeId,
               pad: sourcePadId,
-              connected_node: targetNodeId,
-              connected_pad: targetPadId,
+              connected_node: edge?.target || "",
+              connected_pad: edge?.targetHandle || "",
             };
-            // edits.push(updatePortalEnd);
-            // edits.push(disconnectEdit);
+            edits.push(updatePortalEnd);
+            edits.push(disconnectEdit);
           }
         } else if (change.type === "add") {
         }
@@ -782,7 +786,12 @@ export function EditorProvider({
         sendRequest({ type: "edit", edits: [e], req_id: v4() });
       }
     },
-    [localRepresentation, reactFlowRepresentation.nodes, sendRequest],
+    [
+      localRepresentation,
+      reactFlowRepresentation.edges,
+      reactFlowRepresentation.nodes,
+      sendRequest,
+    ],
   );
 
   const onReactFlowConnect = useCallback(
@@ -1023,7 +1032,7 @@ function graphToReact(
     const sourcePad = sourceNode?.pads?.find((p) => p.id === portal.source_pad);
     if (!sourceNode || !sourcePad) continue;
     edges.push({
-      id: `${sourceNode.id}-${sourcePad.id}-${portal.id}-${portal.id}`,
+      id: `portal-${sourceNode.id}-${sourcePad.id}-${portal.id}-${portal.id}`,
       source: sourceNode.id,
       sourceHandle: sourcePad.id,
       target: portal.id,
@@ -1037,7 +1046,7 @@ function graphToReact(
         const targetNode = nodeLookup.get(np.node);
         const targetPad = targetNode?.pads?.find((p) => p.id === np.pad);
         if (!targetNode || !targetPad) continue;
-        const edgeId = `${sourceNode.id}-${sourcePad.id}-${targetNode.id}-${targetPad.id}`;
+        const edgeId = `portalend-${sourceNode.id}-${sourcePad.id}-${targetNode.id}-${targetPad.id}`;
         edges.push({
           id: edgeId,
           source: pe.id,

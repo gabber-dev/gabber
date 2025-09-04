@@ -188,7 +188,15 @@ class SourcePad(Pad, Protocol):
 
     def disconnect(self, sink_pad: "SinkPad") -> None:
         next_pads = self.get_next_pads()
-        next_pads = [np for np in next_pads if np.get_id() != sink_pad.get_id()]
+        next_pads = [
+            np
+            for np in next_pads
+            if (
+                np.get_id() == sink_pad.get_id()
+                and np.get_owner_node().id == sink_pad.get_owner_node().id
+            )
+            is False
+        ]
         self.set_next_pads(next_pads)
         sink_pad.set_previous_pad(None)
         self._resolve_type_constraints()
