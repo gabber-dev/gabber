@@ -60,25 +60,8 @@ class Graph:
                 n.resolve_pads()
                 self.virtual_nodes.append((n, item))
             elif isinstance(item, GraphLibraryItem_SubGraph):
-                self._sub_graph_cls_lookup[item.id] = item
-                graph = Graph(
-                    id=item.id,
-                    secret_provider=self.secret_provider,
-                    secrets=self.secrets,
-                    library_items=[li for li in self.library_items if li != item],
-                )
-                sg = SubGraph(
-                    secret_provider=self.secret_provider,
-                    secrets=[],
-                    graph=graph,
-                )
-                sg.resolve_pads()
-                self.virtual_nodes.append(
-                    (
-                        sg,
-                        item,
-                    )
-                )
+                # TODO
+                pass
 
     def get_node(self, node_id: str) -> Node | None:
         return next((n for n in self.nodes if n.id == node_id), None)
