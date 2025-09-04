@@ -15,7 +15,7 @@ export function QuickAddModal({
   addPosition,
   close,
 }: Props) {
-  const { queryEligibleLibraryItems } = useEditor();
+  const { queryEligibleLibraryItems, addLibraryItem } = useEditor();
   const [eligibleItems, setEligibleItems] = useState<
     EligibleLibraryItem[] | undefined
   >(undefined);
@@ -96,7 +96,25 @@ export function QuickAddModal({
           <ul className="menu bg-base-200 rounded-box">
             {filteredItems.map((item, idx) => (
               <li key={idx}>
-                <EligibleItem item={item} />
+                <EligibleItem
+                  item={item}
+                  onPadClick={(padId: string) => {
+                    addLibraryItem({
+                      libraryItemId: item.library_item.id,
+                      sourceNodeId: sourceNode,
+                      sourcePadId: sourcePad,
+                      targetPadId: padId,
+                      position: addPosition,
+                    })
+                      .then(() => {
+                        close();
+                      })
+                      .catch((error) => {
+                        console.error("Error adding library item:", error);
+                        toast.error("Failed to add item");
+                      });
+                  }}
+                />
               </li>
             ))}
           </ul>
@@ -106,11 +124,27 @@ export function QuickAddModal({
   );
 }
 
-function EligibleItem({ item }: { item: EligibleLibraryItem }) {
+type EligibleItemProps = {
+  item: EligibleLibraryItem;
+  onPadClick: (padId: string) => void;
+};
+
+function EligibleItem({ item, onPadClick }: EligibleItemProps) {
   return (
     <div>
       <h3 className="font-semibold">{item.library_item.name}</h3>
       <p className="text-sm">Type: {item.library_item.type}</p>
+      <div className="flex flex-wrap gap-2 mt-2">
+        {item.pads.map((pad) => (
+          <button
+            key={pad.id}
+            className="btn btn-xs btn-primary"
+            onClick={() => onPadClick(pad.id)}
+          >
+            {pad.id}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

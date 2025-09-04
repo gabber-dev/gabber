@@ -54,14 +54,11 @@ class Graph:
         for item in self.library_items:
             if isinstance(item, GraphLibraryItem_Node):
                 self._node_cls_lookup[item.name] = item.node_type
-                self.virtual_nodes.append(
-                    (
-                        item.node_type(
-                            secret_provider=self.secret_provider, secrets=[]
-                        ),
-                        item,
-                    )
+                n = self._node_cls_lookup[item.name](
+                    secret_provider=self.secret_provider, secrets=[]
                 )
+                n.resolve_pads()
+                self.virtual_nodes.append((n, item))
             elif isinstance(item, GraphLibraryItem_SubGraph):
                 self._sub_graph_cls_lookup[item.id] = item
                 graph = Graph(
@@ -70,13 +67,15 @@ class Graph:
                     secrets=self.secrets,
                     library_items=[li for li in self.library_items if li != item],
                 )
+                sg = SubGraph(
+                    secret_provider=self.secret_provider,
+                    secrets=[],
+                    graph=graph,
+                )
+                sg.resolve_pads()
                 self.virtual_nodes.append(
                     (
-                        SubGraph(
-                            secret_provider=self.secret_provider,
-                            secrets=[],
-                            graph=graph,
-                        ),
+                        sg,
                         item,
                     )
                 )
@@ -149,12 +148,14 @@ class Graph:
         res: list[models.EligibleLibraryItem] = []
 
         for vn, li in self.virtual_nodes:
+            logging.info("NEIL checking virtual node %s", vn.pads)
             connectable_pads = [p for p in vn.pads if source_pad.can_connect(p)]
             pads: list[models.PadEditorRepresentation] = []
             for p in connectable_pads:
                 pads.append(serialize.pad_editor_rep(p))
 
-            res.append(models.EligibleLibraryItem(library_item=li, pads=pads))
+            if pads:
+                res.append(models.EligibleLibraryItem(library_item=li, pads=pads))
 
         return messages.QueryEligibleNodeLibraryItemsResponse(
             direct_eligible_items=res, autoconvert_eligible_items=[], req_id=req.req_id
