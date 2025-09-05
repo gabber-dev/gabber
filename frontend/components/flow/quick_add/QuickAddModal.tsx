@@ -39,7 +39,6 @@ export function QuickAddModal({
         sourceNode,
         sourcePad,
       });
-      console.log("Fetched eligible library items:", items);
       setEligibleItems(items);
     } catch (error) {
       toast.error("Error fetching eligible library items");
@@ -76,12 +75,14 @@ export function QuickAddModal({
   return (
     <div className="flex flex-col h-full w-full p-2">
       <div className="w-full flex items-center justify-center">
-        <CreatePortalButton
-          addPosition={addPosition}
-          fromNodeId={sourceNode}
-          fromPadId={sourcePad}
-          close={close}
-        />
+        {portalInfo === undefined && (
+          <CreatePortalButton
+            addPosition={addPosition}
+            fromNodeId={sourceNode}
+            fromPadId={sourcePad}
+            close={close}
+          />
+        )}
       </div>
       <div className="divider">Eligible Nodes</div>
       <div>

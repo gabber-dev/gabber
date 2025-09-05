@@ -142,6 +142,11 @@ class Publish(node.Node):
                 audio_stream = await audio_stream_provider(
                     self.room, f"{self.id}:audio", self._allowed_participant
                 )
+                logging.info(
+                    "NEIL Subscribed to audio stream for participant %s, %s",
+                    self._allowed_participant,
+                    self.id,
+                )
                 async for frame in audio_stream:
                     last_audio_frame_time = time.time()
                     original_data = AudioFrameData(
