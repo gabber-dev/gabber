@@ -61,8 +61,8 @@ class Graph:
                 n.resolve_pads()
                 self.virtual_nodes.append((n, item))
             elif isinstance(item, GraphLibraryItem_SubGraph):
-                # TODO
-                pass
+                self._sub_graph_cls_lookup[item.id] = item
+                # TODO create virtual node
 
     def get_node(self, node_id: str) -> Node | None:
         return next((n for n in self.nodes if n.id == node_id), None)
