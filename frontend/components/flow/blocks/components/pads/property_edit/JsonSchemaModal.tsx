@@ -4,22 +4,197 @@
  */
 
 import { XCircleIcon } from "@heroicons/react/24/outline";
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 
 type Props = {
   title: string;
-  schema: Record<string, any>;
-  setSchema: (schema: Record<string, any>) => void;
+  schema: Record<string, unknown>;
+  setSchema: (schema: Record<string, unknown>) => void;
 };
 
-export function JsonSchemaModal({ title, schema, setSchema }: Props) {
+type PropertyEditorProps = {
+  name: string;
+  prop: any;
+  renameProperty: (oldName: string, newName: string) => void;
+  updateProperty: (propName: string, updates: Record<string, any>) => void;
+  setDefault: (propName: string, defaultValue: any) => void;
+  toggleRequired: (propName: string) => void;
+  deleteProperty: (propName: string) => void;
+  schema: Record<string, unknown>;
+};
+
+function PropertyEditor({
+  name,
+  prop,
+  renameProperty,
+  updateProperty,
+  setDefault,
+  toggleRequired,
+  deleteProperty,
+  schema,
+}: PropertyEditorProps) {
   const typeOptions = ["string", "number", "boolean"];
 
+  return (
+    <div className="card bg-base-100 shadow-md border border-base-200 p-2">
+      <div className="flex gap-2 mb-1 items-end">
+        <div className="form-control flex-grow">
+          <label className="label py-0.5">
+            <span className="label-text text-sm">Name</span>
+          </label>
+          <input
+            type="text"
+            className="input input-bordered input-sm font-semibold"
+            value={name}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              renameProperty(name, e.target.value)
+            }
+            placeholder="Property name"
+          />
+        </div>
+        <div className="form-control w-32">
+          <label className="label py-0.5">
+            <span className="label-text text-sm">Type</span>
+          </label>
+          <select
+            className="select select-bordered select-sm"
+            value={prop.type || "string"}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+              updateProperty(name, {
+                type: e.target.value,
+              })
+            }
+          >
+            {typeOptions.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+        </div>
+        <button
+          className="absolute top-1 right-1 w-6 h-6 cursor-pointer text-error"
+          onClick={() => deleteProperty(name)}
+        >
+          <XCircleIcon />
+        </button>
+      </div>
+
+      <div className="flex gap-2 mb-1">
+        <div className="form-control flex-grow">
+          <label className="label py-0.5">
+            <span className="label-text text-sm">Default Value</span>
+          </label>
+          <input
+            type="text"
+            className="input input-bordered input-sm"
+            value={schema.defaults?.[name] || ""}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setDefault(name, e.target.value)
+            }
+            placeholder="Default value"
+          />
+        </div>
+        <div className="form-control">
+          <label className="label cursor-pointer py-0.5 space-x-1">
+            <span className="label-text text-sm">Required</span>
+            <input
+              type="checkbox"
+              className="toggle toggle-sm"
+              checked={schema.required?.includes(name) || false}
+              onChange={() => toggleRequired(name)}
+            />
+          </label>
+        </div>
+      </div>
+
+      {["number"].includes(prop.type) && (
+        <div className="grid grid-cols-2 gap-1">
+          <div className="form-control">
+            <label className="label py-0.5">
+              <span className="label-text text-sm">Minimum</span>
+            </label>
+            <input
+              type="number"
+              className="input input-bordered input-sm"
+              value={prop.minimum ?? ""}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                updateProperty(name, {
+                  minimum: e.target.value ? Number(e.target.value) : undefined,
+                })
+              }
+              placeholder="Min"
+            />
+          </div>
+          <div className="form-control">
+            <label className="label py-0.5">
+              <span className="label-text text-sm">Maximum</span>
+            </label>
+            <input
+              type="number"
+              className="input input-bordered input-sm"
+              value={prop.maximum ?? ""}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                updateProperty(name, {
+                  maximum: e.target.value ? Number(e.target.value) : undefined,
+                })
+              }
+              placeholder="Max"
+            />
+          </div>
+        </div>
+      )}
+
+      {prop.type === "string" && (
+        <div className="grid grid-cols-2 gap-1">
+          <div className="form-control">
+            <label className="label py-0.5">
+              <span className="label-text text-sm">Min Length</span>
+            </label>
+            <input
+              type="number"
+              className="input input-bordered input-sm"
+              value={prop.min_length ?? ""}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                updateProperty(name, {
+                  min_length: e.target.value
+                    ? Number(e.target.value)
+                    : undefined,
+                })
+              }
+              placeholder="Min len"
+            />
+          </div>
+          <div className="form-control">
+            <label className="label py-0.5">
+              <span className="label-text text-sm">Max Length</span>
+            </label>
+            <input
+              type="number"
+              className="input input-bordered input-sm"
+              value={prop.max_length ?? ""}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                updateProperty(name, {
+                  max_length: e.target.value
+                    ? Number(e.target.value)
+                    : undefined,
+                })
+              }
+              placeholder="Max len"
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function JsonSchemaModal({ title, schema, setSchema }: Props) {
   const propCount = useMemo(() => {
     return Object.keys(schema.properties || {}).length || 0;
   }, [schema.properties]);
 
-  const properties: Record<string, any> = useMemo(() => {
+  const properties: Record<string, unknown> = useMemo(() => {
     return schema.properties || {};
   }, [schema.properties]);
 
@@ -48,7 +223,7 @@ export function JsonSchemaModal({ title, schema, setSchema }: Props) {
       properties: {
         ...schema.properties,
         [propName]: {
-          ...schema.properties[propName],
+          ...(schema.properties?.[propName] as object),
           ...updates,
         },
       },
@@ -66,7 +241,7 @@ export function JsonSchemaModal({ title, schema, setSchema }: Props) {
   };
 
   const renameProperty = (oldName: string, newName: string): void => {
-    if (newName && newName !== oldName && !schema.properties[newName]) {
+    if (newName && newName !== oldName && !schema.properties?.[newName]) {
       const newProperties = { ...schema.properties };
       newProperties[newName] = newProperties[oldName];
       delete newProperties[oldName];
@@ -118,163 +293,17 @@ export function JsonSchemaModal({ title, schema, setSchema }: Props) {
 
       <div className="flex flex-col gap-2 max-h-[60vh] overflow-y-auto">
         {propertyEntries.map(([name, prop]: [string, any], index: number) => (
-          <div
+          <PropertyEditor
             key={index}
-            className="card bg-base-100 shadow-md border border-base-200 p-2"
-          >
-            <div className="flex gap-2 mb-1 items-end">
-              <div className="form-control flex-grow">
-                <label className="label py-0.5">
-                  <span className="label-text text-sm">Name</span>
-                </label>
-                <input
-                  type="text"
-                  className="input input-bordered input-sm font-semibold"
-                  value={name}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    renameProperty(name, e.target.value)
-                  }
-                  placeholder="Property name"
-                />
-              </div>
-              <div className="form-control w-32">
-                <label className="label py-0.5">
-                  <span className="label-text text-sm">Type</span>
-                </label>
-                <select
-                  className="select select-bordered select-sm"
-                  value={prop.type || "string"}
-                  onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                    updateProperty(name, {
-                      type: e.target.value,
-                    })
-                  }
-                >
-                  {typeOptions.map((type) => (
-                    <option key={type} value={type}>
-                      {type}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <button
-                className="absolute top-1 right-1 w-6 h-6 cursor-pointer text-error"
-                onClick={() => deleteProperty(name)}
-              >
-                <XCircleIcon />
-              </button>
-            </div>
-
-            <div className="flex gap-2 mb-1">
-              <div className="form-control flex-grow">
-                <label className="label py-0.5">
-                  <span className="label-text text-sm">Default Value</span>
-                </label>
-                <input
-                  type="text"
-                  className="input input-bordered input-sm"
-                  value={schema.defaults[name] || ""}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setDefault(name, e.target.value)
-                  }
-                  placeholder="Default value"
-                />
-              </div>
-              <div className="form-control">
-                <label className="label cursor-pointer py-0.5 space-x-1">
-                  <span className="label-text text-sm">Required</span>
-                  <input
-                    type="checkbox"
-                    className="toggle toggle-sm"
-                    checked={schema.required?.includes(name) || false}
-                    onChange={() => toggleRequired(name)}
-                  />
-                </label>
-              </div>
-            </div>
-
-            {["number"].includes(prop.type) && (
-              <div className="grid grid-cols-2 gap-1">
-                <div className="form-control">
-                  <label className="label py-0.5">
-                    <span className="label-text text-sm">Minimum</span>
-                  </label>
-                  <input
-                    type="number"
-                    className="input input-bordered input-sm"
-                    value={prop.minimum ?? ""}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      updateProperty(name, {
-                        minimum: e.target.value
-                          ? Number(e.target.value)
-                          : undefined,
-                      })
-                    }
-                    placeholder="Min"
-                  />
-                </div>
-                <div className="form-control">
-                  <label className="label py-0.5">
-                    <span className="label-text text-sm">Maximum</span>
-                  </label>
-                  <input
-                    type="number"
-                    className="input input-bordered input-sm"
-                    value={prop.maximum ?? ""}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      updateProperty(name, {
-                        maximum: e.target.value
-                          ? Number(e.target.value)
-                          : undefined,
-                      })
-                    }
-                    placeholder="Max"
-                  />
-                </div>
-              </div>
-            )}
-
-            {prop.type === "string" && (
-              <div className="grid grid-cols-2 gap-1">
-                <div className="form-control">
-                  <label className="label py-0.5">
-                    <span className="label-text text-sm">Min Length</span>
-                  </label>
-                  <input
-                    type="number"
-                    className="input input-bordered input-sm"
-                    value={prop.min_length ?? ""}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      updateProperty(name, {
-                        min_length: e.target.value
-                          ? Number(e.target.value)
-                          : undefined,
-                      })
-                    }
-                    placeholder="Min len"
-                  />
-                </div>
-                <div className="form-control">
-                  <label className="label py-0.5">
-                    <span className="label-text text-sm">Max Length</span>
-                  </label>
-                  <input
-                    type="number"
-                    className="input input-bordered input-sm"
-                    value={prop.max_length ?? ""}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      updateProperty(name, {
-                        max_length: e.target.value
-                          ? Number(e.target.value)
-                          : undefined,
-                      })
-                    }
-                    placeholder="Max len"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
+            name={name}
+            prop={prop}
+            renameProperty={renameProperty}
+            updateProperty={updateProperty}
+            setDefault={setDefault}
+            toggleRequired={toggleRequired}
+            deleteProperty={deleteProperty}
+            schema={schema}
+          />
         ))}
       </div>
     </div>
