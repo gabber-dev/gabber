@@ -86,7 +86,10 @@ function FlowEditInner({ editable }: Props) {
           x: clientX,
           y: clientY,
         });
-        if (connectionState.fromNode?.type === "node") {
+        if (
+          connectionState.fromNode?.type === "node" &&
+          connectionState.fromHandle?.type === "source"
+        ) {
           setQuickAdd({
             sourceNode: connectionState.fromNode?.id || "",
             sourcePad: connectionState.fromHandle?.id || "",
