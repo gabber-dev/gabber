@@ -6,17 +6,25 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, Field
 from livekit import rtc
 from dataclasses import dataclass
-from core import node, pad, runtime_types
+from core import node, pad, runtime_types, mcp
 import logging
 from core.editor import serialize
 from core.node import Node
 from nodes.core.media.publish import Publish
+from nodes.core.tool import MCP
 
 
 class RuntimeApi:
-    def __init__(self, *, room: rtc.Room, nodes: list[node.Node]):
+    def __init__(
+        self,
+        *,
+        room: rtc.Room,
+        nodes: list[node.Node],
+        mcp_servers: list[mcp.MCPServer],
+    ):
         self.room = room
         self.nodes = nodes
+        self.mcp_servers = mcp_servers
         self._publish_locks: dict[str, PublishLock] = {}
 
     def _trigger_value_from_pad_value(self, value: Any):
@@ -207,7 +215,13 @@ class RuntimeApi:
                 dc_queue.put_nowait(
                     QueueItem(payload=complete_resp, participant=packet.participant)
                 )
-
+            elif request.payload.type == "list_mcp_servers":
+                complete_resp.payload = RuntimeResponsePayload_ListMCPServers(
+                    servers=self.mcp_servers
+                )
+                dc_queue.put_nowait(
+                    QueueItem(payload=complete_resp, participant=packet.participant)
+                )
             else:
                 logging.error(f"Unknown request type: {request.payload.type}")
                 complete_resp.error = f"Unknown request type: {request.payload.type}"
@@ -324,10 +338,15 @@ class RuntimeRequestPayload_LockPublisher(BaseModel):
     publish_node: str
 
 
+class RuntimeRequestPayload_ListMCPServers(BaseModel):
+    type: Literal["list_mcp_servers"] = "list_mcp_servers"
+
+
 RuntimeRequestPayload = Annotated[
     RuntimeRequestPayload_PushValue
     | RuntimeRequestPayload_GetValue
-    | RuntimeRequestPayload_LockPublisher,
+    | RuntimeRequestPayload_LockPublisher
+    | RuntimeRequestPayload_ListMCPServers,
     Field(discriminator="type", description="Request to push data to a pad"),
 ]
 
@@ -357,10 +376,16 @@ class RuntimeResponsePayload_LockPublisher(BaseModel):
     success: bool
 
 
+class RuntimeResponsePayload_ListMCPServers(BaseModel):
+    type: Literal["list_mcp_servers"] = "list_mcp_servers"
+    servers: list[mcp.MCPServer]
+
+
 RuntimeResponsePayload = Annotated[
     RuntimeResponsePayload_PushValue
     | RuntimeResponsePayload_GetValue
-    | RuntimeResponsePayload_LockPublisher,
+    | RuntimeResponsePayload_LockPublisher
+    | RuntimeResponsePayload_ListMCPServers,
     Field(discriminator="type", description="Payload for the runtime request complete"),
 ]
 

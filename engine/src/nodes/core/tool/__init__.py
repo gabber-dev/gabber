@@ -4,9 +4,6 @@
 from .set_tool_result import SetToolResult
 from .tool import Tool
 from .tool_group import ToolGroup
+from .mcp import MCP
 
-ALL_NODES = [
-    Tool,
-    ToolGroup,
-    SetToolResult,
-]
+ALL_NODES = [Tool, ToolGroup, SetToolResult, MCP]

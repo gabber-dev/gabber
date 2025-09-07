@@ -16,11 +16,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Engine, EngineHandler, Publication, Subscription } from "@gabber/client"
+import { Engine, EngineHandler, MCPServer, Publication, Subscription } from "@gabber/client"
 import { LocalTrack } from "@gabber/client";
 import { GetLocalTrackOptions } from "@gabber/client";
 import { ConnectionDetails, PublishParams, SubscribeParams, ConnectionState } from "@gabber/client";
-import { createContext, useContext, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useRef, useState } from "react";
 
 type EngineContextType = {
     connectionState: ConnectionState;
@@ -29,6 +29,7 @@ type EngineContextType = {
     disconnect: () => Promise<void>;
     publishToNode: (params: PublishParams) => Promise<Publication>;
     subscribeToNode: (params: SubscribeParams) => Promise<Subscription>;
+    listMCPServers: () => Promise<MCPServer[]>;
 };
 
 type InternalEngineContextType = {
@@ -54,6 +55,13 @@ export function EngineProvider({ children }: { children: React.ReactNode }) {
         engineRef.current = new Engine({ handler: handlerRef.current });
     }
 
+    const listMCPServers = useCallback(async () => {
+        if (!engineRef.current) {
+            throw new Error("Engine not initialized");
+        }
+        return engineRef.current.listMCPServers();
+    }, []);
+
     return (
         <EngineContext.Provider value={{
             main: {
@@ -63,6 +71,7 @@ export function EngineProvider({ children }: { children: React.ReactNode }) {
                 disconnect: engineRef.current.disconnect,
                 publishToNode: engineRef.current.publishToNode,
                 subscribeToNode: engineRef.current.subscribeToNode,
+                listMCPServers,
             },
             internal: {
                 engineRef: engineRef as React.RefObject<Engine>

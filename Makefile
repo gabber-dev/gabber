@@ -2,24 +2,32 @@
 
 GABBER_REPOSITORY_DIR ?= $(shell pwd)/.gabber
 GABBER_SECRET_FILE ?= $(shell pwd)/.secret
+GABBER_MCP_CONFIG ?= $(shell pwd)/mcp.yaml
 
 engine:
 	export GABBER_REPOSITORY_DIR=$(GABBER_REPOSITORY_DIR) && \
 	export GABBER_SECRET_FILE=$(GABBER_SECRET_FILE) && \
+	export GABBER_MCP_CONFIG=$(GABBER_MCP_CONFIG) && \
 	cd engine && \
 	make engine
 
 editor:
 	export GABBER_REPOSITORY_DIR=$(GABBER_REPOSITORY_DIR) && \
 	export GABBER_SECRET_FILE=$(GABBER_SECRET_FILE) && \
+	export GABBER_MCP_CONFIG=$(GABBER_MCP_CONFIG) && \
 	cd engine && \
 	make editor
 
 repository:
 	export GABBER_REPOSITORY_DIR=$(GABBER_REPOSITORY_DIR) && \
 	export GABBER_SECRET_FILE=$(GABBER_SECRET_FILE) && \
+	export GABBER_MCP_CONFIG=$(GABBER_MCP_CONFIG) && \
 	cd engine && \
 	make repository 
+
+mcp-proxy-client:
+	cd engine && \
+	make mcp-proxy-client
 
 generate:
 	engine/.venv/bin/python engine/src/main.py generate-editor-schema | json2ts -o frontend/generated/editor.ts

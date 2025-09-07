@@ -20,7 +20,7 @@ import { DataPacket_Kind, RemoteParticipant, Room } from 'livekit-client';
 import { PropertyPad, SinkPad, SourcePad } from './pad/Pad';
 import { LocalAudioTrack, LocalVideoTrack, LocalTrack } from './LocalTrack';
 import { Subscription } from './Subscription';
-import { PadValue, Payload, RuntimeEvent, RuntimeRequest, RuntimeRequestPayload_LockPublisher, RuntimeResponsePayload } from './generated/runtime';
+import { MCPServer, PadValue, Payload, RuntimeEvent, RuntimeRequest, RuntimeRequestPayload_LockPublisher, RuntimeResponsePayload } from './generated/runtime';
 import { Publication } from './Publication';
 
 export interface EngineHandler {
@@ -138,6 +138,17 @@ export class Engine  {
       return new Publication({ nodeId: params.publishNodeId, livekitRoom: this.livekitRoom, trackName });
     }
     throw new Error(`Unsupported track type: ${params.localTrack.type}`);
+  }
+
+  public async listMCPServers(): Promise<MCPServer[]> {
+    const payload: Payload = {
+      type: "list_mcp_servers"
+    }
+    const response = await this.runtimeRequest({payload});
+    if(response.type !== "list_mcp_servers") {
+      throw new Error("Unexpected response type");
+    }
+    return response.servers;
   }
 
   public async subscribeToNode(params: SubscribeParams): Promise<Subscription> {

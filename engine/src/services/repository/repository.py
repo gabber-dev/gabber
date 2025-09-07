@@ -57,6 +57,7 @@ class RepositoryServer:
         self.app.router.add_get("/premade_subgraph/list", self.list_premade_subgraphs)
         self.app.router.add_post("/app/run", self.app_run)
         self.app.router.add_post("/app/debug_connection", self.debug_connection)
+        self.app.router.add_post("/app/mcp_proxy_connection", self.mcp_proxy_connection)
         self.app.router.add_post("/app/import", self.import_app)
         self.app.router.add_get("/app/{id}/export", self.export_app)
 
@@ -738,6 +739,34 @@ class RepositoryServer:
         response = messages.DebugConnectionResponse(
             connection_details=connection_details,
             graph=graph,
+        )
+        return aiohttp.web.Response(
+            body=response.model_dump_json(), content_type="application/json"
+        )
+
+    async def mcp_proxy_connection(self, request: aiohttp.web.Request):
+        livekit_url = "ws://localhost:7880"
+        livekit_api_key = "devkey"
+        livekit_api_secret = "secret"
+        req = messages.MCPProxyConnectionRequest.model_validate(await request.json())
+        at = api.AccessToken(livekit_api_key, livekit_api_secret)
+        at = at.with_grants(
+            api.VideoGrants(
+                room_join=True,
+                room=req.run_id,
+                can_publish=False,
+                can_publish_data=True,
+                can_subscribe=True,
+            )
+        ).with_identity("debug")
+
+        connection_details = models.AppRunConnectionDetails(
+            url=livekit_url,
+            token=at.to_jwt(),
+        )
+
+        response = messages.MCPProxyConnectionResponse(
+            connection_details=connection_details
         )
         return aiohttp.web.Response(
             body=response.model_dump_json(), content_type="application/json"

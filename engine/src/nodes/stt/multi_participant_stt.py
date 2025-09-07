@@ -274,7 +274,6 @@ class MultiParticipantSTT(node.Node):
                         )
                         continue
 
-                    logging.info("NEIL Participant %d said: %s", idx, txt)
                     transcription_source.push_item(txt, ctx)
                     speech_ended_source.push_item(runtime_types.Trigger(), ctx)
                     ctx.complete()

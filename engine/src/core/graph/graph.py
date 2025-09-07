@@ -24,6 +24,7 @@ from core.editor.models import (
 )
 from core.node import Node
 from core.secret import PublicSecret, SecretProvider
+from core import mcp
 from nodes.core.sub_graph import SubGraph
 from utils import short_uuid
 from .runtime_api import RuntimeApi
@@ -37,11 +38,14 @@ class Graph:
         *,
         id: str = "default",
         secret_provider: SecretProvider,
+        mcp_server_provider: mcp.MCPServerProvider,
         secrets: list[PublicSecret],
         library_items: list[GraphLibraryItem],
     ):
         self.id = id
         self.secret_provider = secret_provider
+        self.mcp_server_provider = mcp_server_provider
+        self._mcp_servers: list[mcp.MCPServer] | None = None
         self.secrets = secrets
         self.library_items = library_items
 
@@ -56,7 +60,7 @@ class Graph:
             if isinstance(item, GraphLibraryItem_Node):
                 self._node_cls_lookup[item.name] = item.node_type
                 n = self._node_cls_lookup[item.name](
-                    secret_provider=self.secret_provider, secrets=[]
+                    secret_provider=self.secret_provider, secrets=[], mcp_servers=[]
                 )
                 n.resolve_pads()
                 self.virtual_nodes.append((n, item))
@@ -66,6 +70,13 @@ class Graph:
 
     def get_node(self, node_id: str) -> Node | None:
         return next((n for n in self.nodes if n.id == node_id), None)
+
+    async def get_mcp_servers(self) -> list[mcp.MCPServer]:
+        if self._mcp_servers is None:
+            config = await self.mcp_server_provider.get_config()
+            self._mcp_servers = config.servers
+
+        return self._mcp_servers
 
     async def handle_request(
         self, request: messages.Request
@@ -164,7 +175,11 @@ class Graph:
 
     async def _handle_insert_node(self, edit: InsertNodeEdit):
         node_cls = self._node_cls_lookup[edit.node_type]
-        node = node_cls(secret_provider=self.secret_provider, secrets=self.secrets)
+        node = node_cls(
+            secret_provider=self.secret_provider,
+            secrets=self.secrets,
+            mcp_servers=await self.get_mcp_servers(),
+        )
         if edit.id:
             node.id = edit.id
         else:
@@ -183,6 +198,7 @@ class Graph:
         graph = Graph(
             id=subgraph_item.id,
             secret_provider=self.secret_provider,
+            mcp_server_provider=self.mcp_server_provider,
             secrets=self.secrets,
             library_items=self.library_items,
         )
@@ -406,6 +422,7 @@ class Graph:
                 node = node_cls(
                     secret_provider=self.secret_provider,
                     secrets=self.secrets,
+                    mcp_servers=await self.get_mcp_servers(),
                 )
             elif node_data.type == "SubGraph":
                 subgraph_id_pad = next(
@@ -434,6 +451,7 @@ class Graph:
                 subgraph = Graph(
                     id=subgraph_li.id,
                     secret_provider=self.secret_provider,
+                    mcp_server_provider=self.mcp_server_provider,
                     secrets=self.secrets,
                     library_items=self.library_items,
                 )
@@ -569,6 +587,7 @@ class Graph:
             runtime_api = RuntimeApi(
                 room=room,
                 nodes=self.nodes,
+                mcp_servers=await self.get_mcp_servers(),
             )
 
         for node in self.nodes:
