@@ -30,5 +30,18 @@ class MCP(node.Node):
                 value=self,
             )
 
+        proxy_token = cast(pad.PropertySourcePad, self.get_pad("proxy_token"))
+        if not proxy_token:
+            proxy_token = pad.PropertySourcePad(
+                id="proxy_token",
+                group="config",
+                owner_node=self,
+                default_type_constraints=[pad.types.String()],
+                value="",
+            )
+
     async def run(self):
+        pass
+
+    async def generate_proxy_token(self):
         pass

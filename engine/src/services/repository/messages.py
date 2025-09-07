@@ -40,6 +40,11 @@ class DebugConnectionRequest(BaseModel):
     run_id: str
 
 
+class MCPProxyConnectionRequest(BaseModel):
+    type: Literal["mcp_proxy_connection"] = "mcp_proxy_connection"
+    run_id: str
+
+
 class ImportAppRequest(BaseModel):
     type: Literal["import_app"] = "import_app"
     export: AppExport
@@ -50,7 +55,8 @@ Request = Annotated[
     | SaveAppRequest
     | CreateAppRunRequest
     | DebugConnectionRequest
-    | ImportAppRequest,
+    | ImportAppRequest
+    | MCPProxyConnectionRequest,
     Field(discriminator="type", description="Request to perform on the graph editor"),
 ]
 
@@ -90,10 +96,20 @@ class CreateAppRunResponse(BaseModel):
     connection_details: AppRunConnectionDetails
 
 
+class ListAppRunsResponse(BaseModel):
+    type: Literal["list_app_runs"] = "list_app_runs"
+    runs: list[str]
+
+
 class DebugConnectionResponse(BaseModel):
     type: Literal["debug_connection"] = "debug_connection"
     connection_details: AppRunConnectionDetails
     graph: models.GraphEditorRepresentation
+
+
+class MCPProxyConnectionResponse(BaseModel):
+    type: Literal["mcp_proxy_connection"] = "mcp_proxy_connection"
+    connection_details: AppRunConnectionDetails
 
 
 class ImportAppResponse(BaseModel):
@@ -113,8 +129,10 @@ Response = Annotated[
     | GetSubgraphResponse
     | ListSubgraphsResponse
     | CreateAppRunResponse
+    | ListAppRunsResponse
     | DebugConnectionResponse
     | ImportAppResponse
-    | ExportAppResponse,
+    | ExportAppResponse
+    | MCPProxyConnectionResponse,
     Field(discriminator="type", description="Response from the graph editor"),
 ]

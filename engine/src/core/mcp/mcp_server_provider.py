@@ -3,11 +3,11 @@
 
 from abc import ABC, abstractmethod
 
-from .mcp_server_config import MCPServer
+from .mcp_server_config import MCPServerConfig
 
 
 class MCPServerProvider(ABC):
     @abstractmethod
-    async def list_servers(self) -> list[MCPServer]:
+    async def get_config(self) -> MCPServerConfig:
         """List all mcp server configs."""
         pass

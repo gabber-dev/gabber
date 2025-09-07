@@ -2,20 +2,22 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
-import os
 import json
 import logging
+import os
 
+import aiohttp
 import click
-from core.editor import messages
-from core import graph
 from pydantic import TypeAdapter
-from server import (
-    GraphEditorServer,
-    run_engine,
-    repository,
+
+from core import graph
+from core.editor import messages
+from services import (
     DefaultGraphLibrary,
     DefaultSecretProvider,
+    GraphEditorServer,
+    repository,
+    run_engine,
 )
 
 
@@ -145,9 +147,18 @@ def generate_statemachine_schema():
     print(json.dumps(config_schema, indent=2))
 
 
-@main_cli.command("mcp-proxy")
+@main_cli.command("mcp-proxy-client")
 def mcp_proxy():
-    pass
+    async def run_proxy_client():
+        while True:
+            try:
+                pass
+            except Exception as e:
+                logging.error(f"Error in MCP proxy client: {e}", exc_info=True)
+                await asyncio.sleep(5)
+                continue
+
+    asyncio.run(run_proxy_client())
 
 
 if __name__ == "__main__":

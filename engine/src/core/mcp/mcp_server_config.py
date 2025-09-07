@@ -5,6 +5,10 @@ from pydantic import BaseModel, Field
 from typing import Annotated, Literal
 
 
+class MCPServerConfig(BaseModel):
+    servers: list["MCPServer"]
+
+
 class MCPTransportSSE(BaseModel):
     type: Literal["sse"] = "sse"
     url: str

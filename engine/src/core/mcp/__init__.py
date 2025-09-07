@@ -3,6 +3,7 @@ from .mcp_server_config import (
     MCPTransportDatachannelProxy,
     MCPTransportSSE,
     MCPServer,
+    MCPServerConfig,
 )
 from .mcp_server_provider import MCPServerProvider
 
@@ -12,4 +13,5 @@ __all__ = [
     "MCPTransportSSE",
     "MCPServer",
     "MCPServerProvider",
+    "MCPServerConfig",
 ]
