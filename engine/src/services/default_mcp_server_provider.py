@@ -15,9 +15,5 @@ class DefaultMCPServerProvider(mcp.MCPServerProvider):
     async def get_config(self) -> mcp.MCPServerConfig:
         async with aiofiles.open(self.mcp_config_file, mode="r") as f:
             content = await f.read()
-            logging.info(
-                f"NEIL Loaded MCP config from {self.mcp_config_file} - {content}"
-            )
             config_dict = yaml.safe_load(content)
-            logging.info(f"NEIL Parsed MCP config: {config_dict}")
             return mcp.MCPServerConfig.model_validate(config_dict)
