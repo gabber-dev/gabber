@@ -5,9 +5,8 @@ import asyncio
 import logging
 from typing import Any, cast
 
-from core import node, pad, runtime_types
+from core import node, pad
 from core.node import NodeMetadata
-from core.runtime_types import ToolCall
 
 
 class MCP(node.Node):
@@ -30,18 +29,22 @@ class MCP(node.Node):
                 value=self,
             )
 
-        proxy_token = cast(pad.PropertySourcePad, self.get_pad("proxy_token"))
-        if not proxy_token:
-            proxy_token = pad.PropertySourcePad(
-                id="proxy_token",
+        mcp_server = cast(pad.PropertySinkPad, self.get_pad("mcp_server"))
+        if not mcp_server:
+            mcp_server = pad.PropertySinkPad(
+                id="mcp_server",
                 group="config",
                 owner_node=self,
-                default_type_constraints=[pad.types.String()],
-                value="",
+                default_type_constraints=[
+                    pad.types.Enum(options=[s.name for s in self.mcp_servers])
+                ],
+                value=self.mcp_servers[0].name if self.mcp_servers else None,
             )
+
+        self.pads = [self_pad, mcp_server]
 
     async def run(self):
         pass
 
-    async def generate_proxy_token(self):
+    async def generate_mcp_server(self):
         pass

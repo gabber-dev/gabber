@@ -15,6 +15,7 @@ from core.editor import messages
 from services import (
     DefaultGraphLibrary,
     DefaultSecretProvider,
+    DefaultMCPServerProvider,
     GraphEditorServer,
     repository,
     run_engine,
@@ -36,6 +37,7 @@ def start(port):
             port=port,
             graph_library=DefaultGraphLibrary(),
             secret_provider=DefaultSecretProvider(),
+            mcp_server_provider=DefaultMCPServerProvider(),
         )
         await server.run()
 

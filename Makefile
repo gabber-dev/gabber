@@ -7,23 +7,25 @@ GABBER_MCP_CONFIG ?= $(shell pwd)/mcp.yaml
 engine:
 	export GABBER_REPOSITORY_DIR=$(GABBER_REPOSITORY_DIR) && \
 	export GABBER_SECRET_FILE=$(GABBER_SECRET_FILE) && \
+	export GABBER_MCP_CONFIG=$(GABBER_MCP_CONFIG) && \
 	cd engine && \
 	make engine
 
 editor:
 	export GABBER_REPOSITORY_DIR=$(GABBER_REPOSITORY_DIR) && \
 	export GABBER_SECRET_FILE=$(GABBER_SECRET_FILE) && \
+	export GABBER_MCP_CONFIG=$(GABBER_MCP_CONFIG) && \
 	cd engine && \
 	make editor
 
 repository:
 	export GABBER_REPOSITORY_DIR=$(GABBER_REPOSITORY_DIR) && \
 	export GABBER_SECRET_FILE=$(GABBER_SECRET_FILE) && \
+	export GABBER_MCP_CONFIG=$(GABBER_MCP_CONFIG) && \
 	cd engine && \
 	make repository 
 
 mcp-proxy-client:
-	export GABBER_MCP_CONFIG=$(GABBER_MCP_CONFIG) && \
 	cd engine && \
 	make mcp-proxy-client
 

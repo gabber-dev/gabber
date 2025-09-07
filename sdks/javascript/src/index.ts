@@ -44,4 +44,5 @@ export type {
     PadValue_Integer,
     PadValue_String,
     PadValue,
+    MCPServer,
 } from './generated/runtime';

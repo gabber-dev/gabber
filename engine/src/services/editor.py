@@ -9,7 +9,7 @@ import aiohttp.web
 from aiohttp import web
 from pydantic import TypeAdapter
 
-from core import graph, secret
+from core import graph, secret, mcp
 from core.editor import messages
 
 
@@ -20,10 +20,12 @@ class GraphEditorServer:
         port: int,
         graph_library: graph.GraphLibrary,
         secret_provider: secret.SecretProvider,
+        mcp_server_provider: mcp.MCPServerProvider,
     ):
         self.port = port
         self.graph_library = graph_library
         self.secret_provider = secret_provider
+        self.mcp_server_provider = mcp_server_provider
         self.app = web.Application()
 
         self.setup_routes()
@@ -39,6 +41,7 @@ class GraphEditorServer:
             ws=ws,
             graph_library=self.graph_library,
             secret_provider=self.secret_provider,
+            mcp_server_provider=self.mcp_server_provider,
         )
         await editor_session.run()
 
@@ -75,10 +78,12 @@ class GraphEditorSession:
         ws: web.WebSocketResponse,
         graph_library: graph.GraphLibrary,
         secret_provider: secret.SecretProvider,
+        mcp_server_provider: mcp.MCPServerProvider,
     ):
         self.ws = ws
         self.graph_library = graph_library
         self.secret_provider = secret_provider
+        self.mcp_server_provider = mcp_server_provider
 
     async def run(self):
         library_items = await self.graph_library.list_items()
@@ -87,6 +92,7 @@ class GraphEditorSession:
             secrets=secrets,
             secret_provider=self.secret_provider,
             library_items=library_items,
+            mcp_server_provider=self.mcp_server_provider,
         )
         async for message in self.ws:
             if message.type == aiohttp.WSMsgType.TEXT:

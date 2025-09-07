@@ -13,7 +13,8 @@ export type ReqId = string;
 export type Payload =
   | RuntimeRequestPayload_PushValue
   | RuntimeRequestPayload_GetValue
-  | RuntimeRequestPayload_LockPublisher;
+  | RuntimeRequestPayload_LockPublisher
+  | RuntimeRequestPayload_ListMCPServers;
 export type Type1 = "push_value";
 export type NodeId = string;
 export type PadId = string;
@@ -22,21 +23,28 @@ export type NodeId1 = string;
 export type PadId1 = string;
 export type Type3 = "lock_publisher";
 export type PublishNode = string;
+export type Type4 = "list_mcp_servers";
 /**
  * Request to push data to a pad
  */
 export type RuntimeRequestPayload =
   | RuntimeRequestPayload_PushValue
   | RuntimeRequestPayload_GetValue
-  | RuntimeRequestPayload_LockPublisher;
-export type Type4 = "complete";
+  | RuntimeRequestPayload_LockPublisher
+  | RuntimeRequestPayload_ListMCPServers;
+export type Type5 = "complete";
 export type ReqId1 = string;
 export type Error = string | null;
 export type Payload1 =
-  | (RuntimeResponsePayload_PushValue | RuntimeResponsePayload_GetValue | RuntimeResponsePayload_LockPublisher)
+  | (
+      | RuntimeResponsePayload_PushValue
+      | RuntimeResponsePayload_GetValue
+      | RuntimeResponsePayload_LockPublisher
+      | RuntimeResponsePayload_ListMCPServers
+    )
   | null;
-export type Type5 = "push_value";
-export type Type6 = "get_value";
+export type Type6 = "push_value";
+export type Type7 = "get_value";
 /**
  * Type of the pad triggered value
  */
@@ -48,35 +56,43 @@ export type Value1 =
   | PadValue_Trigger
   | PadValue_AudioClip
   | PadValue_VideoClip;
-export type Type7 = "string";
+export type Type8 = "string";
 export type Value2 = string;
-export type Type8 = "integer";
+export type Type9 = "integer";
 export type Value3 = number;
-export type Type9 = "float";
+export type Type10 = "float";
 export type Value4 = number;
-export type Type10 = "boolean";
+export type Type11 = "boolean";
 export type Value5 = boolean;
-export type Type11 = "trigger";
-export type Type12 = "audio_clip";
+export type Type12 = "trigger";
+export type Type13 = "audio_clip";
 export type Transcript = string;
 export type Duration = number;
-export type Type13 = "video_clip";
+export type Type14 = "video_clip";
 export type Duration1 = number;
-export type Type14 = "lock_publisher";
+export type Type15 = "lock_publisher";
 export type Success = boolean;
+export type Type16 = "list_mcp_servers";
+export type Name = string;
+export type Transport = MCPTransportDatachannelProxy;
+export type Type17 = "datachannel_proxy";
+export type Type18 = "sse";
+export type Url = string;
+export type Servers = MCPServer[];
 /**
  * Payload for the runtime request complete
  */
 export type RuntimeResponsePayload =
   | RuntimeResponsePayload_PushValue
   | RuntimeResponsePayload_GetValue
-  | RuntimeResponsePayload_LockPublisher;
-export type Type15 = "event";
+  | RuntimeResponsePayload_LockPublisher
+  | RuntimeResponsePayload_ListMCPServers;
+export type Type19 = "event";
 /**
  * Payload for the runtime event
  */
 export type Payload2 = RuntimeEventPayload_Value;
-export type Type16 = "value";
+export type Type20 = "value";
 /**
  * Type of the pad triggered value
  */
@@ -143,69 +159,93 @@ export interface RuntimeRequestPayload_LockPublisher {
   publish_node: PublishNode;
   [k: string]: unknown;
 }
-export interface RuntimeResponse {
+export interface RuntimeRequestPayload_ListMCPServers {
   type?: Type4;
+  [k: string]: unknown;
+}
+export interface RuntimeResponse {
+  type?: Type5;
   req_id: ReqId1;
   error?: Error;
   payload?: Payload1;
   [k: string]: unknown;
 }
 export interface RuntimeResponsePayload_PushValue {
-  type?: Type5;
+  type?: Type6;
   [k: string]: unknown;
 }
 export interface RuntimeResponsePayload_GetValue {
-  type?: Type6;
+  type?: Type7;
   value: Value1;
   [k: string]: unknown;
 }
 export interface PadValue_String {
-  type?: Type7;
+  type?: Type8;
   value: Value2;
   [k: string]: unknown;
 }
 export interface PadValue_Integer {
-  type?: Type8;
+  type?: Type9;
   value: Value3;
   [k: string]: unknown;
 }
 export interface PadValue_Float {
-  type?: Type9;
+  type?: Type10;
   value: Value4;
   [k: string]: unknown;
 }
 export interface PadValue_Boolean {
-  type?: Type10;
+  type?: Type11;
   value: Value5;
   [k: string]: unknown;
 }
 export interface PadValue_Trigger {
-  type?: Type11;
+  type?: Type12;
   [k: string]: unknown;
 }
 export interface PadValue_AudioClip {
-  type?: Type12;
+  type?: Type13;
   transcript: Transcript;
   duration: Duration;
   [k: string]: unknown;
 }
 export interface PadValue_VideoClip {
-  type?: Type13;
+  type?: Type14;
   duration: Duration1;
   [k: string]: unknown;
 }
 export interface RuntimeResponsePayload_LockPublisher {
-  type?: Type14;
+  type?: Type15;
   success: Success;
   [k: string]: unknown;
 }
+export interface RuntimeResponsePayload_ListMCPServers {
+  type?: Type16;
+  servers: Servers;
+  [k: string]: unknown;
+}
+export interface MCPServer {
+  name: Name;
+  transport: Transport;
+  [k: string]: unknown;
+}
+export interface MCPTransportDatachannelProxy {
+  type?: Type17;
+  local_transport: MCPTransportSSE;
+  [k: string]: unknown;
+}
+export interface MCPTransportSSE {
+  type?: Type18;
+  url: Url;
+  [k: string]: unknown;
+}
 export interface RuntimeEvent {
-  type?: Type15;
+  type?: Type19;
   payload: Payload2;
   [k: string]: unknown;
 }
 export interface RuntimeEventPayload_Value {
-  type?: Type16;
+  type?: Type20;
   value: Value6;
   node_id: NodeId2;
   pad_id: PadId2;

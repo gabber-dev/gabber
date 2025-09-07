@@ -1,3 +1,7 @@
 servers:
-  - type: sse
-    url: http://localhost:9876
+  - name: blender
+    transport:
+      type: datachannel_proxy
+      local_transport:
+        type: sse
+        url: http://localhost:9876/sse
