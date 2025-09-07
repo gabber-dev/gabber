@@ -1,0 +1,3 @@
+servers:
+  - type: sse
+    url: http://localhost:9876

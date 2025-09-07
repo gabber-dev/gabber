@@ -145,5 +145,10 @@ def generate_statemachine_schema():
     print(json.dumps(config_schema, indent=2))
 
 
+@main_cli.command("mcp-proxy")
+def mcp_proxy():
+    pass
+
+
 if __name__ == "__main__":
     main_cli()
