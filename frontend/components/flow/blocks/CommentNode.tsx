@@ -19,6 +19,7 @@ export function CommentNode({ data }: CommentNodeProps) {
   const { editorValue: savedWidth, setEditorValue: setSavedWidth } =
     usePropertyPad<number>(data.id, "width");
   const [width, setWidth] = useState<number>(savedWidth ?? 480);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
   const startXRef = useRef<number | null>(null);
   const startWidthRef = useRef<number>(width);
 
@@ -58,17 +59,24 @@ export function CommentNode({ data }: CommentNodeProps) {
     >
       <div className="h-2 bg-transparent rounded-t-lg drag-handle cursor-grab active:cursor-grabbing"></div>
       <div className="flex flex-col p-4">
-        <div className="[&_.pad-handle]:hidden [&_.pad-label]:hidden [&_textarea]:min-h-[72px] [&_textarea]:bg-transparent [&_textarea]:text-white [&_textarea]:border-transparent [&_textarea]:placeholder:text-white/50 [&_textarea]:focus:border-transparent [&_textarea:hover]:bg-transparent">
-          <MultiLineTextPropertyEdit nodeId={data.id} padId="text" />
-        </div>
-        <div className="mt-3 border-t border-base-300 pt-3">
-          <div className="text-xs text-base-content/60 mb-2">Preview</div>
-          <div className="markdown-body text-white break-words whitespace-pre-wrap">
+        {isEditing ? (
+          <div
+            className="[&_.pad-handle]:hidden [&_.pad-label]:hidden [&_textarea]:min-h-[200px] [&_textarea]:bg-transparent [&_textarea]:text-white [&_textarea]:border-transparent [&_textarea]:placeholder:text-white/50 [&_textarea]:focus:border-transparent [&_textarea:hover]:bg-transparent"
+            onFocus={() => setIsEditing(true)}
+            onBlur={() => setIsEditing(false)}
+          >
+            <MultiLineTextPropertyEdit nodeId={data.id} padId="text" />
+          </div>
+        ) : (
+          <div
+            className="markdown-body text-white break-words whitespace-pre-wrap cursor-pointer min-h-[72px]"
+            onClick={() => setIsEditing(true)}
+          >
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {runtimeValue || ""}
+              {runtimeValue || "Click to add a comment..."}
             </ReactMarkdown>
           </div>
-        </div>
+        )}
         <div
           className="absolute top-0 right-0 h-full w-2 cursor-ew-resize nodrag"
           onMouseDown={onResizeMouseDown}
