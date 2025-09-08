@@ -35,6 +35,20 @@ generate:
 	engine/.venv/bin/python engine/src/main.py generate-state-machine-schema | json2ts -o frontend/generated/stateMachine.ts
 
 	engine/.venv/bin/python engine/src/main.py generate-runtime-schema | json2ts -o sdks/javascript/src/generated/runtime.ts
+	make generate-python
+
+generate-python:
+	mkdir -p .gabber/.generate/python && \
+	engine/.venv/bin/python engine/src/main.py generate-runtime-schema > .gabber/.generate/python/runtime.json && \
+	cd .gabber/.generate/python && \
+	uv venv && uv pip install datamodel-code-generator && \
+	uv run datamodel-codegen --input runtime.json --input-file-type jsonschema --output runtime.py --use-standard-collections && \
+	mkdir -p ../../../sdks/python/gabber/generated && \
+	touch ../../../sdks/python/gabber/generated/__init__.py && \
+	echo "from . import runtime" > ../../../sdks/python/gabber/generated/__init__.py && \
+	echo "__all__ = ['runtime']" >> ../../../sdks/python/gabber/generated/__init__.py && \
+	cp runtime.py ../../../sdks/python/gabber/generated/runtime.py
+
 
 frontend:
 	cd frontend && \
