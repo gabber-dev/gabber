@@ -16,7 +16,9 @@ export interface CommentNodeProps {
 
 export function CommentNode({ data }: CommentNodeProps) {
   const { runtimeValue } = usePropertyPad<string>(data.id, "text");
-  const [width, setWidth] = useState<number>(480);
+  const { editorValue: savedWidth, setEditorValue: setSavedWidth } =
+    usePropertyPad<number>(data.id, "width");
+  const [width, setWidth] = useState<number>(savedWidth ?? 480);
   const startXRef = useRef<number | null>(null);
   const startWidthRef = useRef<number>(width);
 
@@ -29,6 +31,10 @@ export function CommentNode({ data }: CommentNodeProps) {
     };
     const handleMouseUp = () => {
       startXRef.current = null;
+      // Persist width to graph when user finishes dragging
+      if (width && width !== savedWidth) {
+        setSavedWidth(Math.round(width));
+      }
     };
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
@@ -36,7 +42,7 @@ export function CommentNode({ data }: CommentNodeProps) {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-  }, []);
+  }, [savedWidth, setSavedWidth, width]);
 
   const onResizeMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();

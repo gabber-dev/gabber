@@ -29,3 +29,15 @@ class Comment(node.Node):
                 value="",
             )
             self.pads.append(text)
+
+        # Persisted layout width for comment node (in pixels)
+        width = self.get_pad("width")
+        if not width:
+            width = pad.PropertySinkPad(
+                id="width",
+                owner_node=self,
+                group="layout",
+                default_type_constraints=[pad.types.Integer(minimum=160, maximum=1600)],
+                value=480,
+            )
+            self.pads.append(width)
