@@ -266,6 +266,17 @@ body {
     animation: none !important;
 }
 
+.comment-node {
+    border: 1px dotted transparent;
+    border-radius: 0.5rem;
+}
+
+.react-flow__node.selected .comment-node,
+.comment-node:hover,
+.comment-node:focus-within {
+    border-color: rgba(255,255,255,0.6);
+}
+
 .markdown-body {
     line-height: 1.6;
     word-wrap: break-word;
