@@ -207,6 +207,7 @@ class Graph:
             secrets=self.secrets,
             secret_provider=self.secret_provider,
             graph=graph,
+            mcp_servers=await self.get_mcp_servers(),
         )
         node.set_subgraph_id(subgraph_item.id)
         if edit.id:
@@ -460,6 +461,7 @@ class Graph:
                     secret_provider=self.secret_provider,
                     secrets=self.secrets,
                     graph=subgraph,
+                    mcp_servers=await self.get_mcp_servers(),
                 )
             else:
                 logging.error(f"Node type {node_data.type} not found in library.")
