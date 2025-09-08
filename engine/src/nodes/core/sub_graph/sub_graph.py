@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, cast
 from core import node, pad
 from core.node import NodeMetadata
 from core.secret import PublicSecret, SecretProvider
+from core.mcp import MCPServer
 
 from .proxy_property_sink import ProxyPropertySink
 from .proxy_property_source import ProxyPropertySource
@@ -32,10 +33,13 @@ class SubGraph(node.Node):
         self,
         *,
         secret_provider: SecretProvider,
+        mcp_servers: list[MCPServer],
         secrets: list[PublicSecret],
         graph: "Graph",
     ):
-        super().__init__(secret_provider=secret_provider, secrets=secrets)
+        super().__init__(
+            secret_provider=secret_provider, secrets=secrets, mcp_servers=mcp_servers
+        )
         self.graph = graph
         self.loaded = False
 
