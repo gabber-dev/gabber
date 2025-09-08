@@ -9,6 +9,9 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { usePropertyPad } from "./components/pads/hooks/usePropertyPad";
 import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { usePropertyPad } from "./components/pads/hooks/usePropertyPad";
 
 export interface CommentNodeProps {
   data: NodeEditorRepresentation;
@@ -51,6 +54,7 @@ export function CommentNode({ data }: CommentNodeProps) {
     startWidthRef.current = width;
   };
 
+  const { runtimeValue } = usePropertyPad<string>(data.id, "text");
   return (
     <div
       className="comment-node min-w-80 flex flex-col bg-transparent rounded-lg relative text-white"
