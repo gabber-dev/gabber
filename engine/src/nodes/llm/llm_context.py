@@ -282,4 +282,18 @@ class LLMContext(node.Node):
                 tasks.append(asyncio.create_task(pad_task(p)))
 
         tasks.append(asyncio.create_task(system_message_task()))
+        
+        # Periodic logging of system message
+        async def log_system_message():
+            while True:
+                await asyncio.sleep(10)
+                current_system = system_message.get_value()
+                if current_system and current_system.content:
+                    content_text = ""
+                    for content in current_system.content:
+                        if isinstance(content, runtime_types.ContextMessageContentItem_Text):
+                            content_text += content.content
+                    logging.info(f"Current system message: {content_text}")
+        
+        tasks.append(asyncio.create_task(log_system_message()))
         await asyncio.gather(*tasks)
