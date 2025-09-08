@@ -266,6 +266,89 @@ body {
     animation: none !important;
 }
 
+.comment-node {
+    border: 1px dotted transparent;
+    border-radius: 0.5rem;
+}
+
+.react-flow__node.selected .comment-node,
+.comment-node:hover,
+.comment-node:focus-within {
+    border-color: rgba(255,255,255,0.6);
+}
+
+.markdown-body {
+    line-height: 1.6;
+    word-wrap: break-word;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+    font-weight: 700;
+    line-height: 1.25;
+    margin: 0.5rem 0 0.75rem 0;
+}
+
+.markdown-body h1 { font-size: 1.75rem; }
+.markdown-body h2 { font-size: 1.5rem; }
+.markdown-body h3 { font-size: 1.25rem; }
+.markdown-body h4 { font-size: 1.1rem; }
+.markdown-body h5 { font-size: 1rem; }
+.markdown-body h6 { font-size: 0.95rem; opacity: 0.9; }
+
+.markdown-body p {
+    margin: 0.25rem 0 0.75rem 0;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+    padding-left: 1.25rem;
+    margin: 0.25rem 0 0.75rem 0;
+}
+
+.markdown-body ul {
+    list-style-type: disc;
+}
+
+.markdown-body ol {
+    list-style-type: decimal;
+}
+
+.markdown-body li {
+    margin: 0.125rem 0;
+}
+
+.markdown-body pre {
+    overflow: auto;
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    background-color: #2a2a2a;
+    border: 1px solid #2a2a2a;
+}
+
+.markdown-body code {
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    background-color: #2a2a2a;
+}
+
+.markdown-body a {
+    color: hsl(var(--p));
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 3px;
+}
+
+.markdown-body a:hover,
+.markdown-body a:focus-visible {
+    color: hsl(var(--p));
+    text-decoration-style: solid;
+}
+
 .pad-handle-connected {
     border: 2px solid white !important;
     border-radius: 9999px !important;
