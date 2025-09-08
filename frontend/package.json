@@ -23,6 +23,8 @@
     "next": "15.4.4",
     "react": "19.1.0",
     "react-dom": "19.1.0",
+    "react-markdown": "^9.0.3",
+    "remark-gfm": "^4.0.0",
     "react-hot-toast": "^2.5.2",
     "react-modal": "^3.16.3",
     "react-use-websocket": "^4.13.0",
