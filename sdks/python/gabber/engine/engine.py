@@ -22,35 +22,25 @@ from typing import Any, Callable, Dict, List, Optional, Protocol
 from generated import runtime
 from .publication import Publication
 from . import types
+from .pad import SourcePad, SinkPad, PropertyPad
 from media import VirtualCamera, VirtualMicrophone
 
 import logging  # For debug logging, replace console.debug with logging.debug
 
 from livekit import rtc
 
-# Assuming the following imports exist in the Python project:
-# from pad.Pad import PropertyPad, SinkPad, SourcePad
-# from LocalTrack import LocalAudioTrack, LocalVideoTrack, LocalTrack
-# from Subscription import Subscription
-# from Publication import Publication
-# from generated.runtime import (
-#     MCPServer, PadValue, Payload, RuntimeEvent, RuntimeRequest,
-#     RuntimeRequestPayload_LockPublisher, RuntimeResponsePayload
-# )
-
-
-class EngineHandler(Protocol):
-    """Optional handler for engine events."""
-
-    def on_connection_state_change(self, state: types.ConnectionState) -> None:
-        pass
-
 
 class Engine:
-    def __init__(self, params: Dict[str, Optional[EngineHandler]]):
+    def __init__(
+        self,
+        *,
+        on_connection_state_change: Optional[
+            Callable[[types.ConnectionState], None]
+        ] = None,
+    ):
         logging.debug("Creating new Engine instance")
         self._livekit_room: rtc.Room = rtc.Room()
-        self.handler: Optional[EngineHandler] = params.get("handler")
+        self._on_connection_state_change = on_connection_state_change
         self._last_emitted_connection_state: types.ConnectionState = "disconnected"
         self._runtime_request_id_counter: int = 1
         self._pending_requests: Dict[str, Dict[str, Callable]] = {}
@@ -78,13 +68,11 @@ class Engine:
         return "disconnected"
 
     def _emit_connection_state_change(self) -> None:
-        if self.handler is not None and hasattr(
-            self.handler, "on_connection_state_change"
-        ):
+        if self._on_connection_state_change is not None:
             if self._last_emitted_connection_state == self.connection_state:
                 return  # No change, do not emit
             self._last_emitted_connection_state = self.connection_state
-            self.handler.on_connection_state_change(self._last_emitted_connection_state)
+            self._on_connection_state_change(self._last_emitted_connection_state)
 
     async def connect(self, *, connection_details: types.ConnectionDetails) -> None:
         await self._livekit_room.connect(
@@ -120,7 +108,7 @@ class Engine:
             track_name=track_name,
             device=device,
         )
-        pub._start()
+        await pub.start()
         return pub
 
     async def list_mcp_servers(self) -> List[runtime.MCPServer]:
@@ -155,34 +143,19 @@ class Engine:
         await self._livekit_room.local_participant.publish_data(data_bytes, topic=topic)
         return await future
 
-    def get_source_pad(self, node_id: str, pad_id: str) -> "SourcePad[PadValue]":
+    def get_source_pad(self, node_id: str, pad_id: str) -> "SourcePad":
         return SourcePad(
-            {
-                "nodeId": node_id,
-                "padId": pad_id,
-                "livekitRoom": self._livekit_room,
-                "engine": self,
-            }
+            node_id=node_id, pad_id=pad_id, engine=self, livekit_room=self._livekit_room
         )
 
     def get_sink_pad(self, node_id: str, pad_id: str) -> "SinkPad[PadValue]":
         return SinkPad(
-            {
-                "nodeId": node_id,
-                "padId": pad_id,
-                "livekitRoom": self._livekit_room,
-                "engine": self,
-            }
+            node_id=node_id, pad_id=pad_id, engine=self, livekit_room=self._livekit_room
         )
 
     def get_property_pad(self, node_id: str, pad_id: str) -> "PropertyPad[PadValue]":
         return PropertyPad(
-            {
-                "nodeId": node_id,
-                "padId": pad_id,
-                "livekitRoom": self._livekit_room,
-                "engine": self,
-            }
+            node_id=node_id, pad_id=pad_id, engine=self, livekit_room=self._livekit_room
         )
 
     def setup_room_event_listeners(self) -> None:
