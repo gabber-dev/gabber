@@ -1,5 +1,12 @@
 import asyncio
-from media import VirtualCamera, VirtualMicrophone
+from media import (
+    VirtualCamera,
+    VirtualMicrophone,
+    MediaIterator,
+    VideoFrame,
+    AudioFrame,
+)
+from typing import cast
 from livekit import rtc
 import logging
 
@@ -18,32 +25,57 @@ class Publication:
         self.track_name = track_name
         self.device = device
         self._run_task: asyncio.Task | None = None
+        self._publication: rtc.LocalTrackPublication | None = None
 
-    def _start(self):
-        self._run_task = asyncio.create_task(self._run())
-
-    async def _run(self):
-        if isinstance(self.device, VirtualCamera):
-            await self._run_video()
-        elif isinstance(self.device, VirtualMicrophone):
-            await self._run_audio()
-
-    async def _run_video(self):
-        assert isinstance(self.device, VirtualCamera)
+    async def start(self):
         iterator = self.device.create_iterator()
-        local_track: rtc.LocalVideoTrack
-        source = rtc.VideoSource(width=self.device.width, height=self.device.height)
-        local_track = rtc.LocalVideoTrack.create_video_track(
-            self.track_name, source=source
-        )
 
         def on_local_track_published(publication: rtc.LocalTrackPublication) -> None:
             if publication.name == self.track_name:
                 logging.info(f"Published local video track: {publication.sid}")
             iterator.cleanup()
 
-        self.livekit_room.on("local_track_unpublished", on_local_track_published)
-        pub = await self.livekit_room.local_participant.publish_track(local_track)
+        self.livekit_room.on("track_published", on_local_track_published)
+
+        try:
+            local_track: rtc.LocalTrack
+            if isinstance(self.device, VirtualCamera):
+                source = rtc.VideoSource(
+                    width=self.device.width, height=self.device.height
+                )
+                local_track = rtc.LocalVideoTrack.create_video_track(
+                    self.track_name, source=source
+                )
+                self._publication = (
+                    await self.livekit_room.local_participant.publish_track(local_track)
+                )
+                self._run_task = asyncio.create_task(
+                    self._run_video(cast(MediaIterator[VideoFrame], iterator), source)
+                )
+            elif isinstance(self.device, VirtualMicrophone):
+                source = rtc.AudioSource(
+                    sample_rate=self.device.sample_rate,
+                    num_channels=self.device.channels,
+                )
+                local_track = rtc.LocalAudioTrack.create_audio_track(
+                    self.track_name, source=source
+                )
+                self._publication = (
+                    await self.livekit_room.local_participant.publish_track(local_track)
+                )
+                self._run_task = asyncio.create_task(
+                    self._run_audio(cast(MediaIterator[AudioFrame], iterator), source)
+                )
+
+        except Exception as e:
+            logging.error(f"Error publishing track: {e}", exc_info=True)
+            iterator.cleanup()
+
+        self.livekit_room.off("track_published", on_local_track_published)
+
+    async def _run_video(
+        self, iterator: MediaIterator[VideoFrame], source: rtc.VideoSource
+    ):
         try:
             async for item in iterator:
                 lk_frame = item.to_livekit_video_frame()
@@ -52,49 +84,36 @@ class Publication:
             logging.error(f"Error in video capture loop: {e}", exc_info=True)
         except asyncio.CancelledError:
             logging.info("Video capture task cancelled")
-            if pub.track:
-                try:
-                    await self.livekit_room.local_participant.unpublish_track(
-                        pub.track.sid
-                    )
-                except Exception as e:
-                    logging.error(f"Error unpublishing track: {e}", exc_info=True)
-                    iterator.cleanup()
 
-    async def _run_audio(self):
-        assert isinstance(self.device, VirtualMicrophone)
-        iterator = self.device.create_iterator()
-        local_track: rtc.LocalAudioTrack
-        source = rtc.AudioSource(
-            sample_rate=self.device.sample_rate, num_channels=self.device.channels
-        )
-        local_track = rtc.LocalAudioTrack.create_audio_track(
-            self.track_name, source=source
-        )
+        if (
+            self._publication
+            and self._publication.track
+            and self._publication.track.name
+        ):
+            await self.livekit_room.local_participant.unpublish_track(
+                self._publication.track.name
+            )
 
-        def on_local_track_published(publication: rtc.LocalTrackPublication) -> None:
-            if publication.name == self.track_name:
-                logging.info(f"Published local audio track: {publication.sid}")
-            iterator.cleanup()
-
-        self.livekit_room.on("local_track_unpublished", on_local_track_published)
-        pub = await self.livekit_room.local_participant.publish_track(local_track)
+    async def _run_audio(
+        self, iterator: MediaIterator[AudioFrame], source: rtc.AudioSource
+    ):
         try:
             async for item in iterator:
                 lk_frame = item.to_livekit_audio_frame()
                 await source.capture_frame(lk_frame)
         except Exception as e:
-            logging.error(f"Error in video capture loop: {e}", exc_info=True)
+            logging.error(f"Error in audio capture loop: {e}", exc_info=True)
         except asyncio.CancelledError:
-            logging.info("Video capture task cancelled")
-            if pub.track:
-                try:
-                    await self.livekit_room.local_participant.unpublish_track(
-                        pub.track.sid
-                    )
-                except Exception as e:
-                    logging.error(f"Error unpublishing track: {e}", exc_info=True)
-                    iterator.cleanup()
+            logging.info("Audio capture task cancelled")
+
+        if (
+            self._publication
+            and self._publication.track
+            and self._publication.track.name
+        ):
+            await self.livekit_room.local_participant.unpublish_track(
+                self._publication.track.name
+            )
 
     async def unpublish(self) -> None:
         if self._run_task:
@@ -104,3 +123,9 @@ class Publication:
             except asyncio.CancelledError:
                 pass
             self._run_task = None
+
+            if self._publication and self._publication.track:
+                await self.livekit_room.local_participant.unpublish_track(
+                    self._publication.track.name
+                )
+                self._publication = None

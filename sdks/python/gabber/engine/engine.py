@@ -114,14 +114,14 @@ class Engine:
         elif isinstance(device, VirtualMicrophone):
             track_name = publish_node + ":audio"
 
-        pub = await self._livekit_room.local_participant.publish_track(local_track)
-        return Publication(
-            source=source,
+        pub = Publication(
             node_id=publish_node,
             livekit_room=self._livekit_room,
             track_name=track_name,
             device=device,
         )
+        pub._start()
+        return pub
 
     async def list_mcp_servers(self) -> List[runtime.MCPServer]:
         payload = runtime.RuntimeRequestPayloadListMCPServers(type="list_mcp_servers")
