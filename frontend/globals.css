@@ -325,6 +325,19 @@ body {
     background-color: #2a2a2a;
 }
 
+.markdown-body a {
+    color: hsl(var(--p));
+    text-decoration: underline;
+    text-decoration-style: dotted;
+    text-underline-offset: 3px;
+}
+
+.markdown-body a:hover,
+.markdown-body a:focus-visible {
+    color: hsl(var(--p));
+    text-decoration-style: solid;
+}
+
 .pad-handle-connected {
     border: 2px solid white !important;
     border-radius: 9999px !important;
