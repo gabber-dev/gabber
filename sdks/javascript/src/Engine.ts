@@ -218,10 +218,15 @@ export class Engine  {
     }
   }
 
-  private onData(data: Uint8Array, _: RemoteParticipant | undefined, __: DataPacket_Kind | undefined, topic: string | undefined): void {
+  private onData(data: Uint8Array, rp: RemoteParticipant | undefined, __: DataPacket_Kind | undefined, topic: string | undefined): void {
+    if(rp?.identity !== "gabber-engine") {
+      return;
+    }
+
     if (topic !== "runtime_api") {
       return; // Ignore data not on this pad's channel
     }
+
     const msg = JSON.parse(new TextDecoder().decode(data));
     if (msg.type === "ack") {
         console.log("Received ACK for request:", msg.req_id);
