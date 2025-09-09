@@ -1,13 +1,15 @@
 import asyncio
 import colorsys
 import json
+import logging
+import uuid
+from time import perf_counter
 
 import aiofiles
 import aiohttp
 import numpy as np
-from time import perf_counter
 
-from gabber import ConnectionDetails, Engine, VirtualCamera, VideoFrame, VideoFormat
+from gabber import ConnectionDetails, Engine, VideoFormat, VideoFrame, VirtualCamera
 
 
 async def draw_color_cycle(
@@ -38,20 +40,18 @@ async def draw_color_cycle(
         # await asyncio.sleep(1 / FPS - code_duration)
 
 
-async def get_connection_details():
+async def get_connection_details(run_id: str):
     async with aiofiles.open("graph.json", mode="r") as graph_json:
         async with aiohttp.ClientSession() as session:
             async with session.post(
                 "http://localhost:8001/app/run",
                 json={
                     "graph": json.loads(await graph_json.read()),
-                    "run_id": "test-run",
+                    "run_id": run_id,
                 },
             ) as resp:
                 if resp.status != 200:
                     raise ValueError("Failed to get connection details")
-
-                print("NEIL", await resp.text())
 
                 resp_json = await resp.json()
                 res = ConnectionDetails(
@@ -65,14 +65,22 @@ async def main():
     def on_connection_state_change(state: str):
         print(f"Connection state changed to: {state}")
 
+    run_id = str(uuid.uuid4())
     engine = Engine(on_connection_state_change=on_connection_state_change)
 
-    await engine.connect(connection_details=await get_connection_details())
+    await engine.connect(connection_details=await get_connection_details(run_id))
     tick_pad = engine.get_property_pad("ticker_0", "tick")
-    tick_pad.on("data", lambda data: print(f"Tick: {data}"))
+    tick_pad.on("value", lambda data: print(f"Tick: {data}"))
 
-    while True:
-        await asyncio.sleep(1)
+    print(f"Debug Link: http://localhost:3000/debug/{run_id}")
+
+    virtual_cam = VirtualCamera(width=640, height=480, format=VideoFormat.RGBA)
+
+    pub = await engine.publish_to_node(
+        publish_node="publish_webcam", device=virtual_cam
+    )
+
+    await draw_color_cycle(640, 480, virtual_cam)
 
 
 if __name__ == "__main__":

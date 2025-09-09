@@ -239,12 +239,6 @@ class RuntimeApi:
 
                 try:
                     destination_identities: list[str] = []
-                    logging.info(
-                        "NEIL sending data packet %s: %s: %s",
-                        item.payload,
-                        item.payload.model_dump_json(),
-                        item.participant,
-                    )
                     payload_bytes = item.payload.model_dump_json().encode("utf-8")
                     if item.participant:
                         destination_identities.append(item.participant.identity)

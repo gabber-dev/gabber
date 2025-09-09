@@ -54,7 +54,7 @@ class Engine:
             agent_participants = [
                 p
                 for p in self._livekit_room.remote_participants.values()
-                if p.identity.startswith("agent-")
+                if p.identity == "gabber-engine"
             ]
             if len(agent_participants) > 0:
                 return "connected"
@@ -78,6 +78,11 @@ class Engine:
         await self._livekit_room.connect(
             connection_details.url, connection_details.token
         )
+
+        while True:
+            if self.connection_state == "connected":
+                break
+            await asyncio.sleep(0.2)
 
     async def disconnect(self) -> None:
         await self._livekit_room.disconnect()
@@ -111,15 +116,25 @@ class Engine:
         await pub.start()
         return pub
 
+    async def subscribe_to_node(self, *, output_or_publish_node: str, pad: str) -> None:
+        track_fut = asyncio.Future[rtc.RemoteTrack]()
+
+        def on_track_subscribed(track: rtc.RemoteTrack) -> None:
+            if (
+                track.name == output_or_publish_node + ":video"
+                or track.name == output_or_publish_node + ":audio"
+            ):
+                if not track_fut.done():
+                    track_fut.set_result(track)
+
+        pass
+
     async def list_mcp_servers(self) -> List[runtime.MCPServer]:
         payload = runtime.RuntimeRequestPayloadListMCPServers(type="list_mcp_servers")
         response = await self.runtime_request(payload)
         if response.type != "list_mcp_servers":
             raise ValueError("Unexpected response type")
         return response.servers
-
-    async def subscribe_to_node(self):
-        pass
 
     async def runtime_request(
         self, payload: types.RuntimeRequestPayload
@@ -134,8 +149,9 @@ class Engine:
             "res": lambda response: future.set_result(response),
             "rej": lambda error: future.set_exception(ValueError(error)),
         }
-        data_bytes = json.dumps(req).encode("utf-8")
-        await self._livekit_room.local_participant.publish_data(data_bytes, topic=topic)
+        await self._livekit_room.local_participant.publish_data(
+            req.model_dump_json(), topic=topic, destination_identities=["gabber-engine"]
+        )
         return await future
 
     def get_source_pad(self, node_id: str, pad_id: str) -> "SourcePad":
@@ -197,18 +213,23 @@ class Engine:
         self,
         packet: rtc.DataPacket,
     ) -> None:
+        if packet.participant and packet.participant.identity != "gabber-engine":
+            return
+
         data = packet.data
+
         if packet.topic != "runtime_api":
             return  # Ignore data not on this pad's channel
 
         msg_str = data.decode("utf-8")
-        print("NEIL msg string", msg_str)
         msg = json.loads(msg_str)
+
         if msg["type"] == "ack":
-            logging.debug("Received ACK for request: %s", msg["req_id"])
+            pass
         elif msg["type"] == "complete":
-            logging.debug("Received COMPLETE for request: %s", msg["req_id"])
-            if "error" in msg:
+            resp = runtime.RuntimeResponse.model_validate(msg)
+            payload = resp.payload
+            if resp.error is not None:
                 logging.error("Error in request: %s", msg["error"])
                 pending_request = self._pending_requests.get(msg["req_id"])
                 if pending_request:
@@ -216,44 +237,15 @@ class Engine:
             else:
                 pending_request = self._pending_requests.get(msg["req_id"])
                 if pending_request:
-                    payload_dict = msg["payload"]
-                    if payload_dict["type"] == "lock_publisher":
-                        payload = runtime.RuntimeResponsePayloadLockPublisher.model_validate_json(
-                            payload_dict
-                        )
-                    elif payload_dict["type"] == "list_mcp_servers":
-                        payload = runtime.RuntimeResponsePayloadListMCPServers.model_validate_json(
-                            payload_dict
-                        )
-                    elif payload_dict["type"] == "get_value":
-                        payload = (
-                            runtime.RuntimeResponsePayloadGetValue.model_validate_json(
-                                payload_dict
-                            )
-                        )
-                    elif payload_dict["type"] == "push_value":
-                        payload = (
-                            runtime.RuntimeRequestPayloadPushValue.model_validate_json(
-                                payload_dict
-                            )
-                        )
-                    else:
-                        logging.error(
-                            f"Unknown response payload type {payload_dict['type']}"
-                        )
-                        return
                     pending_request["res"](payload)
             self._pending_requests.pop(msg["req_id"], None)
         elif msg["type"] == "event":
-            # Assuming RuntimeEvent(msg)
-            payload_dict = msg["payload"]
-            if payload_dict["type"] == "value":
-                value_payload = runtime.RuntimeEventPayloadValue.model_validate(
-                    payload_dict
-                )
-                node_id = value_payload.node_id
-                pad_id = value_payload.pad_id
+            resp = runtime.RuntimeEvent.model_validate(msg)
+            payload = resp.payload
+            if payload.type == "value":
+                node_id = payload.node_id
+                pad_id = payload.pad_id
                 key = f"{node_id}:{pad_id}"
                 handlers = self._pad_value_handlers.get(key, [])
                 for handler in handlers:
-                    handler(value_payload.value)
+                    handler(payload.value)
