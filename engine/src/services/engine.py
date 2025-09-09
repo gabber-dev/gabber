@@ -57,6 +57,12 @@ def cpu_load_fnc(worker: agents.Worker) -> float:
     return float(len(worker.active_jobs)) / 4
 
 
+async def req_fnc(worker: agents.JobRequest):
+    logging.info("NEIL Requesting job for gabber-engine")
+    await worker.accept(name="gabber-engine", identity="gabber-engine")
+    logging.info("NEIL Requesting job for gabber-engine 2")
+
+
 def run_engine(
     *,
     livekit_api_key: str,
@@ -71,6 +77,7 @@ def run_engine(
     sys.argv = [sys.argv[0], "dev"]
     cli.run_app(
         agents.WorkerOptions(
+            request_fnc=req_fnc,
             agent_name="gabber-engine",
             load_fnc=cpu_load_fnc,
             load_threshold=0.99,

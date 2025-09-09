@@ -1,1 +1,26 @@
+[project]
+name = "gabber-sdk"
+version = "0.2.0"
+description = "Python client SDK for interacting with the Gabber Engine"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+authors = [{ name = "Neil Dwyer", email = "neil@gabber.dev" }]
+dependencies = [
+    "aiohttp~=3.0",
+    "aiohttp_retry",
+    "livekit~=1.0",
+    "pydantic~=2.11",
+    "numpy~=2.3.2",
+]
 
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.urls]
+Homepage = "https://github.com/gabber-dev/gabber"
+Repository = "https://github.com/gabber-dev/gabber"
+
+[tool.hatch.build.targets.wheel]
+packages = ["gabber"]

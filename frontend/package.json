@@ -12,7 +12,7 @@
   "dependencies": {
     "@fontsource/fredoka": "^5.1.0",
     "@fontsource/inter": "^5.1.0",
-    "@gabber/client-react": "0.0.18",
+    "@gabber/client-react": "0.0.20",
     "@heroicons/react": "^2.2.0",
     "@monaco-editor/react": "^4.7.0",
     "@types/react-modal": "^3.16.3",

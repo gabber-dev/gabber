@@ -1,0 +1,18 @@
+
+[project]
+name = "gabber-python-example"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = "==3.12.2"
+
+# Core dependencies needed by both modes
+dependencies = [
+    "aiofiles>=24.1.0",
+    "aiohttp>=3.12.15",
+    "gabber-sdk",
+    "numpy>=2.3.2",
+]
+
+[tool.uv.sources]
+gabber-sdk = { path = "../", editable = true }
