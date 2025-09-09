@@ -50,7 +50,7 @@ export function CommentNode({ data }: CommentNodeProps) {
     startXRef.current = e.clientX;
     startWidthRef.current = width;
   };
-  
+
   return (
     <div
       className="comment-node min-w-80 flex flex-col bg-transparent rounded-lg relative text-white"

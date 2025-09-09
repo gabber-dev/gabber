@@ -300,15 +300,15 @@ body {
 .markdown-body h5 { font-size: 1rem; }
 .markdown-body h6 { font-size: 0.95rem; opacity: 0.9; }
 
-.markdown-body p {
-    margin: 0.25rem 0 0.75rem 0;
-}
-
 .markdown-body ul,
 .markdown-body ol {
     padding-left: 1.25rem;
-    margin: 0.25rem 0 0.75rem 0;
+    margin: 0;
 }
+
+/* CommentNode markdown-only tweaks */
+.comment-node .markdown-body p { line-height: normal; } /* un-stack wrapped lines */
+.comment-node .markdown-body p + ul { margin-top: 0; }   /* keep list tight after a paragraph */
 
 .markdown-body ul {
     list-style-type: disc;
@@ -319,7 +319,8 @@ body {
 }
 
 .markdown-body li {
-    margin: 0.125rem 0;
+    margin: 0;
+    line-height: 1.4;
 }
 
 .markdown-body pre {
