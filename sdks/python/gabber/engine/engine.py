@@ -18,17 +18,20 @@ SPDX-License-Identifier: Apache-2.0
 
 import asyncio
 import json
+import logging
 from typing import Any, Callable, Dict, List, Optional
-from ..generated import runtime
-from .publication import Publication
-from .subscription import Subscription
-from . import types
-from .pad import SourcePad, SinkPad, PropertyPad
-from ..media import VirtualCamera, VirtualMicrophone
-
-import logging  # For debug logging, replace console.debug with logging.debug
 
 from livekit import rtc
+
+from ..generated import runtime
+from ..media import VirtualCamera, VirtualMicrophone
+from . import types
+from .pad import PropertyPad, SinkPad, SourcePad
+from .publication import Publication
+from .subscription import Subscription
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 class Engine:
@@ -117,19 +120,12 @@ class Engine:
         await pub.start()
         return pub
 
-    async def subscribe_to_node(self, *, output_or_publish_node: str) -> None:
-        track_fut = asyncio.Future[rtc.RemoteTrack]()
-        sub = Sub
-
-        def on_track_subscribed(track: rtc.RemoteTrack) -> None:
-            if (
-                track.name == output_or_publish_node + ":video"
-                or track.name == output_or_publish_node + ":audio"
-            ):
-                if not track_fut.done():
-                    track_fut.set_result(track)
-
-        pass
+    async def subscribe_to_node(self, *, output_or_publish_node: str):
+        sub = Subscription(
+            node_id=output_or_publish_node, livekit_room=self._livekit_room
+        )
+        await sub.start()
+        return sub
 
     async def list_mcp_servers(self) -> List[runtime.MCPServer]:
         payload = runtime.RuntimeRequestPayloadListMCPServers(type="list_mcp_servers")

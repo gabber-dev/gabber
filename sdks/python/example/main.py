@@ -9,7 +9,14 @@ import aiofiles
 import aiohttp
 import numpy as np
 
-from gabber import ConnectionDetails, Engine, VideoFormat, VideoFrame, VirtualCamera
+from gabber import (
+    ConnectionDetails,
+    Engine,
+    VideoFormat,
+    VideoFrame,
+    VirtualCamera,
+    Subscription,
+)
 
 
 async def draw_color_cycle(
@@ -61,6 +68,12 @@ async def get_connection_details(run_id: str):
                 return res
 
 
+async def sub_video(sub: Subscription):
+    video_it = await sub.iterate_video()
+    async for frame in video_it:
+        print(f"Received video frame: {frame}")
+
+
 async def main():
     def on_connection_state_change(state: str):
         print(f"Connection state changed to: {state}")
@@ -76,11 +89,12 @@ async def main():
 
     virtual_cam = VirtualCamera(width=640, height=480, format=VideoFormat.RGBA)
 
-    pub = await engine.publish_to_node(
-        publish_node="publish_webcam", device=virtual_cam
-    )
+    pub = await engine.publish_to_node(publish_node="publish_0", device=virtual_cam)
+    sub = await engine.subscribe_to_node(output_or_publish_node="output_0")
 
+    sub_video_task = asyncio.create_task(sub_video(sub))
     await draw_color_cycle(640, 480, virtual_cam)
+    sub_video_task.cancel()
 
 
 if __name__ == "__main__":

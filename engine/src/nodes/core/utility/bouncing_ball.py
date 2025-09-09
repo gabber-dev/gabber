@@ -32,16 +32,6 @@ class BouncingBall(node.Node):
                 default_type_constraints=[pad.types.Audio()],
             )
 
-        audio_enabled = cast(pad.PropertySourcePad, self.get_pad("audio_enabled"))
-        if not audio_enabled:
-            audio_enabled = pad.PropertySourcePad(
-                id="audio_enabled",
-                owner_node=self,
-                group="audio_enabled",
-                default_type_constraints=[pad.types.Boolean()],
-                value=False,
-            )
-
         video_source = cast(pad.StatelessSourcePad, self.get_pad("video"))
         if not video_source:
             video_source = pad.StatelessSourcePad(
@@ -51,22 +41,7 @@ class BouncingBall(node.Node):
                 default_type_constraints=[pad.types.Video()],
             )
 
-        video_enabled = cast(pad.PropertySourcePad, self.get_pad("video_enabled"))
-        if not video_enabled:
-            video_enabled = pad.PropertySourcePad(
-                id="video_enabled",
-                owner_node=self,
-                group="video_enabled",
-                default_type_constraints=[pad.types.Boolean()],
-                value=False,
-            )
-
-        self.pads = [
-            audio_source,
-            video_source,
-            audio_enabled,
-            video_enabled,
-        ]
+        self.pads = [audio_source, video_source]
 
     async def run(self):
         audio_source = cast(pad.StatelessSourcePad, self.get_pad_required("audio"))

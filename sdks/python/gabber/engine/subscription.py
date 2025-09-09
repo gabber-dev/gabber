@@ -12,11 +12,9 @@ class Subscription:
         *,
         node_id: str,
         livekit_room: rtc.Room,
-        track_name: str,
     ):
         self.node_id = node_id
         self.livekit_room = livekit_room
-        self.track_name = track_name
         self._run_task: asyncio.Task | None = None
         self._run_task: asyncio.Task | None = None
         self._stream: rtc.AudioStream | rtc.VideoStream | None = None
@@ -29,10 +27,12 @@ class Subscription:
     async def iterate_audio(self):
         new_it = MediaIterator[AudioFrame](owner=self)
         self._audio_iterators.append(new_it)
+        return new_it
 
     async def iterate_video(self):
         new_it = MediaIterator[VideoFrame](owner=self)
         self._video_iterators.append(new_it)
+        return new_it
 
     def unsubscribe(self) -> None:
         if self._run_task:
@@ -40,9 +40,35 @@ class Subscription:
             self._run_task = None
 
     async def _run(self) -> None:
+        running_pubs = set[rtc.RemoteTrackPublication]()
+        tasks: list[asyncio.Task] = []
+
+        def on_track_published(pub: rtc.RemoteTrackPublication) -> None:
+            if pub in running_pubs:
+                return
+
+            running_pubs.add(pub)
+            t = asyncio.create_task(self._run_publication(pub))
+            tasks.append(t)
+
+        self.livekit_room.on("track_published", on_track_published)
+
         pubs = await self._get_publications()
-        tasks = [asyncio.create_task(self._run_publication(pub)) for pub in pubs]
-        await asyncio.gather(*tasks)
+        for pub in pubs:
+            if pub not in running_pubs:
+                running_pubs.add(pub)
+                t = asyncio.create_task(self._run_publication(pub))
+                tasks.append(t)
+
+        try:
+            while True:
+                await asyncio.sleep(1)
+        except asyncio.CancelledError:
+            pass
+
+        self.livekit_room.off("track_published", on_track_published)
+        await self._unsubscribe_all()
+        await asyncio.gather(*tasks, return_exceptions=True)
 
     async def _run_publication(self, pub: rtc.RemoteTrackPublication) -> None:
         if not pub.subscribed:
@@ -55,7 +81,7 @@ class Subscription:
                 await self._run_track(track)
 
     async def _run_track(self, track: rtc.RemoteTrack) -> None:
-        if isinstance(track, rtc.AudioStream):
+        if isinstance(track, rtc.RemoteAudioTrack):
             stream = rtc.AudioStream(track)
             async for frame in stream:
                 np_arr = np.frombuffer(frame.frame.data, dtype=np.int16)
@@ -66,7 +92,7 @@ class Subscription:
                 )
                 for it in self._audio_iterators:
                     it._push(af)
-        elif isinstance(track, rtc.VideoStream):
+        elif isinstance(track, rtc.RemoteVideoTrack):
             stream = rtc.VideoStream(track)
             async for frame in stream:
                 np_arr = np.frombuffer(frame.frame.data, dtype=np.uint8)
