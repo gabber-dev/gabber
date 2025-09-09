@@ -1,15 +1,13 @@
 import numpy as np
 from livekit import rtc
+from dataclasses import dataclass
 
 
+@dataclass
 class AudioFrame:
     data: np.typing.NDArray[np.int16]  # (1,N) array of int16 PCM audio data
     sample_rate: int
     num_channels: int
-
-    @staticmethod
-    def from_numpy_array(array):
-        pass
 
     @property
     def duration(self) -> float:
