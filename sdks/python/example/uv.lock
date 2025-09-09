@@ -138,14 +138,14 @@ dependencies = [
 requires-dist = [
     { name = "aiofiles", specifier = ">=24.1.0" },
     { name = "aiohttp", specifier = ">=3.12.15" },
-    { name = "gabber-sdk", editable = "../" },
+    { name = "gabber-sdk", specifier = ">=0.2.0" },
     { name = "numpy", specifier = ">=2.3.2" },
 ]
 
 [[package]]
 name = "gabber-sdk"
 version = "0.2.0"
-source = { editable = "../" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
     { name = "aiohttp-retry" },
@@ -153,14 +153,9 @@ dependencies = [
     { name = "numpy" },
     { name = "pydantic" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "aiohttp", specifier = "~=3.0" },
-    { name = "aiohttp-retry" },
-    { name = "livekit", specifier = "~=1.0" },
-    { name = "numpy", specifier = "~=2.3.2" },
-    { name = "pydantic", specifier = "~=2.11" },
+sdist = { url = "https://files.pythonhosted.org/packages/c1/39/8abee69d27999f54eb8153bee4a1bc4b10b547c17a152d96847a2ba1b61d/gabber_sdk-0.2.0.tar.gz", hash = "sha256:c3747fdf620d7f8a1ef8b5a1a0011e6066ade38a66c34d19bb4024127601e92a", size = 80860, upload_time = "2025-09-09T18:08:08.966Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cc/9d/a97424a1cb31ee5e3d54055085a45218769875ef2cdb6d71803f1f1dd74a/gabber_sdk-0.2.0-py3-none-any.whl", hash = "sha256:a12c3474ed7a81fb341f64e756a768f4927b5e777414cde516ac34d3a1d263e4", size = 14180, upload_time = "2025-09-09T18:08:08.126Z" },
 ]
 
 [[package]]
