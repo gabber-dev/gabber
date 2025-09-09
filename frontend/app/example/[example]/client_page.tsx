@@ -25,9 +25,7 @@ export function ClientPage({ existingExample: existingApp }: Props) {
 
   const startRunImpl = useCallback(
     async (params: { graph: GraphEditorRepresentation }) => {
-      const resp = await createAppRun({ graph: params.graph });
-      const connDetails = resp.connection_details;
-      return connDetails;
+      return await createAppRun({ graph: params.graph });
     },
     [],
   );
@@ -39,6 +37,7 @@ export function ClientPage({ existingExample: existingApp }: Props) {
           editor_url="ws://localhost:8000/ws"
           savedGraph={existingApp.graph}
           saveImpl={saveImpl}
+          debug={false}
         >
           <RunProvider generateConnectionDetailsImpl={startRunImpl}>
             <AppEditPage />

@@ -38,6 +38,7 @@ import {
   PadEditorRepresentation,
   PortalEnd,
 } from "@/generated/editor";
+import { RunId } from "../RunId";
 
 const edgeTypes = {
   hybrid: HybridEdge,
@@ -146,6 +147,11 @@ function FlowEditInner({ editable }: Props) {
           {connectionStatus}
         </div>
       )}
+      {
+        <div className="absolute top-2 left-2 z-20">
+          <RunId />
+        </div>
+      }
 
       <div
         className={`absolute top-0 left-0 right-0 bottom-0 transition-all duration-300 ease-in-out`}

@@ -42,14 +42,13 @@ class Engine:
             Callable[[types.ConnectionState], None]
         ] = None,
     ):
-        logging.debug("Creating new Engine instance")
-        self._livekit_room: rtc.Room = rtc.Room()
+        self._livekit_room = rtc.Room()
+        self.setup_room_event_listeners()
         self._on_connection_state_change = on_connection_state_change
         self._last_emitted_connection_state: types.ConnectionState = "disconnected"
         self._runtime_request_id_counter: int = 1
-        self._pending_requests: Dict[str, Dict[str, Callable]] = {}
+        self._pending_futs: Dict[str, Dict[str, Callable]] = {}
         self._pad_value_handlers: Dict[str, List[Callable[[Any], None]]] = {}
-        self.setup_room_event_listeners()
 
     @property
     def connection_state(self) -> types.ConnectionState:
@@ -82,6 +81,7 @@ class Engine:
         await self._livekit_room.connect(
             connection_details.url, connection_details.token
         )
+        logging.info("NEIL connected to room")
 
         while True:
             if self.connection_state == "connected":
@@ -129,28 +129,43 @@ class Engine:
 
     async def list_mcp_servers(self) -> List[runtime.MCPServer]:
         payload = runtime.RuntimeRequestPayloadListMCPServers(type="list_mcp_servers")
-        response = await self.runtime_request(payload)
-        if response.type != "list_mcp_servers":
-            raise ValueError("Unexpected response type")
-        return response.servers
+        logging.info("NEIL Sending list_mcp_servers request")
+        retries = 3
+        last_exception = None
+        for attempt in range(retries):
+            try:
+                response = await self.runtime_request(payload)
+                if response.type == "list_mcp_servers":
+                    logging.info(f"NEIL list_mcp_servers response: {response}")
+                    return response.servers
+                logging.warning(f"NEIL list_mcp_servers attempt {attempt + 1} failed")
+            except Exception as e:
+                last_exception = e
+
+        if last_exception:
+            raise last_exception
+        raise ValueError("Unexpected response type")
 
     async def runtime_request(
-        self, payload: types.RuntimeRequestPayload
+        self, payload: types.RuntimeRequestPayload, timeout: float = 2.0
     ) -> types.RuntimeResponsePayload:
         topic = "runtime_api"
         request_id = str(self._runtime_request_id_counter)
         self._runtime_request_id_counter += 1
         req = runtime.RuntimeRequest(req_id=request_id, payload=payload, type="request")
-        loop = asyncio.get_running_loop()
-        future: asyncio.Future[types.RuntimeResponsePayload] = loop.create_future()
-        self._pending_requests[request_id] = {
-            "res": lambda response: future.set_result(response),
-            "rej": lambda error: future.set_exception(ValueError(error)),
-        }
-        await self._livekit_room.local_participant.publish_data(
-            req.model_dump_json(), topic=topic, destination_identities=["gabber-engine"]
-        )
-        return await future
+        future = asyncio.Future[types.RuntimeResponsePayload]()
+        self._pending_futs[request_id] = future
+        try:
+            await self._livekit_room.local_participant.publish_data(
+                req.model_dump_json(),
+                topic=topic,
+                destination_identities=["gabber-engine"],
+            )
+            logging.debug(f"NEIL Sent runtime request: {req}")
+            return await asyncio.wait_for(future, timeout=timeout)
+        except Exception as e:
+            future.set_exception(e)
+            raise
 
     def get_source_pad(self, node_id: str, pad_id: str) -> "SourcePad":
         return SourcePad(
@@ -168,26 +183,19 @@ class Engine:
         )
 
     def setup_room_event_listeners(self) -> None:
-        def on_connected():
+        def on_connected(state: rtc.ConnectionState):
+            logging.info(f"NEIL on connected!!!!!!!!!!!: {state}")
             self._emit_connection_state_change()
-
-        self._livekit_room.on("connected", on_connected)
-
-        def on_disconnected(reason: Any):
-            self._emit_connection_state_change()
-
-        self._livekit_room.on("disconnected", on_disconnected)
 
         def on_participant_connected(participant: rtc.RemoteParticipant):
             self._emit_connection_state_change()
 
-        self._livekit_room.on("participant_connected", on_participant_connected)
-
         def on_participant_disconnected(participant: rtc.RemoteParticipant):
             self._emit_connection_state_change()
 
+        self._livekit_room.on("connection_state_changed", on_connected)
+        self._livekit_room.on("participant_connected", on_participant_connected)
         self._livekit_room.on("participant_disconnected", on_participant_disconnected)
-
         self._livekit_room.on("data_received", self._on_data)
 
     def _add_pad_value_handler(
@@ -229,14 +237,14 @@ class Engine:
             payload = resp.payload
             if resp.error is not None:
                 logging.error("Error in request: %s", msg["error"])
-                pending_request = self._pending_requests.get(msg["req_id"])
+                pending_request = self._pending_futs.get(msg["req_id"])
                 if pending_request:
-                    pending_request["rej"](msg["error"])
+                    pending_request.set_exception(Exception(msg["error"]))
             else:
-                pending_request = self._pending_requests.get(msg["req_id"])
+                pending_request = self._pending_futs.get(msg["req_id"])
                 if pending_request:
-                    pending_request["res"](payload)
-            self._pending_requests.pop(msg["req_id"], None)
+                    pending_request.set_result(payload)
+            self._pending_futs.pop(msg["req_id"], None)
         elif msg["type"] == "event":
             resp = runtime.RuntimeEvent.model_validate(msg)
             payload = resp.payload

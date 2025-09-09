@@ -13,6 +13,8 @@ from core.node import Node
 from nodes.core.media.publish import Publish
 from nodes.core.tool import MCP
 
+PING_BYTES = "ping".encode("utf-8")
+
 
 class RuntimeApi:
     def __init__(
@@ -80,13 +82,24 @@ class RuntimeApi:
             p._add_update_handler(on_pad)
 
         def on_data(packet: rtc.DataPacket):
-            if not packet.topic or not packet.topic.startswith("runtime_api"):
+            logging.info(f"NEIL **************** Received data packet: {packet.data}")
+            if not packet.topic or packet.topic != "runtime_api":
+                logging.warning(
+                    f"Unknown data packet topic: {packet.topic} - {packet.data}"
+                )
                 return
 
-            request = RuntimeRequest.model_validate_json(packet.data)
+            try:
+                request = RuntimeRequest.model_validate_json(packet.data)
+            except Exception as e:
+                logging.error(f"Invalid runtime_api request: {e}", exc_info=e)
+                return
             req_id = request.req_id
             ack_resp = RuntimeRequestAck(req_id=req_id, type="ack")
             complete_resp = RuntimeResponse(req_id=req_id, type="complete")
+            logging.info(
+                "NEIL ---------------- Handling runtime_api request: %s", request
+            )
 
             dc_queue.put_nowait(
                 QueueItem(payload=ack_resp, participant=packet.participant)

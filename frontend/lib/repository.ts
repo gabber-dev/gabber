@@ -21,6 +21,7 @@ import {
   SaveSubgraphRequest,
   SaveSubgraphResponse,
 } from "@/generated/repository";
+import { ConnectionDetails } from "@gabber/client-react";
 import axios from "axios";
 import { v4 } from "uuid";
 
@@ -106,13 +107,18 @@ export async function createAppRun({
   graph,
 }: {
   graph: GraphEditorRepresentation;
-}): Promise<CreateAppRunResponse> {
+}): Promise<{ connectionDetails: ConnectionDetails; runId: string }> {
+  const run_id = v4();
   const resp = await axios.post(`${getBaseUrl()}/app/run`, {
     type: "create_app_run",
     graph,
-    run_id: v4(),
+    run_id,
   });
-  return resp.data;
+
+  return {
+    connectionDetails: resp.data.connection_details,
+    runId: run_id,
+  };
 }
 
 export async function createDebugConnection({

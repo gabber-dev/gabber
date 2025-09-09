@@ -17,6 +17,9 @@ from .generated.runtime import (
     PadValueInteger,
     PadValueTrigger,
     PadValueVideoClip,
+    MCPServer,
+    MCPTransportDatachannelProxy,
+    MCPTransportSSE,
 )
 from .media import (
     AudioFrame,
@@ -42,6 +45,9 @@ __all__ = [
     "PadValueInteger",
     "PadValueTrigger",
     "PadValueVideoClip",
+    "MCPServer",
+    "MCPTransportDatachannelProxy",
+    "MCPTransportSSE",
     "AudioFrame",
     "VideoFrame",
     "VideoFormat",

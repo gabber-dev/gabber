@@ -58,9 +58,7 @@ def cpu_load_fnc(worker: agents.Worker) -> float:
 
 
 async def req_fnc(worker: agents.JobRequest):
-    logging.info("NEIL Requesting job for gabber-engine")
     await worker.accept(name="gabber-engine", identity="gabber-engine")
-    logging.info("NEIL Requesting job for gabber-engine 2")
 
 
 def run_engine(

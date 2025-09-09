@@ -14,16 +14,17 @@ import { DebugGraph } from "@/components/debug/DebugGraph";
 
 type Props = {
   connectionDetails: AppRunConnectionDetails;
+  runId: string;
   graph: GraphEditorRepresentation;
 };
-export function ClientPage({ graph, connectionDetails }: Props) {
+export function ClientPage({ graph, connectionDetails, runId }: Props) {
   const saveImpl = useCallback(async () => {
     throw new Error("saveImpl is not implemented for Debug mode");
   }, []);
 
   const startRunImpl = useCallback(async () => {
-    return connectionDetails;
-  }, [connectionDetails]);
+    return { connectionDetails, runId };
+  }, [connectionDetails, runId]);
 
   return (
     <div className="absolute top-0 left-0 right-0 bottom-0">

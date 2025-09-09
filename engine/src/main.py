@@ -6,7 +6,6 @@ import json
 import logging
 import os
 
-import aiohttp
 import click
 from pydantic import TypeAdapter
 
@@ -147,20 +146,6 @@ def generate_statemachine_schema():
         config_schema = json.loads(schema_str)
 
     print(json.dumps(config_schema, indent=2))
-
-
-@main_cli.command("mcp-proxy-client")
-def mcp_proxy():
-    async def run_proxy_client():
-        while True:
-            try:
-                pass
-            except Exception as e:
-                logging.error(f"Error in MCP proxy client: {e}", exc_info=True)
-                await asyncio.sleep(5)
-                continue
-
-    asyncio.run(run_proxy_client())
 
 
 if __name__ == "__main__":
