@@ -8,10 +8,12 @@ from .type_constraint import TypeConstraint
 from .unpack_object import UnpackObject
 from .noop import Noop
 from .jinja2_node import Jinja2
+from .bouncing_ball import BouncingBall
 
 ALL_NODES = [
     Merge,
     Entry,
+    BouncingBall,
     TypeConstraint,
     AutoConvert,
     UnpackObject,

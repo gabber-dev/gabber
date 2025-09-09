@@ -21,6 +21,7 @@ import json
 from typing import Any, Callable, Dict, List, Optional
 from ..generated import runtime
 from .publication import Publication
+from .subscription import Subscription
 from . import types
 from .pad import SourcePad, SinkPad, PropertyPad
 from ..media import VirtualCamera, VirtualMicrophone
@@ -116,8 +117,9 @@ class Engine:
         await pub.start()
         return pub
 
-    async def subscribe_to_node(self, *, output_or_publish_node: str, pad: str) -> None:
+    async def subscribe_to_node(self, *, output_or_publish_node: str) -> None:
         track_fut = asyncio.Future[rtc.RemoteTrack]()
+        sub = Sub
 
         def on_track_subscribed(track: rtc.RemoteTrack) -> None:
             if (

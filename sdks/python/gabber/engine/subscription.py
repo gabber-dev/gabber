@@ -1,5 +1,4 @@
 import asyncio
-from typing import cast
 
 import numpy as np
 from livekit import rtc

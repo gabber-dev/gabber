@@ -5,6 +5,7 @@ from .engine import (
     SinkPad,
     PropertyPad,
     Publication,
+    Subscription,
     ConnectionDetails,
     ConnectionState,
 )
@@ -33,6 +34,7 @@ __all__ = [
     "SinkPad",
     "PropertyPad",
     "Publication",
+    "Subscription",
     "PadValueAudioClip",
     "PadValueBoolean",
     "PadValueString",
