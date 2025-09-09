@@ -85,8 +85,8 @@ class RuntimeApi:
 
             request = RuntimeRequest.model_validate_json(packet.data)
             req_id = request.req_id
-            ack_resp = RuntimeRequestAck(req_id=req_id)
-            complete_resp = RuntimeResponse(req_id=req_id)
+            ack_resp = RuntimeRequestAck(req_id=req_id, type="ack")
+            complete_resp = RuntimeResponse(req_id=req_id, type="complete")
 
             dc_queue.put_nowait(
                 QueueItem(payload=ack_resp, participant=packet.participant)
@@ -133,7 +133,7 @@ class RuntimeApi:
                 )
 
                 complete_resp.payload = RuntimeResponsePayload_LockPublisher(
-                    success=True
+                    type="lock_publisher", success=True
                 )
                 dc_queue.put_nowait(
                     QueueItem(payload=complete_resp, participant=packet.participant)
@@ -239,6 +239,12 @@ class RuntimeApi:
 
                 try:
                     destination_identities: list[str] = []
+                    logging.info(
+                        "NEIL sending data packet %s: %s: %s",
+                        item.payload,
+                        item.payload.model_dump_json(),
+                        item.participant,
+                    )
                     payload_bytes = item.payload.model_dump_json().encode("utf-8")
                     if item.participant:
                         destination_identities.append(item.participant.identity)

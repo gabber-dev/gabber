@@ -16,22 +16,24 @@
 * SPDX-License-Identifier: Apache-2.0
 """
 
-from typing import Callable, Generic, TypeVar, cast
+from typing import Callable, Generic, TypeVar, cast, TYPE_CHECKING
 
 from livekit import rtc
 
-from .engine import Engine
 from .types import PadValue
-from generated import runtime
+from ..generated import runtime
+
+if TYPE_CHECKING:
+    from .engine import Engine
 
 DataType = TypeVar("DataType", bound=PadValue)
 
 
 class BasePad(Generic[DataType]):
     def __init__(
-        self, *, engine: Engine, node_id: str, pad_id: str, livekit_room: rtc.Room
+        self, *, engine: "Engine", node_id: str, pad_id: str, livekit_room: rtc.Room
     ):
-        self.engine: Engine = engine
+        self.engine: "Engine" = engine
         self._node_id: str = node_id
         self._pad_id: str = pad_id
         self.livekit_room: rtc.Room = livekit_room
@@ -86,9 +88,9 @@ class BasePad(Generic[DataType]):
         return resp.value
 
 
-class SourcePad(BasePad[DataType]):
+class SourcePad(BasePad[DataType], Generic[DataType]):
     def __init__(
-        self, *, engine: Engine, node_id: str, pad_id: str, livekit_room: rtc.Room
+        self, *, engine: "Engine", node_id: str, pad_id: str, livekit_room: rtc.Room
     ):
         super().__init__(
             engine=engine, node_id=node_id, pad_id=pad_id, livekit_room=livekit_room
@@ -105,18 +107,18 @@ class SourcePad(BasePad[DataType]):
         )
 
 
-class SinkPad(BasePad[DataType]):
+class SinkPad(BasePad[DataType], Generic[DataType]):
     def __init__(
-        self, *, engine: Engine, node_id: str, pad_id: str, livekit_room: rtc.Room
+        self, *, engine: "Engine", node_id: str, pad_id: str, livekit_room: rtc.Room
     ):
         super().__init__(
             engine=engine, node_id=node_id, pad_id=pad_id, livekit_room=livekit_room
         )
 
 
-class PropertyPad(BasePad[DataType]):
+class PropertyPad(BasePad[DataType], Generic[DataType]):
     def __init__(
-        self, *, engine: Engine, node_id: str, pad_id: str, livekit_room: rtc.Room
+        self, *, engine: "Engine", node_id: str, pad_id: str, livekit_room: rtc.Room
     ):
         super().__init__(
             engine=engine, node_id=node_id, pad_id=pad_id, livekit_room=livekit_room

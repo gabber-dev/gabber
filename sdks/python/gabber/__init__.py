@@ -1,4 +1,13 @@
-from .engine import Engine, PadValue, SourcePad, SinkPad, PropertyPad, Publication
+from .engine import (
+    Engine,
+    PadValue,
+    SourcePad,
+    SinkPad,
+    PropertyPad,
+    Publication,
+    ConnectionDetails,
+    ConnectionState,
+)
 from .generated.runtime import (
     PadValueAudioClip,
     PadValueBoolean,
@@ -11,6 +20,7 @@ from .generated.runtime import (
 from .media import (
     AudioFrame,
     VideoFrame,
+    VideoFormat,
     VirtualMicrophone,
     VirtualCamera,
     MediaIterator,
@@ -32,7 +42,10 @@ __all__ = [
     "PadValueVideoClip",
     "AudioFrame",
     "VideoFrame",
+    "VideoFormat",
     "VirtualMicrophone",
     "VirtualCamera",
     "MediaIterator",
+    "ConnectionDetails",
+    "ConnectionState",
 ]

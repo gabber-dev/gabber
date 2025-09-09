@@ -1,5 +1,5 @@
 import asyncio
-from media import (
+from ..media import (
     VirtualCamera,
     VirtualMicrophone,
     MediaIterator,

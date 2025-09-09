@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Annotated, Literal
-from generated import runtime
+from ..generated import runtime
 from pydantic import Field
 
 

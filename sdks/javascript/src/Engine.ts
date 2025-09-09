@@ -165,7 +165,7 @@ export class Engine  {
     }
     const prom = new Promise<RuntimeResponsePayload>((res, rej) => {
       this.pendingRequests.set(requestId, { res, rej });
-      this.livekitRoom.localParticipant.publishData(new TextEncoder().encode(JSON.stringify(req)), { topic });
+      this.livekitRoom.localParticipant.publishData(new TextEncoder().encode(JSON.stringify(req)), { topic, destinationIdentities: ["gabber-engine"] });
     });
     return prom;
   }
@@ -219,8 +219,6 @@ export class Engine  {
   }
 
   private onData(data: Uint8Array, _: RemoteParticipant | undefined, __: DataPacket_Kind | undefined, topic: string | undefined): void {
-    const test_msg = JSON.parse(new TextDecoder().decode(data));
-    console.log("Received data on topic:", topic, test_msg);
     if (topic !== "runtime_api") {
       return; // Ignore data not on this pad's channel
     }

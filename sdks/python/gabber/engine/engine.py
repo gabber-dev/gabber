@@ -18,12 +18,12 @@ SPDX-License-Identifier: Apache-2.0
 
 import asyncio
 import json
-from typing import Any, Callable, Dict, List, Optional, Protocol
-from generated import runtime
+from typing import Any, Callable, Dict, List, Optional
+from ..generated import runtime
 from .publication import Publication
 from . import types
 from .pad import SourcePad, SinkPad, PropertyPad
-from media import VirtualCamera, VirtualMicrophone
+from ..media import VirtualCamera, VirtualMicrophone
 
 import logging  # For debug logging, replace console.debug with logging.debug
 
@@ -118,13 +118,8 @@ class Engine:
             raise ValueError("Unexpected response type")
         return response.servers
 
-    async def subscribe_to_node(self, params: SubscribeParams) -> "Subscription":
-        return Subscription(
-            {
-                "nodeId": params["outputOrPublishNodeId"],
-                "livekitRoom": self._livekit_room,
-            }
-        )
+    async def subscribe_to_node(self):
+        pass
 
     async def runtime_request(
         self, payload: types.RuntimeRequestPayload
@@ -148,12 +143,12 @@ class Engine:
             node_id=node_id, pad_id=pad_id, engine=self, livekit_room=self._livekit_room
         )
 
-    def get_sink_pad(self, node_id: str, pad_id: str) -> "SinkPad[PadValue]":
+    def get_sink_pad(self, node_id: str, pad_id: str) -> "SinkPad":
         return SinkPad(
             node_id=node_id, pad_id=pad_id, engine=self, livekit_room=self._livekit_room
         )
 
-    def get_property_pad(self, node_id: str, pad_id: str) -> "PropertyPad[PadValue]":
+    def get_property_pad(self, node_id: str, pad_id: str) -> "PropertyPad":
         return PropertyPad(
             node_id=node_id, pad_id=pad_id, engine=self, livekit_room=self._livekit_room
         )
@@ -200,16 +195,14 @@ class Engine:
 
     def _on_data(
         self,
-        data: bytes,
-        participant: Optional[rtc.RemoteParticipant],
-        kind: rtc.DataPacketKind,
-        topic: Optional[str],
+        packet: rtc.DataPacket,
     ) -> None:
-        msg_str = data.decode("utf-8")
-        test_msg = json.loads(msg_str)
-        logging.debug("Received data on topic: %s, %s", topic, test_msg)
-        if topic != "runtime_api":
+        data = packet.data
+        if packet.topic != "runtime_api":
             return  # Ignore data not on this pad's channel
+
+        msg_str = data.decode("utf-8")
+        print("NEIL msg string", msg_str)
         msg = json.loads(msg_str)
         if msg["type"] == "ack":
             logging.debug("Received ACK for request: %s", msg["req_id"])
@@ -223,16 +216,44 @@ class Engine:
             else:
                 pending_request = self._pending_requests.get(msg["req_id"])
                 if pending_request:
-                    pending_request["res"](msg["payload"])
+                    payload_dict = msg["payload"]
+                    if payload_dict["type"] == "lock_publisher":
+                        payload = runtime.RuntimeResponsePayloadLockPublisher.model_validate_json(
+                            payload_dict
+                        )
+                    elif payload_dict["type"] == "list_mcp_servers":
+                        payload = runtime.RuntimeResponsePayloadListMCPServers.model_validate_json(
+                            payload_dict
+                        )
+                    elif payload_dict["type"] == "get_value":
+                        payload = (
+                            runtime.RuntimeResponsePayloadGetValue.model_validate_json(
+                                payload_dict
+                            )
+                        )
+                    elif payload_dict["type"] == "push_value":
+                        payload = (
+                            runtime.RuntimeRequestPayloadPushValue.model_validate_json(
+                                payload_dict
+                            )
+                        )
+                    else:
+                        logging.error(
+                            f"Unknown response payload type {payload_dict['type']}"
+                        )
+                        return
+                    pending_request["res"](payload)
             self._pending_requests.pop(msg["req_id"], None)
         elif msg["type"] == "event":
             # Assuming RuntimeEvent(msg)
-            casted_msg: runtime.RuntimeEvent = msg  # Type cast
-            payload_event = casted_msg.payload
-            if payload_event.type == "value":
-                node_id = payload_event.node_id
-                pad_id = payload_event.pad_id
+            payload_dict = msg["payload"]
+            if payload_dict["type"] == "value":
+                value_payload = runtime.RuntimeEventPayloadValue.model_validate(
+                    payload_dict
+                )
+                node_id = value_payload.node_id
+                pad_id = value_payload.pad_id
                 key = f"{node_id}:{pad_id}"
                 handlers = self._pad_value_handlers.get(key, [])
                 for handler in handlers:
-                    handler(payload_event.value)
+                    handler(value_payload.value)

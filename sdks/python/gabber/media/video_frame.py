@@ -15,14 +15,13 @@ class VideoFrame:
     data: np.ndarray  # (H,W,4) array of uint8 RGBA video data
     width: int
     height: int
-    timestamp: float
     format: VideoFormat = VideoFormat.RGBA
 
     @classmethod
     def black_frame(cls, width: int, height: int, timestamp: float) -> "VideoFrame":
         """Create a black video frame of the given width and height."""
         data = np.zeros((height, width, 4), dtype=np.uint8)
-        return cls(data=data, width=width, height=height, timestamp=timestamp)
+        return cls(data=data, width=width, height=height)
 
     def to_livekit_video_frame(self) -> "rtc.VideoFrame":
         lk_format: rtc.VideoBufferType.ValueType

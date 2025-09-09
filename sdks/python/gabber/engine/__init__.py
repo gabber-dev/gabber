@@ -1,7 +1,7 @@
 from .engine import Engine
-from .pad import SourcePad, SinkPad, PropertyPad
+from .pad import PropertyPad, SinkPad, SourcePad
 from .publication import Publication
-from .types import PadValue
+from .types import ConnectionDetails, ConnectionState, PadValue
 
 __all__ = [
     "Engine",
@@ -10,4 +10,6 @@ __all__ = [
     "SinkPad",
     "PropertyPad",
     "Publication",
+    "ConnectionDetails",
+    "ConnectionState",
 ]

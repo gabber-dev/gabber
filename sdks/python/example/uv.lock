@@ -128,16 +128,24 @@ name = "gabber-python-example"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "aiofiles" },
+    { name = "aiohttp" },
     { name = "gabber-sdk" },
+    { name = "numpy" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "gabber-sdk", directory = "../" }]
+requires-dist = [
+    { name = "aiofiles", specifier = ">=24.1.0" },
+    { name = "aiohttp", specifier = ">=3.12.15" },
+    { name = "gabber-sdk", editable = "../" },
+    { name = "numpy", specifier = ">=2.3.2" },
+]
 
 [[package]]
 name = "gabber-sdk"
 version = "0.2.0"
-source = { directory = "../" }
+source = { editable = "../" }
 dependencies = [
     { name = "aiohttp" },
     { name = "aiohttp-retry" },
