@@ -20,6 +20,7 @@ from .generated.runtime import (
     MCPServer,
     MCPTransportDatachannelProxy,
     MCPTransportSSE,
+    MCPTransportSTDIO,
 )
 from .media import (
     AudioFrame,
@@ -48,6 +49,7 @@ __all__ = [
     "MCPServer",
     "MCPTransportDatachannelProxy",
     "MCPTransportSSE",
+    "MCPTransportSTDIO",
     "AudioFrame",
     "VideoFrame",
     "VideoFormat",

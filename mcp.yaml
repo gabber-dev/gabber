@@ -3,5 +3,6 @@ servers:
     transport:
       type: datachannel_proxy
       local_transport:
-        type: sse
-        url: http://localhost:9876/sse
+        type: stdio
+        command: uvx
+        args: [blender-mcp]

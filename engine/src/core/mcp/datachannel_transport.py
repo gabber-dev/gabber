@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def datachannel_host(
-    room: rtc.Room, participant: str
+    room: rtc.Room, participant: str, mcp_name: str
 ) -> AsyncGenerator[
     tuple[
         MemoryObjectReceiveStream[SessionMessage | Exception],
@@ -27,6 +27,7 @@ async def datachannel_host(
     ],
     None,
 ]:
+    topic = f"__mcp__:{mcp_name}"
     read_stream: MemoryObjectReceiveStream[SessionMessage | Exception]
     read_stream_writer: MemoryObjectSendStream[SessionMessage | Exception]
     write_stream: MemoryObjectSendStream[SessionMessage]
@@ -38,7 +39,7 @@ async def datachannel_host(
     packet_q = asyncio.Queue[rtc.DataPacket | None]()
 
     def on_message(packet: rtc.DataPacket):
-        if packet.topic != "__mcp__":
+        if packet.topic != topic:
             return
 
         if not packet.participant:
@@ -75,7 +76,7 @@ async def datachannel_host(
                     by_alias=True, mode="json", exclude_none=True
                 )
                 await room.local_participant.publish_data(
-                    json.dumps(msg_dict), topic="__mcp__"
+                    json.dumps(msg_dict), topic=topic
                 )
 
     room.on("data_received", on_message)
@@ -91,42 +92,3 @@ async def datachannel_host(
         tg.cancel_scope.cancel()
 
     room.off("data_received", on_message)
-
-
-async def datachannel_client_proxy(
-    url: str,
-    token: str,
-    other_read_stream: MemoryObjectReceiveStream[SessionMessage | Exception],
-    other_write_stream: MemoryObjectSendStream[SessionMessage],
-) -> rtc.Room:
-    """
-    Connects to a LiveKit room and returns the Room object.
-    """
-    room = rtc.Room()
-
-    def on_message(packet: rtc.DataPacket):
-        if packet.topic != "__mcp__":
-            return
-        logger.debug(f"Received data packet: {packet.data}")
-        json_msg = types.JSONRPCMessage.model_validate_json(packet.data)
-        sm = SessionMessage(json_msg)
-        other_write_stream.send_nowait(sm)
-
-    async def read_loop():
-        async with other_read_stream:
-            async for session_message in other_read_stream:
-                if isinstance(session_message, Exception):
-                    logger.error(f"Error in received message: {session_message}")
-                    continue
-                msg_dict = session_message.message.model_dump(
-                    by_alias=True, mode="json", exclude_none=True
-                )
-                await room.local_participant.publish_data(
-                    json.dumps(msg_dict), topic="__mcp__"
-                )
-
-    room.on("data_received", on_message)
-    await room.connect(url, token)
-    await read_loop()
-    room.off("data_received", on_message)
-    return room

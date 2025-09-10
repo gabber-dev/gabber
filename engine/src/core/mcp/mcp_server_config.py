@@ -14,12 +14,26 @@ class MCPTransportSSE(BaseModel):
     url: str
 
 
+class MCPTransportSTDIO(BaseModel):
+    type: Literal["stdio"] = "stdio"
+    command: str
+    args: list[str]
+
+
+MCPLocalTransport = Annotated[
+    MCPTransportSTDIO | MCPTransportSSE, Field(discriminator="type")
+]
+
+
 class MCPTransportDatachannelProxy(BaseModel):
     type: Literal["datachannel_proxy"] = "datachannel_proxy"
-    local_transport: MCPTransportSSE
+    local_transport: MCPLocalTransport
 
 
-MCPTransport = Annotated[MCPTransportDatachannelProxy, Field(discriminator="type")]
+MCPTransport = Annotated[
+    MCPTransportDatachannelProxy | MCPTransportSTDIO | MCPTransportSTDIO,
+    Field(discriminator="type"),
+]
 
 
 class MCPServer(BaseModel):
