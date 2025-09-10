@@ -50,25 +50,14 @@ class MCPProxy:
                 )
             else:
                 raise ValueError(f"Unsupported local transport: {local_transport}")
-            self.session = await self.exit_stack.enter_async_context(
-                mcp.ClientSession(read_stream=read_stream, write_stream=write_stream)
+
+            await datachannel_client_proxy(
+                room=self.room,
+                mcp_name=self.server.name,
+                other_read_stream=read_stream,
+                other_write_stream=write_stream,
             )
-            # self.proxy_task = asyncio.create_task(
-            #     datachannel_client_proxy(
-            #         room=self.room,
-            #         mcp_name=self.server.name,
-            #         other_read_stream=read_stream,
-            #         other_write_stream=write_stream,
-            #     )
-            # )
-            logger.info(f"Initializing mcp session for: {self.server.name}")
-            await self.session.initialize()
-            logger.info(f"MCPProxy session initialized for {self.server.name}")
-            prompts = await self.session.list_prompts()
-            logger.info(f"MCPProxy prompts for {self.server.name}: {prompts}")
-            tools = await self.session.list_tools()
-            logger.info(f"MCPProxy tools for {self.server.name}: {tools}")
-            # await self.proxy_task
+
             logger.info(f"MCPProxy finished {self.server.name}")
 
     async def aclose(self):

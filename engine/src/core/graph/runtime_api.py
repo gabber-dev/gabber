@@ -11,7 +11,6 @@ import logging
 from core.editor import serialize
 from core.node import Node
 from nodes.core.media.publish import Publish
-from nodes.core.tool import MCP
 
 PING_BYTES = "ping".encode("utf-8")
 
@@ -82,11 +81,7 @@ class RuntimeApi:
             p._add_update_handler(on_pad)
 
         def on_data(packet: rtc.DataPacket):
-            logging.info(f"NEIL **************** Received data packet: {packet.data}")
             if not packet.topic or packet.topic != "runtime_api":
-                logging.warning(
-                    f"Unknown data packet topic: {packet.topic} - {packet.data}"
-                )
                 return
 
             try:
@@ -97,9 +92,6 @@ class RuntimeApi:
             req_id = request.req_id
             ack_resp = RuntimeRequestAck(req_id=req_id, type="ack")
             complete_resp = RuntimeResponse(req_id=req_id, type="complete")
-            logging.info(
-                "NEIL ---------------- Handling runtime_api request: %s", request
-            )
 
             dc_queue.put_nowait(
                 QueueItem(payload=ack_resp, participant=packet.participant)

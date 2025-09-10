@@ -34,7 +34,6 @@ class BaseLLM(node.Node, ABC):
                 owner_node=self,
                 default_type_constraints=[pad.types.Trigger()],
             )
-            self.pads.append(run_trigger)
 
         started_source = cast(pad.StatelessSourcePad, self.get_pad("started"))
         if not started_source:
@@ -44,7 +43,6 @@ class BaseLLM(node.Node, ABC):
                 owner_node=self,
                 default_type_constraints=[pad.types.Trigger()],
             )
-            self.pads.append(started_source)
 
         tool_calls_started_source = cast(
             pad.StatelessSourcePad, self.get_pad("tool_calls_started")
@@ -56,7 +54,6 @@ class BaseLLM(node.Node, ABC):
                 owner_node=self,
                 default_type_constraints=[pad.types.Trigger()],
             )
-            self.pads.append(tool_calls_started_source)
 
         tool_calls_finished_source = cast(
             pad.StatelessSourcePad, self.get_pad("tool_calls_finished")
@@ -68,7 +65,6 @@ class BaseLLM(node.Node, ABC):
                 owner_node=self,
                 default_type_constraints=[pad.types.Trigger()],
             )
-            self.pads.append(tool_calls_finished_source)
 
         first_token_source = cast(pad.StatelessSourcePad, self.get_pad("first_token"))
         if not first_token_source:
@@ -78,7 +74,6 @@ class BaseLLM(node.Node, ABC):
                 owner_node=self,
                 default_type_constraints=[pad.types.Trigger()],
             )
-            self.pads.append(first_token_source)
 
         text_stream_source = cast(pad.StatelessSourcePad, self.get_pad("text_stream"))
         if not text_stream_source:
@@ -88,7 +83,6 @@ class BaseLLM(node.Node, ABC):
                 owner_node=self,
                 default_type_constraints=[pad.types.TextStream()],
             )
-            self.pads.append(text_stream_source)
 
         thinking_stream_source = cast(
             pad.StatelessSourcePad, self.get_pad("thinking_stream")
@@ -100,7 +94,6 @@ class BaseLLM(node.Node, ABC):
                 owner_node=self,
                 default_type_constraints=[pad.types.TextStream()],
             )
-            self.pads.append(thinking_stream_source)
 
         context_message_source = cast(
             pad.StatelessSourcePad, self.get_pad("context_message")
@@ -112,7 +105,6 @@ class BaseLLM(node.Node, ABC):
                 owner_node=self,
                 default_type_constraints=[pad.types.ContextMessage()],
             )
-            self.pads.append(context_message_source)
 
         finished_source = cast(pad.StatelessSourcePad, self.get_pad("finished"))
         if not finished_source:
@@ -122,7 +114,6 @@ class BaseLLM(node.Node, ABC):
                 owner_node=self,
                 default_type_constraints=[pad.types.Trigger()],
             )
-            self.pads.append(finished_source)
 
         cancel_trigger = cast(pad.StatelessSinkPad, self.get_pad("cancel_trigger"))
         if not cancel_trigger:
@@ -132,7 +123,6 @@ class BaseLLM(node.Node, ABC):
                 owner_node=self,
                 default_type_constraints=[pad.types.Trigger()],
             )
-            self.pads.append(cancel_trigger)
 
         context_sink = cast(pad.PropertySinkPad, self.get_pad("context"))
         if not context_sink:
@@ -155,10 +145,10 @@ class BaseLLM(node.Node, ABC):
                     )
                 ],
             )
-            self.pads.append(context_sink)
 
+        tool_group_sink = cast(pad.PropertySinkPad, self.get_pad("tool_group"))
+        mcp_pads: list[pad.PropertySinkPad] = []
         if self.supports_tool_calls():
-            tool_group_sink = cast(pad.PropertySinkPad, self.get_pad("tool_group"))
             if not tool_group_sink:
                 tool_group_sink = pad.PropertySinkPad(
                     id="tool_group",
@@ -169,7 +159,61 @@ class BaseLLM(node.Node, ABC):
                     ],
                     value=None,
                 )
-                self.pads.append(tool_group_sink)
+
+            mcp_pads = self.mcp_server_pads()
+
+        base_sink_pads = [
+            run_trigger,
+            cancel_trigger,
+            context_sink,
+        ]
+        base_source_pads = [
+            started_source,
+            first_token_source,
+            text_stream_source,
+            thinking_stream_source,
+            context_message_source,
+            finished_source,
+        ]
+
+        if tool_group_sink is not None:
+            base_sink_pads.append(tool_group_sink)
+            base_sink_pads += mcp_pads
+            base_source_pads.append(tool_calls_started_source)
+            base_source_pads.append(tool_calls_finished_source)
+
+        self.pads = base_sink_pads + base_source_pads
+
+    def mcp_server_pads(self):
+        exising_mcp_pads = [
+            p
+            for p in self.pads
+            if isinstance(p, pad.PropertySinkPad)
+            and p.get_id().startswith("mcp_server_")
+        ]
+
+        connected_mcp_pads = [
+            p for p in exising_mcp_pads if p.get_previous_pad() is not None
+        ]
+
+        renamed_connected_mcp_pads = []
+        for i, cp in enumerate(connected_mcp_pads):
+            new_id = f"mcp_server_{i}"
+            if cp.get_id() != new_id:
+                cp.set_id(new_id)
+            renamed_connected_mcp_pads.append(cp)
+
+        empty_pad = pad.PropertySinkPad(
+            id=f"mcp_server_{len(renamed_connected_mcp_pads)}",
+            group="mcp_server",
+            owner_node=self,
+            default_type_constraints=[
+                pad.types.NodeReference(node_types=["MCP"]),
+            ],
+            value="None",
+        )
+
+        return renamed_connected_mcp_pads + [empty_pad]
 
     async def run(self):
         cancel_trigger = cast(

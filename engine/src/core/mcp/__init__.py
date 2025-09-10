@@ -6,6 +6,7 @@ from .mcp_server_config import (
     MCPServerConfig,
 )
 from .mcp_server_provider import MCPServerProvider
+from .datachannel_transport import datachannel_host
 
 __all__ = [
     "MCPTransport",
@@ -14,4 +15,5 @@ __all__ = [
     "MCPServer",
     "MCPServerProvider",
     "MCPServerConfig",
+    "datachannel_host",
 ]

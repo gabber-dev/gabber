@@ -4,9 +4,11 @@
 import asyncio
 import logging
 from typing import Any, cast
+import contextlib
 
-from core import node, pad
+from core import node, pad, mcp
 from core.node import NodeMetadata
+from mcp import ClientSession
 
 
 class MCP(node.Node):
@@ -44,7 +46,56 @@ class MCP(node.Node):
         self.pads = [self_pad, mcp_server]
 
     async def run(self):
-        pass
+        while True:
+            exit_stack = contextlib.AsyncExitStack()
+            session = await self.create_session(exit_stack)
+            try:
+                await asyncio.wait_for(session.initialize(), timeout=2)
+                await asyncio.sleep(1)
+            except asyncio.TimeoutError:
+                logging.error("NEIL MCP Client session timeout")
+                await exit_stack.aclose()
+                continue
+            try:
+                tools = await asyncio.wait_for(session.list_tools(), timeout=10)
+                logging.info(f"NEIL Available tools: {tools}")
+            except Exception as e:
+                logging.error(f"NEIL MCP Client list_tools error: {e}")
+                await exit_stack.aclose()
+                continue
 
-    async def generate_mcp_server(self):
-        pass
+    async def create_session(self, exit_stack: contextlib.AsyncExitStack):
+        mcp_server_pad = cast(pad.PropertySinkPad, self.get_pad("mcp_server"))
+        if not mcp_server_pad or not mcp_server_pad.get_value():
+            raise ValueError("MCP server pad not configured")
+
+        mcp_server_name = mcp_server_pad.get_value()
+        mcp_server = next(
+            (s for s in self.mcp_servers if s.name == mcp_server_name), None
+        )
+        if not mcp_server:
+            raise ValueError(f"MCP server '{mcp_server_name}' not found")
+
+        if not isinstance(mcp_server.transport, mcp.MCPTransportDatachannelProxy):
+            raise ValueError(
+                "Only MCPTransportDatachannelProxy is supported in this node"
+            )
+
+        logging.info(f"NEIL Connecting to MCP server '{mcp_server.name}'")
+        read_stream, write_stream = await exit_stack.enter_async_context(
+            mcp.datachannel_host(self.room, "mcp_proxy", mcp_server.name)
+        )
+        session = await exit_stack.enter_async_context(
+            ClientSession(read_stream=read_stream, write_stream=write_stream)
+        )
+        return session
+
+    async def session_ping_loop(self, session: ClientSession):
+        try:
+            while True:
+                await asyncio.sleep(10)
+                logging.info("NEIL MCP Client sending ping")
+                await asyncio.wait_for(session.send_ping(), timeout=2)
+        except asyncio.CancelledError:
+            logging.info("NEIL MCP Client ping loop cancelled")
+            raise

@@ -58,10 +58,15 @@ async def datachannel_host(
 
             try:
                 message = types.JSONRPCMessage.model_validate_json(packet.data)
+                logging.info(f"NEIL message received on topic {message}")
                 session_message = SessionMessage(message)
                 await read_stream_writer.send(session_message)
             except ValidationError as exc:
+                logging.error(f"NEIL DC message validation error: {exc}")
                 # If JSON parse or model validation fails, send the exception
+                await read_stream_writer.send(exc)
+            except Exception as exc:
+                logging.error(f"NEIL DC unexpected error: {exc}")
                 await read_stream_writer.send(exc)
 
     async def dc_writer():
@@ -75,6 +80,7 @@ async def datachannel_host(
                 msg_dict = session_message.message.model_dump(
                     by_alias=True, mode="json", exclude_none=True
                 )
+                logger.debug(f"NEIL --------- DC sending message: {msg_dict}")
                 await room.local_participant.publish_data(
                     json.dumps(msg_dict), topic=topic
                 )

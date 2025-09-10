@@ -23,7 +23,6 @@ async def datachannel_client_proxy(
     def on_message(packet: rtc.DataPacket):
         if packet.topic != topic:
             return
-        logger.debug(f"Received data packet: {packet.data}")
         json_msg = types.JSONRPCMessage.model_validate_json(packet.data)
         sm = SessionMessage(json_msg)
         other_write_stream.send_nowait(sm)
@@ -31,6 +30,9 @@ async def datachannel_client_proxy(
     async def read_loop():
         async with other_read_stream:
             async for session_message in other_read_stream:
+                logging.debug(
+                    f"NEIL------------------------Read session message: {session_message}"
+                )
                 if isinstance(session_message, Exception):
                     logger.error(f"Error in received message: {session_message}")
                     continue
