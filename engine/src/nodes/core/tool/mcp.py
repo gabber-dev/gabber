@@ -3,11 +3,12 @@
 
 import asyncio
 import logging
-from typing import Any, cast
+from typing import Tuple, cast
 import contextlib
 
-from core import node, pad, mcp
+from core import node, pad, mcp, runtime_types
 from core.node import NodeMetadata
+from mcp.types import ContentBlock
 from mcp import ClientSession
 
 
@@ -46,19 +47,22 @@ class MCP(node.Node):
         self.pads = [self_pad, mcp_server]
 
     async def run(self):
+        self.init_lock = asyncio.Lock()
+        self.session: ClientSession | None = None
         while True:
             exit_stack = contextlib.AsyncExitStack()
-            session = await self.create_session(exit_stack)
+            async with self.init_lock:
+                self.session = await self.create_session(exit_stack)
+                try:
+                    await asyncio.wait_for(self.session.initialize(), timeout=2)
+                    await asyncio.sleep(1)
+                except asyncio.TimeoutError:
+                    logging.error("NEIL MCP Client session timeout")
+                    await exit_stack.aclose()
+                    continue
+
             try:
-                await asyncio.wait_for(session.initialize(), timeout=2)
-                await asyncio.sleep(1)
-            except asyncio.TimeoutError:
-                logging.error("NEIL MCP Client session timeout")
-                await exit_stack.aclose()
-                continue
-            try:
-                tools = await asyncio.wait_for(session.list_tools(), timeout=10)
-                logging.info(f"NEIL Available tools: {tools}")
+                await self.session_ping_loop(self.session)
             except Exception as e:
                 logging.error(f"NEIL MCP Client list_tools error: {e}")
                 await exit_stack.aclose()
@@ -99,3 +103,42 @@ class MCP(node.Node):
         except asyncio.CancelledError:
             logging.info("NEIL MCP Client ping loop cancelled")
             raise
+
+    async def to_tool_definitions(self) -> list[runtime_types.ToolDefinition]:
+        async with self.init_lock:
+            if not self.session:
+                raise ValueError("MCP session not initialized")
+            mcp_tools_res = await self.session.list_tools()
+            mcp_tools = mcp_tools_res.tools
+            tool_defs: list[runtime_types.ToolDefinition] = []
+            for t in mcp_tools:
+                schema = runtime_types.Schema.from_json_schema(t.inputSchema)
+                tool_def = runtime_types.ToolDefinition(
+                    name=t.name,
+                    description=t.description or "",
+                    parameters=schema,
+                )
+                tool_defs.append(tool_def)
+
+            return tool_defs
+
+    async def call_tools(self, tool_calls: list[runtime_types.ToolCall]):
+        async with self.init_lock:
+            if not self.session:
+                raise ValueError("MCP session not initialized")
+            results: list[
+                Tuple[runtime_types.ToolCall, list[ContentBlock] | Exception]
+            ] = []
+            for tc in tool_calls:
+                try:
+                    response = await asyncio.wait_for(
+                        self.session.call_tool(tc.name, tc.arguments), timeout=15
+                    )
+                    results.append((tc, response.content))
+                except asyncio.TimeoutError:
+                    results.append((tc, Exception(f"Tool call '{tc.name}' timed out.")))
+                except Exception as e:
+                    results.append(
+                        (tc, Exception(f"Error calling tool '{tc.name}': {e}"))
+                    )
+            return results

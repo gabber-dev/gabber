@@ -275,7 +275,13 @@ class ContextMessageContent_ToolCallDelta(BaseModel):
 
 class Schema(BaseModel):
     properties: dict[
-        str, pad.types.String | pad.types.Integer | pad.types.Float | pad.types.Boolean
+        str,
+        pad.types.String
+        | pad.types.Integer
+        | pad.types.Float
+        | pad.types.Boolean
+        | pad.types.Object
+        | pad.types.List,
     ]
     required: list[str] | None = None
     defaults: dict[str, Any] | None = None
@@ -294,6 +300,43 @@ class Schema(BaseModel):
             "properties": properties,
             "required": self.required or [],
         }
+
+    @classmethod
+    def from_json_schema(cls, schema: dict[str, Any]) -> "Schema":
+        properties: dict[
+            str,
+            pad.types.String
+            | pad.types.Integer
+            | pad.types.Float
+            | pad.types.Boolean
+            | pad.types.Object
+            | pad.types.List,
+        ] = {}
+        for key, value in schema.get("properties", {}).items():
+            type_ = value.get("type")
+            if type_ == "string":
+                properties[key] = pad.types.String()
+            elif type_ == "integer":
+                properties[key] = pad.types.Integer()
+            elif type_ == "number":
+                properties[key] = pad.types.Float()
+            elif type_ == "boolean":
+                properties[key] = pad.types.Boolean()
+            elif type_ == "object":
+                properties[key] = pad.types.Object()
+            elif type_ == "array":
+                properties[key] = pad.types.List(item_type_constraints=None)
+            else:
+                raise ValueError(f"Unsupported property type: {type_}")
+        return cls(
+            properties=properties,
+            required=schema.get("required", []),
+            defaults={
+                k: v.get("default")
+                for k, v in schema.get("properties", {}).items()
+                if "default" in v
+            },
+        )
 
     def intersect(self, other: "Schema"):
         if not isinstance(other, Schema):
