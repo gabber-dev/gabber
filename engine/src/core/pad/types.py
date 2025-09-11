@@ -19,6 +19,9 @@ class BasePadType(BaseModel):
             return self
         return None
 
+    def to_json_schema(self) -> dict[str, Any]:
+        raise NotImplementedError()
+
 
 class String(BasePadType):
     type: Literal["string"] = "string"
@@ -42,6 +45,14 @@ class String(BasePadType):
                 else None
             ),
         )
+
+    def to_json_schema(self) -> dict[str, Any]:
+        schema: dict[str, Any] = {"type": "string"}
+        if self.max_length is not None:
+            schema["maxLength"] = self.max_length
+        if self.min_length is not None:
+            schema["minLength"] = self.min_length
+        return schema
 
 
 class Enum(BasePadType):
@@ -75,6 +86,12 @@ class Enum(BasePadType):
 
         raise ValueError("Unexpected state.")
 
+    def to_json_schema(self) -> dict[str, Any]:
+        schema: dict[str, Any] = {"type": "string"}
+        if self.options is not None:
+            schema["enum"] = self.options
+        return schema
+
 
 class Secret(BasePadType):
     type: Literal["secret"] = "secret"
@@ -95,6 +112,9 @@ class Secret(BasePadType):
             type=self.type,
             options=intersected_options,
         )
+
+    def to_json_schema(self) -> dict[str, Any]:
+        raise NotImplementedError()
 
 
 class Integer(BasePadType):
@@ -119,6 +139,14 @@ class Integer(BasePadType):
             ),
         )
 
+    def to_json_schema(self) -> dict[str, Any]:
+        schema: dict[str, Any] = {"type": "integer"}
+        if self.maximum is not None:
+            schema["maximum"] = self.maximum
+        if self.minimum is not None:
+            schema["minimum"] = self.minimum
+        return schema
+
 
 class Float(BasePadType):
     type: Literal["float"] = "float"
@@ -142,6 +170,14 @@ class Float(BasePadType):
             ),
         )
 
+    def to_json_schema(self) -> dict[str, Any]:
+        schema: dict[str, Any] = {"type": "number"}
+        if self.maximum is not None:
+            schema["maximum"] = self.maximum
+        if self.minimum is not None:
+            schema["minimum"] = self.minimum
+        return schema
+
 
 class BoundingBox(BasePadType):
     type: Literal["bounding_box"] = "bounding_box"
@@ -153,6 +189,9 @@ class Point(BasePadType):
 
 class Boolean(BasePadType):
     type: Literal["boolean"] = "boolean"
+
+    def to_json_schema(self) -> dict[str, Any]:
+        return {"type": "boolean"}
 
 
 class Audio(BasePadType):
@@ -211,6 +250,17 @@ class List(BasePadType):
             ),
         )
 
+    def to_json_schema(self) -> dict[str, Any]:
+        schema: dict[str, Any] = {"type": "array"}
+        if self.max_length is not None:
+            schema["maxItems"] = self.max_length
+        if (
+            self.item_type_constraints is not None
+            and len(self.item_type_constraints) == 1
+        ):
+            schema["items"] = self.item_type_constraints[0].to_json_schema()
+        return schema
+
 
 class Schema(BasePadType):
     type: Literal["schema"] = "schema"
@@ -242,6 +292,14 @@ class Object(BasePadType):
                 new_schema[key] = value
 
         return Object(object_schema=new_schema) if new_schema else None
+
+    def to_json_schema(self) -> dict[str, Any]:
+        if self.object_schema is not None:
+            return {
+                "type": "object",
+                "properties": self.object_schema,
+            }
+        return {"type": "object"}
 
 
 class NodeReference(BasePadType):

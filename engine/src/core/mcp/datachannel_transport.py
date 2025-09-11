@@ -58,7 +58,6 @@ async def datachannel_host(
 
             try:
                 message = types.JSONRPCMessage.model_validate_json(packet.data)
-                logging.info(f"NEIL message received on topic {message}")
                 session_message = SessionMessage(message)
                 await read_stream_writer.send(session_message)
             except ValidationError as exc:
@@ -80,7 +79,6 @@ async def datachannel_host(
                 msg_dict = session_message.message.model_dump(
                     by_alias=True, mode="json", exclude_none=True
                 )
-                logger.debug(f"NEIL --------- DC sending message: {msg_dict}")
                 await room.local_participant.publish_data(
                     json.dumps(msg_dict), topic=topic
                 )

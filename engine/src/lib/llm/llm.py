@@ -23,6 +23,7 @@ from core.runtime_types import (
     ContextMessageContentItem_Video,
     ContextMessageRole,
     ToolDefinition,
+    Schema,
 )
 from lib.video.mp4_encoder import MP4_Encoder
 
@@ -182,8 +183,16 @@ class LLMRequest:
                     "properties": {},
                     "required": [],
                 }
-            else:
+            elif isinstance(tool.parameters, dict):
+                parameters = tool.parameters
+            elif isinstance(tool.parameters, Schema):
                 parameters = tool.parameters.to_json_schema()
+            else:
+                parameters = {
+                    "type": "object",
+                    "properties": {},
+                    "required": [],
+                }
 
             tools.append(
                 {

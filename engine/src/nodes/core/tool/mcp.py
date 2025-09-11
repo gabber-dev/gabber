@@ -112,33 +112,32 @@ class MCP(node.Node):
             mcp_tools = mcp_tools_res.tools
             tool_defs: list[runtime_types.ToolDefinition] = []
             for t in mcp_tools:
-                schema = runtime_types.Schema.from_json_schema(t.inputSchema)
                 tool_def = runtime_types.ToolDefinition(
                     name=t.name,
                     description=t.description or "",
-                    parameters=schema,
+                    parameters=t.inputSchema,
                 )
                 tool_defs.append(tool_def)
 
             return tool_defs
 
-    async def call_tools(self, tool_calls: list[runtime_types.ToolCall]):
+    async def call_tool(self, tool_call: runtime_types.ToolCall):
+        logging.info(f"NEIL ************ MCP Client calling tool '{tool_call.name}'")
+        sess: ClientSession
         async with self.init_lock:
             if not self.session:
                 raise ValueError("MCP session not initialized")
-            results: list[
-                Tuple[runtime_types.ToolCall, list[ContentBlock] | Exception]
-            ] = []
-            for tc in tool_calls:
-                try:
-                    response = await asyncio.wait_for(
-                        self.session.call_tool(tc.name, tc.arguments), timeout=15
-                    )
-                    results.append((tc, response.content))
-                except asyncio.TimeoutError:
-                    results.append((tc, Exception(f"Tool call '{tc.name}' timed out.")))
-                except Exception as e:
-                    results.append(
-                        (tc, Exception(f"Error calling tool '{tc.name}': {e}"))
-                    )
-            return results
+            sess = self.session
+
+        results: list[ContentBlock] | Exception = []
+        try:
+            response = await asyncio.wait_for(
+                sess.call_tool(tool_call.name, tool_call.arguments), timeout=15
+            )
+            results = response.content if response.content else []
+        except asyncio.TimeoutError:
+            results = Exception(f"Tool call '{tool_call.name}' timed out.")
+        except Exception as e:
+            results = Exception(f"Error calling tool '{tool_call.name}': {e}")
+
+        return results

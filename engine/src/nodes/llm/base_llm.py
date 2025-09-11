@@ -365,22 +365,6 @@ class BaseLLM(node.Node, ABC):
                     tool_msgs = await tool_task
                     for msg in tool_msgs:
                         context_message_source.push_item(msg, ctx)
-                    # TODO
-                    # for i in range(len(all_tool_calls)):
-                    #     context_message_source.push_item(
-                    #         runtime_types.ContextMessage(
-                    #             role=runtime_types.ContextMessageRole.TOOL,
-                    #             content=[
-                    #                 runtime_types.ContextMessageContentItem_Text(
-                    #                     content=tool_results[i]
-                    #                 )
-                    #             ],
-                    #             tool_call_id=all_tool_calls[i].call_id,
-                    #             tool_calls=[],
-                    #         ),
-                    #         ctx,
-                    #     )
-            # TODO look at the finished/ctx.complete() logic here
             except asyncio.CancelledError:
                 pass
             except Exception as e:
@@ -413,12 +397,13 @@ class BaseLLM(node.Node, ABC):
             mcp_sinks = self.mcp_server_pads()
             for mcp_sink in mcp_sinks:
                 mcp_node = cast(mcp.MCP, mcp_sink.get_value())
+                if not isinstance(mcp_node, mcp.MCP):
+                    continue
                 if mcp_node not in mcp_tool_definitions:
                     mcp_tool_definitions[mcp_node] = []
                 tdfs = await mcp_node.to_tool_definitions()
-                for tdf in tdfs:
-                    mcp_tool_definitions[mcp_node].append(tdf)
-                    all_tool_definitions.append(tdf)
+                mcp_tool_definitions[mcp_node].extend(tdfs)
+                all_tool_definitions.extend(tdfs)
 
             request = LLMRequest(
                 context=messages, tool_definitions=all_tool_definitions
@@ -461,29 +446,67 @@ class BaseLLM(node.Node, ABC):
     ) -> list[runtime_types.ContextMessage]:
         tg_tool_calls = [t for t in all_tool_calls if t.name in tg_tool_defns]
 
-        if len(tg_tool_calls) > 0:
-            tg_task = asyncio.create_task(
-                self.call_tg_calls(tg_tool_calls=tg_tool_calls, ctx=ctx)
-            )
+        results: list[runtime_types.ContextMessage] = []
 
-        mcp_tool_calls: dict[mcp.MCP, list[runtime_types.ToolCall]] = {}
-        mcp_tasks: list[
-            asyncio.Task[Tuple[runtime_types.ToolCall, list[ContentBlock] | Exception]]
-        ] = []
+        all_tasks: list[asyncio.Task] = []
+
+        async def run_tg_task():
+            tg_res = await self.call_tg_calls(tg_tool_calls=tg_tool_calls, ctx=ctx)
+            for i, res in enumerate(tg_res):
+                msg = runtime_types.ContextMessage(
+                    role=runtime_types.ContextMessageRole.TOOL,
+                    content=[runtime_types.ContextMessageContentItem_Text(content=res)],
+                    tool_call_id=tg_tool_calls[i].call_id,
+                    tool_calls=[],
+                )
+                results.append(msg)
+
+        async def run_mcp_task(node: mcp.MCP, tc: runtime_types.ToolCall):
+            res = await node.call_tool(tc)
+            if isinstance(res, Exception):
+                logging.error(f"Error calling MCP tool '{tc.name}': {res}")
+                msg = runtime_types.ContextMessage(
+                    role=runtime_types.ContextMessageRole.TOOL,
+                    content=[
+                        runtime_types.ContextMessageContentItem_Text(
+                            content=f"Error calling tool '{tc.name}': {res}"
+                        )
+                    ],
+                    tool_call_id=tc.call_id,
+                    tool_calls=[],
+                )
+            else:
+                contents: list[runtime_types.ContextMessageContentItem] = []
+                for block in res:
+                    if isinstance(block, TextContent):
+                        content = runtime_types.ContextMessageContentItem_Text(
+                            content=block.text
+                        )
+                        contents.append(content)
+                    else:
+                        logging.error(f"Error calling MCP tool '{tc.name}': {res}")
+                msg = runtime_types.ContextMessage(
+                    role=runtime_types.ContextMessageRole.TOOL,
+                    content=contents,
+                    tool_call_id=tc.call_id,
+                    tool_calls=[],
+                )
+                results.append(msg)
+
+        if len(tg_tool_calls) > 0:
+            tg_task = asyncio.create_task(run_tg_task())
+            all_tasks.append(tg_task)
+
         for mcp_node in mcp_tool_defns.keys():
             mcp_defns = mcp_tool_defns[mcp_node]
-            mcp_calls = [tc for tc in all_tool_calls if tc.name in mcp_defns]
-            mcp_tasks.append(
-                asyncio.create_task(
-                    self.call_mcp_tools(
-                        mcp_node=mcp_node,
-                        mcp_tool_calls=mcp_calls,
-                        ctx=ctx,
-                    )
-                )
-            )
+            mcp_defn_names = [td.name for td in mcp_defns]
+            mcp_calls = [tc for tc in all_tool_calls if tc.name in mcp_defn_names]
+            for tc in mcp_calls:
+                mcp_t = asyncio.create_task(run_mcp_task(mcp_node, tc))
+                all_tasks.append(mcp_t)
 
-        return []
+        await asyncio.gather(*all_tasks)
+        return results
 
     async def call_tg_calls(self, tg_tool_calls: list[runtime_types.ToolCall], ctx):
         tool_group_sink = cast(pad.PropertySinkPad, self.get_pad_required("tool_group"))
@@ -491,11 +514,6 @@ class BaseLLM(node.Node, ABC):
             raise ValueError("Tool group is not configured for tool calls.")
         tg = cast(ToolGroup, tool_group_sink.get_value())
         return await tg.call_tools(tg_tool_calls, ctx)
-
-    async def call_mcp_tools(
-        self, mcp_node: mcp.MCP, mcp_tool_calls: list[runtime_types.ToolCall], ctx
-    ):
-        return await mcp_node.call_tools(mcp_tool_calls)
 
     async def _supports_video(self, llm: openai_compatible.OpenAICompatibleLLM) -> bool:
         dummy_request = LLMRequest(

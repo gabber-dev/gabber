@@ -3,6 +3,7 @@
 
 import asyncio
 import base64
+import logging
 from dataclasses import dataclass
 from enum import Enum
 from typing import Annotated, Any, Literal, cast
@@ -198,7 +199,7 @@ class ToolCall(BaseModel):
 class ToolDefinition(BaseModel):
     name: str
     description: str
-    parameters: "Schema | None" = None
+    parameters: "Schema | dict[str, Any] | None" = None
 
 
 class ContextMessageContentItem_Audio(BaseModel):
@@ -287,9 +288,7 @@ class Schema(BaseModel):
     defaults: dict[str, Any] | None = None
 
     def to_json_schema(self) -> dict[str, Any]:
-        properties = {
-            k: v.model_dump(exclude_none=True) for k, v in self.properties.items()
-        }
+        properties = {k: v.to_json_schema() for k, v in self.properties.items()}
         for d in self.defaults or {}:
             if self.defaults is None:
                 continue
@@ -343,7 +342,12 @@ class Schema(BaseModel):
             return None
         properties: dict[
             str,
-            pad.types.String | pad.types.Integer | pad.types.Float | pad.types.Boolean,
+            pad.types.String
+            | pad.types.Integer
+            | pad.types.Float
+            | pad.types.Boolean
+            | pad.types.Object
+            | pad.types.List,
         ] = {}
         defaults: dict[str, Any] = {}
         for d in self.defaults or {}:

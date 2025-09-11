@@ -48,7 +48,6 @@ class OpenAICompatibleLLM(BaseLLM):
         return await self.secret_provider.resolve_secret(api_key_name)
 
     def resolve_pads(self):
-        logging.info("NEIL ________ Resolving pads for OpenAICompatibleLLM")
         base_sink_pads, base_source_pads = self.get_base_pads()
         base_url_sink = cast(pad.PropertySinkPad, self.get_pad("base_url"))
         if not base_url_sink:
@@ -85,9 +84,5 @@ class OpenAICompatibleLLM(BaseLLM):
         cast(list[pad.types.Secret], api_key_sink.get_type_constraints())[
             0
         ].options = self.secrets
-
-        logging.info(
-            f"NEIL ________ Resolved pads for {[p.get_id() for p in base_sink_pads]}:{[p.get_id() for p in base_source_pads]}"
-        )
 
         self.pads = cast(list[pad.Pad], base_sink_pads + base_source_pads)

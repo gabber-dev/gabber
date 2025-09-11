@@ -28,7 +28,7 @@ dependencies = [
     "elevenlabs==1.12.1",
     "pyvips~=2.0.2",
     "av~=14.4.0",
-    "openai~=1.93.0",
+    "openai~=1.107.1",
     "pillow~=11.1.0",
     "msgpack~=1.1.1",
     "python-dotenv~=1.1.1",
