@@ -16,18 +16,15 @@ from core.graph import Graph, GraphLibrary
 from core.secret import SecretProvider
 from .default_graph_library import DefaultGraphLibrary
 from .default_secret_provider import DefaultSecretProvider
-from .default_mcp_server_provider import DefaultMCPServerProvider
 
 
 async def entrypoint(ctx: agents.JobContext):
-    global _graph_library, _secret_provider
     parsed = json.loads(ctx.job.metadata)
     graph_rep = parsed["graph"]
     graph_rep = models.GraphEditorRepresentation.model_validate(graph_rep)
 
     graph_library: GraphLibrary = DefaultGraphLibrary()
     secret_provider: SecretProvider = DefaultSecretProvider()
-    mcp_server_provider = DefaultMCPServerProvider()
 
     os.environ["TZ"] = "UTC"
     time.tzset()
@@ -37,7 +34,6 @@ async def entrypoint(ctx: agents.JobContext):
     graph = Graph(
         secrets=secrets,
         secret_provider=secret_provider,
-        mcp_server_provider=mcp_server_provider,
         library_items=library_items,
     )
     await graph.load_from_snapshot(graph_rep)

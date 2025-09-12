@@ -21,11 +21,9 @@ class RuntimeApi:
         *,
         room: rtc.Room,
         nodes: list[node.Node],
-        mcp_servers: list[mcp.MCPServer],
     ):
         self.room = room
         self.nodes = nodes
-        self.mcp_servers = mcp_servers
         self._publish_locks: dict[str, PublishLock] = {}
 
     def _trigger_value_from_pad_value(self, value: Any):
@@ -216,13 +214,6 @@ class RuntimeApi:
 
                 complete_resp.payload = RuntimeResponsePayload_GetValue(
                     type="get_value", value=value_obj
-                )
-                dc_queue.put_nowait(
-                    QueueItem(payload=complete_resp, participant=packet.participant)
-                )
-            elif request.payload.type == "list_mcp_servers":
-                complete_resp.payload = RuntimeResponsePayload_ListMCPServers(
-                    servers=self.mcp_servers
                 )
                 dc_queue.put_nowait(
                     QueueItem(payload=complete_resp, participant=packet.participant)

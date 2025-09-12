@@ -8,7 +8,6 @@ from livekit import rtc
 from pydantic import BaseModel
 
 from core.secret import PublicSecret, SecretProvider
-from core import mcp
 
 from ..pad import Pad, SinkPad, SourcePad
 
@@ -24,7 +23,6 @@ class Node:
         self,
         *,
         secret_provider: SecretProvider,
-        mcp_servers: list[mcp.MCPServer],
         secrets: list[PublicSecret],
     ):
         self.room: rtc.Room
@@ -34,7 +32,6 @@ class Node:
         self.editor_dimensions: tuple[float, float] | None = None
         self.editor_name: str = "ERROR"
         self.secret_provider = secret_provider
-        self.mcp_servers = mcp_servers
         self.secrets = secrets
 
     @classmethod

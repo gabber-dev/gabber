@@ -38,13 +38,11 @@ class Graph:
         *,
         id: str = "default",
         secret_provider: SecretProvider,
-        mcp_server_provider: mcp.MCPServerProvider,
         secrets: list[PublicSecret],
         library_items: list[GraphLibraryItem],
     ):
         self.id = id
         self.secret_provider = secret_provider
-        self.mcp_server_provider = mcp_server_provider
         self._mcp_servers: list[mcp.MCPServer] | None = None
         self.secrets = secrets
         self.library_items = library_items
@@ -60,7 +58,7 @@ class Graph:
             if isinstance(item, GraphLibraryItem_Node):
                 self._node_cls_lookup[item.name] = item.node_type
                 n = self._node_cls_lookup[item.name](
-                    secret_provider=self.secret_provider, secrets=[], mcp_servers=[]
+                    secret_provider=self.secret_provider, secrets=[]
                 )
                 n.resolve_pads()
                 self.virtual_nodes.append((n, item))
@@ -70,13 +68,6 @@ class Graph:
 
     def get_node(self, node_id: str) -> Node | None:
         return next((n for n in self.nodes if n.id == node_id), None)
-
-    async def get_mcp_servers(self) -> list[mcp.MCPServer]:
-        if self._mcp_servers is None:
-            config = await self.mcp_server_provider.get_config()
-            self._mcp_servers = config.servers
-
-        return self._mcp_servers
 
     async def handle_request(
         self, request: messages.Request
@@ -178,7 +169,6 @@ class Graph:
         node = node_cls(
             secret_provider=self.secret_provider,
             secrets=self.secrets,
-            mcp_servers=await self.get_mcp_servers(),
         )
         if edit.id:
             node.id = edit.id
@@ -198,16 +188,12 @@ class Graph:
         graph = Graph(
             id=subgraph_item.id,
             secret_provider=self.secret_provider,
-            mcp_server_provider=self.mcp_server_provider,
             secrets=self.secrets,
             library_items=self.library_items,
         )
         await graph.load_from_snapshot(subgraph_item.graph)
         node = SubGraph(
-            secrets=self.secrets,
-            secret_provider=self.secret_provider,
-            graph=graph,
-            mcp_servers=await self.get_mcp_servers(),
+            secrets=self.secrets, secret_provider=self.secret_provider, graph=graph
         )
         node.set_subgraph_id(subgraph_item.id)
         if edit.id:
@@ -421,9 +407,7 @@ class Graph:
             node_cls = self._node_cls_lookup.get(node_data.type)
             if node_cls:
                 node = node_cls(
-                    secret_provider=self.secret_provider,
-                    secrets=self.secrets,
-                    mcp_servers=await self.get_mcp_servers(),
+                    secret_provider=self.secret_provider, secrets=self.secrets
                 )
             elif node_data.type == "SubGraph":
                 subgraph_id_pad = next(
@@ -452,7 +436,6 @@ class Graph:
                 subgraph = Graph(
                     id=subgraph_li.id,
                     secret_provider=self.secret_provider,
-                    mcp_server_provider=self.mcp_server_provider,
                     secrets=self.secrets,
                     library_items=self.library_items,
                 )
@@ -461,7 +444,6 @@ class Graph:
                     secret_provider=self.secret_provider,
                     secrets=self.secrets,
                     graph=subgraph,
-                    mcp_servers=await self.get_mcp_servers(),
                 )
             else:
                 logging.error(f"Node type {node_data.type} not found in library.")
@@ -586,11 +568,7 @@ class Graph:
         # Only top level graph gets events
         runtime_api: RuntimeApi | None = None
         if self.id == "default":
-            runtime_api = RuntimeApi(
-                room=room,
-                nodes=self.nodes,
-                mcp_servers=await self.get_mcp_servers(),
-            )
+            runtime_api = RuntimeApi(room=room, nodes=self.nodes)
 
         for node in self.nodes:
             node.room = room

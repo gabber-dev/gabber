@@ -3,7 +3,7 @@
 
 import asyncio
 import logging
-from typing import Tuple, cast
+from typing import cast
 import contextlib
 
 from core import node, pad, mcp, runtime_types
@@ -39,9 +39,9 @@ class MCP(node.Node):
                 group="config",
                 owner_node=self,
                 default_type_constraints=[
-                    pad.types.Enum(options=[s.name for s in self.mcp_servers])
+                    pad.types.String(),
                 ],
-                value=self.mcp_servers[0].name if self.mcp_servers else None,
+                value=None,
             )
 
         self.pads = [self_pad, mcp_server]
@@ -74,20 +74,10 @@ class MCP(node.Node):
             raise ValueError("MCP server pad not configured")
 
         mcp_server_name = mcp_server_pad.get_value()
-        mcp_server = next(
-            (s for s in self.mcp_servers if s.name == mcp_server_name), None
-        )
-        if not mcp_server:
-            raise ValueError(f"MCP server '{mcp_server_name}' not found")
 
-        if not isinstance(mcp_server.transport, mcp.MCPTransportDatachannelProxy):
-            raise ValueError(
-                "Only MCPTransportDatachannelProxy is supported in this node"
-            )
-
-        logging.info(f"Connecting to MCP server '{mcp_server.name}'")
+        logging.info(f"Connecting to MCP server '{mcp_server_name}'")
         read_stream, write_stream = await exit_stack.enter_async_context(
-            mcp.datachannel_host(self.room, "mcp_proxy", mcp_server.name)
+            mcp.datachannel_host(self.room, "mcp_proxy", mcp_server_name)
         )
         session = await exit_stack.enter_async_context(
             ClientSession(read_stream=read_stream, write_stream=write_stream)

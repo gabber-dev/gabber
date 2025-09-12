@@ -40,7 +40,7 @@ class LocalLLM(BaseLLM):
         return ""
 
     def resolve_pads(self):
-        super().resolve_pads()
+        sink, source = self.get_base_pads()
         port_pad = cast(pad.PropertySinkPad, self.get_pad("port"))
         if not port_pad:
             port_pad = pad.PropertySinkPad(
@@ -50,4 +50,5 @@ class LocalLLM(BaseLLM):
                 default_type_constraints=[pad.types.Integer()],
                 value=7002,
             )
-            self.pads.append(port_pad)
+
+        self.pads = cast(list[pad.Pad], sink + [port_pad] + source)

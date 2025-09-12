@@ -1,0 +1,58 @@
+[project]
+name = "gabber-mcp-computer_use-server"
+version = "0.1.0"
+description = "MCP server for computer use actions"
+readme = "README.md"
+requires-python = "==3.12.2"
+
+# Core dependencies needed by both modes
+dependencies = ["pynput==1.8.1", "mcp>=1.13.1", "pydantic>=2.11.7"]
+
+[dependency-groups]
+dev = ["ruff>=0.12.5", "watchfiles>=1.1.0"]
+
+[tool.ruff]
+# Set the target Python version (modern Python, aligns with projects like FastAPI and Pandas)
+target-version = "py312"
+
+# Set line length to match Black's default (88 characters), common in many projects
+line-length = 88
+indent-width = 4
+
+# Include commonly ignored directories to avoid linting irrelevant files
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+]
+
+src = ["src"]
+
+# Enable a broad set of lint rules for comprehensive checks
+[tool.ruff.lint]
+fixable = ["ALL"]
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+# Use Google-style docstring conventions (common in projects like Pandas)
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.uv.sources]
+gabber-sdk = { path = "../sdks/python", editable = true }

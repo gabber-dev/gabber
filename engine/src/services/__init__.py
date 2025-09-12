@@ -6,7 +6,6 @@ from .engine import run_engine
 from . import repository
 from .default_graph_library import DefaultGraphLibrary
 from .default_secret_provider import DefaultSecretProvider
-from .default_mcp_server_provider import DefaultMCPServerProvider
 
 __all__ = [
     "GraphEditorServer",
@@ -14,5 +13,4 @@ __all__ = [
     "repository",
     "DefaultGraphLibrary",
     "DefaultSecretProvider",
-    "DefaultMCPServerProvider",
 ]
