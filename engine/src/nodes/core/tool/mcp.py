@@ -57,14 +57,14 @@ class MCP(node.Node):
                     await asyncio.wait_for(self.session.initialize(), timeout=2)
                     await asyncio.sleep(1)
                 except asyncio.TimeoutError:
-                    logging.error("NEIL MCP Client session timeout")
+                    logging.error("MCP Client session timeout")
                     await exit_stack.aclose()
                     continue
 
             try:
                 await self.session_ping_loop(self.session)
             except Exception as e:
-                logging.error(f"NEIL MCP Client list_tools error: {e}")
+                logging.error(f"MCP Client list_tools error: {e}")
                 await exit_stack.aclose()
                 continue
 
@@ -85,7 +85,7 @@ class MCP(node.Node):
                 "Only MCPTransportDatachannelProxy is supported in this node"
             )
 
-        logging.info(f"NEIL Connecting to MCP server '{mcp_server.name}'")
+        logging.info(f"Connecting to MCP server '{mcp_server.name}'")
         read_stream, write_stream = await exit_stack.enter_async_context(
             mcp.datachannel_host(self.room, "mcp_proxy", mcp_server.name)
         )
@@ -98,10 +98,9 @@ class MCP(node.Node):
         try:
             while True:
                 await asyncio.sleep(10)
-                logging.info("NEIL MCP Client sending ping")
                 await asyncio.wait_for(session.send_ping(), timeout=2)
         except asyncio.CancelledError:
-            logging.info("NEIL MCP Client ping loop cancelled")
+            logging.info("MCP Client ping loop cancelled")
             raise
 
     async def to_tool_definitions(self) -> list[runtime_types.ToolDefinition]:
@@ -122,7 +121,7 @@ class MCP(node.Node):
             return tool_defs
 
     async def call_tool(self, tool_call: runtime_types.ToolCall):
-        logging.info(f"NEIL ************ MCP Client calling tool '{tool_call.name}'")
+        logging.info(f"MCP Client calling tool '{tool_call.name}'")
         sess: ClientSession
         async with self.init_lock:
             if not self.session:

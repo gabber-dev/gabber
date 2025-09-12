@@ -81,7 +81,6 @@ class Engine:
         await self._livekit_room.connect(
             connection_details.url, connection_details.token
         )
-        logging.info("NEIL connected to room")
 
         while True:
             if self.connection_state == "connected":
@@ -129,16 +128,13 @@ class Engine:
 
     async def list_mcp_servers(self) -> List[runtime.MCPServer]:
         payload = runtime.RuntimeRequestPayloadListMCPServers(type="list_mcp_servers")
-        logging.info("NEIL Sending list_mcp_servers request")
         retries = 3
         last_exception = None
         for attempt in range(retries):
             try:
                 response = await self.runtime_request(payload)
                 if response.type == "list_mcp_servers":
-                    logging.info(f"NEIL list_mcp_servers response: {response}")
                     return response.servers
-                logging.warning(f"NEIL list_mcp_servers attempt {attempt + 1} failed")
             except Exception as e:
                 last_exception = e
 
@@ -161,7 +157,6 @@ class Engine:
                 topic=topic,
                 destination_identities=["gabber-engine"],
             )
-            logging.debug(f"NEIL Sent runtime request: {req}")
             return await asyncio.wait_for(future, timeout=timeout)
         except Exception as e:
             future.set_exception(e)
@@ -184,7 +179,6 @@ class Engine:
 
     def setup_room_event_listeners(self) -> None:
         def on_connected(state: rtc.ConnectionState):
-            logging.info(f"NEIL on connected!!!!!!!!!!!: {state}")
             self._emit_connection_state_change()
 
         def on_participant_connected(participant: rtc.RemoteParticipant):
