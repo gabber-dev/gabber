@@ -11,7 +11,8 @@ import logging
 from core.editor import serialize
 from core.node import Node
 from nodes.core.media.publish import Publish
-from nodes.core.tool import MCP
+
+PING_BYTES = "ping".encode("utf-8")
 
 
 class RuntimeApi:
@@ -80,10 +81,14 @@ class RuntimeApi:
             p._add_update_handler(on_pad)
 
         def on_data(packet: rtc.DataPacket):
-            if not packet.topic or not packet.topic.startswith("runtime_api"):
+            if not packet.topic or packet.topic != "runtime_api":
                 return
 
-            request = RuntimeRequest.model_validate_json(packet.data)
+            try:
+                request = RuntimeRequest.model_validate_json(packet.data)
+            except Exception as e:
+                logging.error(f"Invalid runtime_api request: {e}", exc_info=e)
+                return
             req_id = request.req_id
             ack_resp = RuntimeRequestAck(req_id=req_id, type="ack")
             complete_resp = RuntimeResponse(req_id=req_id, type="complete")

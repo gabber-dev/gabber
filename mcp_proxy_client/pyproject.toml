@@ -1,42 +1,17 @@
 [project]
-name = "gabber-engine"
+name = "gabber-mcp-proxy-client"
 version = "0.1.0"
-description = "Add your description here"
+description = "Proxy client for locally running MCP servers to interact with a remotely running Gabber Engine"
 readme = "README.md"
 requires-python = "==3.12.2"
 
 # Core dependencies needed by both modes
 dependencies = [
-    "pydantic >= 2",
-    "typing-extensions >= 4.7.1",
-    "python-json-logger==2.0.7",
-    "urllib3 >= 1.25.3, < 3.0.0",
-    "python_dateutil >= 2.8.2",
-    "aiohttp >= 3.8.4",
-    "aiohttp-retry >= 2.8.3",
-    "json-repair~=0.47.4",
-    "pydantic-to-typescript",
-    "click",
-    "livekit-agents~=1.0.23",
-    "livekit~=1.0.11",
-    "opencv-python-headless~=4.12.0",
-    "nltk",
-    "posthog",
-    "numpy",
-    "onnxruntime >= 1.17.1",
-    "jiwer~=3.0",
-    "elevenlabs==1.12.1",
-    "pyvips~=2.0.2",
-    "av~=14.4.0",
-    "openai~=1.107.1",
-    "pillow~=11.1.0",
-    "msgpack~=1.1.1",
-    "python-dotenv~=1.1.1",
-    "aiofiles~=24.1.0",
-    "aiohttp-cors~=0.8.1",
-    "jinja2~=3.1.6",
+    "aiohttp>=3.12.15",
+    "click>=8.2.1",
+    "gabber-sdk",
     "mcp>=1.13.1",
-    "pyyaml>=6.0.2",
+    "pydantic>=2.11.7",
 ]
 
 [dependency-groups]
@@ -84,3 +59,6 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 # Use Google-style docstring conventions (common in projects like Pandas)
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.uv.sources]
+gabber-sdk = { path = "../sdks/python", editable = true }

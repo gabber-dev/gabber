@@ -1,6 +1,7 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
+import logging
 from typing import cast
 
 from core import pad
@@ -47,7 +48,7 @@ class OpenAICompatibleLLM(BaseLLM):
         return await self.secret_provider.resolve_secret(api_key_name)
 
     def resolve_pads(self):
-        super().resolve_pads()
+        base_sink_pads, base_source_pads = self.get_base_pads()
         base_url_sink = cast(pad.PropertySinkPad, self.get_pad("base_url"))
         if not base_url_sink:
             base_url_sink = pad.PropertySinkPad(
@@ -57,7 +58,6 @@ class OpenAICompatibleLLM(BaseLLM):
                 default_type_constraints=[pad.types.String()],
                 value="https://api.openai.com/v1",
             )
-            self.pads.append(base_url_sink)
 
         api_key_sink = cast(pad.PropertySinkPad, self.get_pad("api_key"))
         if not api_key_sink:
@@ -68,7 +68,6 @@ class OpenAICompatibleLLM(BaseLLM):
                 default_type_constraints=[pad.types.Secret(options=[])],
                 value="",
             )
-            self.pads.append(api_key_sink)
 
         model_sink = cast(pad.PropertySinkPad, self.get_pad("model"))
         if not model_sink:
@@ -79,8 +78,11 @@ class OpenAICompatibleLLM(BaseLLM):
                 default_type_constraints=[pad.types.String()],
                 value="gpt-4.1-mini",
             )
-            self.pads.append(model_sink)
+
+        base_sink_pads.extend([base_url_sink, api_key_sink, model_sink])
 
         cast(list[pad.types.Secret], api_key_sink.get_type_constraints())[
             0
         ].options = self.secrets
+
+        self.pads = cast(list[pad.Pad], base_sink_pads + base_source_pads)

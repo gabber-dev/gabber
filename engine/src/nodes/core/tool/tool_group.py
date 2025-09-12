@@ -83,6 +83,12 @@ class ToolGroup(node.Node):
 
         self.pads = [num_tools, self_pad] + tools
 
+    def has_tool(self, tool_name: str) -> bool:
+        for tool in self.tool_nodes:
+            if tool.get_name() == tool_name:
+                return True
+        return False
+
     async def call_tools(
         self,
         tool_calls: list[runtime_types.ToolCall],

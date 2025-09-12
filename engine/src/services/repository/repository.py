@@ -758,7 +758,7 @@ class RepositoryServer:
                 can_publish_data=True,
                 can_subscribe=True,
             )
-        ).with_identity("debug")
+        ).with_identity("mcp_proxy")
 
         connection_details = models.AppRunConnectionDetails(
             url=livekit_url,

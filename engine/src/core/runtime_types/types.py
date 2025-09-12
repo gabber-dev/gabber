@@ -3,6 +3,7 @@
 
 import asyncio
 import base64
+import logging
 from dataclasses import dataclass
 from enum import Enum
 from typing import Annotated, Any, Literal, cast
@@ -198,7 +199,7 @@ class ToolCall(BaseModel):
 class ToolDefinition(BaseModel):
     name: str
     description: str
-    parameters: "Schema | None" = None
+    parameters: "Schema | dict[str, Any] | None" = None
 
 
 class ContextMessageContentItem_Audio(BaseModel):
@@ -275,15 +276,19 @@ class ContextMessageContent_ToolCallDelta(BaseModel):
 
 class Schema(BaseModel):
     properties: dict[
-        str, pad.types.String | pad.types.Integer | pad.types.Float | pad.types.Boolean
+        str,
+        pad.types.String
+        | pad.types.Integer
+        | pad.types.Float
+        | pad.types.Boolean
+        | pad.types.Object
+        | pad.types.List,
     ]
     required: list[str] | None = None
     defaults: dict[str, Any] | None = None
 
     def to_json_schema(self) -> dict[str, Any]:
-        properties = {
-            k: v.model_dump(exclude_none=True) for k, v in self.properties.items()
-        }
+        properties = {k: v.to_json_schema() for k, v in self.properties.items()}
         for d in self.defaults or {}:
             if self.defaults is None:
                 continue
@@ -295,12 +300,54 @@ class Schema(BaseModel):
             "required": self.required or [],
         }
 
+    @classmethod
+    def from_json_schema(cls, schema: dict[str, Any]) -> "Schema":
+        properties: dict[
+            str,
+            pad.types.String
+            | pad.types.Integer
+            | pad.types.Float
+            | pad.types.Boolean
+            | pad.types.Object
+            | pad.types.List,
+        ] = {}
+        for key, value in schema.get("properties", {}).items():
+            type_ = value.get("type")
+            if type_ == "string":
+                properties[key] = pad.types.String()
+            elif type_ == "integer":
+                properties[key] = pad.types.Integer()
+            elif type_ == "number":
+                properties[key] = pad.types.Float()
+            elif type_ == "boolean":
+                properties[key] = pad.types.Boolean()
+            elif type_ == "object":
+                properties[key] = pad.types.Object()
+            elif type_ == "array":
+                properties[key] = pad.types.List(item_type_constraints=None)
+            else:
+                raise ValueError(f"Unsupported property type: {type_}")
+        return cls(
+            properties=properties,
+            required=schema.get("required", []),
+            defaults={
+                k: v.get("default")
+                for k, v in schema.get("properties", {}).items()
+                if "default" in v
+            },
+        )
+
     def intersect(self, other: "Schema"):
         if not isinstance(other, Schema):
             return None
         properties: dict[
             str,
-            pad.types.String | pad.types.Integer | pad.types.Float | pad.types.Boolean,
+            pad.types.String
+            | pad.types.Integer
+            | pad.types.Float
+            | pad.types.Boolean
+            | pad.types.Object
+            | pad.types.List,
         ] = {}
         defaults: dict[str, Any] = {}
         for d in self.defaults or {}:

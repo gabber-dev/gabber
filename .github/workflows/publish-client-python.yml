@@ -1,4 +1,4 @@
-name: Publish PyPI Package
+name: Publish Client Python 
 
 on:
   workflow_dispatch:
@@ -29,8 +29,10 @@ jobs:
 
       # Build the package
       - name: Build package
+        working-directory: sdks/python
         run: uv build
 
       # Publish to PyPI
       - name: Publish to PyPI
+        working-directory: sdks/python
         run: uv publish
