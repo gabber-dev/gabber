@@ -106,12 +106,6 @@
             document.getElementById("webcam-button").style.display = "none";
             document.getElementById("webcam-sub-button").style.display = "block";
             document.getElementById("unpublish-webcam").style.display = "block";
-
-            engine.listMCPServers().then(servers => {
-                console.log("MCP Servers:", servers);
-            }).catch(err => {
-                console.error("Error listing MCP servers:", err);
-            });
         }
 
         async function unpublishWebcam() {

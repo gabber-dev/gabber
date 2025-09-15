@@ -4,12 +4,12 @@
 import asyncio
 import logging
 
-from gabber import ConnectionState, Engine, MCPServer
+from gabber import ConnectionState, Engine
 from livekit import rtc
 
 from connection import ConnectionProvider
 
-from mcp_proxy import MCPProxy
+from mcp_proxy import MCPProxy, MCPServerProvider, MCPServer
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -20,14 +20,16 @@ class App:
         self.run_id = run_id
         self.engine = Engine(on_connection_state_change=self.on_connection_state_change)
         self.connection_provider = connection_provider
+        self.server_provider = MCPServerProvider()
 
     async def run(self):
         dets = await self.connection_provider.get_connection(run_id=self.run_id)
         proxy_supervisor = ProxySupervisor(room=self.engine._livekit_room)
 
         await self.engine.connect(connection_details=dets)
-        mcp_servers = await self.engine.list_mcp_servers()
-        for s in mcp_servers:
+        config = await self.server_provider.get_config()
+        servers = config.servers
+        for s in servers:
             proxy_supervisor.add_server(s)
 
         await proxy_supervisor.wait_all()

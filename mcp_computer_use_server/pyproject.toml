@@ -1,19 +1,12 @@
 [project]
-name = "gabber-mcp-proxy-client"
+name = "gabber-mcp-computer_use-server"
 version = "0.1.0"
-description = "Proxy client for locally running MCP servers to interact with a remotely running Gabber Engine"
+description = "MCP server for computer use actions"
 readme = "README.md"
 requires-python = "==3.12.2"
 
 # Core dependencies needed by both modes
-dependencies = [
-    "aiohttp>=3.12.15",
-    "click>=8.2.1",
-    "gabber-sdk",
-    "mcp>=1.13.1",
-    "pydantic>=2.11.7",
-    "pyyaml>=6.0.2",
-]
+dependencies = ["pynput==1.8.1", "mcp>=1.13.1", "pydantic>=2.11.7"]
 
 [dependency-groups]
 dev = ["ruff>=0.12.5", "watchfiles>=1.1.0"]

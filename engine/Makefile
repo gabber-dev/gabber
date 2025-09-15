@@ -6,19 +6,19 @@ install:
 
 engine:
 	make install && \
-	.venv/bin/python -u src/main.py engine 
+	.venv/bin/python -u gabber/main.py engine
 
 repository:
 	make install && \
-	.venv/bin/watchfiles ".venv/bin/python -u src/main.py repository" src
+	.venv/bin/watchfiles ".venv/bin/python -u gabber/main.py repository" gabber 
 
 editor:
 	make install && \
-	.venv/bin/watchfiles ".venv/bin/python -u src/main.py editor" src
+	.venv/bin/watchfiles ".venv/bin/python -u gabber/main.py editor" gabber 
 
 mcp-proxy-client:
 	make install && \
-	.venv/bin/python -u src/main.py mcp-proxy-client 
+	.venv/bin/python -u gabber/main.py mcp-proxy-client 
 
 lint:
 	make install && \

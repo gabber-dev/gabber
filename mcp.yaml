@@ -1,8 +1,0 @@
-servers:
-  - name: blender
-    transport:
-      type: datachannel_proxy
-      local_transport:
-        type: stdio
-        command: uvx
-        args: [blender-mcp]

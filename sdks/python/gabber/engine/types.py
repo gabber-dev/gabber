@@ -23,16 +23,14 @@ ConnectionState = Literal[
 RuntimeRequestPayload = Annotated[
     runtime.RuntimeRequestPayloadGetValue
     | runtime.RuntimeRequestPayloadLockPublisher
-    | runtime.RuntimeRequestPayloadPushValue
-    | runtime.RuntimeRequestPayloadListMCPServers,
+    | runtime.RuntimeRequestPayloadPushValue,
     Field(discriminator="type"),
 ]
 
 RuntimeResponsePayload = Annotated[
     runtime.RuntimeResponsePayloadGetValue
     | runtime.RuntimeResponsePayloadLockPublisher
-    | runtime.RuntimeResponsePayloadPushValue
-    | runtime.RuntimeResponsePayloadListMCPServers,
+    | runtime.RuntimeResponsePayloadPushValue,
     Field(discriminator="type"),
 ]
 
