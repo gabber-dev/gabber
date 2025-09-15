@@ -15,11 +15,13 @@ from .runtime_api import (
 
 from .graph_library import (
     GraphLibrary,
+    GraphLibraryItem,
 )
 
 __all__ = [
     "Graph",
     "GraphLibrary",
+    "GraphLibraryItem",
     "RuntimeEvent",
     "RuntimeRequest",
     "RuntimeRequestAck",
