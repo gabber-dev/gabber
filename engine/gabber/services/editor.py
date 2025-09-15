@@ -9,8 +9,9 @@ import aiohttp.web
 from aiohttp import web
 from pydantic import TypeAdapter
 
-from core import graph, secret, mcp
-from core.editor import messages
+from ..core import graph, secret
+from ..core.editor import messages
+from typing import Callable
 
 
 class GraphEditorServer:
@@ -18,12 +19,12 @@ class GraphEditorServer:
         self,
         *,
         port: int,
-        graph_library: graph.GraphLibrary,
-        secret_provider: secret.SecretProvider,
+        graph_library_provider: Callable[[dict[str, str]], graph.GraphLibrary],
+        secret_provider_provider: Callable[[dict[str, str]], secret.SecretProvider],
     ):
         self.port = port
-        self.graph_library = graph_library
-        self.secret_provider = secret_provider
+        self.graph_library_provider = graph_library_provider
+        self.secret_provider_provider = secret_provider_provider
         self.app = web.Application()
 
         self.setup_routes()
@@ -35,10 +36,14 @@ class GraphEditorServer:
         ws = web.WebSocketResponse()
         await ws.prepare(request)
 
+        query_dict: dict[str, str] = dict(request.query)
+        graph_library = self.graph_library_provider(query_dict)
+        secret_provider = self.secret_provider_provider(query_dict)
+
         editor_session = GraphEditorSession(
             ws=ws,
-            graph_library=self.graph_library,
-            secret_provider=self.secret_provider,
+            graph_library=graph_library,
+            secret_provider=secret_provider,
         )
         await editor_session.run()
 
