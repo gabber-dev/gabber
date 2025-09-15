@@ -17,7 +17,9 @@ class MCPTransportSSE(BaseModel):
 class MCPTransportSTDIO(BaseModel):
     type: Literal["stdio"] = "stdio"
     command: str
+    cwd: str | None = None
     args: list[str]
+    env: dict[str, str] | None = None
 
 
 MCPLocalTransport = Annotated[
@@ -25,13 +27,8 @@ MCPLocalTransport = Annotated[
 ]
 
 
-class MCPTransportDatachannelProxy(BaseModel):
-    type: Literal["datachannel_proxy"] = "datachannel_proxy"
-    local_transport: MCPLocalTransport
-
-
 MCPTransport = Annotated[
-    MCPTransportDatachannelProxy | MCPTransportSTDIO | MCPTransportSTDIO,
+    MCPTransportSTDIO | MCPTransportSTDIO,
     Field(discriminator="type"),
 ]
 

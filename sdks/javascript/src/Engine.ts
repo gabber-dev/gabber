@@ -140,17 +140,6 @@ export class Engine  {
     throw new Error(`Unsupported track type: ${params.localTrack.type}`);
   }
 
-  public async listMCPServers(): Promise<MCPServer[]> {
-    const payload: Payload = {
-      type: "list_mcp_servers"
-    }
-    const response = await this.runtimeRequest({payload});
-    if(response.type !== "list_mcp_servers") {
-      throw new Error("Unexpected response type");
-    }
-    return response.servers;
-  }
-
   public async subscribeToNode(params: SubscribeParams): Promise<Subscription> {
     return new Subscription({nodeId: params.outputOrPublishNodeId, livekitRoom: this.livekitRoom});
   }

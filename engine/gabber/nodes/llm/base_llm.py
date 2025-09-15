@@ -341,7 +341,7 @@ class BaseLLM(node.Node, ABC):
                     tool_task = asyncio.create_task(
                         self.call_tools(
                             all_tool_calls=all_tool_calls,
-                            tg_tool_defns=tg_tool_definitions,
+                            tg_tool_defns=tg_tools,
                             mcp_tool_defns=mcp_tools,
                             ctx=ctx,
                         )
@@ -444,6 +444,7 @@ class BaseLLM(node.Node, ABC):
         all_tool_calls: list[runtime_types.ToolCall],
         ctx: pad.RequestContext,
     ) -> list[runtime_types.ContextMessage]:
+        logging.info(f"NEIL ********* {tg_tool_defns}")
         tg_tool_calls = [t for t in all_tool_calls if t.name in tg_tool_defns]
 
         results: list[runtime_types.ContextMessage] = []

@@ -126,22 +126,6 @@ class Engine:
         await sub.start()
         return sub
 
-    async def list_mcp_servers(self) -> List[runtime.MCPServer]:
-        payload = runtime.RuntimeRequestPayloadListMCPServers(type="list_mcp_servers")
-        retries = 3
-        last_exception = None
-        for attempt in range(retries):
-            try:
-                response = await self.runtime_request(payload)
-                if response.type == "list_mcp_servers":
-                    return response.servers
-            except Exception as e:
-                last_exception = e
-
-        if last_exception:
-            raise last_exception
-        raise ValueError("Unexpected response type")
-
     async def runtime_request(
         self, payload: types.RuntimeRequestPayload, timeout: float = 2.0
     ) -> types.RuntimeResponsePayload:

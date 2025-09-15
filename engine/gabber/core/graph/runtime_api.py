@@ -334,15 +334,10 @@ class RuntimeRequestPayload_LockPublisher(BaseModel):
     publish_node: str
 
 
-class RuntimeRequestPayload_ListMCPServers(BaseModel):
-    type: Literal["list_mcp_servers"] = "list_mcp_servers"
-
-
 RuntimeRequestPayload = Annotated[
     RuntimeRequestPayload_PushValue
     | RuntimeRequestPayload_GetValue
-    | RuntimeRequestPayload_LockPublisher
-    | RuntimeRequestPayload_ListMCPServers,
+    | RuntimeRequestPayload_LockPublisher,
     Field(discriminator="type", description="Request to push data to a pad"),
 ]
 
@@ -372,16 +367,10 @@ class RuntimeResponsePayload_LockPublisher(BaseModel):
     success: bool
 
 
-class RuntimeResponsePayload_ListMCPServers(BaseModel):
-    type: Literal["list_mcp_servers"] = "list_mcp_servers"
-    servers: list[mcp.MCPServer]
-
-
 RuntimeResponsePayload = Annotated[
     RuntimeResponsePayload_PushValue
     | RuntimeResponsePayload_GetValue
-    | RuntimeResponsePayload_LockPublisher
-    | RuntimeResponsePayload_ListMCPServers,
+    | RuntimeResponsePayload_LockPublisher,
     Field(discriminator="type", description="Payload for the runtime request complete"),
 ]
 

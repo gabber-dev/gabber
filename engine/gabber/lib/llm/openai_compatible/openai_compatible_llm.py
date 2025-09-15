@@ -48,6 +48,9 @@ class OpenAICompatibleLLM:
             audio_support=audio_support, video_support=video_support
         )
         tools = request.to_openai_completion_tools_input()
+        logging.debug(
+            f"NEIL &&&&&&&&&&&& OpenAICompatibleLLM sending messages: {messages}, tools: {tools}"
+        )
 
         try:
             res = await self._client.chat.completions.create(
