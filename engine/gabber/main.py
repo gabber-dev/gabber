@@ -33,8 +33,8 @@ def start(port):
     async def run_server():
         server = GraphEditorServer(
             port=port,
-            graph_library=DefaultGraphLibrary(),
-            secret_provider=DefaultSecretProvider(),
+            graph_library_provider=lambda _: DefaultGraphLibrary(),
+            secret_provider_provider=lambda _: DefaultSecretProvider(),
         )
         await server.run()
 
