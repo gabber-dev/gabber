@@ -1,7 +1,6 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-import logging
 from typing import Annotated, Any, Literal
 
 from pydantic import (
@@ -10,7 +9,7 @@ from pydantic import (
     Field,
 )
 
-from core.secret import PublicSecret
+from ..secret import PublicSecret
 
 
 class BasePadType(BaseModel):

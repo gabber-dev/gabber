@@ -4,10 +4,10 @@
 import asyncio
 from typing import TYPE_CHECKING
 
-from core.pad import Item, Pad, ProxyPad, SinkPad, SourcePad, types
+from ..pad import Item, Pad, ProxyPad, SinkPad, SourcePad, types
 
 if TYPE_CHECKING:
-    from core.node import Node
+    from ..node import Node
 
 
 class ProxyStatelessSinkPad(SinkPad, ProxyPad):
