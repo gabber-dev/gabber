@@ -6,8 +6,8 @@ from typing import Annotated, Any, Generic, Literal, Type, TypeVar
 
 from pydantic import BaseModel, Field
 
-from core.node import Node, NodeMetadata
-from core.pad import types
+from ..node import Node, NodeMetadata
+from ..pad import types
 
 
 class EditType(str, Enum):

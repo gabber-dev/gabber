@@ -7,9 +7,9 @@ from typing import Any, Type, TypeVar, cast
 
 from livekit import rtc
 
-from core import pad
-from core.editor import messages, models, serialize
-from core.editor.models import (
+from .. import pad
+from ..editor import messages, models, serialize
+from ..editor.models import (
     ConnectPadEdit,
     DisconnectPadEdit,
     EditType,
@@ -22,9 +22,8 @@ from core.editor.models import (
     UpdateNodeEdit,
     UpdatePadEdit,
 )
-from core.node import Node
-from core.secret import PublicSecret, SecretProvider
-from core import mcp
+from ..node import Node
+from ..secret import PublicSecret, SecretProvider
 from nodes.core.sub_graph import SubGraph
 from utils import short_uuid
 from .runtime_api import RuntimeApi
@@ -43,7 +42,6 @@ class Graph:
     ):
         self.id = id
         self.secret_provider = secret_provider
-        self._mcp_servers: list[mcp.MCPServer] | None = None
         self.secrets = secrets
         self.library_items = library_items
 

@@ -6,7 +6,7 @@ from typing import Any, cast
 
 from pydantic import BaseModel
 
-from core import node, pad, runtime_types
+from .. import node, pad, runtime_types
 
 from .models import NodeEditorRepresentation, PadEditorRepresentation, PadReference
 
