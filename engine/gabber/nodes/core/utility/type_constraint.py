@@ -3,8 +3,8 @@
 
 from typing import Any, cast
 
-from core import pad
-from core.node import Node, NodeMetadata
+from gabber.core import pad
+from gabber.core.node import Node, NodeMetadata
 
 
 class TypeConstraint(Node):
@@ -66,7 +66,7 @@ class TypeConstraint(Node):
             sink.set_default_type_constraints([pad.types.Trigger()])
             source.set_default_type_constraints([pad.types.Trigger()])
             default_value = None
-        
+
         self.pads = [sink, source, type_selector]
 
         prev_pad = sink.get_previous_pad()

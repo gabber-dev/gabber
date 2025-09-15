@@ -5,8 +5,8 @@ import asyncio
 import logging
 from typing import cast
 
-from core import pad, runtime_types
-from core.node import Node, NodeMetadata
+from gabber.core import pad, runtime_types
+from gabber.core.node import Node, NodeMetadata
 
 
 class AVClipZip(Node):
@@ -24,29 +24,29 @@ class AVClipZip(Node):
         video_clip = cast(pad.StatelessSinkPad, self.get_pad("video_clip"))
         if not video_clip:
             video_clip = pad.StatelessSinkPad(
-                    id="video_clip",
-                    owner_node=self,
-                    default_type_constraints=[pad.types.VideoClip()],
-                    group="video_clip",
-                )
+                id="video_clip",
+                owner_node=self,
+                default_type_constraints=[pad.types.VideoClip()],
+                group="video_clip",
+            )
 
         audio_clip = cast(pad.StatelessSinkPad, self.get_pad("audio_clip"))
         if not audio_clip:
             audio_clip = pad.StatelessSinkPad(
-                    id="audio_clip",
-                    owner_node=self,
-                    default_type_constraints=[pad.types.AudioClip()],
-                    group="audio_clip",
-                )
+                id="audio_clip",
+                owner_node=self,
+                default_type_constraints=[pad.types.AudioClip()],
+                group="audio_clip",
+            )
 
         av_clip = cast(pad.StatelessSourcePad, self.get_pad("av_clip"))
         if not av_clip:
             av_clip = pad.StatelessSourcePad(
-                    id="av_clip",
-                    owner_node=self,
-                    default_type_constraints=[pad.types.AVClip()],
-                    group="av_clip",
-                )
+                id="av_clip",
+                owner_node=self,
+                default_type_constraints=[pad.types.AVClip()],
+                group="av_clip",
+            )
 
         self.pads = [audio_clip, video_clip, av_clip]
 

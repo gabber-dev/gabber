@@ -1,7 +1,7 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-from core import secret
+from gabber.core import secret
 import logging
 import os
 import aiofiles

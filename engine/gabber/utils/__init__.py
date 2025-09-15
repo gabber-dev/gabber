@@ -12,7 +12,7 @@ from typing import (
 )
 
 import json_repair
-from core.runtime_types import (
+from gabber.core.runtime_types import (
     ContextMessageContent_ChoiceDelta,
     ContextMessageContent_ToolCallDelta,
     ToolCall,

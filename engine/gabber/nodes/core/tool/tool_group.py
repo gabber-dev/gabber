@@ -5,10 +5,10 @@ import asyncio
 import logging
 from typing import Any, cast
 
-from core import node, pad, runtime_types
-from core.node import NodeMetadata
+from gabber.core import node, pad, runtime_types
+from gabber.core.node import NodeMetadata
 
-from nodes.core.tool import Tool
+from gabber.nodes.core.tool import Tool
 
 
 class ToolGroup(node.Node):

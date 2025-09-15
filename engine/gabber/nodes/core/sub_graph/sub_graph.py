@@ -4,9 +4,9 @@
 import logging
 from typing import TYPE_CHECKING, cast
 
-from core import node, pad
-from core.node import NodeMetadata
-from core.secret import PublicSecret, SecretProvider
+from gabber.core import node, pad
+from gabber.core.node import NodeMetadata
+from gabber.core.secret import PublicSecret, SecretProvider
 
 from .proxy_property_sink import ProxyPropertySink
 from .proxy_property_source import ProxyPropertySource
@@ -14,7 +14,7 @@ from .proxy_stateless_sink import ProxyStatelessSink
 from .proxy_stateless_source import ProxyStatelessSource
 
 if TYPE_CHECKING:
-    from core.graph import Graph
+    from gabber.core.graph import Graph
 
 
 class SubGraph(node.Node):

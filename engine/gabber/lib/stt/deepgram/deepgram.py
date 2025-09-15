@@ -8,7 +8,7 @@ from urllib.parse import urlencode
 
 import aiohttp
 
-from core.runtime_types import AudioClip, AudioFrame
+from gabber.core.runtime_types import AudioClip, AudioFrame
 from utils import short_uuid
 
 from ..stt import (

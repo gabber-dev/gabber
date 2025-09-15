@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
-from core import runtime_types
+from gabber.core import runtime_types
 import av
 import numpy as np  # Assuming f.data is a numpy array; import if needed
 import fractions

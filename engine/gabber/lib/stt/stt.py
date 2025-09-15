@@ -4,7 +4,7 @@
 from abc import ABC
 from dataclasses import dataclass
 
-from core.runtime_types import AudioClip, AudioFrame
+from gabber.core.runtime_types import AudioClip, AudioFrame
 
 
 class STT(ABC):

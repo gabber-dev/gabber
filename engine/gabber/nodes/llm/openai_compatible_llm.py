@@ -4,8 +4,8 @@
 import logging
 from typing import cast
 
-from core import pad
-from core.node import NodeMetadata
+from gabber.core import pad
+from gabber.core.node import NodeMetadata
 
 from .base_llm import BaseLLM
 

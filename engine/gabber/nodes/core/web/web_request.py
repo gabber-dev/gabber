@@ -5,8 +5,8 @@ from dataclasses import dataclass
 from typing import Any, cast
 
 import aiohttp
-from core import pad
-from core.node import Node
+from gabber.core import pad
+from gabber.core.node import Node
 
 
 class WebRequest(Node):
@@ -277,13 +277,17 @@ class WebRequest(Node):
                 # Resolve and set headers based on authorization type
                 if authorization_type.get_value() == "API Key":
                     api_key_name = api_value.get_value()
-                    api_key_value = await self.secret_provider.resolve_secret(api_key_name)
+                    api_key_value = await self.secret_provider.resolve_secret(
+                        api_key_name
+                    )
                     headers = {
                         api_header_key.get_value(): api_key_value,
                     }
                 elif authorization_type.get_value() == "Bearer Token":
                     bearer_token_name = bearer_token.get_value()
-                    bearer_token_value = await self.secret_provider.resolve_secret(bearer_token_name)
+                    bearer_token_value = await self.secret_provider.resolve_secret(
+                        bearer_token_name
+                    )
                     headers = {
                         "Authorization": f"Bearer {bearer_token_value}",
                     }

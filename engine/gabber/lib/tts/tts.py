@@ -8,10 +8,10 @@ from typing import Any, Protocol
 
 import aiohttp
 import numpy as np
-from core.runtime_types import AudioFrame, AudioFrameData
+from gabber.core.runtime_types import AudioFrame, AudioFrameData
 from utils import short_uuid
 
-from lib.audio import Resampler
+from gabber.lib.audio import Resampler
 
 
 class TTS(Protocol):

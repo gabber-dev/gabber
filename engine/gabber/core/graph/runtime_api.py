@@ -10,7 +10,7 @@ from .. import node, pad, runtime_types, mcp
 import logging
 from ..editor import serialize
 from ..node import Node
-from nodes.core.media.publish import Publish
+from gabber.nodes.core.media.publish import Publish
 
 PING_BYTES = "ping".encode("utf-8")
 

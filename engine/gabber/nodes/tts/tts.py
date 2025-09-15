@@ -6,9 +6,9 @@ import logging
 import time
 from typing import cast
 
-from core import node, pad, runtime_types
-from lib.tts import TTS as BaseTTS
-from lib.tts import CartesiaTTS, ElevenLabsTTS, GabberTTS
+from gabber.core import node, pad, runtime_types
+from gabber.lib.tts import TTS as BaseTTS
+from gabber.lib.tts import CartesiaTTS, ElevenLabsTTS, GabberTTS
 
 
 class TTS(node.Node):
@@ -65,7 +65,6 @@ class TTS(node.Node):
                 default_type_constraints=[pad.types.TextStream()],
             )
 
-
         audio_source = cast(pad.StatelessSourcePad, self.get_pad("audio"))
         if audio_source is None:
             audio_source = pad.StatelessSourcePad(
@@ -95,7 +94,15 @@ class TTS(node.Node):
                 default_type_constraints=[pad.types.String()],
             )
 
-        self.pads = [service, api_key, voice_id, text_sink, audio_source, cancel_trigger, final_transcription_source]
+        self.pads = [
+            service,
+            api_key,
+            voice_id,
+            text_sink,
+            audio_source,
+            cancel_trigger,
+            final_transcription_source,
+        ]
 
     async def run(self):
         api_key_pad = cast(pad.PropertySinkPad, self.get_pad_required("api_key"))

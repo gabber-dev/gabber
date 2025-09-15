@@ -9,8 +9,8 @@ import aiohttp.web
 from aiohttp import web
 from pydantic import TypeAdapter
 
-from core import graph, secret
-from core.editor import messages
+from gabber.core import graph, secret
+from gabber.core.editor import messages
 from typing import Callable
 
 

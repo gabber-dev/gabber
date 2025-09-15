@@ -6,8 +6,8 @@ import logging
 from typing import cast
 import contextlib
 
-from core import node, pad, mcp, runtime_types
-from core.node import NodeMetadata
+from gabber.core import node, pad, mcp, runtime_types
+from gabber.core.node import NodeMetadata
 from mcp.types import ContentBlock
 from mcp import ClientSession
 

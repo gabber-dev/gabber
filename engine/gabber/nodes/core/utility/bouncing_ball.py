@@ -5,10 +5,10 @@ import asyncio
 from typing import cast
 import time
 import numpy as np
-from core import node, pad
-from core.node import NodeMetadata
-from core.runtime_types import AudioFrame, AudioFrameData, VideoFrame
-from lib.audio import Resampler
+from gabber.core import node, pad
+from gabber.core.node import NodeMetadata
+from gabber.core.runtime_types import AudioFrame, AudioFrameData, VideoFrame
+from gabber.lib.audio import Resampler
 
 
 class BouncingBall(node.Node):

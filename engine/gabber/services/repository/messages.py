@@ -5,7 +5,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
-from core.editor import models
+from gabber.core.editor import models
 
 from .models import (
     AppRunConnectionDetails,

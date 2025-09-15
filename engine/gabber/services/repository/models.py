@@ -3,7 +3,7 @@
 
 import datetime
 from pydantic import BaseModel
-from core.editor import models
+from gabber.core.editor import models
 
 
 class RepositorySubGraph(BaseModel):

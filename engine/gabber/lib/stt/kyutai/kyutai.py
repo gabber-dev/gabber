@@ -7,7 +7,7 @@ from typing import Any, cast
 
 import aiohttp
 import msgpack
-from core.runtime_types import AudioClip, AudioFrame
+from gabber.core.runtime_types import AudioClip, AudioFrame
 from utils import short_uuid
 
 from ..stt import (
