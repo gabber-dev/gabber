@@ -39,14 +39,18 @@ export function StateMachineEdge(props: EdgeProps) {
 
   let edgePath = "";
   if (sourceNode && targetNode) {
+    const sourceWidth = sourceNode.measured.width || 10;
+    const sourceHeight = sourceNode.measured.height || 10;
+    const targetWidth = targetNode.measured.width || 10;
+    const targetHeight = targetNode.measured.height || 10;
     const { sx, sy, tx, ty } = getEdgeParams(
-      sourceNode as unknown as {
-        measured: { width: number; height: number };
-        internals: { positionAbsolute: { x: number; y: number } };
+      {
+        position: sourceNode.position,
+        size: { width: sourceWidth, height: sourceHeight },
       },
-      targetNode as unknown as {
-        measured: { width: number; height: number };
-        internals: { positionAbsolute: { x: number; y: number } };
+      {
+        position: targetNode.position,
+        size: { width: targetWidth, height: targetHeight },
       },
     );
     // determine how many edges connect this pair (both directions)

@@ -39,7 +39,8 @@ export const CustomConnectionLine: ConnectionLineComponent = ({
     let sourceBottomY = fromY + BOTTOM_OFFSET;
 
     if (sourceNode && sourceNode.measured) {
-      sourceBottomY = sourceNode.position.y + sourceNode.measured.height + 20;
+      sourceBottomY =
+        sourceNode.position.y + (sourceNode.measured?.height || 10) + 20;
     }
 
     edgePath = `M ${fromX},${fromY}
