@@ -257,41 +257,44 @@ export function NodeLibrary({
     setDraggedItem(null);
   }, []);
 
-  // Set up global drop handlers for the canvas
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  // For native event listeners
+  const handleNativeDragOver = (e: Event) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-  }, []);
+    const dragEvent = e as DragEvent;
+    if (dragEvent.dataTransfer) {
+      dragEvent.dataTransfer.dropEffect = "move";
+    }
+  };
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
+  const handleNativeDrop = useCallback(
+    (e: Event) => {
       e.preventDefault();
-
+      const dragEvent = e as DragEvent;
       if (!draggedItem) return;
-
       // Convert screen coordinates to flow coordinates
       const position = screenToFlowPosition({
-        x: e.clientX,
-        y: e.clientY,
+        x: dragEvent.clientX,
+        y: dragEvent.clientY,
       });
-
+      // Convert position to [x, y] array for editor_position
+      const editor_position: [number, number] = [position.x, position.y];
+      const editor_name = draggedItem.name || "NodeLibrary";
       if (draggedItem.type === "subgraph") {
         insertSubGraph({
           type: "insert_sub_graph",
-          subgraph_id: draggedItem.id,
+          subgraph_id: String(draggedItem.id),
           subgraph_name: draggedItem.name,
-          editor_name: draggedItem.name,
-          editor_position: [position.x, position.y],
+          editor_name,
+          editor_position,
         });
       } else if (draggedItem.type === "node") {
         insertNode({
           type: "insert_node",
-          node_type: draggedItem.name,
-          editor_name: draggedItem.name,
-          editor_position: [position.x, position.y],
+          node_type: String(draggedItem.name),
+          editor_name,
+          editor_position,
         });
       }
-
       setDraggedItem(null);
     },
     [draggedItem, insertNode, insertSubGraph, screenToFlowPosition],
@@ -301,14 +304,14 @@ export function NodeLibrary({
   const setupDropZone = useCallback(() => {
     const canvas = document.querySelector(".react-flow");
     if (canvas) {
-      canvas.addEventListener("dragover", handleDragOver as any);
-      canvas.addEventListener("drop", handleDrop as any);
+      canvas.addEventListener("dragover", handleNativeDragOver);
+      canvas.addEventListener("drop", handleNativeDrop);
       return () => {
-        canvas.removeEventListener("dragover", handleDragOver as any);
-        canvas.removeEventListener("drop", handleDrop as any);
+        canvas.removeEventListener("dragover", handleNativeDragOver);
+        canvas.removeEventListener("drop", handleNativeDrop);
       };
     }
-  }, [handleDragOver, handleDrop]);
+  }, [handleNativeDrop]);
 
   // Set up drop zone when component mounts
   React.useEffect(() => {
