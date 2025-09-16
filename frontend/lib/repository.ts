@@ -6,7 +6,6 @@
 import { GraphEditorRepresentation } from "@/generated/editor";
 import {
   AppExport,
-  CreateAppRunResponse,
   DebugConnectionResponse,
   ExportAppResponse,
   GetAppResponse,
