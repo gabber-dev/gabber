@@ -3,7 +3,6 @@
 
 from dataclasses import dataclass
 from typing import Any, cast
-
 import aiohttp
 from gabber.core import pad
 from gabber.core.node import Node
