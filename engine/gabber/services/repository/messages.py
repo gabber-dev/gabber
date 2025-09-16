@@ -96,11 +96,6 @@ class CreateAppRunResponse(BaseModel):
     connection_details: AppRunConnectionDetails
 
 
-class ListAppRunsResponse(BaseModel):
-    type: Literal["list_app_runs"] = "list_app_runs"
-    runs: list[str]
-
-
 class DebugConnectionResponse(BaseModel):
     type: Literal["debug_connection"] = "debug_connection"
     connection_details: AppRunConnectionDetails
@@ -129,7 +124,6 @@ Response = Annotated[
     | GetSubgraphResponse
     | ListSubgraphsResponse
     | CreateAppRunResponse
-    | ListAppRunsResponse
     | DebugConnectionResponse
     | ImportAppResponse
     | ExportAppResponse
