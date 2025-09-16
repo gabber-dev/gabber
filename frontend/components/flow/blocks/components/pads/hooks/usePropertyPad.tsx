@@ -66,12 +66,24 @@ export function usePropertyPad<T>(nodeId: string, padId: string): Result<T> {
     if (currentValue === "loading") {
       return editorValue;
     }
-    const cv = currentValue.value;
+    let cv = currentValue.value;
+    
+    // If the runtime value is a JSON string and the pad expects an object, parse it
+    if (typeof cv === 'string' && singleAllowedType?.type === 'Object') {
+      try {
+        cv = JSON.parse(cv);
+        console.log('usePropertyPad: Parsed JSON string to object:', cv);
+      } catch (e) {
+        console.warn('usePropertyPad: Failed to parse JSON string:', cv, e);
+        // Keep the string value if parsing fails
+      }
+    }
+    
     if (cv !== editorValue) {
       return cv as T;
     }
     return editorValue;
-  }, [currentValue, editorValue]);
+  }, [currentValue, editorValue, singleAllowedType]);
 
   const runtimeChanged = useMemo(() => {
     if (currentValue === "loading") {

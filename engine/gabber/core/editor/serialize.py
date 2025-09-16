@@ -37,7 +37,8 @@ def deserialize_pad_value(
         if isinstance(tc, pad.types.Object) and isinstance(v, str):
             try:
                 import json
-                return json.loads(v)
+                parsed = json.loads(v)
+                return parsed
             except (json.JSONDecodeError, ValueError):
                 # If JSON parsing fails, return the string as-is
                 return v
@@ -57,19 +58,16 @@ def deserialize_pad_value(
             return runtime_types.Point.model_validate(v)
     elif isinstance(v, list):
         if not isinstance(tc, pad.types.List):
-            logging.error(
-                f"Expected List type constraint for list deserialization, got {type(tc)}"
-            )
             return None
         list_types = tc.item_type_constraints
         if not list_types or len(list_types) != 1:
-            logging.error(
-                f"List type constraints: {list_types}, value: {v}, type_constraints: {tc}"
-            )
             return None
 
         items = [deserialize_pad_value(list_types[0], item) for item in v]
         return items
+    
+    # Fallback case - return the value as-is
+    return v
 
 
 def pad_editor_rep(p: pad.Pad):

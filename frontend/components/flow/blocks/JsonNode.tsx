@@ -20,6 +20,7 @@ export function JsonNode({ data }: BaseBlockProps) {
     "value",
   );
   const { pad: emitData } = useStatelessPad("emit");
+  const { pad: stringInputData } = useStatelessPad("string_input");
 
   return (
     <div className="w-100 flex flex-col bg-base-200 border-2 border-black border-b-4 border-r-4 rounded-lg relative pb-2">
@@ -41,6 +42,12 @@ export function JsonNode({ data }: BaseBlockProps) {
         <div className="relative w-full flex items-center justify-end">
           <div className="mr-4 text-accent">value</div>
           <div className="">{pad && <PadHandle data={pad} />}</div>
+        </div>
+        <div className="relative w-full flex items-center">
+          <div className="">
+            {stringInputData && <PadHandle data={stringInputData} />}
+          </div>
+          <div className="text-accent ml-4">string_input</div>
         </div>
         <div className="relative w-full flex items-center">
           <div className="">{emitData && <PadHandle data={emitData} />}</div>

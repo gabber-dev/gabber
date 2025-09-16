@@ -37,6 +37,14 @@ class RuntimeApi:
             ev_value = PadValue_Float(value=v)
         elif isinstance(v, str):
             ev_value = PadValue_String(value=v)
+        elif isinstance(v, dict):
+            # Convert dict to JSON string for transmission
+            import json
+            ev_value = PadValue_String(value=json.dumps(v))
+        elif isinstance(v, list):
+            # Convert list to JSON string for transmission
+            import json
+            ev_value = PadValue_String(value=json.dumps(v))
         elif isinstance(value, runtime_types.AudioClip):
             trans = value.transcription if value.transcription else ""
             ev_value = PadValue_AudioClip(transcript=trans, duration=value.duration)
