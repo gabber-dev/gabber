@@ -32,7 +32,7 @@ def deserialize_pad_value(
 ):
     if isinstance(tc, pad.types.Trigger):
         return runtime_types.Trigger()
-    elif isinstance(v, str | float | int):
+    if isinstance(v, str | float | int):
         return v
     elif isinstance(v, BaseModel):
         return v
