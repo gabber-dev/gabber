@@ -7,6 +7,7 @@
 
 import { TopBar } from "@/components/TopBar";
 import {
+  AppExport,
   RepositoryApp,
   RepositorySubGraph,
   SaveAppRequest,
@@ -16,6 +17,8 @@ import { RepositoryProvider } from "@/hooks/useRepository";
 import {
   deleteApp,
   deleteSubGraph,
+  exportApp,
+  importApp,
   listApps,
   listSubGraphs,
   saveApp,
@@ -58,6 +61,16 @@ export function ClientLayout({
     return await deleteSubGraph(subGraphId);
   }, []);
 
+  const importAppImpl = useCallback(async (exp: AppExport) => {
+    const res = await importApp(exp);
+    return res;
+  }, []);
+
+  const exportAppImpl = useCallback(async (appId: string) => {
+    const res = await exportApp(appId);
+    return res;
+  }, []);
+
   return (
     <RepositoryProvider
       initialApps={initialApps}
@@ -68,6 +81,8 @@ export function ClientLayout({
       listSubgraphsImpl={listSubgraphsImpl}
       saveSubGraphImpl={saveSubGraphImpl}
       deleteSubGraphImpl={deleteSubGraphImpl}
+      importAppImpl={importAppImpl}
+      exportAppImpl={exportAppImpl}
       examples={initialExamples}
     >
       <Toaster />

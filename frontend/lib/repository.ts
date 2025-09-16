@@ -132,12 +132,12 @@ export async function createDebugConnection({
   return resp.data;
 }
 
-export async function importApp(app: AppExport): Promise<ImportAppResponse> {
+export async function importApp(app: AppExport): Promise<RepositoryApp> {
   const resp = await axios.post(`${getBaseUrl()}/app/import`, app);
-  return resp.data as ImportAppResponse;
+  return resp.data as RepositoryApp;
 }
 
-export async function exportApp(appId: string): Promise<ExportAppResponse> {
+export async function exportApp(appId: string): Promise<AppExport> {
   const resp = await axios.get(`${getBaseUrl()}/app/${appId}/export`);
-  return resp.data as ExportAppResponse;
+  return (resp.data as ExportAppResponse).export;
 }

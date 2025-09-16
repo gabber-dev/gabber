@@ -6,6 +6,7 @@
 "use client";
 
 import {
+  AppExport,
   RepositoryApp,
   RepositorySubGraph,
   SaveAppRequest,
@@ -26,6 +27,9 @@ type RepositoryContextType = {
   saveSubGraph: (params: SaveSubgraphRequest) => Promise<RepositorySubGraph>;
   deleteSubGraph: (subGraphId: string) => Promise<void>;
   refreshSubGraphs: () => Promise<void>;
+
+  importApp(exp: AppExport): Promise<RepositoryApp>;
+  exportApp(appId: string): Promise<AppExport>;
 
   examples: RepositoryApp[];
 };
@@ -49,6 +53,9 @@ type Props = {
   listSubgraphsImpl: () => Promise<RepositorySubGraph[]>;
   deleteSubGraphImpl: (subGraphId: string) => Promise<void>;
 
+  importAppImpl: (exp: AppExport) => Promise<RepositoryApp>;
+  exportAppImpl: (appId: string) => Promise<AppExport>;
+
   examples: RepositoryApp[];
 };
 
@@ -63,6 +70,9 @@ export function RepositoryProvider({
   saveSubGraphImpl,
   listSubgraphsImpl,
   deleteSubGraphImpl,
+
+  importAppImpl,
+  exportAppImpl,
 
   examples,
 }: Props) {
@@ -157,14 +167,41 @@ export function RepositoryProvider({
     }
   };
 
+  const importApp = async (exp: AppExport): Promise<RepositoryApp> => {
+    try {
+      const resp = await importAppImpl(exp);
+      await refreshApps();
+      toast.success("App imported successfully");
+      return resp;
+    } catch (error) {
+      toast.error("Error importing app. Please refresh.");
+      console.error("Error importing app:", error);
+      throw error;
+    }
+  };
+
+  const exportApp = async (appId: string): Promise<AppExport> => {
+    try {
+      const resp = await exportAppImpl(appId);
+      return resp;
+    } catch (error) {
+      toast.error("Error exporting app. Please refresh.");
+      console.error("Error exporting app:", error);
+      throw error;
+    }
+  };
+
   return (
     <RepositoryContext.Provider
       value={{
         apps,
         appsLoading,
         refreshApps,
-        saveApp: saveApp,
+        saveApp,
         deleteApp,
+
+        importApp,
+        exportApp,
 
         subGraphs,
         subGraphsLoading,
