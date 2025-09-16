@@ -15,16 +15,17 @@ export const StateMachineConnectionLine: ConnectionLineComponent = ({
 }) => {
   if (!fromNode) return null;
 
-  const targetNode = {
-    id: "__connection_target__",
-    measured: { width: 1, height: 1 },
-    internals: { positionAbsolute: { x: toX, y: toY } },
+  const fromWidth = fromNode.measured.width || 10;
+  const fromHeight = fromNode.measured.height || 10;
+  const fromDims = {
+    position: fromNode.position,
+    size: { width: fromWidth, height: fromHeight },
   };
 
-  const { sx, sy, tx, ty, sourcePos, targetPos } = getEdgeParams(
-    fromNode,
-    targetNode,
-  );
+  const { sx, sy, tx, ty, sourcePos, targetPos } = getEdgeParams(fromDims, {
+    position: { x: toX, y: toY },
+    size: { width: 10, height: 10 },
+  });
 
   const [path] = getBezierPath({
     sourceX: sx,
