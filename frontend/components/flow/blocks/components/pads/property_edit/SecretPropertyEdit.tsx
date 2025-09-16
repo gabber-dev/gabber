@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { BasePadType } from "@/generated/editor";
 import { usePropertyPad } from "../hooks/usePropertyPad";
 import { PropertyEditProps } from "./PropertyEdit";
 import { useMemo } from "react";

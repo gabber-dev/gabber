@@ -37,7 +37,10 @@ export function getNodeIntersection(
   return { x, y };
 }
 
-export function getEdgePosition(node: InternalLikeNode, point: { x: number; y: number }) {
+export function getEdgePosition(
+  node: InternalLikeNode,
+  point: { x: number; y: number },
+) {
   const posAbs = node.internals.positionAbsolute as { x: number; y: number };
   const width = node.measured.width as number;
   const height = node.measured.height as number;
@@ -55,7 +58,10 @@ export function getEdgePosition(node: InternalLikeNode, point: { x: number; y: n
   return Position.Top;
 }
 
-export function getEdgeParams(source: InternalLikeNode, target: InternalLikeNode) {
+export function getEdgeParams(
+  source: InternalLikeNode,
+  target: InternalLikeNode,
+) {
   const sourceIntersectionPoint = getNodeIntersection(source, target);
   const targetIntersectionPoint = getNodeIntersection(target, source);
 
@@ -71,4 +77,3 @@ export function getEdgeParams(source: InternalLikeNode, target: InternalLikeNode
     targetPos,
   };
 }
-

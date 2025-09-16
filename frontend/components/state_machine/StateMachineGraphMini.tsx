@@ -3,14 +3,11 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { useState } from "react";
 import ReactModal from "react-modal";
-import { StateMachineGraphEdit } from "./StateMachineGraphEdit";
 import { useEditor } from "@/hooks/useEditor";
 import { useNodeId } from "@xyflow/react";
 export function StateMachineGraphMini() {
-  const { clearAllSelection, stateMachineEditing, setStateMachineEditing } =
-    useEditor();
+  const { clearAllSelection, setStateMachineEditing } = useEditor();
   const nodeId = useNodeId();
   return (
     <div className="flex flex-col items-center justify-center h-full pointer-events-none">

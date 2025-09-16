@@ -60,7 +60,7 @@ import {
 } from "@/components/flow/blocks/components/pads/utils/dataTypeColors";
 
 type ReactFlowRepresentation = {
-  nodes: Node[];
+  nodes: Node<NodeEditorRepresentation>[];
   edges: Edge[];
 };
 

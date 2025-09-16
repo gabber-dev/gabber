@@ -26,7 +26,6 @@ export function MultiLineTextPropertyEdit({
 
   useEffect(() => {
     autoResize();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [runtimeValue]);
   const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setValue(event.target.value);
