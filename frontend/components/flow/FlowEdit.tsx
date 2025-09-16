@@ -29,7 +29,6 @@ import { StateMachineGraphEdit } from "../state_machine/StateMachineGraphEdit";
 import { StateMachineProvider } from "../state_machine/useStateMachine";
 import { usePathname } from "next/navigation";
 import toast from "react-hot-toast";
-import { exportApp } from "@/lib/repository";
 import { QuickAddModal, QuickAddProps } from "./quick_add/QuickAddModal";
 import { PortalStart } from "./blocks/PortalStart";
 import { PortalEnd as PortalEndComponent } from "./blocks/PortalEnd";
@@ -39,6 +38,7 @@ import {
   PortalEnd,
 } from "@/generated/editor";
 import { RunId } from "../RunId";
+import { useRepository } from "@/hooks/useRepository";
 
 const edgeTypes = {
   hybrid: HybridEdge,
@@ -246,10 +246,11 @@ function AddBlockButton({ onClick }: { onClick: () => void }) {
 function ExportButton() {
   const path = usePathname();
   const appId = path.split("/app/")[1];
+  const { exportApp } = useRepository();
 
   const onClick = useCallback(async () => {
     try {
-      const { export: appExport } = await exportApp(appId);
+      const appExport = await exportApp(appId);
       const blob = new Blob([JSON.stringify(appExport, null, 2)], {
         type: "application/json",
       });
@@ -266,7 +267,7 @@ function ExportButton() {
       toast.error("Error exporting app");
     }
     console.log("Exporting", appId, path);
-  }, [appId, path]);
+  }, [appId, exportApp, path]);
 
   if (!path.startsWith("/app/")) {
     return null;
