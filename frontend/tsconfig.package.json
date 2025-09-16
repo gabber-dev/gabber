@@ -19,8 +19,6 @@
     }
   },
   "include": [
-    "app/**/*.ts",
-    "app/**/*.tsx",
     "components/**/*.ts",
     "components/**/*.tsx",
     "generated/**/*.ts",
