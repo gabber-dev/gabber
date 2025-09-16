@@ -66,8 +66,9 @@ export function usePropertyPad<T>(nodeId: string, padId: string): Result<T> {
     if (currentValue === "loading") {
       return editorValue;
     }
-    if (currentValue.value !== editorValue) {
-      return currentValue.value as T;
+    const cv = currentValue.value;
+    if (cv !== editorValue) {
+      return cv as T;
     }
     return editorValue;
   }, [currentValue, editorValue]);
