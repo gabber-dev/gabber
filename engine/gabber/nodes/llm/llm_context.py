@@ -5,7 +5,7 @@ import asyncio
 import logging
 from typing import cast
 
-from core import node, pad, runtime_types
+from gabber.core import node, pad, runtime_types
 
 DEFAULT_SYSTEM_MESSAGE = runtime_types.ContextMessage(
     role=runtime_types.ContextMessageRole.SYSTEM,

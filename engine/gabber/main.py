@@ -9,8 +9,8 @@ import os
 import click
 from pydantic import TypeAdapter
 
-from core import graph
-from core.editor import messages
+from gabber.core import graph
+from gabber.core.editor import messages
 from services import (
     DefaultGraphLibrary,
     DefaultSecretProvider,
@@ -131,7 +131,9 @@ def generate_runtime_schema():
 def generate_statemachine_schema():
     """Generate JSON schema for StateMachine"""
 
-    from nodes.core.logic.state_machine.state_machine import StateMachineConfiguration
+    from gabber.nodes.core.logic.state_machine.state_machine import (
+        StateMachineConfiguration,
+    )
 
     config_schema = TypeAdapter(StateMachineConfiguration).json_schema()
 

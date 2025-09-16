@@ -6,10 +6,12 @@
 import { XCircleIcon } from "@heroicons/react/24/outline";
 import React, { useMemo } from "react";
 
+/* eslint-disable  @typescript-eslint/no-explicit-any */
+
 type Props = {
   title: string;
-  schema: Record<string, unknown>;
-  setSchema: (schema: Record<string, unknown>) => void;
+  schema: any;
+  setSchema: (schema: any) => void;
 };
 
 type PropertyEditorProps = {
@@ -88,7 +90,7 @@ function PropertyEditor({
           <input
             type="text"
             className="input input-bordered input-sm"
-            value={schema.defaults?.[name] || ""}
+            value={(schema.defaults as any)?.[name] || ""}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setDefault(name, e.target.value)
             }
@@ -101,7 +103,7 @@ function PropertyEditor({
             <input
               type="checkbox"
               className="toggle toggle-sm"
-              checked={schema.required?.includes(name) || false}
+              checked={(schema.required as any)?.includes(name) || false}
               onChange={() => toggleRequired(name)}
             />
           </label>
@@ -194,7 +196,7 @@ export function JsonSchemaModal({ title, schema, setSchema }: Props) {
     return Object.keys(schema.properties || {}).length || 0;
   }, [schema.properties]);
 
-  const properties: Record<string, unknown> = useMemo(() => {
+  const properties: any = useMemo(() => {
     return schema.properties || {};
   }, [schema.properties]);
 

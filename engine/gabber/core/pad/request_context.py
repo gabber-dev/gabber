@@ -6,7 +6,7 @@ import logging
 import time
 from typing import Any, Callable
 
-from utils import short_uuid
+from gabber.utils import short_uuid
 
 
 class RequestContext:

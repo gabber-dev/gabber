@@ -19,10 +19,10 @@ export const StateMachineConnectionLine: ConnectionLineComponent = ({
     id: "__connection_target__",
     measured: { width: 1, height: 1 },
     internals: { positionAbsolute: { x: toX, y: toY } },
-  } as any;
+  };
 
   const { sx, sy, tx, ty, sourcePos, targetPos } = getEdgeParams(
-    fromNode as any,
+    fromNode,
     targetNode,
   );
 
@@ -37,7 +37,13 @@ export const StateMachineConnectionLine: ConnectionLineComponent = ({
 
   return (
     <g>
-      <path d={path} stroke="#F59E0B" strokeWidth={2.5} fill="none" strokeDasharray="5,5" />
+      <path
+        d={path}
+        stroke="#F59E0B"
+        strokeWidth={2.5}
+        fill="none"
+        strokeDasharray="5,5"
+      />
     </g>
   );
 };

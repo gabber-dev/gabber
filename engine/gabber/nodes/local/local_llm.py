@@ -3,10 +3,10 @@
 
 from typing import cast
 
-from core import pad
+from gabber.core import pad
 import os
-from core.node import NodeMetadata
-from nodes.llm import BaseLLM
+from gabber.core.node import NodeMetadata
+from gabber.nodes.llm import BaseLLM
 
 
 class LocalLLM(BaseLLM):

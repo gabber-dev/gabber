@@ -3,13 +3,13 @@
 
 from typing import TYPE_CHECKING, Literal
 
-from core.pad.pad import SourcePad
+from ..pad.pad import SourcePad
 
 from . import types
 from .pad import SinkPad
 
 if TYPE_CHECKING:
-    from core.node import Node
+    from ..node import Node
 
 
 class StatelessSourcePad(SourcePad):

@@ -6,11 +6,11 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, Field
 from livekit import rtc
 from dataclasses import dataclass
-from core import node, pad, runtime_types, mcp
+from .. import node, pad, runtime_types, mcp
 import logging
-from core.editor import serialize
-from core.node import Node
-from nodes.core.media.publish import Publish
+from ..editor import serialize
+from ..node import Node
+from gabber.nodes.core.media.publish import Publish
 
 PING_BYTES = "ping".encode("utf-8")
 

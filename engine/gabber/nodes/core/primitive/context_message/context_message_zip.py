@@ -5,9 +5,9 @@ import logging
 import asyncio
 from typing import cast
 
-from core import pad, runtime_types
-from core.node import Node, NodeMetadata
-from core.pad import PropertySinkPad, StatelessSinkPad, StatelessSourcePad, types
+from gabber.core import pad, runtime_types
+from gabber.core.node import Node, NodeMetadata
+from gabber.core.pad import PropertySinkPad, StatelessSinkPad, StatelessSourcePad, types
 
 
 class ContextMessageZip(Node):

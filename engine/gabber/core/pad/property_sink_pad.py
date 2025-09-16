@@ -8,7 +8,7 @@ from . import types
 from .pad import Item, PropertyPad, SinkPad, SourcePad, NOTIFIABLE_TYPES
 
 if TYPE_CHECKING:
-    from core.node import Node
+    from ..node import Node
 
 
 class PropertySinkPad(SinkPad, PropertyPad):

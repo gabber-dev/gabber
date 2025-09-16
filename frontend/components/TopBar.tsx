@@ -7,7 +7,7 @@
 // import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { BeakerIcon, CodeBracketIcon } from "@heroicons/react/24/outline";
+import { BeakerIcon } from "@heroicons/react/24/outline";
 
 export function TopBar() {
   // const params = useParams<{ app?: string; graph?: string }>();
@@ -24,7 +24,7 @@ export function TopBar() {
             className="object-contain"
           />
         </Link>
-        <Link 
+        <Link
           href={`/example`}
           className="btn btn-sm btn-ghost gap-2 normal-case border border-base-300 hover:border-base-content/20"
         >
@@ -32,8 +32,8 @@ export function TopBar() {
           Examples
         </Link>
       </div>
-      
-      <Link 
+
+      <Link
         href="https://github.com/gabber-dev/gabber"
         target="_blank"
         rel="noopener noreferrer"

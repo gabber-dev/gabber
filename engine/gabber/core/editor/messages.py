@@ -3,6 +3,7 @@
 
 from enum import Enum
 from typing import Annotated, Literal
+from ..pad.types import PadType
 
 from pydantic import BaseModel, Field
 
@@ -124,3 +125,4 @@ class DummyModel(BaseModel):
     request: Request
     response: Response
     edit: Edit
+    pad_type: PadType

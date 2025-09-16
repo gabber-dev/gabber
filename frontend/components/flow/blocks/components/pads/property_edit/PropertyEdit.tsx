@@ -12,7 +12,6 @@ import { BooleanPropertyEdit } from "./BooleanPropertyEdit";
 import { JsonSchemaEdit } from "./JsonSchemaEdit";
 import { NodeReferenceEdit } from "./NodeReferenceEdit";
 import { SecretPropertyEdit } from "./SecretPropertyEdit";
-import { MultiLineTextPropertyEdit } from "./MultiLineTextPropertyEdit";
 
 import { EnumPropertyEdit } from "./EnumPropertyEdit";
 

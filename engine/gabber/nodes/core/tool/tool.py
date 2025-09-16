@@ -5,9 +5,9 @@ import asyncio
 import logging
 from typing import Any, cast
 
-from core import node, pad, runtime_types
-from core.node import NodeMetadata
-from core.runtime_types import ToolCall
+from gabber.core import node, pad, runtime_types
+from gabber.core.node import NodeMetadata
+from gabber.core.runtime_types import ToolCall
 
 
 class Tool(node.Node):

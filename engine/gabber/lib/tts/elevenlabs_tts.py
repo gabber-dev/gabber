@@ -4,7 +4,7 @@
 import base64
 from typing import Any
 
-from utils import ItalicRemover, ParenthesisRemover, EmojiRemover
+from gabber.utils import ItalicRemover, ParenthesisRemover, EmojiRemover
 
 from .tts import MultiplexWebSocketTTS
 

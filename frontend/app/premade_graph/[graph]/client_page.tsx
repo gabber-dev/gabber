@@ -10,14 +10,13 @@ import { useCallback } from "react";
 import { SubGraphEdit } from "@/components/subgraph/SubGraphEdit";
 import { RunProvider } from "@/hooks/useRun";
 import { RepositorySubGraph } from "@/generated/repository";
-import { GraphEditorRepresentation } from "@/generated/editor";
 import toast from "react-hot-toast";
 
 type Props = {
   initialSubGraph: RepositorySubGraph;
 };
 export function ClientPage({ initialSubGraph }: Props) {
-  const saveImpl = useCallback(async (graph: GraphEditorRepresentation) => {
+  const saveImpl = useCallback(async () => {
     toast.error("Premade subgraphs can't be modified");
   }, []);
 

@@ -360,11 +360,34 @@ export type Edit =
   | DeletePortalEndEdit
   | UpdatePortalEdit
   | UpdatePortalEndEdit;
+export type PadType =
+  | String
+  | Integer
+  | Float
+  | Boolean
+  | Enum
+  | Secret
+  | BoundingBox
+  | Point
+  | Audio
+  | Video
+  | Trigger
+  | AudioClip
+  | VideoClip
+  | AVClip
+  | TextStream
+  | ContextMessage
+  | ContextMessageRole
+  | List
+  | Schema
+  | Object
+  | NodeReference;
 
 export interface DummyModel {
   request: Request;
   response: Response;
   edit: Edit;
+  pad_type: PadType;
   [k: string]: unknown;
 }
 export interface GetNodeLibraryRequest {
