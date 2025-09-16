@@ -6,6 +6,7 @@
     "dev": "next dev --turbopack",
     "dev-https": "next dev --experimental-https",
     "build": "next build",
+    "build-package": "tsc -p tsconfig.package.json",
     "start": "next start",
     "lint": "next lint"
   },

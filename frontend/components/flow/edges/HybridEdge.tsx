@@ -55,15 +55,14 @@ export function HybridEdge({
 
     let clearanceY = Math.max(sourceY, targetY) + BOTTOM_OFFSET; // fallback
 
-    // Prefer live editor_dimensions from node data, fallback to measured
-    const sourceHeight =
-      (sourceNode?.data as any)?.editor_dimensions?.[1] ??
-      sourceNode?.measured?.height ??
-      null;
-    const targetHeight =
-      (targetNode?.data as any)?.editor_dimensions?.[1] ??
-      targetNode?.measured?.height ??
-      null;
+    let sourceHeight = sourceNode?.measured?.height ?? 10;
+    if (sourceNode?.data?.editor_dimensions) {
+      sourceHeight = sourceNode.data.editor_dimensions[1] as number;
+    }
+    let targetHeight = targetNode?.measured?.height ?? 10;
+    if (targetNode?.data?.editor_dimensions) {
+      targetHeight = targetNode.data.editor_dimensions[1] as number;
+    }
 
     const measuredSourceBottom =
       sourceNode && sourceHeight ? sourceNode.position.y + sourceHeight : null;

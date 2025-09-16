@@ -8,8 +8,8 @@ import logging
 import time
 from typing import cast
 
-from core import node, pad, runtime_types
-from lib.audio import Resampler
+from gabber.core import node, pad, runtime_types
+from gabber.lib.audio import Resampler
 import numpy as np
 
 VOICES = [

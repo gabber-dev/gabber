@@ -2,17 +2,16 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
-import logging
 from typing import cast
 import time
 
 import numpy as np
-from core import node, pad
-from core.node import NodeMetadata
-from core.runtime_types import AudioFrame, AudioFrameData, VideoFrame
-from lib.audio import Resampler
+from gabber.core import node, pad
+from gabber.core.node import NodeMetadata
+from gabber.core.runtime_types import AudioFrame, AudioFrameData, VideoFrame
+from gabber.lib.audio import Resampler
 from livekit import rtc
-from utils import audio_stream_provider, video_stream_provider
+from gabber.utils import audio_stream_provider, video_stream_provider
 
 
 class Publish(node.Node):

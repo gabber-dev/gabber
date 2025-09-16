@@ -4,7 +4,7 @@
 import asyncio
 from typing import TYPE_CHECKING, Any
 
-from core.pad import (
+from ..pad import (
     Item,
     PropertyPad,
     ProxyPad,
@@ -12,11 +12,11 @@ from core.pad import (
     SourcePad,
     types,
 )
-from core.pad.pad import Pad
+from ..pad.pad import Pad
 from .pad import NOTIFIABLE_TYPES
 
 if TYPE_CHECKING:
-    from core.node import Node
+    from ..node import Node
 
 
 class ProxyPropertySinkPad(SinkPad, PropertyPad, ProxyPad):

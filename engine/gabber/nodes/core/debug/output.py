@@ -5,11 +5,11 @@ import asyncio
 from typing import cast
 
 import numpy as np
-from core import pad
-from core.node import Node
-from core.runtime_types import AudioFrame, VideoFrame
+from gabber.core import pad
+from gabber.core.node import Node
+from gabber.core.runtime_types import AudioFrame, VideoFrame
 from livekit import rtc
-from core.node import NodeMetadata
+from gabber.core.node import NodeMetadata
 
 
 class Output(Node):
@@ -27,19 +27,19 @@ class Output(Node):
         audio = cast(pad.StatelessSinkPad, self.get_pad("audio"))
         if not audio:
             audio = pad.StatelessSinkPad(
-                    id="audio",
-                    owner_node=self,
-                    default_type_constraints=[pad.types.Audio()],
-                    group="audio",
-                )
+                id="audio",
+                owner_node=self,
+                default_type_constraints=[pad.types.Audio()],
+                group="audio",
+            )
         video = cast(pad.StatelessSinkPad, self.get_pad("video"))
         if not video:
             video = pad.StatelessSinkPad(
-                    id="video",
-                    owner_node=self,
-                    default_type_constraints=[pad.types.Video()],
-                    group="video",
-                )
+                id="video",
+                owner_node=self,
+                default_type_constraints=[pad.types.Video()],
+                group="video",
+            )
 
         self.pads = [audio, video]
 

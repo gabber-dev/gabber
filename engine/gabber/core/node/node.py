@@ -7,7 +7,7 @@ from abc import abstractmethod
 from livekit import rtc
 from pydantic import BaseModel
 
-from core.secret import PublicSecret, SecretProvider
+from ..secret import PublicSecret, SecretProvider
 
 from ..pad import Pad, SinkPad, SourcePad
 

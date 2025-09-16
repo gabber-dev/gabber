@@ -5,10 +5,10 @@ import asyncio
 import time
 from typing import cast
 
-from core import pad
-from core.node import Node, NodeMetadata
-from core.pad import PropertySinkPad, StatelessSinkPad, StatelessSourcePad, types
-from core.runtime_types import VideoFrame
+from gabber.core import pad
+from gabber.core.node import Node, NodeMetadata
+from gabber.core.pad import PropertySinkPad, StatelessSinkPad, StatelessSourcePad, types
+from gabber.core.runtime_types import VideoFrame
 
 
 class FPS(Node):
@@ -24,31 +24,31 @@ class FPS(Node):
         sink = cast(StatelessSinkPad, self.get_pad("video_in"))
         if not sink:
             sink = StatelessSinkPad(
-                    id="video_in",
-                    owner_node=self,
-                    default_type_constraints=[types.Video()],
-                    group="video_in",
-                )
+                id="video_in",
+                owner_node=self,
+                default_type_constraints=[types.Video()],
+                group="video_in",
+            )
 
         source = cast(StatelessSourcePad, self.get_pad("video_out"))
         if not source:
             source = StatelessSourcePad(
-                    id="video_out",
-                    owner_node=self,
-                    default_type_constraints=[types.Video()],
-                    group="video_out",
-                )
+                id="video_out",
+                owner_node=self,
+                default_type_constraints=[types.Video()],
+                group="video_out",
+            )
 
         fps_sink = cast(PropertySinkPad, self.get_pad("fps"))
         if not fps_sink:
             fps_sink = PropertySinkPad(
-                    id="fps",
-                    owner_node=self,
-                    default_type_constraints=[types.Float(minimum=0.0, maximum=30.0)],
-                    group="fps",
-                    value=0.5,
-                )
-        
+                id="fps",
+                owner_node=self,
+                default_type_constraints=[types.Float(minimum=0.0, maximum=30.0)],
+                group="fps",
+                value=0.5,
+            )
+
         self.pads = [sink, source, fps_sink]
 
     async def run(self):

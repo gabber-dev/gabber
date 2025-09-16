@@ -3,7 +3,7 @@
 
 import av
 import numpy as np
-from core import runtime_types
+from gabber.core import runtime_types
 
 
 class Resampler:

@@ -4,13 +4,13 @@
 import asyncio
 from typing import TYPE_CHECKING
 
-from core.pad.pad import Item, SourcePad
+from ..pad.pad import Item, SourcePad
 
 from .pad import SinkPad
 from . import types
 
 if TYPE_CHECKING:
-    from core.node import Node
+    from ..node import Node
 
 
 class StatelessSinkPad(SinkPad):

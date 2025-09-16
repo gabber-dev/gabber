@@ -6,11 +6,11 @@ import logging
 from abc import ABC, abstractmethod
 from typing import cast, Tuple
 
-from core import node, pad, runtime_types
-from nodes.core.tool import mcp
-from lib.llm import AsyncLLMResponseHandle, LLMRequest, openai_compatible
-from utils import get_full_content_from_deltas, get_tool_calls_from_choice_deltas
-from nodes.core.tool import Tool, ToolGroup
+from gabber.core import node, pad, runtime_types
+from gabber.nodes.core.tool import mcp
+from gabber.lib.llm import AsyncLLMResponseHandle, LLMRequest, openai_compatible
+from gabber.utils import get_full_content_from_deltas, get_tool_calls_from_choice_deltas
+from gabber.nodes.core.tool import Tool, ToolGroup
 from mcp.types import (
     ContentBlock,
     TextContent,

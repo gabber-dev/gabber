@@ -3,8 +3,8 @@
 
 from typing import cast
 
-from core import node, pad
-from core.node import NodeMetadata
+from gabber.core import node, pad
+from gabber.core.node import NodeMetadata
 
 
 class ChatInput(node.Node):
@@ -27,7 +27,7 @@ class ChatInput(node.Node):
                 group="text",
                 default_type_constraints=[pad.types.String()],
             )
-        
+
         self.pads = [output]
 
     async def run(self):

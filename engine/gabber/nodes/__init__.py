@@ -1,7 +1,7 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-from core import node
+from gabber.core import node
 from typing import Type
 from . import core, llm, stt, tts, local
 

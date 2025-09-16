@@ -6,10 +6,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import { JsonSchemaModal } from "./pads/property_edit/JsonSchemaModal";
 import { Dialog, DialogBackdrop, DialogPanel } from "@headlessui/react";
+import { PadValue } from "@gabber/client-react";
 
 type Props = {
-  value: any;
-  setValue: (value: any) => void;
+  value: PadValue | null;
+  setValue: (value: PadValue | null) => void;
 };
 
 export function ToolDefinitionProperty({ value, setValue }: Props) {
@@ -94,15 +95,15 @@ export function ToolDefinitionProperty({ value, setValue }: Props) {
                 <JsonSchemaModal
                   schema={
                     schemaDialog === "request"
-                      ? value.request_schema
-                      : value.response_schema
+                      ? (value as PadValue).request_schema
+                      : (value as PadValue).response_schema
                   }
                   title={
                     schemaDialog === "request"
                       ? "Edit Request"
                       : "Edit Response"
                   }
-                  setSchema={(newSchema: Record<string, any>) => {
+                  setSchema={(newSchema: Record<string, unknown>) => {
                     if (schemaDialog === "request") {
                       setValue?.({ ...value, request_schema: newSchema });
                     } else {

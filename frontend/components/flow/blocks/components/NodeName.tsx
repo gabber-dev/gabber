@@ -27,7 +27,6 @@ export function NodeName() {
     },
     [
       nodeData?.data.editor_dimensions,
-      nodeData?.data.editor_name,
       nodeData?.data.editor_position,
       nodeId,
       updateNode,

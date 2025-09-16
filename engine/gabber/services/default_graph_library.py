@@ -7,9 +7,9 @@ from pathlib import Path
 
 import aiofiles
 
-from core import graph
-from core.editor import models
-from nodes import ALL_NODES
+from gabber.core import graph
+from gabber.core.editor import models
+from gabber.nodes import ALL_NODES
 
 
 class DefaultGraphLibrary(graph.GraphLibrary):

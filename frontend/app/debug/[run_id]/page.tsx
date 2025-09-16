@@ -15,5 +15,11 @@ export default async function Page({
   const { graph, connection_details } = await createDebugConnection({
     run_id,
   });
-  return <ClientPage graph={graph} connectionDetails={connection_details} />;
+  return (
+    <ClientPage
+      graph={graph}
+      connectionDetails={connection_details}
+      runId={run_id}
+    />
+  );
 }

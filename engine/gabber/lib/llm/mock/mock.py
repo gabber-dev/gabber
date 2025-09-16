@@ -4,7 +4,7 @@
 import asyncio
 import logging
 
-from core import runtime_types
+from gabber.core import runtime_types
 
 from ..llm import AsyncLLMResponseHandle, BaseLLM, LLMRequest
 

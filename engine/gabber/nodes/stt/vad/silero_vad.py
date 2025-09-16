@@ -7,10 +7,10 @@ from enum import Enum
 from typing import cast
 
 import numpy as np
-from core import node, pad, runtime_types
-from core.node import NodeMetadata
-from core.runtime_types import AudioClip, AudioFrame
-from lib.audio import vad
+from gabber.core import node, pad, runtime_types
+from gabber.core.node import NodeMetadata
+from gabber.core.runtime_types import AudioClip, AudioFrame
+from gabber.lib.audio import vad
 from numpy.typing import NDArray
 
 logger = logging.getLogger(__name__)

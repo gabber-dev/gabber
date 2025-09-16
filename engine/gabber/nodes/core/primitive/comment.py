@@ -1,8 +1,8 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-from core import node, pad
-from core.node import NodeMetadata
+from gabber.core import node, pad
+from gabber.core.node import NodeMetadata
 
 
 class Comment(node.Node):

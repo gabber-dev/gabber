@@ -14,7 +14,7 @@ from typing import Any, Callable, cast
 
 from openai.types import chat
 
-from core.runtime_types import (
+from gabber.core.runtime_types import (
     ContextMessage,
     ContextMessageContent_ChoiceDelta,
     ContextMessageContentItem_Audio,
@@ -25,7 +25,7 @@ from core.runtime_types import (
     ToolDefinition,
     Schema,
 )
-from lib.video.mp4_encoder import MP4_Encoder
+from gabber.lib.video.mp4_encoder import MP4_Encoder
 
 
 class BaseLLM(ABC):

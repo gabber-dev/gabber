@@ -4,9 +4,9 @@
 import logging
 from typing import cast
 
-from core import node, pad
-from core.node import NodeMetadata
-from utils import short_uuid
+from gabber.core import node, pad
+from gabber.core.node import NodeMetadata
+from gabber.utils import short_uuid
 
 
 class ProxyStatelessSink(node.Node):

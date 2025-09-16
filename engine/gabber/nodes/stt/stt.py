@@ -5,9 +5,9 @@ import asyncio
 import logging
 from typing import cast
 
-from core import node, pad, runtime_types
-from core.node import NodeMetadata
-from lib import stt
+from gabber.core import node, pad, runtime_types
+from gabber.core.node import NodeMetadata
+from gabber.lib import stt
 
 
 class STT(node.Node):

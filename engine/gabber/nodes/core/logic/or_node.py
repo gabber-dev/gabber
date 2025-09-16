@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
-from core import node, pad
+from gabber.core import node, pad
 from typing import cast
 
 

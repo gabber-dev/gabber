@@ -3,10 +3,10 @@
 
 from typing import TYPE_CHECKING
 
-from core.pad import Pad, ProxyPad, SinkPad, SourcePad, types
+from ..pad import Pad, ProxyPad, SinkPad, SourcePad, types
 
 if TYPE_CHECKING:
-    from core.node import Node
+    from ..node import Node
 
 
 class ProxyStatelessSourcePad(SourcePad, ProxyPad):

@@ -4,9 +4,13 @@
  */
 
 import { useRepository } from "@/hooks/useRepository";
-import { ChevronDownIcon, TrashIcon, DocumentDuplicateIcon, PencilIcon } from "@heroicons/react/24/solid";
+import {
+  ChevronDownIcon,
+  TrashIcon,
+  DocumentDuplicateIcon,
+  PencilIcon,
+} from "@heroicons/react/24/solid";
 import { useState } from "react";
-import { AppListItem } from "./AppListItem";
 import ReactModal from "react-modal";
 import { CreateSubGraphModal } from "./CreateSubGraphModal";
 import { SubGraphListItem } from "./SubGraphListItem";
@@ -15,11 +19,16 @@ import toast from "react-hot-toast";
 export function SubGraphList() {
   const [showModal, setShowModal] = useState(false);
   const [subGraphsExpanded, setSubGraphsExpanded] = useState(false);
-  const { subGraphs, deleteSubGraph, saveSubGraph, refreshSubGraphs } = useRepository();
+  const { subGraphs, deleteSubGraph, saveSubGraph, refreshSubGraphs } =
+    useRepository();
   const [selectedSubGraphs, setSelectedSubGraphs] = useState<Set<string>>(
     new Set(),
   );
-  const [renameModal, setRenameModal] = useState<{ isOpen: boolean; subGraphId: string; currentName: string }>({ isOpen: false, subGraphId: "", currentName: "" });
+  const [renameModal, setRenameModal] = useState<{
+    isOpen: boolean;
+    subGraphId: string;
+    currentName: string;
+  }>({ isOpen: false, subGraphId: "", currentName: "" });
 
   const handleDeleteSelected = async () => {
     const confirmed = window.confirm(
@@ -36,18 +45,18 @@ export function SubGraphList() {
 
   const handleDuplicateSelected = async () => {
     const confirmed = window.confirm(
-      `Duplicate ${selectedSubGraphs.size} subgraph${selectedSubGraphs.size > 1 ? "s" : ""} to your collection?`
+      `Duplicate ${selectedSubGraphs.size} subgraph${selectedSubGraphs.size > 1 ? "s" : ""} to your collection?`,
     );
     if (!confirmed) return;
 
     // Duplicate all selected subgraphs
     for (const subGraphId of selectedSubGraphs) {
-      const subGraph = subGraphs.find(sg => sg.id === subGraphId);
+      const subGraph = subGraphs.find((sg) => sg.id === subGraphId);
       if (subGraph) {
         try {
           await saveSubGraph({
             name: `${subGraph.name} (Copy)`,
-            graph: subGraph.graph
+            graph: subGraph.graph,
           });
         } catch (error) {
           console.error("Error duplicating subgraph:", error);
@@ -65,13 +74,13 @@ export function SubGraphList() {
 
   const handleRenameSubGraph = async (subGraphId: string, newName: string) => {
     try {
-      const subGraph = subGraphs.find(sg => sg.id === subGraphId);
+      const subGraph = subGraphs.find((sg) => sg.id === subGraphId);
       if (!subGraph) return;
 
       await saveSubGraph({
         id: subGraphId,
         name: newName,
-        graph: subGraph.graph
+        graph: subGraph.graph,
       });
 
       toast.success("Subgraph renamed successfully!");
@@ -110,7 +119,9 @@ export function SubGraphList() {
       {/* Rename Modal */}
       <ReactModal
         isOpen={renameModal.isOpen}
-        onRequestClose={() => setRenameModal({ isOpen: false, subGraphId: "", currentName: "" })}
+        onRequestClose={() =>
+          setRenameModal({ isOpen: false, subGraphId: "", currentName: "" })
+        }
         overlayClassName="fixed top-0 bottom-0 left-0 right-0 backdrop-blur-lg bg-blur flex justify-center items-center z-50"
         className="w-full max-w-md bg-neutral-800 rounded-lg shadow-lg outline-none z-50"
         shouldCloseOnOverlayClick={true}
@@ -143,7 +154,13 @@ export function SubGraphList() {
             <div className="flex gap-2 justify-end">
               <button
                 type="button"
-                onClick={() => setRenameModal({ isOpen: false, subGraphId: "", currentName: "" })}
+                onClick={() =>
+                  setRenameModal({
+                    isOpen: false,
+                    subGraphId: "",
+                    currentName: "",
+                  })
+                }
                 className="btn btn-ghost"
               >
                 Cancel
@@ -177,7 +194,9 @@ export function SubGraphList() {
                 onClick={() => {
                   if (selectedSubGraphs.size === 1) {
                     const subGraphId = Array.from(selectedSubGraphs)[0];
-                    const subGraph = subGraphs.find(sg => sg.id === subGraphId);
+                    const subGraph = subGraphs.find(
+                      (sg) => sg.id === subGraphId,
+                    );
                     if (subGraph) {
                       openRenameModal(subGraphId, subGraph.name);
                     }

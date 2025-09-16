@@ -14,9 +14,9 @@ import aiohttp.web
 import aiohttp_cors
 from aiohttp import web
 from livekit import api
-from utils import short_uuid
+from gabber.utils import short_uuid
 
-from core.editor.models import GraphEditorRepresentation
+from gabber.core.editor.models import GraphEditorRepresentation
 
 from . import messages, models
 

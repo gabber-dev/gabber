@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { BaseEdge, Node, Position } from "@xyflow/react";
+import { BaseEdge, EdgeProps, Node, Position } from "@xyflow/react";
 import { useEditor } from "@/hooks/useEditor";
+import { NodeEditorRepresentation } from "@/generated/editor";
 
 const HANDLE_OFFSET = 20;
 const BOTTOM_OFFSET = 80;
@@ -21,7 +22,7 @@ export function CustomStepEdge({
   target,
   style = {},
   markerEnd,
-}: any) {
+}: EdgeProps) {
   const { reactFlowRepresentation } = useEditor();
 
   const isBackward = sourceX > targetX;
@@ -38,22 +39,23 @@ export function CustomStepEdge({
   let edgePath: string;
   if (isBackward && isSourceRight) {
     const sourceNode = reactFlowRepresentation.nodes.find(
-      (n: Node) => n.id === source,
+      (n: Node<NodeEditorRepresentation>) => n.id === source,
     );
     const targetNode = reactFlowRepresentation.nodes.find(
-      (n: Node) => n.id === target,
+      (n: Node<NodeEditorRepresentation>) => n.id === target,
     );
 
-    // Default to a safe clearance if we don't have measurements
     let clearanceY = Math.max(sourceY, targetY) + BOTTOM_OFFSET;
 
-    // Prefer editor_dimensions from node data, fallback to measured
-    const sourceHeight =
-      (sourceNode?.data as any)?.editor_dimensions?.[1] ??
-      (sourceNode?.measured?.height ?? null);
-    const targetHeight =
-      (targetNode?.data as any)?.editor_dimensions?.[1] ??
-      (targetNode?.measured?.height ?? null);
+    const sourceDims: [number, number] = (sourceNode?.data
+      ?.editor_dimensions as [number, number]) ?? [0, 0];
+    const targetDims: [number, number] = (targetNode?.data
+      ?.editor_dimensions as [number, number]) ?? [0, 0];
+
+    const sourceHeight: number =
+      sourceDims?.[1] ?? sourceNode?.measured?.height ?? 10;
+    const targetHeight: number =
+      targetDims?.[1] ?? targetNode?.measured?.height ?? 10;
 
     const measuredSourceBottom =
       sourceNode && sourceHeight ? sourceNode.position.y + sourceHeight : null;

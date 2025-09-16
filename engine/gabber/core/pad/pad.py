@@ -4,14 +4,14 @@
 import asyncio
 import logging
 from dataclasses import dataclass
-from core import runtime_types
+from .. import runtime_types
 from typing import TYPE_CHECKING, Any, Callable, Protocol, runtime_checkable
 
 from .request_context import RequestContext
 from .types import INTERSECTION, BasePadType, NodeReference
 
 if TYPE_CHECKING:
-    from core.node import Node
+    from ..node import Node
 
 
 class Pad(Protocol):

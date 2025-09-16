@@ -16,15 +16,9 @@ export interface BaseBlockProps {
     sourcePad: PadEditorRepresentation;
   };
 }
-// export interface CreatePortalEndEdit {
-//   type?: Type10;
-//   portal_id: PortalId;
-//   editor_position: EditorPosition4;
-//   [k: string]: unknown;
-// }
 
 export function PortalStart({ data }: BaseBlockProps) {
-  const { portal, dataColor, sourcePad } = data;
+  const { portal, dataColor } = data;
   const { createPortalEnd, portalHighlights, highlightPortal } = useEditor();
 
   const isHighlighted = portalHighlights.portal === portal.id;

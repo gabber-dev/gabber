@@ -11,9 +11,9 @@ import time
 from livekit import agents
 from livekit.agents import cli
 
-from core.editor import models
-from core.graph import Graph, GraphLibrary
-from core.secret import SecretProvider
+from gabber.core.editor import models
+from gabber.core.graph import Graph, GraphLibrary
+from gabber.core.secret import SecretProvider
 from .default_graph_library import DefaultGraphLibrary
 from .default_secret_provider import DefaultSecretProvider
 

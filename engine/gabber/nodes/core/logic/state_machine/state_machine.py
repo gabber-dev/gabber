@@ -7,7 +7,7 @@ from typing import Any, Literal, cast
 
 from pydantic import BaseModel
 
-from core import node, pad, runtime_types
+from gabber.core import node, pad, runtime_types
 
 ALL_PARAMETER_TYPES: list[pad.types.BasePadType] = [
     pad.types.Float(),
@@ -125,7 +125,7 @@ class StateMachine(node.Node):
                 value="",
             )
             self.pads.append(previous_state)
-        
+
         # Ensure configuration has necessary keys and set entry_state if needed
         config_dict = configuration.get_value()
         cleaned_dict = {}
@@ -241,8 +241,12 @@ class StateMachine(node.Node):
         # Update current_state enum options and default value from configuration
         try:
             enum_options = [s.name for s in config.states]
-            previous_state.set_default_type_constraints([pad.types.Enum(options=enum_options)])
-            current_state.set_default_type_constraints([pad.types.Enum(options=enum_options)])
+            previous_state.set_default_type_constraints(
+                [pad.types.Enum(options=enum_options)]
+            )
+            current_state.set_default_type_constraints(
+                [pad.types.Enum(options=enum_options)]
+            )
 
             # Set current state value to entry state's name if present, else blank
             if config.entry_state:

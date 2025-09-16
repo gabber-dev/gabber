@@ -4,27 +4,13 @@
  */
 
 import {
-  getBezierPath,
   BaseEdge,
   EdgeLabelRenderer,
   getSmoothStepPath,
+  EdgeProps,
 } from "@xyflow/react";
 
-interface BasicBezierEdgeProps {
-  id: string;
-  sourceX: number;
-  sourceY: number;
-  targetX: number;
-  targetY: number;
-  sourcePosition: any;
-  targetPosition: any;
-  data?: {
-    label?: string;
-  };
-}
-
 export function BasicBezierEdge({
-  id,
   sourceX,
   sourceY,
   targetX,
@@ -32,7 +18,7 @@ export function BasicBezierEdge({
   sourcePosition,
   targetPosition,
   data,
-}: BasicBezierEdgeProps) {
+}: EdgeProps) {
   const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
     sourceY,
@@ -41,6 +27,8 @@ export function BasicBezierEdge({
     targetY,
     targetPosition,
   });
+
+  const dataLabel = (data as { label: string | undefined }).label || "Edge";
 
   return (
     <>
@@ -61,7 +49,7 @@ export function BasicBezierEdge({
             border: "1px solid #333",
           }}
         >
-          {data?.label || "Edge"}
+          {dataLabel}
         </div>
       </EdgeLabelRenderer>
     </>

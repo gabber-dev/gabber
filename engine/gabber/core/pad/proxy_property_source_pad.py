@@ -3,7 +3,7 @@
 
 from typing import TYPE_CHECKING, Any
 
-from core.pad import (
+from ..pad import (
     Pad,
     PropertyPad,
     ProxyPad,
@@ -14,7 +14,7 @@ from core.pad import (
 from .pad import NOTIFIABLE_TYPES
 
 if TYPE_CHECKING:
-    from core.node import Node
+    from ..node import Node
 
 
 class ProxyPropertySourcePad(SourcePad, PropertyPad, ProxyPad):

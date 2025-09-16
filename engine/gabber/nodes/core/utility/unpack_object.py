@@ -4,8 +4,8 @@
 import logging
 from typing import Any, cast
 
-from core import pad
-from core.node import Node, NodeMetadata
+from gabber.core import pad
+from gabber.core.node import Node, NodeMetadata
 
 
 class UnpackObject(Node):

@@ -3,7 +3,7 @@
 
 from abc import ABC, abstractmethod
 
-from core.editor.models import GraphLibraryItem
+from ..editor.models import GraphLibraryItem
 
 
 class GraphLibrary(ABC):

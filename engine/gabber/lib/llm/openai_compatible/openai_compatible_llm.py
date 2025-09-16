@@ -6,7 +6,7 @@ import logging
 from typing import Any, cast
 
 import openai
-from core.runtime_types import (
+from gabber.core.runtime_types import (
     ContextMessageContent_ChoiceDelta,
     ContextMessageContent_ToolCallDelta,
 )

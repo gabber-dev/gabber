@@ -3,14 +3,17 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { PadEditorRepresentation, Portal, PortalEnd } from "@/generated/editor";
+import {
+  PadEditorRepresentation,
+  PortalEnd as PortalEndModel,
+} from "@/generated/editor";
 import { Handle, Position } from "@xyflow/react";
 import { DataTypeColor } from "./components/pads/utils/dataTypeColors";
 import { useEditor } from "@/hooks/useEditor";
 
 export interface BaseBlockProps {
   data: {
-    portalEnd: PortalEnd;
+    portalEnd: PortalEndModel;
     dataColor: DataTypeColor;
     sourcePad: PadEditorRepresentation;
     sourcePortalId: string;
