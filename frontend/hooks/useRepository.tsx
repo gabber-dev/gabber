@@ -31,6 +31,10 @@ type RepositoryContextType = {
   importApp(exp: AppExport): Promise<RepositoryApp>;
   exportApp(appId: string): Promise<AppExport>;
 
+  subgraphEditPath: (id: string) => string;
+  appEditPath: (id: string) => string;
+  debugRunPath: (id: string) => string;
+
   examples: RepositoryApp[];
 };
 
@@ -56,6 +60,10 @@ type Props = {
   importAppImpl: (exp: AppExport) => Promise<RepositoryApp>;
   exportAppImpl: (appId: string) => Promise<AppExport>;
 
+  subgraphEditPath: (id: string) => string;
+  appEditPath: (id: string) => string;
+  debugRunPath: (id: string) => string;
+
   examples: RepositoryApp[];
 };
 
@@ -73,6 +81,10 @@ export function RepositoryProvider({
 
   importAppImpl,
   exportAppImpl,
+
+  subgraphEditPath,
+  appEditPath,
+  debugRunPath,
 
   examples,
 }: Props) {
@@ -208,6 +220,10 @@ export function RepositoryProvider({
         refreshSubGraphs,
         saveSubGraph,
         deleteSubGraph,
+
+        subgraphEditPath,
+        appEditPath,
+        debugRunPath,
 
         examples,
       }}
