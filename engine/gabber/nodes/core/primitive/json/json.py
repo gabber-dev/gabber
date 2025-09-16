@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
-import logging
+import json
 from typing import cast
 
 from gabber.core import node, pad
@@ -88,7 +88,6 @@ class Json(node.Node):
             if string_input:
                 async for item in string_input:
                     try:
-                        import json
                         json_string = item.value
                         parsed_json = json.loads(json_string)
                         

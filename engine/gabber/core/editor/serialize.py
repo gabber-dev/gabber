@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import logging
+import json
 from typing import Any, cast
 
 from pydantic import BaseModel
@@ -36,7 +37,6 @@ def deserialize_pad_value(
         # For Object type constraints, try to parse string as JSON
         if isinstance(tc, pad.types.Object) and isinstance(v, str):
             try:
-                import json
                 parsed = json.loads(v)
                 return parsed
             except (json.JSONDecodeError, ValueError):
@@ -58,9 +58,15 @@ def deserialize_pad_value(
             return runtime_types.Point.model_validate(v)
     elif isinstance(v, list):
         if not isinstance(tc, pad.types.List):
+            logging.error(
+                f"Expected List type constraint for list deserialization, got {type(tc)}"
+            )
             return None
         list_types = tc.item_type_constraints
         if not list_types or len(list_types) != 1:
+            logging.error(
+                f"List type constraints: {list_types}, value: {v}, type_constraints: {tc}"
+            )
             return None
 
         items = [deserialize_pad_value(list_types[0], item) for item in v]
