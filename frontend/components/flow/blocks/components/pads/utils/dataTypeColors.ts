@@ -157,16 +157,8 @@ export const DATA_TYPE_COLORS: Record<string, DataTypeColor> = {
   },
 };
 
-export function getDataTypeColor(dataType: PadType): DataTypeColor {
-  // Handle both string types and object types with a 'type' property
-  const typeKey =
-    typeof dataType === "string"
-      ? dataType
-      : dataType && typeof dataType === "object" && "type" in dataType
-        ? dataType.type
-        : "default";
-
-  return DATA_TYPE_COLORS[typeKey || "default"] || DATA_TYPE_COLORS.default;
+export function getDataTypeColor(dataType: string): DataTypeColor {
+  return DATA_TYPE_COLORS[dataType] || DATA_TYPE_COLORS.default;
 }
 
 export function getPrimaryDataType(

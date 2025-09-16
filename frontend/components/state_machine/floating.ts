@@ -3,9 +3,12 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { Position } from "@xyflow/react";
+import { Node, Position } from "@xyflow/react";
 
-type InternalLikeNode = any;
+type InternalLikeNode = Node & {
+  measured: { width: number; height: number };
+  internals: { positionAbsolute: { x: number; y: number } };
+};
 
 // Calculate the intersection of the line between the centers of two nodes
 // and the rectangle (with measured width/height) of the first node
@@ -14,7 +17,7 @@ export function getNodeIntersection(
   targetNode: InternalLikeNode,
 ) {
   const { width: intersectionNodeWidth, height: intersectionNodeHeight } =
-    intersectionNode.measured;
+    intersectionNode.measured || { width: 10, height: 10 };
   const intersectionNodePosition = intersectionNode.internals.positionAbsolute;
   const targetPosition = targetNode.internals.positionAbsolute;
 
