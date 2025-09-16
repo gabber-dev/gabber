@@ -9,7 +9,7 @@ from typing import cast, Tuple
 from gabber.core import node, pad, runtime_types
 from gabber.nodes.core.tool import mcp
 from gabber.lib.llm import AsyncLLMResponseHandle, LLMRequest, openai_compatible
-from utils import get_full_content_from_deltas, get_tool_calls_from_choice_deltas
+from gabber.utils import get_full_content_from_deltas, get_tool_calls_from_choice_deltas
 from gabber.nodes.core.tool import Tool, ToolGroup
 from mcp.types import (
     ContentBlock,

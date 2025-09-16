@@ -9,7 +9,7 @@ from typing import Any, Protocol
 import aiohttp
 import numpy as np
 from gabber.core.runtime_types import AudioFrame, AudioFrameData
-from utils import short_uuid
+from gabber.utils import short_uuid
 
 from gabber.lib.audio import Resampler
 

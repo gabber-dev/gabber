@@ -6,7 +6,7 @@ from typing import cast
 
 from gabber.core import node, pad
 from gabber.core.node import NodeMetadata
-from utils import short_uuid
+from gabber.utils import short_uuid
 
 
 class ProxyPropertySink(node.Node):

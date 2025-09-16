@@ -25,7 +25,7 @@ from ..editor.models import (
 from ..node import Node
 from ..secret import PublicSecret, SecretProvider
 from gabber.nodes.core.sub_graph import SubGraph
-from utils import short_uuid
+from gabber.utils import short_uuid
 from .runtime_api import RuntimeApi
 
 T = TypeVar("T", bound=Node)

@@ -11,7 +11,7 @@ from gabber.core.node import NodeMetadata
 from gabber.core.runtime_types import AudioFrame, AudioFrameData, VideoFrame
 from gabber.lib.audio import Resampler
 from livekit import rtc
-from utils import audio_stream_provider, video_stream_provider
+from gabber.utils import audio_stream_provider, video_stream_provider
 
 
 class Publish(node.Node):
