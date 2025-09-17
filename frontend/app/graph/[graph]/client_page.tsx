@@ -15,8 +15,9 @@ import { GraphEditorRepresentation } from "@/generated/editor";
 
 type Props = {
   initialSubGraph: RepositorySubGraph;
+  editorUrl: string;
 };
-export function ClientPage({ initialSubGraph }: Props) {
+export function ClientPage({ initialSubGraph, editorUrl }: Props) {
   const saveImpl = useCallback(
     async (graph: GraphEditorRepresentation) => {
       saveSubGraph({
@@ -36,7 +37,7 @@ export function ClientPage({ initialSubGraph }: Props) {
     <div className="absolute top-0 left-0 right-0 bottom-0">
       <EditorProvider
         debug={false}
-        editor_url={`ws://${process.env.NEXT_PUBLIC_GABBER_PUBLIC_HOST || "localhost"}:8000/ws`}
+        editor_url={editorUrl}
         saveImpl={saveImpl}
         savedGraph={initialSubGraph.graph}
       >

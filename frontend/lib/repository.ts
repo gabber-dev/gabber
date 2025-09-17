@@ -25,11 +25,16 @@ import { v4 } from "uuid";
 
 function getBaseUrl() {
   const host = process.env.REPOSITORY_HOST;
-  const publicHost = process.env.NEXT_PUBLIC_GABBER_PUBLIC_HOST;
+  const publicHost = process.env.GABBER_PUBLIC_HOST;
   if (host) {
     return `http://${host}`;
   }
   return `http://${publicHost || "localhost"}:8001`;
+}
+
+export function getEditorUrl() {
+  const publicHost = process.env.NEXT_PUBLIC_GABBER_PUBLIC_HOST;
+  return `ws://${publicHost || "localhost"}:8000/ws`;
 }
 
 export async function getApp(appId: string) {

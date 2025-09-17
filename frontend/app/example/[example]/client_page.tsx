@@ -16,9 +16,10 @@ import { GraphEditorRepresentation } from "@/generated/editor";
 
 type Props = {
   existingExample: RepositoryApp;
+  editorUrl: string;
 };
 
-export function ClientPage({ existingExample: existingApp }: Props) {
+export function ClientPage({ existingExample: existingApp, editorUrl }: Props) {
   const saveImpl = useCallback(async () => {
     toast.error("Examples can't be saved. Please try again.");
   }, []);
@@ -34,7 +35,7 @@ export function ClientPage({ existingExample: existingApp }: Props) {
     <div className="realtive w-full h-full">
       <div className="absolute top-0 left-0 right-0 bottom-0">
         <EditorProvider
-          editor_url={`ws://${process.env.NEXT_PUBLIC_GABBER_PUBLIC_HOST || "localhost"}:8000/ws`}
+          editor_url={editorUrl}
           savedGraph={existingApp.graph}
           saveImpl={saveImpl}
           debug={false}

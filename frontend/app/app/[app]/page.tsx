@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { getApp } from "@/lib/repository";
+import { getApp, getEditorUrl } from "@/lib/repository";
 import { ClientPage } from "./client_page";
 
 export default async function Page({
@@ -13,5 +13,6 @@ export default async function Page({
 }) {
   const { app } = await params;
   const appObj = await getApp(app);
-  return <ClientPage existingApp={appObj} />;
+  const editorUrl = getEditorUrl();
+  return <ClientPage existingApp={appObj} editorUrl={editorUrl} />;
 }

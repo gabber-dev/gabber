@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { getPreMadeSubGraph } from "@/lib/repository";
+import { getEditorUrl, getPreMadeSubGraph } from "@/lib/repository";
 import { ClientPage } from "./client_page";
 
 export default async function Page({
@@ -14,5 +14,6 @@ export default async function Page({
   const { graph } = await params;
 
   const subgraph = await getPreMadeSubGraph(graph);
-  return <ClientPage initialSubGraph={subgraph} />;
+  const editorUrl = getEditorUrl();
+  return <ClientPage initialSubGraph={subgraph} editorUrl={editorUrl} />;
 }
