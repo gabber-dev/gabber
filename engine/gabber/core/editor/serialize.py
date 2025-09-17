@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import logging
+import json
 from typing import Any, cast
 
 from pydantic import BaseModel
@@ -32,7 +33,15 @@ def deserialize_pad_value(
 ):
     if isinstance(tc, pad.types.Trigger):
         return runtime_types.Trigger()
-    if isinstance(v, str | float | int):
+    elif isinstance(v, str | float | int):
+        # For Object type constraints, try to parse string as JSON
+        if isinstance(tc, pad.types.Object) and isinstance(v, str):
+            try:
+                parsed = json.loads(v)
+                return parsed
+            except (json.JSONDecodeError, ValueError):
+                # If JSON parsing fails, return the string as-is
+                return v
         return v
     elif isinstance(v, BaseModel):
         return v
@@ -62,6 +71,9 @@ def deserialize_pad_value(
 
         items = [deserialize_pad_value(list_types[0], item) for item in v]
         return items
+    
+    # Fallback case - return the value as-is
+    return v
 
 
 def pad_editor_rep(p: pad.Pad):
