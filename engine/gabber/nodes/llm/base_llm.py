@@ -248,6 +248,13 @@ class BaseLLM(node.Node, ABC):
                 pad.PropertySinkPad, self.get_pad_required("tool_group")
             )
         run_trigger = cast(pad.StatelessSinkPad, self.get_pad_required("run_trigger"))
+        
+        # Get tool call source pads if tool calling is supported
+        tool_calls_started_source: pad.StatelessSourcePad | None = None
+        tool_calls_finished_source: pad.StatelessSourcePad | None = None
+        if self.supports_tool_calls():
+            tool_calls_started_source = cast(pad.StatelessSourcePad, self.get_pad_required("tool_calls_started"))
+            tool_calls_finished_source = cast(pad.StatelessSourcePad, self.get_pad_required("tool_calls_finished"))
 
         api_key = await self.api_key()
         llm = openai_compatible.OpenAICompatibleLLM(
@@ -338,14 +345,17 @@ class BaseLLM(node.Node, ABC):
                 all_tool_calls: list[runtime_types.ToolCall] = []
                 if tool_group_sink is not None:
                     all_tool_calls = get_tool_calls_from_choice_deltas(all_deltas)
-                    tool_task = asyncio.create_task(
-                        self.call_tools(
-                            all_tool_calls=all_tool_calls,
-                            tg_tool_defns=tg_tools,
-                            mcp_tool_defns=mcp_tools,
-                            ctx=ctx,
+                    if all_tool_calls:
+                        if tool_calls_started_source:
+                            tool_calls_started_source.push_item(runtime_types.Trigger(), ctx)
+                        tool_task = asyncio.create_task(
+                            self.call_tools(
+                                all_tool_calls=all_tool_calls,
+                                tg_tool_defns=tg_tool_definitions,
+                                mcp_tool_defns=mcp_tool_definitions,
+                                ctx=ctx,
+                            )
                         )
-                    )
 
                 full_content = get_full_content_from_deltas(all_deltas)
                 context_message_source.push_item(
@@ -365,6 +375,8 @@ class BaseLLM(node.Node, ABC):
                     tool_msgs = await tool_task
                     for msg in tool_msgs:
                         context_message_source.push_item(msg, ctx)
+                    if tool_calls_finished_source:
+                        tool_calls_finished_source.push_item(runtime_types.Trigger(), ctx)
             except asyncio.CancelledError:
                 pass
             except Exception as e:
@@ -387,12 +399,14 @@ class BaseLLM(node.Node, ABC):
             messages = context_sink.get_value()
             all_tool_definitions: list[runtime_types.ToolDefinition] = []
             tg_tool_definitions: list[runtime_types.ToolDefinition] = []
+            
             if tool_group_sink is not None and tool_group_sink.get_value() is not None:
                 tool_nodes = cast(ToolGroup, tool_group_sink.get_value()).tool_nodes
                 for tn in tool_nodes:
                     td = tn.get_tool_definition()
                     tg_tool_definitions.append(td)
                     all_tool_definitions.append(td)
+                
             mcp_tool_definitions: dict[mcp.MCP, list[runtime_types.ToolDefinition]] = {}
             mcp_sinks = self.mcp_server_pads()
             for mcp_sink in mcp_sinks:
@@ -401,9 +415,12 @@ class BaseLLM(node.Node, ABC):
                     continue
                 if mcp_node not in mcp_tool_definitions:
                     mcp_tool_definitions[mcp_node] = []
-                tdfs = await mcp_node.to_tool_definitions()
-                mcp_tool_definitions[mcp_node].extend(tdfs)
-                all_tool_definitions.extend(tdfs)
+                try:
+                    tdfs = await mcp_node.to_tool_definitions()
+                    mcp_tool_definitions[mcp_node].extend(tdfs)
+                    all_tool_definitions.extend(tdfs)
+                except Exception as e:
+                    logging.error(f"BaseLLM: Failed to get tool definitions from MCP node {mcp_node.id}: {e}")
 
             request = LLMRequest(
                 context=messages, tool_definitions=all_tool_definitions
@@ -425,8 +442,8 @@ class BaseLLM(node.Node, ABC):
                     generation_task(
                         running_handle,
                         ctx,
-                        tg_tools=tg_tool_definitions,
-                        mcp_tools=mcp_tool_definitions,
+                        tg_tool_definitions,
+                        mcp_tool_definitions,
                     )
                 )
                 tasks.add(t)
@@ -444,8 +461,7 @@ class BaseLLM(node.Node, ABC):
         all_tool_calls: list[runtime_types.ToolCall],
         ctx: pad.RequestContext,
     ) -> list[runtime_types.ContextMessage]:
-        logging.info(f"NEIL ********* {tg_tool_defns}")
-        tg_tool_calls = [t for t in all_tool_calls if t.name in tg_tool_defns]
+        tg_tool_calls = [t for t in all_tool_calls if t.name in [td.name for td in tg_tool_defns]]
 
         results: list[runtime_types.ContextMessage] = []
 
@@ -465,7 +481,6 @@ class BaseLLM(node.Node, ABC):
         async def run_mcp_task(node: mcp.MCP, tc: runtime_types.ToolCall):
             res = await node.call_tool(tc)
             if isinstance(res, Exception):
-                logging.error(f"Error calling MCP tool '{tc.name}': {res}")
                 msg = runtime_types.ContextMessage(
                     role=runtime_types.ContextMessageRole.TOOL,
                     content=[
@@ -484,17 +499,16 @@ class BaseLLM(node.Node, ABC):
                             content=block.text
                         )
                         contents.append(content)
-                    else:
-                        logging.error(f"Error calling MCP tool '{tc.name}': {res}")
                 msg = runtime_types.ContextMessage(
                     role=runtime_types.ContextMessageRole.TOOL,
                     content=contents,
                     tool_call_id=tc.call_id,
                     tool_calls=[],
                 )
-                results.append(msg)
+            results.append(msg)
 
         if len(tg_tool_calls) > 0:
+            logging.info(f"BaseLLM: Creating TG task for {len(tg_tool_calls)} tool calls")
             tg_task = asyncio.create_task(run_tg_task())
             all_tasks.append(tg_task)
 

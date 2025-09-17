@@ -10,7 +10,6 @@ import {
   ExportAppResponse,
   GetAppResponse,
   GetSubgraphResponse,
-  ImportAppResponse,
   ListAppsResponse,
   ListSubgraphsResponse,
   RepositoryApp,
