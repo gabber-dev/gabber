@@ -29,6 +29,7 @@ import { Toaster } from "react-hot-toast";
 type Props = {
   initialApps: RepositoryApp[];
   initialSubGraphs: RepositorySubGraph[];
+  initialPremadeSubGraphs: RepositorySubGraph[];
   examples: RepositoryApp[];
   children: React.ReactNode;
 };
@@ -36,6 +37,7 @@ export function ClientLayout({
   children,
   initialApps,
   initialSubGraphs,
+  initialPremadeSubGraphs,
   examples: initialExamples,
 }: Props) {
   const listAppsImpl = useCallback(async () => {
@@ -75,6 +77,7 @@ export function ClientLayout({
     <RepositoryProvider
       initialApps={initialApps}
       initialSubGraphs={initialSubGraphs}
+      initialPremadeSubGraphs={initialPremadeSubGraphs}
       listAppsImpl={listAppsImpl}
       saveAppImpl={saveAppImpl}
       deleteAppImpl={deleteAppImpl}

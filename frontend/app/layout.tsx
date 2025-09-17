@@ -17,7 +17,12 @@ import "@fontsource/inter/600.css";
 import "@fontsource/inter/700.css";
 import React from "react";
 import { ClientLayout } from "./client_layout";
-import { listApps, listExamples, listSubGraphs } from "@/lib/repository";
+import {
+  listApps,
+  listExamples,
+  listPreMadeSubGraphs,
+  listSubGraphs,
+} from "@/lib/repository";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +40,7 @@ export default async function RootLayout({
   const apps = await listApps();
   const subgraphs = await listSubGraphs();
   const examples = await listExamples();
+  const premadeSubGraphs = await listPreMadeSubGraphs();
 
   return (
     <html lang="en" data-theme="gabber-arcade">
@@ -42,6 +48,7 @@ export default async function RootLayout({
         <ClientLayout
           initialApps={apps}
           initialSubGraphs={subgraphs}
+          initialPremadeSubGraphs={premadeSubGraphs}
           examples={examples}
         >
           {children}
