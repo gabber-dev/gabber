@@ -24,7 +24,12 @@ import axios from "axios";
 import { v4 } from "uuid";
 
 function getBaseUrl() {
-  return "http://192.168.1.29:8001";
+  const host = process.env.REPOSITORY_HOST;
+  const publicHost = process.env.NEXT_PUBLIC_GABBER_PUBLIC_HOST;
+  if (host) {
+    return `http://${host}`;
+  }
+  return `http://${publicHost || "localhost"}:8001`;
 }
 
 export async function getApp(appId: string) {

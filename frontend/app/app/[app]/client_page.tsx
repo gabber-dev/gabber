@@ -48,7 +48,7 @@ export function ClientPage({ existingApp }: Props) {
       <div className="absolute top-0 left-0 right-0 bottom-0">
         <EditorProvider
           debug={false}
-          editor_url="ws://192.168.1.29:8000/ws"
+          editor_url={`ws://${process.env.NEXT_PUBLIC_GABBER_PUBLIC_HOST || "localhost"}:8000/ws`}
           savedGraph={savedGraph}
           saveImpl={saveImpl}
         >

@@ -34,7 +34,7 @@ export function ClientPage({ existingExample: existingApp }: Props) {
     <div className="realtive w-full h-full">
       <div className="absolute top-0 left-0 right-0 bottom-0">
         <EditorProvider
-          editor_url="ws://192.168.1.29:8000/ws"
+          editor_url={`ws://${process.env.NEXT_PUBLIC_GABBER_PUBLIC_HOST || "localhost"}:8000/ws`}
           savedGraph={existingApp.graph}
           saveImpl={saveImpl}
           debug={false}
