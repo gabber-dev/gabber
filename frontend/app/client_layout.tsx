@@ -26,6 +26,7 @@ import {
 } from "@/lib/repository";
 import { useCallback } from "react";
 import { Toaster } from "react-hot-toast";
+
 type Props = {
   initialApps: RepositoryApp[];
   initialSubGraphs: RepositorySubGraph[];
