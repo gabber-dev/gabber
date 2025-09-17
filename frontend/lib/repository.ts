@@ -5,8 +5,9 @@
 
 import { GraphEditorRepresentation } from "@/generated/editor";
 import {
-  CreateAppRunResponse,
+  AppExport,
   DebugConnectionResponse,
+  ExportAppResponse,
   GetAppResponse,
   GetSubgraphResponse,
   ListAppsResponse,
@@ -18,7 +19,9 @@ import {
   SaveSubgraphRequest,
   SaveSubgraphResponse,
 } from "@/generated/repository";
+import { ConnectionDetails } from "@gabber/client-react";
 import axios from "axios";
+import { v4 } from "uuid";
 
 function getBaseUrl() {
   return "http://192.168.1.29:8001";
@@ -78,26 +81,55 @@ export async function listExamples(): Promise<RepositoryApp[]> {
   return (resp.data as ListAppsResponse).apps;
 }
 
+export async function getPreMadeSubGraph(
+  subgraphId: string,
+): Promise<RepositorySubGraph> {
+  const resp = await axios.get(
+    `${getBaseUrl()}/premade_subgraph/${subgraphId}`,
+  );
+  return (resp.data as GetSubgraphResponse).sub_graph;
+}
+export async function listPreMadeSubGraphs(): Promise<RepositorySubGraph[]> {
+  const resp = await axios.get(`${getBaseUrl()}/premade_subgraph/list`);
+  return (resp.data as ListSubgraphsResponse).sub_graphs;
+}
+
 export async function createAppRun({
   graph,
 }: {
   graph: GraphEditorRepresentation;
-}): Promise<CreateAppRunResponse> {
+}): Promise<{ connectionDetails: ConnectionDetails; runId: string }> {
+  const run_id = v4();
   const resp = await axios.post(`${getBaseUrl()}/app/run`, {
     type: "create_app_run",
     graph,
+    run_id,
+  });
+
+  return {
+    connectionDetails: resp.data.connection_details,
+    runId: run_id,
+  };
+}
+
+export async function createDebugConnection({
+  run_id,
+}: {
+  run_id: string;
+}): Promise<DebugConnectionResponse> {
+  const resp = await axios.post(`${getBaseUrl()}/app/debug_connection`, {
+    type: "create_debug_connection",
+    run_id,
   });
   return resp.data;
 }
 
-export async function createDebugConnection({
-  app_run,
-}: {
-  app_run: string;
-}): Promise<DebugConnectionResponse> {
-  const resp = await axios.post(`${getBaseUrl()}/app/debug_connection`, {
-    type: "create_debug_connection",
-    app_run,
-  });
-  return resp.data;
+export async function importApp(app: AppExport): Promise<RepositoryApp> {
+  const resp = await axios.post(`${getBaseUrl()}/app/import`, app);
+  return resp.data as RepositoryApp;
+}
+
+export async function exportApp(appId: string): Promise<AppExport> {
+  const resp = await axios.get(`${getBaseUrl()}/app/${appId}/export`);
+  return (resp.data as ExportAppResponse).export;
 }

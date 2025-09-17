@@ -2,29 +2,97 @@
     "id": "local-tts",
     "name": "Local TTS",
     "created_at": "2025-08-18T22:10:51.327793",
-    "updated_at": "2025-08-19T12:44:33.369858",
+    "updated_at": "2025-08-29T16:23:01.601033",
     "graph": {
         "nodes": [
             {
-                "id": "kittentts_d7ec7a90",
+                "id": "chatinput_6ab46b1b",
+                "type": "ChatInput",
+                "editor_name": "ChatInput",
+                "editor_position": [
+                    540.0,
+                    156.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    168.0
+                ],
+                "pads": [
+                    {
+                        "id": "output",
+                        "group": "text",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "autoconvert_4d440340",
+                                "pad": "sink"
+                            },
+                            {
+                                "node": "kittentts_9ae0fd05",
+                                "pad": "text"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "pad_links": []
+                    }
+                ],
+                "description": "A chat input node to send text into your Gabber flow",
+                "metadata": {
+                    "primary": "core",
+                    "secondary": "debug",
+                    "tags": [
+                        "input",
+                        "text"
+                    ]
+                }
+            },
+            {
+                "id": "kittentts_9ae0fd05",
                 "type": "KittenTTS",
                 "editor_name": "KittenTTS",
                 "editor_position": [
-                    864.0,
+                    1032.0,
                     108.0
                 ],
                 "editor_dimensions": [
                     256.0,
-                    251.0
+                    246.0
                 ],
                 "pads": [
                     {
                         "id": "voice_id",
                         "group": "voice_id",
                         "type": "PropertySinkPad",
-                        "value": "expr-voice-3-m",
-                        "next_pads": [],
-                        "previous_pad": null,
+                        "default_allowed_types": [
+                            {
+                                "type": "enum",
+                                "options": [
+                                    "expr-voice-2-m",
+                                    "expr-voice-2-f",
+                                    "expr-voice-3-m",
+                                    "expr-voice-3-f",
+                                    "expr-voice-4-m",
+                                    "expr-voice-4-f",
+                                    "expr-voice-5-m",
+                                    "expr-voice-5-f"
+                                ]
+                            }
+                        ],
                         "allowed_types": [
                             {
                                 "type": "enum",
@@ -39,74 +107,109 @@
                                     "expr-voice-5-f"
                                 ]
                             }
-                        ]
-                    },
-                    {
-                        "id": "audio",
-                        "group": "audio",
-                        "type": "StatelessSourcePad",
-                        "value": null,
-                        "next_pads": [
-                            {
-                                "node": "output_3e458b7d",
-                                "pad": "audio_sink"
-                            }
                         ],
-                        "previous_pad": null,
-                        "allowed_types": [
-                            {
-                                "type": "audio"
-                            }
-                        ]
-                    },
-                    {
-                        "id": "cancel_trigger",
-                        "group": "cancel_trigger",
-                        "type": "StatelessSinkPad",
-                        "value": null,
-                        "next_pads": [],
-                        "previous_pad": {
-                            "node": "autoconvert_15eb6daf",
-                            "pad": "source"
-                        },
-                        "allowed_types": [
-                            {
-                                "type": "trigger"
-                            }
-                        ]
-                    },
-                    {
-                        "id": "complete_transcription",
-                        "group": "complete_transcription",
-                        "type": "StatelessSourcePad",
-                        "value": null,
+                        "value": "expr-voice-2-m",
                         "next_pads": [],
                         "previous_pad": null,
-                        "allowed_types": [
-                            {
-                                "type": "string",
-                                "max_length": null,
-                                "min_length": null
-                            }
-                        ]
+                        "pad_links": []
                     },
                     {
                         "id": "text",
                         "group": "text",
                         "type": "StatelessSinkPad",
-                        "value": null,
-                        "next_pads": [],
-                        "previous_pad": {
-                            "node": "chatinput_f3a1d19e",
-                            "pad": "output"
-                        },
+                        "default_allowed_types": [
+                            {
+                                "type": "text_stream"
+                            },
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ],
                         "allowed_types": [
                             {
                                 "type": "string",
                                 "max_length": null,
                                 "min_length": null
                             }
-                        ]
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "chatinput_6ab46b1b",
+                            "pad": "output"
+                        },
+                        "pad_links": []
+                    },
+                    {
+                        "id": "audio",
+                        "group": "audio",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "output_48a08059",
+                                "pad": "audio"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "cancel_trigger",
+                        "group": "cancel_trigger",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "autoconvert_4d440340",
+                            "pad": "source"
+                        },
+                        "pad_links": []
+                    },
+                    {
+                        "id": "complete_transcription",
+                        "group": "complete_transcription",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
                     }
                 ],
                 "description": "Converts text to speech using Gabber's native TTS model",
@@ -121,113 +224,12 @@
                 }
             },
             {
-                "id": "chatinput_f3a1d19e",
-                "type": "ChatInput",
-                "editor_name": "ChatInput",
-                "editor_position": [
-                    420.0,
-                    156.0
-                ],
-                "editor_dimensions": [
-                    256.0,
-                    167.0
-                ],
-                "pads": [
-                    {
-                        "id": "output",
-                        "group": "text",
-                        "type": "StatelessSourcePad",
-                        "value": null,
-                        "next_pads": [
-                            {
-                                "node": "kittentts_d7ec7a90",
-                                "pad": "text"
-                            },
-                            {
-                                "node": "autoconvert_15eb6daf",
-                                "pad": "sink"
-                            }
-                        ],
-                        "previous_pad": null,
-                        "allowed_types": [
-                            {
-                                "type": "string",
-                                "max_length": null,
-                                "min_length": null
-                            }
-                        ]
-                    }
-                ],
-                "description": "A chat input node to send text into your Gabber flow",
-                "metadata": {
-                    "primary": "core",
-                    "secondary": "debug",
-                    "tags": [
-                        "input",
-                        "text"
-                    ]
-                }
-            },
-            {
-                "id": "output_3e458b7d",
-                "type": "Output",
-                "editor_name": "Output",
-                "editor_position": [
-                    1236.0,
-                    48.0
-                ],
-                "editor_dimensions": [
-                    256.0,
-                    300.0
-                ],
-                "pads": [
-                    {
-                        "id": "audio_sink",
-                        "group": "audio_sink",
-                        "type": "StatelessSinkPad",
-                        "value": null,
-                        "next_pads": [],
-                        "previous_pad": {
-                            "node": "kittentts_d7ec7a90",
-                            "pad": "audio"
-                        },
-                        "allowed_types": [
-                            {
-                                "type": "audio"
-                            }
-                        ]
-                    },
-                    {
-                        "id": "video_sink",
-                        "group": "video_sink",
-                        "type": "StatelessSinkPad",
-                        "value": null,
-                        "next_pads": [],
-                        "previous_pad": null,
-                        "allowed_types": [
-                            {
-                                "type": "video"
-                            }
-                        ]
-                    }
-                ],
-                "description": "Outputs audio and video to the end user",
-                "metadata": {
-                    "primary": "core",
-                    "secondary": "media",
-                    "tags": [
-                        "output",
-                        "display"
-                    ]
-                }
-            },
-            {
-                "id": "autoconvert_15eb6daf",
+                "id": "autoconvert_4d440340",
                 "type": "AutoConvert",
                 "editor_name": "AutoConvert",
                 "editor_position": [
-                    720.0,
-                    348.0
+                    876.0,
+                    324.0
                 ],
                 "editor_dimensions": [
                     80.0,
@@ -238,37 +240,41 @@
                         "id": "sink",
                         "group": "sink",
                         "type": "StatelessSinkPad",
-                        "value": null,
-                        "next_pads": [],
-                        "previous_pad": {
-                            "node": "chatinput_f3a1d19e",
-                            "pad": "output"
-                        },
+                        "default_allowed_types": null,
                         "allowed_types": [
                             {
                                 "type": "string",
                                 "max_length": null,
                                 "min_length": null
                             }
-                        ]
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "chatinput_6ab46b1b",
+                            "pad": "output"
+                        },
+                        "pad_links": []
                     },
                     {
                         "id": "source",
                         "group": "source",
                         "type": "StatelessSourcePad",
-                        "value": null,
-                        "next_pads": [
-                            {
-                                "node": "kittentts_d7ec7a90",
-                                "pad": "cancel_trigger"
-                            }
-                        ],
-                        "previous_pad": null,
+                        "default_allowed_types": null,
                         "allowed_types": [
                             {
                                 "type": "trigger"
                             }
-                        ]
+                        ],
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "kittentts_9ae0fd05",
+                                "pad": "cancel_trigger"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "pad_links": []
                     }
                 ],
                 "description": "Automatically converts data between compatible types",
@@ -278,6 +284,71 @@
                     "tags": [
                         "auto",
                         "type"
+                    ]
+                }
+            },
+            {
+                "id": "output_48a08059",
+                "type": "Output",
+                "editor_name": "Output",
+                "editor_position": [
+                    1356.0,
+                    60.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    300.0
+                ],
+                "pads": [
+                    {
+                        "id": "audio",
+                        "group": "audio",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "kittentts_9ae0fd05",
+                            "pad": "audio"
+                        },
+                        "pad_links": []
+                    },
+                    {
+                        "id": "video",
+                        "group": "video",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "video"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "video"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    }
+                ],
+                "description": "Outputs audio and video to the end user",
+                "metadata": {
+                    "primary": "core",
+                    "secondary": "media",
+                    "tags": [
+                        "output",
+                        "display"
                     ]
                 }
             }

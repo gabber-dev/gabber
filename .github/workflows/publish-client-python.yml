@@ -1,0 +1,38 @@
+name: Publish Client Python 
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12" # Specify your preferred Python version
+
+      # Install uv
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      # Build the package
+      - name: Build package
+        working-directory: sdks/python
+        run: uv build
+
+      # Publish to PyPI
+      - name: Publish to PyPI
+        working-directory: sdks/python
+        run: uv publish

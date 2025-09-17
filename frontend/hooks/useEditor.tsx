@@ -7,18 +7,31 @@
 
 import {
   ConnectPadEdit,
+  CreatePortalEdit,
+  CreatePortalEndEdit,
+  DeletePortalEdit,
+  DeletePortalEndEdit,
   DisconnectPadEdit,
+  Edit,
+  EditRequest,
+  EligibleLibraryItem,
   GraphEditorRepresentation,
   GraphLibraryItem_Node,
   GraphLibraryItem_SubGraph,
   InsertNodeEdit,
   InsertSubGraphEdit,
   NodeEditorRepresentation,
+  PadEditorRepresentation,
+  Portal,
+  PortalEnd,
+  QueryEligibleNodeLibraryItemsRequest,
   RemoveNodeEdit,
   Request,
   Response,
   UpdateNodeEdit,
   UpdatePadEdit,
+  UpdatePortalEdit,
+  UpdatePortalEndEdit,
 } from "@/generated/editor";
 import {
   applyEdgeChanges,
@@ -40,6 +53,11 @@ import React, {
 } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
 import toast from "react-hot-toast";
+import { v4 } from "uuid";
+import {
+  getDataTypeColor,
+  getPrimaryDataType,
+} from "@/components/flow/blocks/components/pads/utils/dataTypeColors";
 
 type ReactFlowRepresentation = {
   nodes: Node<NodeEditorRepresentation>[];
@@ -57,6 +75,8 @@ type EditorContextType = {
   unsavedChanges: boolean;
   saving: boolean;
   stateMachineEditing?: string;
+  portalHighlights: { portal: string; portalEnds: Set<string> };
+  highlightPortal: (portalId: string | undefined) => void;
   setStateMachineEditing: (stateMachineId: string | undefined) => void;
   saveChanges: () => Promise<void>;
 
@@ -71,6 +91,20 @@ type EditorContextType = {
   updatePad: (req: UpdatePadEdit) => void;
   updateNode: (req: UpdateNodeEdit) => void;
 
+  createPortal: (req: CreatePortalEdit) => void;
+  createPortalEnd: (req: CreatePortalEndEdit) => void;
+  deletePortal: (req: DeletePortalEdit) => void;
+  deletePortalEnd: (req: DeletePortalEndEdit) => void;
+  updatePortal: (req: UpdatePortalEdit) => void;
+  updatePortalEnd: (req: UpdatePortalEndEdit) => void;
+
+  queryEligibleLibraryItems: ({
+    sourceNode,
+    sourcePad,
+  }: {
+    sourceNode: string;
+    sourcePad: string;
+  }) => Promise<EligibleLibraryItem[]>;
   clearAllSelection: () => void;
 };
 
@@ -98,13 +132,17 @@ export function EditorProvider({
   >(undefined);
   const [saving, setSaving] = useState(false);
   const [reactFlowRepresentation, setReactFlowRepresentation] = useState<{
-    nodes: Node[];
+    nodes: Node<NodeEditorRepresentation>[];
     edges: Edge[];
   }>({
     nodes: [],
     edges: [],
   });
   const [stateMachineEditing, setStateMachineEditing] = useState<
+    string | undefined
+  >(undefined);
+
+  const [highlightedPortal, setHighlightedPortal] = useState<
     string | undefined
   >(undefined);
 
@@ -124,6 +162,17 @@ export function EditorProvider({
   const [prevReadyState, setPrevReadyState] = useState<ReadyState>(
     ReadyState.UNINSTANTIATED,
   );
+
+  const pendingRequests = useRef<
+    Map<
+      string,
+      {
+        resolve: (value: Response) => void;
+        reject: (reason?: Error) => void;
+        timeoutId: number;
+      }
+    >
+  >(new Map());
 
   useEffect(() => {
     if (readyState !== prevReadyState) {
@@ -153,13 +202,34 @@ export function EditorProvider({
 
   const isConnected = readyState === ReadyState.OPEN;
 
+  useEffect(() => {
+    if (readyState === ReadyState.CLOSED) {
+      for (const [, pending] of pendingRequests.current.entries()) {
+        clearTimeout(pending.timeoutId);
+        pending.reject(new Error("WebSocket connection closed"));
+      }
+      pendingRequests.current.clear();
+    }
+  }, [readyState]);
+
   const sendRequest = useCallback(
     (request: Request) => {
-      if (isConnected) {
-        sendMessage(JSON.stringify(request));
-      } else {
+      if (!isConnected) {
         console.warn("WebSocket is not connected. Cannot send request.");
+        return Promise.reject(new Error("WebSocket not connected"));
       }
+      if (!request.req_id) {
+        request.req_id = v4();
+      }
+      const req_id = request.req_id;
+      sendMessage(JSON.stringify(request));
+      return new Promise<Response>((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          pendingRequests.current.delete(req_id);
+          reject(new Error("Request timed out after 5 seconds"));
+        }, 5000) as unknown as number;
+        pendingRequests.current.set(req_id, { resolve, reject, timeoutId });
+      });
     },
     [isConnected, sendMessage],
   );
@@ -168,7 +238,8 @@ export function EditorProvider({
     (edit: InsertNodeEdit) => {
       sendRequest({
         type: "edit",
-        edit,
+        edits: [edit],
+        req_id: v4(),
       });
     },
     [sendRequest],
@@ -178,7 +249,8 @@ export function EditorProvider({
     (edit: InsertSubGraphEdit) => {
       sendRequest({
         type: "edit",
-        edit,
+        edits: [edit],
+        req_id: v4(),
       });
     },
     [sendRequest],
@@ -188,7 +260,8 @@ export function EditorProvider({
     (edit: RemoveNodeEdit) => {
       sendRequest({
         type: "edit",
-        edit,
+        edits: [edit],
+        req_id: v4(),
       });
     },
     [sendRequest],
@@ -198,15 +271,95 @@ export function EditorProvider({
     (edit: ConnectPadEdit) => {
       sendRequest({
         type: "edit",
-        edit,
+        edits: [edit],
+        req_id: v4(),
       });
+    },
+    [sendRequest],
+  );
+
+  const createPortal = useCallback(
+    (edit: CreatePortalEdit) => {
+      sendRequest({
+        type: "edit",
+        edits: [edit],
+        req_id: v4(),
+      });
+    },
+    [sendRequest],
+  );
+
+  const createPortalEnd = useCallback(
+    (edit: CreatePortalEndEdit) => {
+      sendRequest({
+        type: "edit",
+        edits: [edit],
+        req_id: v4(),
+      });
+    },
+    [sendRequest],
+  );
+
+  const updatePortal = useCallback(
+    (edit: UpdatePortalEdit) => {
+      sendRequest({
+        type: "edit",
+        edits: [edit],
+        req_id: v4(),
+      });
+    },
+    [sendRequest],
+  );
+
+  const updatePortalEnd = useCallback(
+    (edit: UpdatePortalEndEdit) => {
+      sendRequest({
+        type: "edit",
+        edits: [edit],
+        req_id: v4(),
+      });
+    },
+    [sendRequest],
+  );
+
+  const deletePortal = useCallback(
+    (edit: DeletePortalEdit) => {
+      sendRequest({
+        type: "edit",
+        edits: [edit],
+        req_id: v4(),
+      });
+    },
+    [sendRequest],
+  );
+
+  const deletePortalEnd = useCallback(
+    (edit: DeletePortalEndEdit) => {
+      sendRequest({
+        type: "edit",
+        edits: [edit],
+        req_id: v4(),
+      });
+    },
+    [sendRequest],
+  );
+
+  const queryEligibleLibraryItems = useCallback(
+    async (params: { sourceNode: string; sourcePad: string }) => {
+      const req: QueryEligibleNodeLibraryItemsRequest = {
+        source_node: params.sourceNode,
+        source_pad: params.sourcePad,
+        req_id: v4(),
+        type: "query_eligible_node_library_items",
+      };
+      const resp = await sendRequest(req);
+      return resp.direct_eligible_items as EligibleLibraryItem[];
     },
     [sendRequest],
   );
 
   const pendingEdits = useRef<Map<string, UpdatePadEdit>>(new Map());
   const debounceTimers = useRef<Map<string, number>>(new Map());
-
   const updatePad = useCallback(
     (edit: UpdatePadEdit) => {
       const key = `${edit.node}-${edit.pad}`;
@@ -256,12 +409,13 @@ export function EditorProvider({
         if (pendingEdit) {
           sendRequest({
             type: "edit",
-            edit: pendingEdit,
+            edits: [pendingEdit],
+            req_id: v4(),
           });
           pendingEdits.current.delete(key);
         }
         debounceTimers.current.delete(key);
-      }, 175) as unknown as number;
+      }, 250) as unknown as number;
 
       debounceTimers.current.set(key, timer);
     },
@@ -288,7 +442,8 @@ export function EditorProvider({
     (edit: UpdateNodeEdit) => {
       sendRequest({
         type: "edit",
-        edit,
+        edits: [edit],
+        req_id: v4(),
       });
 
       // Update selection state if node ID is changing
@@ -337,9 +492,10 @@ export function EditorProvider({
       sendRequest({
         type: "load_from_snapshot",
         graph: localRepresentation,
+        req_id: v4(),
       });
 
-      sendRequest({ type: "get_node_library" });
+      sendRequest({ type: "get_node_library", req_id: v4() });
     }
   }, [localRepresentation, prevReadyState, readyState, sendRequest]);
 
@@ -347,11 +503,24 @@ export function EditorProvider({
     if (!lastJsonMessage) return;
 
     try {
-      const resp = (lastJsonMessage as Response).response;
+      const resp = lastJsonMessage as Response;
+      const req_id = resp.req_id || "";
+
       if (resp.type === "node_library") {
         setNodeLibrary(resp.node_library || []);
-      } else if (resp.type === "full_graph") {
+      } else if (resp.type === "load_from_snapshot") {
         setLocalRepresentation(resp.graph);
+      } else if (resp.type === "edit") {
+        setLocalRepresentation(resp.graph);
+      } else if (resp.type === "query_eligible_node_library_items") {
+        // No global state update needed for per-query responses
+      }
+
+      const pending = pendingRequests.current.get(req_id);
+      if (pending) {
+        clearTimeout(pending.timeoutId);
+        pendingRequests.current.delete(req_id);
+        pending.resolve(resp);
       }
     } catch (error) {
       console.error(
@@ -369,7 +538,7 @@ export function EditorProvider({
         console.warn("No previous representation available");
         return;
       }
-      const requests: Request[] = [];
+      const edits: Edit[] = [];
       for (const change of changes) {
         if (change.type === "position") {
           reactFlowRepresentation.nodes = applyNodeChanges(
@@ -378,15 +547,50 @@ export function EditorProvider({
           );
 
           if (!change.dragging) {
-            const edit: UpdateNodeEdit = {
-              type: "update_node",
-              id: change.id,
-              editor_name: null,
-              new_id: null,
-              editor_position: [change.position?.x, change.position?.y],
-              editor_dimensions: null,
-            };
-            requests.push({ type: "edit", edit });
+            const node = prev.nodes.find((n) => n.id === change.id);
+
+            if (node) {
+              edits.push({
+                type: "update_node",
+                id: change.id,
+                editor_name: null,
+                new_id: null,
+                editor_position: [change.position?.x, change.position?.y],
+                editor_dimensions: null,
+              });
+            } else {
+              const portalStart = (prev.portals || []).find(
+                (p) => p.id === change.id,
+              );
+              if (portalStart) {
+                edits.push({
+                  type: "update_portal",
+                  portal_id: change.id,
+                  editor_position: [change.position?.x, change.position?.y],
+                });
+              } else {
+                let portalEnd: PortalEnd | undefined;
+                let portalStart: Portal | undefined;
+                for (const p of prev.portals || []) {
+                  for (const pe of p.ends || []) {
+                    if (pe.id === change.id) {
+                      portalStart = p;
+                      portalEnd = pe;
+                      break;
+                    }
+                  }
+                }
+                if (portalEnd && portalStart) {
+                  edits.push({
+                    type: "update_portal_end",
+                    portal_id: portalStart.id,
+                    portal_end_id: portalEnd.id,
+                    editor_position: [change.position?.x, change.position?.y],
+                    next_pads: portalEnd.next_pads,
+                  });
+                }
+              }
+            }
           }
           setReactFlowRepresentation((prev) => ({
             ...prev,
@@ -399,18 +603,51 @@ export function EditorProvider({
           });
         } else if (change.type === "remove") {
           const nodeId = change.id;
-          requests.push({
-            type: "edit",
-            edit: {
+          const node = prev.nodes.find((n) => n.id === change.id);
+          if (node) {
+            edits.push({
               type: "remove_node",
               node_id: nodeId,
-            } as RemoveNodeEdit,
-          });
-          prev.nodes = prev.nodes.filter((n) => n.id !== nodeId);
+            });
+            prev.nodes = prev.nodes.filter((n) => n.id !== nodeId);
+          } else {
+            const portalStart = (prev.portals || []).find(
+              (p) => p.id === change.id,
+            );
+            if (portalStart) {
+              edits.push({
+                type: "delete_portal",
+                portal_id: change.id,
+              });
+            } else {
+              let portalEnd: PortalEnd | undefined;
+              let portalStart: Portal | undefined;
+              for (const p of prev.portals || []) {
+                for (const pe of p.ends || []) {
+                  if (pe.id === change.id) {
+                    portalStart = p;
+                    portalEnd = pe;
+                    break;
+                  }
+                }
+              }
+              if (portalEnd && portalStart) {
+                edits.push({
+                  type: "delete_portal_end",
+                  portal_id: portalStart.id,
+                  portal_end_id: portalEnd.id,
+                });
+              }
+            }
+          }
         } else if (change.type === "add") {
         } else if (change.type === "dimensions") {
           // Handle node dimension changes
           const nodeId = change.id;
+          const node = prev.nodes.find((n) => n.id === nodeId);
+          if (!node) {
+            continue;
+          }
           const newDims = change.dimensions;
           if (!newDims) {
             continue;
@@ -433,7 +670,7 @@ export function EditorProvider({
             editor_position: null,
             editor_dimensions: [newDims.width, newDims.height],
           };
-          requests.push({ type: "edit", edit });
+          edits.push(edit);
           for (const node of prev?.nodes || []) {
             if (node.id === nodeId) {
               node.editor_dimensions = [newDims?.width, newDims?.height];
@@ -441,7 +678,12 @@ export function EditorProvider({
           }
         }
       }
-      for (const req of requests) {
+      if (edits.length > 0) {
+        const req: EditRequest = {
+          type: "edit",
+          edits,
+          req_id: v4(),
+        };
         sendRequest(req);
       }
     },
@@ -456,7 +698,7 @@ export function EditorProvider({
         console.warn("No previous representation available");
         return;
       }
-      const requests: Request[] = [];
+      const edits: Edit[] = [];
       for (const change of changes) {
         if (change.type === "select") {
           setReactFlowRepresentation((prev) => {
@@ -465,53 +707,136 @@ export function EditorProvider({
           });
         } else if (change.type === "remove") {
           const fullId = change.id;
-          const [sourceNodeId, sourcePadId, targetNodeId, targetPadId] =
-            fullId.split("-");
-
-          dirty = true;
-          const sourceNode = prev?.nodes.find((n) => n.id === sourceNodeId);
-          const sourcePad = sourceNode?.pads?.find((p) => p.id === sourcePadId);
-          if (!sourcePad) {
-            console.warn("Source pad not found for edge removal:", fullId);
-            continue;
-          }
-          sourcePad.next_pads = sourcePad?.next_pads?.filter(
-            (p) => p.node !== targetNodeId || p.pad !== targetPadId,
+          const edge = reactFlowRepresentation.edges.find(
+            (e) => e.id === fullId,
+          );
+          const sourceNodeRf = reactFlowRepresentation.nodes.find(
+            (n) => n.id === edge?.source,
+          );
+          const targetNodeRf = reactFlowRepresentation.nodes.find(
+            (n) => n.id === edge?.target,
           );
 
-          const targetNode = prev?.nodes.find((n) => n.id === targetNodeId);
-          const targetPad = targetNode?.pads?.find((p) => p.id === targetPadId);
-          if (!targetPad) {
-            console.warn("Target pad not found for edge removal:", fullId);
+          if (!sourceNodeRf || !targetNodeRf) {
+            console.warn(
+              "Could not find nodes or pads for edge removal:",
+              fullId,
+            );
             continue;
           }
-          targetPad.previous_pad = null;
 
-          requests.push({
-            type: "edit",
-            edit: {
+          dirty = true;
+
+          if (sourceNodeRf?.type === "node" && targetNodeRf?.type === "node") {
+            edits.push({
+              type: "disconnect_pad",
+              node: sourceNodeRf.id,
+              pad: edge?.sourceHandle || "",
+              connected_node: targetNodeRf.id,
+              connected_pad: edge?.targetHandle || "",
+            });
+          } else if (
+            sourceNodeRf?.type === "node" &&
+            targetNodeRf?.type === "portal_start"
+          ) {
+            edits.push({
+              type: "delete_portal",
+              portal_id: targetNodeRf.id,
+            });
+          } else if (
+            sourceNodeRf?.type === "portal_end" &&
+            targetNodeRf?.type === "node"
+          ) {
+            const portalEnd = sourceNodeRf.data.portalEnd as PortalEnd;
+            const sourceNodeId = (
+              sourceNodeRf.data.sourceNode as NodeEditorRepresentation
+            ).id;
+            const sourcePadId = (
+              sourceNodeRf.data.sourcePad as PadEditorRepresentation
+            ).id;
+            const newNextPads = (portalEnd.next_pads || []).filter(
+              (p) =>
+                p.node !== targetNodeRf.id ||
+                p.pad !== edge?.targetHandle ||
+                "",
+            );
+            const updatePortalEnd: UpdatePortalEndEdit = {
+              type: "update_portal_end",
+              portal_id: sourceNodeRf.data.sourcePortalId as string,
+              portal_end_id: (sourceNodeRf.data.portalEnd as PortalEnd)
+                .id as string,
+              next_pads: newNextPads,
+              editor_position: (sourceNodeRf.data.portalEnd as PortalEnd)
+                .editor_position,
+            };
+            const disconnectEdit: DisconnectPadEdit = {
               type: "disconnect_pad",
               node: sourceNodeId,
               pad: sourcePadId,
-              connected_node: targetNodeId,
-              connected_pad: targetPadId,
-            } as DisconnectPadEdit,
-          });
+              connected_node: edge?.target || "",
+              connected_pad: edge?.targetHandle || "",
+            };
+            edits.push(updatePortalEnd);
+            edits.push(disconnectEdit);
+          }
         } else if (change.type === "add") {
         }
       }
       if (dirty) {
         setLocalRepresentation({ ...prev });
       }
-      for (const req of requests) {
-        sendRequest(req);
+      for (const e of edits) {
+        sendRequest({ type: "edit", edits: [e], req_id: v4() });
       }
     },
-    [localRepresentation, sendRequest],
+    [
+      localRepresentation,
+      reactFlowRepresentation.edges,
+      reactFlowRepresentation.nodes,
+      sendRequest,
+    ],
   );
 
   const onReactFlowConnect = useCallback(
     (connection: Connection) => {
+      const { nodes } = reactFlowRepresentation;
+      const sourceRfNode = nodes.find((n) => n.id === connection.source);
+      if (sourceRfNode?.type === "portal_end") {
+        const sourcePortalId = sourceRfNode.data.sourcePortalId as string;
+        const portalEnd = sourceRfNode.data.portalEnd as PortalEnd;
+        const sourceNode = sourceRfNode.data
+          .sourceNode as NodeEditorRepresentation;
+        const sourcePad = sourceRfNode.data
+          .sourcePad as PadEditorRepresentation;
+
+        const connectEdit: ConnectPadEdit = {
+          type: "connect_pad",
+          node: sourceNode?.id || "ERROR",
+          pad: sourcePad?.id || "ERROR",
+          connected_node: connection.target || "ERROR",
+          connected_pad: connection.targetHandle || "ERROR",
+        };
+        const portalEndEdit: UpdatePortalEndEdit = {
+          type: "update_portal_end",
+          portal_id: sourcePortalId,
+          portal_end_id: portalEnd.id,
+          next_pads: [
+            ...(portalEnd.next_pads || []),
+            {
+              node: connection.target || "ERROR",
+              pad: connection.targetHandle || "ERROR",
+            },
+          ],
+          editor_position: portalEnd.editor_position,
+        };
+        sendRequest({
+          type: "edit",
+          edits: [connectEdit, portalEndEdit],
+          req_id: v4(),
+        });
+        console.log("Connection from portal_end not supported");
+        return;
+      }
       const edit: ConnectPadEdit = {
         type: "connect_pad",
         node: connection.source || "ERROR",
@@ -519,9 +844,9 @@ export function EditorProvider({
         connected_node: connection.target || "ERROR",
         connected_pad: connection.targetHandle || "ERROR",
       };
-      sendRequest({ type: "edit", edit });
+      sendRequest({ type: "edit", edits: [edit], req_id: v4() });
     },
-    [sendRequest],
+    [reactFlowRepresentation, sendRequest],
   );
 
   const unsavedChanges = useMemo(() => {
@@ -549,6 +874,21 @@ export function EditorProvider({
     }
   }, [localRepresentation, saveImpl, saving]);
 
+  const portalHighlights = useMemo(() => {
+    const ends = new Set<string>();
+    if (highlightedPortal) {
+      for (const p of localRepresentation?.portals || []) {
+        if (p.id === highlightedPortal) {
+          for (const pe of p.ends || []) {
+            ends.add(pe.id || "");
+          }
+          break;
+        }
+      }
+    }
+    return { portal: highlightedPortal || "", portalEnds: ends };
+  }, [highlightedPortal, localRepresentation]);
+
   return (
     <EditorContext.Provider
       value={{
@@ -561,6 +901,7 @@ export function EditorProvider({
         saving,
         debug,
         stateMachineEditing,
+        portalHighlights,
         saveChanges,
         onReactFlowConnect,
         onReactFlowNodesChange,
@@ -571,8 +912,16 @@ export function EditorProvider({
         connectPad,
         updatePad,
         updateNode,
+        createPortal,
+        createPortalEnd,
+        deletePortal,
+        deletePortalEnd,
+        updatePortal,
+        updatePortalEnd,
+        highlightPortal: setHighlightedPortal,
         clearAllSelection,
         setStateMachineEditing,
+        queryEligibleLibraryItems,
       }}
     >
       {children}
@@ -591,10 +940,12 @@ export function useEditor() {
 function graphToReact(
   representation: GraphEditorRepresentation,
 ): ReactFlowRepresentation {
-  const nodes: Node<NodeEditorRepresentation>[] = representation.nodes.map(
-    (node) => ({
+  const nodeLookup = new Map<string, NodeEditorRepresentation>();
+  const nodes: Node[] = [];
+  for (const node of representation.nodes) {
+    const rfNode: Node = {
       id: node.id,
-      type: "default",
+      type: "node",
       position: {
         x: (node.editor_position?.[0] || 0) as number,
         y: (node.editor_position?.[1] || 0) as number,
@@ -604,8 +955,67 @@ function graphToReact(
         height: (node.editor_dimensions?.[1] || 10) as number,
       },
       data: node,
-    }),
-  );
+    };
+    nodes.push(rfNode);
+    nodeLookup.set(node.id, node);
+  }
+
+  const portalStarts: Node[] = [];
+  const portalEnds: Node[] = [];
+  const skipEdges = new Set<string>();
+  for (const portal of representation.portals || []) {
+    const sourceNode = nodeLookup.get(portal.source_node || "");
+    const sourcePad = sourceNode?.pads?.find((p) => p.id === portal.source_pad);
+    const dataColor = getDataTypeColor(
+      getPrimaryDataType(sourcePad?.allowed_types || []) || "default",
+    );
+    const startNode = {
+      id: portal.id,
+      type: "portal_start",
+      position: {
+        x: (portal.editor_position?.[0] || 0) as number,
+        y: (portal.editor_position?.[1] || 0) as number,
+      },
+      measured: {
+        width: 150,
+        height: 40,
+      },
+      data: {
+        portal,
+        sourcePad,
+        dataColor,
+      },
+    };
+    portalStarts.push(startNode);
+
+    for (const pe of portal.ends || []) {
+      for (const np of pe.next_pads || []) {
+        const edgeId = `${sourceNode?.id || "ERROR"}-${
+          sourcePad?.id || "ERROR"
+        }-${np.node}-${np.pad}`;
+        skipEdges.add(edgeId);
+      }
+      portalEnds.push({
+        id: pe.id,
+        type: "portal_end",
+        position: {
+          x: (pe.editor_position?.[0] || 0) as number,
+          y: (pe.editor_position?.[1] || 0) as number,
+        },
+        measured: {
+          width: 150,
+          height: 40,
+        },
+        data: {
+          portalEnd: pe,
+          sourcePortalId: portal.id,
+          sourceNode,
+          sourcePad,
+          dataColor,
+        },
+      });
+    }
+  }
 
   const edges: Edge[] = [];
   for (const node of representation.nodes) {
@@ -613,6 +1023,13 @@ function graphToReact(
     for (const pad of node.pads) {
       if (!pad.next_pads) continue;
       for (const connectedPad of pad.next_pads) {
+        if (
+          skipEdges.has(
+            `${node.id}-${pad.id}-${connectedPad.node}-${connectedPad.pad}`,
+          )
+        ) {
+          continue;
+        }
         const edgeId = `${node.id}-${pad.id}-${connectedPad.node}-${connectedPad.pad}`;
         edges.push({
           id: edgeId,
@@ -620,10 +1037,49 @@ function graphToReact(
           sourceHandle: pad.id,
           target: connectedPad.node,
           targetHandle: connectedPad.pad,
+          data: {
+            dataType: getPrimaryDataType(pad.allowed_types || []),
+          },
         });
       }
     }
   }
 
-  return { nodes, edges };
+  for (const portal of representation.portals || []) {
+    const sourceNode = nodeLookup.get(portal.source_node || "");
+    const sourcePad = sourceNode?.pads?.find((p) => p.id === portal.source_pad);
+    if (!sourceNode || !sourcePad) continue;
+    edges.push({
+      id: `portal-${sourceNode.id}-${sourcePad.id}-${portal.id}-${portal.id}`,
+      source: sourceNode.id,
+      sourceHandle: sourcePad.id,
+      target: portal.id,
+      targetHandle: "target",
+      data: {
+        dataType: getPrimaryDataType(sourcePad.allowed_types || []),
+      },
+    });
+    for (const pe of portal.ends || []) {
+      for (const np of pe.next_pads || []) {
+        const targetNode = nodeLookup.get(np.node);
+        const targetPad = targetNode?.pads?.find((p) => p.id === np.pad);
+        if (!targetNode || !targetPad) continue;
+        const edgeId = `portalend-${sourceNode.id}-${sourcePad.id}-${targetNode.id}-${targetPad.id}`;
+        edges.push({
+          id: edgeId,
+          source: pe.id,
+          sourceHandle: "source",
+          target: targetNode.id,
+          targetHandle: targetPad.id,
+          data: {
+            dataType: getPrimaryDataType(sourcePad.allowed_types || []),
+          },
+        });
+      }
+    }
+  }
+
+  const allNodes = [...nodes, ...portalStarts, ...portalEnds];
+
+  return { nodes: allNodes as Node<NodeEditorRepresentation>[], edges };
 }

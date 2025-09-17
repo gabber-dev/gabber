@@ -5,26 +5,27 @@
 
 import { Position } from "@xyflow/react";
 
-type InternalLikeNode = any;
+type NodeDims = {
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+};
 
-// Calculate the intersection of the line between the centers of two nodes
-// and the rectangle (with measured width/height) of the first node
 export function getNodeIntersection(
-  intersectionNode: InternalLikeNode,
-  targetNode: InternalLikeNode,
+  intersectionNode: NodeDims,
+  targetNode: NodeDims,
 ) {
   const { width: intersectionNodeWidth, height: intersectionNodeHeight } =
-    intersectionNode.measured;
-  const intersectionNodePosition = intersectionNode.internals.positionAbsolute;
-  const targetPosition = targetNode.internals.positionAbsolute;
+    intersectionNode.size || { width: 10, height: 10 };
+  const intersectionNodePosition = intersectionNode.position;
+  const targetPosition = targetNode.position;
 
-  const w = intersectionNodeWidth / 2;
-  const h = intersectionNodeHeight / 2;
+  const w = (intersectionNodeWidth || 10) / 2;
+  const h = (intersectionNodeHeight || 10) / 2;
 
   const x2 = intersectionNodePosition.x + w;
   const y2 = intersectionNodePosition.y + h;
-  const x1 = targetPosition.x + targetNode.measured.width / 2;
-  const y1 = targetPosition.y + targetNode.measured.height / 2;
+  const x1 = targetPosition.x + (targetNode.size.width || 10) / 2;
+  const y1 = targetPosition.y + (targetNode.size.height || 10) / 2;
 
   const xx1 = (x1 - x2) / (2 * w) - (y1 - y2) / (2 * h);
   const yy1 = (x1 - x2) / (2 * w) + (y1 - y2) / (2 * h);
@@ -37,10 +38,13 @@ export function getNodeIntersection(
   return { x, y };
 }
 
-export function getEdgePosition(node: InternalLikeNode, point: { x: number; y: number }) {
-  const posAbs = node.internals.positionAbsolute as { x: number; y: number };
-  const width = node.measured.width as number;
-  const height = node.measured.height as number;
+export function getEdgePosition(
+  node: NodeDims,
+  point: { x: number; y: number },
+) {
+  const posAbs = node.position;
+  const width = node.size.width as number;
+  const height = node.size.height as number;
 
   const nx = Math.round(posAbs.x);
   const ny = Math.round(posAbs.y);
@@ -55,7 +59,7 @@ export function getEdgePosition(node: InternalLikeNode, point: { x: number; y: n
   return Position.Top;
 }
 
-export function getEdgeParams(source: InternalLikeNode, target: InternalLikeNode) {
+export function getEdgeParams(source: NodeDims, target: NodeDims) {
   const sourceIntersectionPoint = getNodeIntersection(source, target);
   const targetIntersectionPoint = getNodeIntersection(target, source);
 
@@ -71,4 +75,3 @@ export function getEdgeParams(source: InternalLikeNode, target: InternalLikeNode
     targetPos,
   };
 }
-

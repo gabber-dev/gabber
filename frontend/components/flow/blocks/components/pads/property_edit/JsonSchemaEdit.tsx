@@ -10,6 +10,8 @@ import ReactModal from "react-modal";
 import { usePropertyPad } from "../hooks/usePropertyPad";
 import { PropertyEditProps } from "./PropertyEdit";
 
+/* eslint-disable  @typescript-eslint/no-explicit-any */
+
 export function JsonSchemaEdit({ nodeId, padId }: PropertyEditProps) {
   const [showModal, setShowModal] = useState(false);
   const { runtimeValue, setEditorValue: setValue } = usePropertyPad(
@@ -19,7 +21,7 @@ export function JsonSchemaEdit({ nodeId, padId }: PropertyEditProps) {
 
   return (
     <>
-      <div ref={(el) => ReactModal.setAppElement(el as any)} />
+      <div ref={(el) => ReactModal.setAppElement(el as HTMLDivElement)} />
       <button onClick={() => setShowModal(true)} className="btn">
         Edit JSON Schema
       </button>

@@ -38,8 +38,7 @@ export function ClientPage({ existingApp }: Props) {
 
   const startRunImpl = useCallback(
     async (params: { graph: GraphEditorRepresentation }) => {
-      const resp = await createAppRun({ graph: params.graph });
-      return resp.connection_details;
+      return await createAppRun({ graph: params.graph });
     },
     [],
   );

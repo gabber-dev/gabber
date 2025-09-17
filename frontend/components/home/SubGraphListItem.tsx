@@ -4,6 +4,7 @@
  */
 
 import { RepositorySubGraph } from "@/generated/repository";
+import { useRepository } from "@/hooks/useRepository";
 import { ChevronRightIcon, CubeIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 
@@ -22,9 +23,11 @@ export function SubGraphListItem({
     onSelect(!isSelected);
   };
 
+  const { subgraphEditPath } = useRepository();
+
   return (
     <Link
-      href={`/graph/${subGraph.id}`}
+      href={subgraphEditPath(subGraph.id)}
       className="relative overflow-visible card bg-base-200 hover:bg-base-300 border-2 border-black border-b-4 border-r-4 transform hover:translate-y-1 active:translate-y-2 transition-all group"
     >
       <div className="card-body p-4 relative">

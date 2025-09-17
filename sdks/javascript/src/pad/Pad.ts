@@ -16,34 +16,35 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { DataPacket_Kind, RemoteParticipant, Room } from "livekit-client";
-import { RuntimeRequest, RuntimeRequestPayload_PushValue, RuntimeEvent, RuntimeRequestPayload_GetValue, Value1 as PadTriggeredValue } from "../generated/runtime"
+import { Room } from "livekit-client";
+import { PadValue, RuntimeRequestPayload_PushValue } from "../generated/runtime"
+import { Engine } from "../Engine";
 
 type PadParams = {
     nodeId: string;
     padId: string;
     livekitRoom: Room;
+    engine: Engine
 }
 
-export class BasePad<DataType extends PadTriggeredValue> {
+export class BasePad<DataType extends PadValue> {
     protected handlers: Array<(data: DataType) => void> = [];
     private _nodeId: string;
     private _padId: string;
     protected livekitRoom: Room;
-    private requestIdCounter: number = 0;
-    protected pendingRequests: Map<string, {res: (response: any) => void, rej: (error: string) => void}> = new Map();
-    protected channelTopic: string;
+    protected engine: Engine;
 
-    constructor({ nodeId, padId, livekitRoom }: PadParams) {
-        console.debug("Creating new BasePad instance for node", nodeId, "pad", padId);
+    constructor({ nodeId, padId, livekitRoom, engine }: PadParams) {
+        this.engine = engine;
+
         this._nodeId = nodeId;
         this._padId = padId;
         this.livekitRoom = livekitRoom;
-        this.get_request_id = this.get_request_id.bind(this);
-        this.onData = this.onData.bind(this);
         this.destroy = this.destroy.bind(this);
-        this.livekitRoom.on('dataReceived', this.onData);
-        this.channelTopic = "runtime:" + this._nodeId + ":" + this._padId;
+        this.on_pad_value_event = this.on_pad_value_event.bind(this);
+        this.engine._addPadValueHandler(nodeId, padId, (value) => {
+            this.on_pad_value_event(value);
+        });
     }
 
     public on(event: "value", handler: (data: DataType) => void): void {
@@ -55,10 +56,12 @@ export class BasePad<DataType extends PadTriggeredValue> {
     }
 
     public destroy(): void {
-        console.debug("Destroying pad", this.nodeId, this.padId);
-        this.livekitRoom.off('dataReceived', this.onData);
         this.handlers = [];
-        this.pendingRequests.clear();
+        this.engine._removePadValueHandler(this.nodeId, this.padId, this.on_pad_value_event);
+    }
+
+    private on_pad_value_event(value: PadValue) {
+        this.handlers.forEach(handler => handler(value as DataType));
     }
 
     public get nodeId(): string {
@@ -77,68 +80,25 @@ export class BasePad<DataType extends PadTriggeredValue> {
         this._padId = value;
     }
 
-    protected get_request_id(): string {
-        return this.nodeId + "_" + this.padId + "_" + this.requestIdCounter++;
-    }
-
-    private onData(data: Uint8Array, _: RemoteParticipant | undefined, __: DataPacket_Kind | undefined, topic: string | undefined): void {
-        if (topic !== this.channelTopic) {
-            const msg = JSON.parse(new TextDecoder().decode(data));
-            return; // Ignore data not on this pad's channel
-        }
-        const msg = JSON.parse(new TextDecoder().decode(data));
-        if (msg.type === "ack") {
-            console.log("Received ACK for request:", msg.req_id);
-        } else if (msg.type === "complete") {
-            console.log("Received COMPLETE for request:", msg.req_id);
-            if(msg.error) {
-                console.error("Error in request:", msg.error);
-                const pendingRequest = this.pendingRequests.get(msg.req_id);
-                if (pendingRequest) {
-                    pendingRequest.rej(msg.error);
-                }
-            } else {
-                const pendingRequest = this.pendingRequests.get(msg.req_id);
-                if (pendingRequest) {
-                    pendingRequest.res(msg.payload);
-                }
+    protected async _getValue(): Promise<PadValue> {
+        const resp = await this.engine.runtimeRequest({
+            payload: {
+                type: "get_value",
+                node_id: this.nodeId,
+                pad_id: this.padId,
             }
-            this.pendingRequests.delete(msg.req_id);
-        } else if (msg.type === "event") {
-            const castedMsg: RuntimeEvent = msg
-            const payload = castedMsg.payload;
-            if(payload.type === "value") {
-                for (const handler of this.handlers) {
-                    const value = payload.value as DataType;
-                    handler(value);
-                }
-            }
-        }
-    }
-
-    protected async _getValue(): Promise<DataType> {
-        const payload: RuntimeRequestPayload_GetValue = {
-            type: "get_value",
-            node_id: this.nodeId,
-            property_pad_id: this.padId,
-        };
-        const req_id = this.get_request_id();
-        const request: RuntimeRequest = {
-            type: "request",
-            req_id: req_id,
-            payload: payload
-        };
-        const requestJson = JSON.stringify(request);
-        const requestBytes = new TextEncoder().encode(requestJson);
-        const prom = new Promise<DataType>(async (res, rej) => {
-            this.pendingRequests.set(req_id, {res, rej});
-            await this.livekitRoom.localParticipant.publishData(requestBytes, {topic: this.channelTopic});
         });
-        return prom;
+        if(resp?.type !== "get_value") {
+            throw new Error(`Unexpected response type: ${resp?.type}`);
+        }
+        if(resp.value === undefined) {
+            throw new Error("No value in response");
+        }
+        return resp.value;
     }
 }
 
-export class SourcePad<DataType extends PadTriggeredValue> extends BasePad<DataType> {
+export class SourcePad<DataType extends PadValue> extends BasePad<DataType> {
     constructor(params: PadParams) {
         super(params);
         this.pushValue = this.pushValue.bind(this);
@@ -148,37 +108,28 @@ export class SourcePad<DataType extends PadTriggeredValue> extends BasePad<DataT
         const payload: RuntimeRequestPayload_PushValue = {
             type: "push_value",
             node_id: this.nodeId,
+            pad_id: this.padId,
             source_pad_id: this.padId,
             value: (value as any)
         };
-        const req_id = this.get_request_id();
-        const request: RuntimeRequest = {
-            type: "request",
-            req_id: req_id,
-            payload: payload
-        };
-        const requestJson = JSON.stringify(request);
-        const requestBytes = new TextEncoder().encode(requestJson);
-        const prom = new Promise<void>(async (res, rej) => {
-            this.pendingRequests.set(req_id, {res, rej});
-            await this.livekitRoom.localParticipant.publishData(requestBytes, {topic: this.channelTopic});
+        await this.engine.runtimeRequest({
+            payload
         });
-        return prom;
     }
 }
 
-export class SinkPad<DataType extends PadTriggeredValue> extends BasePad<DataType> {
+export class SinkPad<DataType extends PadValue> extends BasePad<DataType> {
     constructor(params: PadParams) {
         super(params);
     }
 }
 
-export class PropertyPad<DataType extends PadTriggeredValue> extends BasePad<DataType> {
+export class PropertyPad<DataType extends PadValue> extends BasePad<DataType> {
     constructor(params: PadParams) {
         super(params);
     }
 
-    public async getValue(): Promise<DataType> {
+    public async getValue(): Promise<PadValue> {
         return this._getValue();
     }
 }

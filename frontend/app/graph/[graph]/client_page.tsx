@@ -41,7 +41,7 @@ export function ClientPage({ initialSubGraph }: Props) {
         savedGraph={initialSubGraph.graph}
       >
         <RunProvider generateConnectionDetailsImpl={startRunImpl}>
-          <SubGraphEdit />
+          <SubGraphEdit editable={true} />
         </RunProvider>
       </EditorProvider>
     </div>

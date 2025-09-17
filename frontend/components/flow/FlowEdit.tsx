@@ -3,14 +3,14 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { useState, useMemo } from "react";
+import { useState, useCallback } from "react";
 import {
   ReactFlow,
   Background,
   BackgroundVariant,
   ReactFlowProvider,
-  Node,
-  Edge,
+  useReactFlow,
+  FinalConnectionState,
 } from "@xyflow/react";
 
 import "@xyflow/react/dist/base.css";
@@ -18,32 +18,47 @@ import { FlowErrorBoundary } from "./ErrorBoundary";
 import { useEditor } from "@/hooks/useEditor";
 import { useRun } from "@/hooks/useRun";
 import { BaseBlock } from "./blocks/BaseBlock";
-import { PlusIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, ShareIcon } from "@heroicons/react/24/outline";
 import { NodeLibrary } from "./NodeLibrary";
 
 import { HybridEdge } from "./edges/HybridEdge";
 import { CustomConnectionLine } from "./edges/CustomConnectionLine";
 
-import { getPrimaryDataType } from "./blocks/components/pads/utils/dataTypeColors";
 import ReactModal from "react-modal";
 import { StateMachineGraphEdit } from "../state_machine/StateMachineGraphEdit";
 import { StateMachineProvider } from "../state_machine/useStateMachine";
+import { usePathname } from "next/navigation";
+import toast from "react-hot-toast";
+import { QuickAddModal, QuickAddProps } from "./quick_add/QuickAddModal";
+import { PortalStart } from "./blocks/PortalStart";
+import { PortalEnd as PortalEndComponent } from "./blocks/PortalEnd";
+import {
+  NodeEditorRepresentation,
+  PadEditorRepresentation,
+  PortalEnd,
+} from "@/generated/editor";
+import { RunId } from "../RunId";
+import { useRepository } from "@/hooks/useRepository";
 
 const edgeTypes = {
   hybrid: HybridEdge,
 };
 
-export function FlowEdit() {
+type Props = {
+  editable: boolean;
+};
+
+export function FlowEdit(props: Props) {
   return (
     <ReactFlowProvider>
       <FlowErrorBoundary>
-        <FlowEditInner />
+        <FlowEditInner {...props} />
       </FlowErrorBoundary>
     </ReactFlowProvider>
   );
 }
 
-function FlowEditInner() {
+function FlowEditInner({ editable }: Props) {
   const {
     reactFlowRepresentation,
     stateMachineEditing,
@@ -56,36 +71,62 @@ function FlowEditInner() {
   const { connectionState } = useRun();
   const isRunning =
     connectionState === "connected" || connectionState === "connecting";
+  const { screenToFlowPosition } = useReactFlow();
+  const [quickAdd, setQuickAdd] = useState<QuickAddProps | undefined>(
+    undefined,
+  );
 
   const [isNodeLibraryOpen, setIsNodeLibraryOpen] = useState(false);
 
-  const styledEdges = useMemo(() => {
-    return reactFlowRepresentation.edges.map((edge: Edge) => {
-      const sourceNode = reactFlowRepresentation.nodes.find(
-        (node: Node) => node.id === edge.source,
-      );
-      const sourcePad = sourceNode?.data.pads.find(
-        (pad) => pad.id === edge.sourceHandle,
-      );
-      const dataType = getPrimaryDataType(sourcePad?.allowed_types || []);
-      return {
-        ...edge,
-        type: "hybrid",
-        data: {
-          ...edge.data,
-          dataType,
-        },
-      };
-    });
-  }, [reactFlowRepresentation.edges, reactFlowRepresentation.nodes]);
+  const onConnectEnd = useCallback(
+    (event: MouseEvent | TouchEvent, connectionState: FinalConnectionState) => {
+      if (!connectionState.isValid) {
+        const { clientX, clientY } =
+          "changedTouches" in event ? event.changedTouches[0] : event;
+        const position = screenToFlowPosition({
+          x: clientX,
+          y: clientY,
+        });
+        if (
+          connectionState.fromNode?.type === "node" &&
+          connectionState.fromHandle?.type === "source"
+        ) {
+          setQuickAdd({
+            sourceNode: connectionState.fromNode?.id || "",
+            sourcePad: connectionState.fromHandle?.id || "",
+            addPosition: position,
+            close: () => setQuickAdd(undefined),
+          });
+        } else if (connectionState.fromNode?.type === "portal_end") {
+          const { data } = connectionState.fromNode || {};
+          const { sourceNode, sourcePad } = data || {};
+          setQuickAdd({
+            sourceNode: (sourceNode as NodeEditorRepresentation).id || "",
+            sourcePad: (sourcePad as PadEditorRepresentation).id || "",
+            addPosition: position,
+            close: () => setQuickAdd(undefined),
+            portalInfo: {
+              portalId: data.sourcePortalId as string,
+              portalEnd: data.portalEnd as PortalEnd,
+            },
+          });
+        }
+      }
+    },
+    [screenToFlowPosition],
+  );
 
   return (
     <div className="relative w-full h-full flex flex-col">
-      <div className="absolute top-2 right-2 flex z-10">
-        <AddBlockButton
-          onClick={() => setIsNodeLibraryOpen(!isNodeLibraryOpen)}
-        />
-      </div>
+      <div ref={(el) => ReactModal.setAppElement(el as HTMLDivElement)} />
+      {editable && (
+        <div className="absolute top-2 right-2 flex z-10 gap-2">
+          <ExportButton />
+          <AddBlockButton
+            onClick={() => setIsNodeLibraryOpen(!isNodeLibraryOpen)}
+          />
+        </div>
+      )}
 
       {/* Node Library Panel */}
       <div
@@ -106,6 +147,11 @@ function FlowEditInner() {
           {connectionStatus}
         </div>
       )}
+      {
+        <div className="absolute top-2 left-2 z-20">
+          <RunId />
+        </div>
+      }
 
       <div
         className={`absolute top-0 left-0 right-0 bottom-0 transition-all duration-300 ease-in-out`}
@@ -113,8 +159,8 @@ function FlowEditInner() {
         <FlowErrorBoundary>
           <ReactFlow
             className=""
-            nodes={reactFlowRepresentation.nodes as Node[]}
-            edges={styledEdges as Edge[]}
+            nodes={reactFlowRepresentation.nodes}
+            edges={reactFlowRepresentation.edges}
             onNodesChange={(changes) => {
               // Close node library if a node is selected
               const selectionChange = changes.find(
@@ -127,10 +173,15 @@ function FlowEditInner() {
             }}
             onEdgesChange={onReactFlowEdgesChange}
             onConnect={onReactFlowConnect}
+            onConnectEnd={onConnectEnd}
             edgeTypes={edgeTypes}
             connectionLineComponent={CustomConnectionLine}
             fitView
-            nodeTypes={{ default: BaseBlock }}
+            nodeTypes={{
+              node: BaseBlock,
+              portal_start: PortalStart,
+              portal_end: PortalEndComponent,
+            }}
             snapGrid={[12, 12]}
             snapToGrid={true}
             defaultEdgeOptions={{
@@ -143,6 +194,7 @@ function FlowEditInner() {
             nodesDraggable={!isRunning}
             nodesConnectable={!isRunning}
             selectNodesOnDrag={false}
+            minZoom={0.1}
           >
             <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
           </ReactFlow>
@@ -166,6 +218,15 @@ function FlowEditInner() {
           </div>
         </StateMachineProvider>
       </ReactModal>
+      <ReactModal
+        isOpen={Boolean(quickAdd)}
+        onRequestClose={() => setQuickAdd(undefined)}
+        overlayClassName="fixed top-0 bottom-0 left-0 right-0 backdrop-blur-xs bg-blur flex justify-center items-center z-11"
+        className="bg-base-200 rounded-lg overflow-hidden shadow-lg outline-none h-2/3 w-100"
+        shouldCloseOnOverlayClick={true}
+      >
+        {quickAdd && <QuickAddModal {...quickAdd} />}
+      </ReactModal>
     </div>
   );
 }
@@ -178,6 +239,46 @@ function AddBlockButton({ onClick }: { onClick: () => void }) {
     >
       <PlusIcon className="h-4 w-4" />
       Add Node
+    </button>
+  );
+}
+
+function ExportButton() {
+  const path = usePathname();
+  const appId = path.split("/app/")[1];
+  const { exportApp } = useRepository();
+
+  const onClick = useCallback(async () => {
+    try {
+      const appExport = await exportApp(appId);
+      const blob = new Blob([JSON.stringify(appExport, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${appExport.app.name || "app"}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error exporting app", error);
+      toast.error("Error exporting app");
+    }
+    console.log("Exporting", appId, path);
+  }, [appId, exportApp, path]);
+
+  if (!path.startsWith("/app/")) {
+    return null;
+  }
+
+  return (
+    <button
+      onClick={onClick}
+      className="btn btn-sm gap-2 font-vt323 tracking-wider btn-primary"
+    >
+      <ShareIcon className="h-4 w-4" />
     </button>
   );
 }

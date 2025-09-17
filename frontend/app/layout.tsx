@@ -19,6 +19,8 @@ import React from "react";
 import { ClientLayout } from "./client_layout";
 import { listApps, listExamples, listSubGraphs } from "@/lib/repository";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Gabber - Real-time AI Engine",
   description: "Real-time AI Engine for building interactive applications",

@@ -4,7 +4,6 @@
  */
 
 import { MinusIcon, PlusIcon } from "@heroicons/react/24/outline";
-import { useEditor } from "@/hooks/useEditor";
 import { BaseBlockProps } from "./BaseBlock";
 import { usePropertyPad } from "./components/pads/hooks/usePropertyPad";
 import { useNodeId, useNodesData, Node } from "@xyflow/react";
@@ -12,17 +11,16 @@ import { PadHandle } from "./components/pads/PadHandle";
 import { PropertyEdit } from "./components/pads/property_edit/PropertyEdit";
 import { useMemo } from "react";
 import { NodeEditorRepresentation } from "@/generated/repository";
+import { NodeName } from "./components/NodeName";
+import { NodeId } from "./components/NodeId";
 
-export function CompareNode({ data }: BaseBlockProps) {
-  const {} = useEditor();
+export function CompareNode({}: BaseBlockProps) {
   return (
     <div className="w-54 flex flex-col bg-base-200 border-2 border-black border-b-4 border-r-4 rounded-lg relative">
       <div className="flex w-full items-center gap-2 bg-base-300 border-b-2 border-black p-3 rounded-t-lg drag-handle cursor-grab active:cursor-grabbing">
         <div className="flex-1">
-          <h2 className="text-lg text-purple-400 font-medium">
-            {data.editor_name}
-          </h2>
-          <div className="text-xs text-purple-400/60 font-mono">{data.id}</div>
+          <NodeName />
+          <NodeId />
         </div>
       </div>
       <div className="p-2">

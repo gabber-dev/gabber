@@ -38,17 +38,19 @@ export function StateMachineEdge(props: EdgeProps) {
   const targetNode = useInternalNode(target);
 
   let edgePath = "";
-  let labelX = 0; // kept for potential future label features
-  let labelY = 0;
   if (sourceNode && targetNode) {
+    const sourceWidth = sourceNode.measured.width || 10;
+    const sourceHeight = sourceNode.measured.height || 10;
+    const targetWidth = targetNode.measured.width || 10;
+    const targetHeight = targetNode.measured.height || 10;
     const { sx, sy, tx, ty } = getEdgeParams(
-      sourceNode as unknown as {
-        measured: { width: number; height: number };
-        internals: { positionAbsolute: { x: number; y: number } };
+      {
+        position: sourceNode.position,
+        size: { width: sourceWidth, height: sourceHeight },
       },
-      targetNode as unknown as {
-        measured: { width: number; height: number };
-        internals: { positionAbsolute: { x: number; y: number } };
+      {
+        position: targetNode.position,
+        size: { width: targetWidth, height: targetHeight },
       },
     );
     // determine how many edges connect this pair (both directions)
@@ -114,17 +116,12 @@ export function StateMachineEdge(props: EdgeProps) {
 
     if (makeStraight) {
       edgePath = `M ${sx},${sy} L ${tx},${ty}`;
-      labelX = (sx + tx) / 2;
-      labelY = (sy + ty) / 2;
     } else {
       edgePath = `M ${sx},${sy} C ${c1x},${c1y} ${c2x},${c2y} ${tx},${ty}`;
-      // fallback midpoint for label; precise 1/3 will be measured via ref
-      labelX = sx + dx * 0.5 + nx * offsetForCurve * 0.25;
-      labelY = sy + dy * 0.5 + ny * offsetForCurve * 0.25;
     }
   } else {
     // Fallback during transient re-measure/re-render while dragging
-    [edgePath, labelX, labelY] = getBezierPath({
+    [edgePath] = getBezierPath({
       sourceX: sourceX!,
       sourceY: sourceY!,
       sourcePosition: sourcePosition!,
@@ -138,10 +135,6 @@ export function StateMachineEdge(props: EdgeProps) {
   const isEntryEdge = id === "entry_edge";
 
   const measurePathRef = useRef<SVGPathElement | null>(null);
-  // We compute midPos for arrow/filter placement
-  const [thirdPos, setThirdPos] = useState<{ x: number; y: number } | null>(
-    null,
-  );
   const [midPos, setMidPos] = useState<{ x: number; y: number } | null>(null);
   const [midAngle, setMidAngle] = useState<number>(0);
   const [isHovered, setIsHovered] = useState<boolean>(false);
@@ -151,8 +144,6 @@ export function StateMachineEdge(props: EdgeProps) {
     if (!p) return;
     try {
       const total = p.getTotalLength();
-      const point = p.getPointAtLength(total * (1 / 3));
-      setThirdPos({ x: point.x, y: point.y });
       const mid = p.getPointAtLength(total * 0.5);
       const ahead = p.getPointAtLength(Math.min(total, total * 0.5 + 1));
       setMidPos({ x: mid.x, y: mid.y });
@@ -160,7 +151,6 @@ export function StateMachineEdge(props: EdgeProps) {
       setMidAngle(angle);
     } catch {
       // fallback gracefully; keep midpoint
-      setThirdPos(null);
       setMidPos(null);
     }
   }, [edgePath]);

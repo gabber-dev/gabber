@@ -78,7 +78,10 @@ export function NodeLibrary({
   const primaryOptions = useMemo(() => {
     const options = [
       ...new Set(
-        nodeLibrary?.map((n) => (n as any).metadata?.primary).filter(Boolean),
+        nodeLibrary
+          ?.filter((n) => n.type === "node")
+          .map((n) => (n as GraphLibraryItem_Node).metadata?.primary)
+          .filter(Boolean),
       ),
     ];
 
@@ -98,10 +101,10 @@ export function NodeLibrary({
         ? [
             ...new Set(
               nodeLibrary
-                ?.filter(
-                  (n) => (n as any).metadata?.primary === selectedMainCategory,
-                )
-                .map((n) => (n as any).metadata?.secondary)
+                ?.filter((n) => n.type === "node")
+                .map((n) => n as GraphLibraryItem_Node)
+                ?.filter((n) => n.metadata?.primary === selectedMainCategory)
+                .map((n) => n.metadata?.secondary)
                 .filter(Boolean),
             ),
           ].sort()
@@ -115,12 +118,14 @@ export function NodeLibrary({
         ? [
             ...new Set(
               nodeLibrary
+                ?.filter((n) => n.type === "node")
+                .map((n) => n as GraphLibraryItem_Node)
                 ?.filter(
                   (n) =>
-                    (n as any).metadata?.primary === selectedMainCategory &&
-                    (n as any).metadata?.secondary === selectedSubcategory1,
+                    n.metadata?.primary === selectedMainCategory &&
+                    n.metadata?.secondary === selectedSubcategory1,
                 )
-                .flatMap((n) => (n as any).metadata?.tags || []),
+                .flatMap((n) => n.metadata?.tags || []),
             ),
           ].sort()
         : [],
@@ -131,10 +136,8 @@ export function NodeLibrary({
   const filteredBlocks = useMemo(() => {
     return (
       nodeLibrary?.filter((node) => {
-        const { metadata } = node as any;
-
         // Treat subgraph nodes as having a special "My Subgraphs" category
-        let effectivePrimary = metadata?.primary;
+        let effectivePrimary = "Other";
         if (node.type === "subgraph") {
           if (node.editable) {
             effectivePrimary = "My Subgraphs";
@@ -142,20 +145,22 @@ export function NodeLibrary({
             effectivePrimary = "Official Subgraphs";
           }
         }
-
-        if (metadata || node.type === "subgraph") {
-          if (selectedMainCategory && effectivePrimary !== selectedMainCategory)
+        if (node.type === "node") {
+          effectivePrimary = node.metadata?.primary || "Other";
+          if (selectedTag && !node.metadata?.tags?.includes(selectedTag)) {
             return false;
+          }
           if (
             selectedSubcategory1 &&
-            metadata?.secondary !== selectedSubcategory1
-          )
+            node.metadata?.secondary !== selectedSubcategory1
+          ) {
             return false;
-          if (selectedTag && !metadata?.tags?.includes(selectedTag))
-            return false;
+          }
+        }
+        if (selectedMainCategory && selectedMainCategory !== effectivePrimary) {
+          return false;
         }
 
-        // Search filter applies to all nodes
         if (
           searchQuery &&
           !node.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -227,7 +232,10 @@ export function NodeLibrary({
         shadow-[4px_4px_0px_rgba(252,211,77,0.6)] pointer-events-none z-[9999]
       `;
 
-      const description = (block as any).description;
+      let description = "";
+      if (block.type === "node") {
+        description = (block as GraphLibraryItem_Node).description;
+      }
       dragPreview.textContent = description
         ? `${block.name}: ${description}`
         : block.name;
@@ -249,41 +257,44 @@ export function NodeLibrary({
     setDraggedItem(null);
   }, []);
 
-  // Set up global drop handlers for the canvas
-  const handleDragOver = useCallback((e: React.DragEvent) => {
+  // For native event listeners
+  const handleNativeDragOver = (e: Event) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-  }, []);
+    const dragEvent = e as DragEvent;
+    if (dragEvent.dataTransfer) {
+      dragEvent.dataTransfer.dropEffect = "move";
+    }
+  };
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
+  const handleNativeDrop = useCallback(
+    (e: Event) => {
       e.preventDefault();
-
+      const dragEvent = e as DragEvent;
       if (!draggedItem) return;
-
       // Convert screen coordinates to flow coordinates
       const position = screenToFlowPosition({
-        x: e.clientX,
-        y: e.clientY,
+        x: dragEvent.clientX,
+        y: dragEvent.clientY,
       });
-
+      // Convert position to [x, y] array for editor_position
+      const editor_position: [number, number] = [position.x, position.y];
+      const editor_name = draggedItem.name || "NodeLibrary";
       if (draggedItem.type === "subgraph") {
         insertSubGraph({
           type: "insert_sub_graph",
-          subgraph_id: draggedItem.id,
+          subgraph_id: String(draggedItem.id),
           subgraph_name: draggedItem.name,
-          editor_name: draggedItem.name,
-          editor_position: [position.x, position.y],
+          editor_name,
+          editor_position,
         });
       } else if (draggedItem.type === "node") {
         insertNode({
           type: "insert_node",
-          node_type: draggedItem.name,
-          editor_name: draggedItem.name,
-          editor_position: [position.x, position.y],
+          node_type: String(draggedItem.name),
+          editor_name,
+          editor_position,
         });
       }
-
       setDraggedItem(null);
     },
     [draggedItem, insertNode, insertSubGraph, screenToFlowPosition],
@@ -293,14 +304,14 @@ export function NodeLibrary({
   const setupDropZone = useCallback(() => {
     const canvas = document.querySelector(".react-flow");
     if (canvas) {
-      canvas.addEventListener("dragover", handleDragOver as any);
-      canvas.addEventListener("drop", handleDrop as any);
+      canvas.addEventListener("dragover", handleNativeDragOver);
+      canvas.addEventListener("drop", handleNativeDrop);
       return () => {
-        canvas.removeEventListener("dragover", handleDragOver as any);
-        canvas.removeEventListener("drop", handleDrop as any);
+        canvas.removeEventListener("dragover", handleNativeDragOver);
+        canvas.removeEventListener("drop", handleNativeDrop);
       };
     }
-  }, [handleDragOver, handleDrop]);
+  }, [handleNativeDrop]);
 
   // Set up drop zone when component mounts
   React.useEffect(() => {
@@ -479,15 +490,16 @@ export function NodeLibrary({
                           <h3 className="font-medium text-sm text-primary group-hover:text-accent transition-colors">
                             {block.name}
                           </h3>
-                          {(block as any).metadata?.secondary && (
-                            <span className="text-[10px] text-base-content/50 font-mono">
-                              ·{(block as any).metadata.secondary}
-                            </span>
-                          )}
+                          {block.type === "node" &&
+                            block.metadata?.secondary && (
+                              <span className="text-[10px] text-base-content/50 font-mono">
+                                ·{block.metadata.secondary}
+                              </span>
+                            )}
                         </div>
-                        {(block as any).description && (
+                        {block.type === "node" && block.description && (
                           <p className="text-xs text-base-content/70 mt-0.5">
-                            {(block as any).description}
+                            {block.description}
                           </p>
                         )}
                         <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-base-300 p-1 rounded-sm">

@@ -8,7 +8,7 @@ services:
     volumes:
       - ./.gabber:/app/.gabber
       - ./.secret:/app/.secret
-    command: ["uv", "run", "src/main.py", "editor"]
+    command: ["uv", "run", "gabber/main.py", "editor"]
     environment:
       - GABBER_SECRET_FILE=.secret
       - GABBER_REPOSITORY_DIR=.gabber
@@ -22,7 +22,7 @@ services:
     volumes:
       - ./.gabber:/app/.gabber
       - ./.secret:/app/.secret
-    command: ["uv", "run", "src/main.py", "repository"]
+    command: ["uv", "run", "gabber/main.py", "repository"]
     environment:
       - GABBER_SECRET_FILE=.secret
       - GABBER_REPOSITORY_DIR=.gabber
@@ -37,7 +37,7 @@ services:
     volumes:
       - ./.gabber:/app/.gabber
       - ./.secret:/app/.secret
-    command: ["uv", "run", "src/main.py", "engine"]
+    command: ["uv", "run", "gabber/main.py", "engine"]
     environment:
       - GABBER_SECRET_FILE=.secret
       - GABBER_REPOSITORY_DIR=.gabber

@@ -5,6 +5,7 @@
 
 import { usePropertyPad } from "../hooks/usePropertyPad";
 import { PropertyEditProps } from "./PropertyEdit";
+import { useEffect, useRef } from "react";
 
 export function MultiLineTextPropertyEdit({
   nodeId,
@@ -14,17 +15,34 @@ export function MultiLineTextPropertyEdit({
     nodeId,
     padId,
   );
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const autoResize = () => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  };
+
+  useEffect(() => {
+    autoResize();
+  }, [runtimeValue]);
   const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     setValue(event.target.value);
   };
 
   return (
     <textarea
+      ref={textareaRef}
       value={runtimeValue || ""}
-      onChange={handleChange}
+      onChange={(e) => {
+        handleChange(e);
+        autoResize();
+      }}
       placeholder="Add your comment here..."
-      rows={8}
-      className="textarea textarea-bordered w-full bg-base-300 border-2 border-black border-b-4 border-r-4 rounded-lg text-base-content placeholder-base-content/40 focus:border-primary focus:ring-2 focus:ring-primary font-sans text-base leading-relaxed hover:bg-base-100 transition-colors duration-150 resize-none min-h-[160px] flex-1"
+      rows={1}
+      className="textarea textarea-bordered w-full bg-base-300 border-2 border-black border-b-4 border-r-4 rounded-lg text-base-content placeholder-base-content/40 focus:border-primary focus:ring-2 focus:ring-primary font-sans text-base leading-relaxed hover:bg-base-100 transition-colors duration-150 resize-none min-h-[72px]"
+      style={{ overflow: "hidden" }}
     />
   );
 }

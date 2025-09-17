@@ -16,7 +16,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Engine, EngineHandler, Publication, Subscription } from "@gabber/client"
+import { Engine, EngineHandler, MCPServer, Publication, Subscription } from "@gabber/client"
 import { LocalTrack } from "@gabber/client";
 import { GetLocalTrackOptions } from "@gabber/client";
 import { ConnectionDetails, PublishParams, SubscribeParams, ConnectionState } from "@gabber/client";

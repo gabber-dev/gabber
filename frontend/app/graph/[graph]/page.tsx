@@ -12,6 +12,7 @@ export default async function Page({
   params: Promise<{ graph: string }>;
 }) {
   const { graph } = await params;
+
   const subgraph = await getSubGraph(graph);
   return <ClientPage initialSubGraph={subgraph} />;
 }

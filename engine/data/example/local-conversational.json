@@ -1,1 +1,1830 @@
-{"id":"local-conversational","name":"Local Conversational W/ Vision","created_at":"2025-08-18T17:36:49.997790","updated_at":"2025-08-19T15:12:43.890249","graph":{"nodes":[{"id":"publish_51d485ce","type":"Publish","editor_name":"Publish","editor_position":[-216.0,180.0],"editor_dimensions":[256.0,348.0],"pads":[{"id":"audio","group":"audio","type":"StatelessSourcePad","value":null,"next_pads":[{"node":"silerovad_8b46b458","pad":"audio"}],"previous_pad":null,"allowed_types":[{"type":"audio"}]},{"id":"video","group":"video","type":"StatelessSourcePad","value":null,"next_pads":[{"node":"fps_eedcaf02","pad":"video_in"}],"previous_pad":null,"allowed_types":[{"type":"video"}]}],"description":"Stream audio and video into your Gabber flow","metadata":{"primary":"core","secondary":"media","tags":["input","stream"]}},{"id":"silerovad_8b46b458","type":"SileroVAD","editor_name":"SileroVAD","editor_position":[312.0,144.0],"editor_dimensions":[362.0,432.0],"pads":[{"id":"audio","group":"audio","type":"StatelessSinkPad","value":null,"next_pads":[],"previous_pad":{"node":"publish_51d485ce","pad":"audio"},"allowed_types":[{"type":"audio"}]},{"id":"audio_clip","group":"audio_clip","type":"StatelessSourcePad","value":null,"next_pads":[{"node":"avclipzip_215e33c4","pad":"audio_clip"}],"previous_pad":null,"allowed_types":[{"type":"audio_clip"}]},{"id":"speech_started_trigger","group":"speech_started_trigger","type":"StatelessSourcePad","value":null,"next_pads":[{"node":"localllm_ec07ef49","pad":"cancel_trigger"},{"node":"kittentts_af3695c4","pad":"cancel_trigger"}],"previous_pad":null,"allowed_types":[{"type":"trigger"}]},{"id":"speech_ended_trigger","group":"speech_ended_trigger","type":"StatelessSourcePad","value":null,"next_pads":[{"node":"slidingwindow_80c47f54","pad":"flush"}],"previous_pad":null,"allowed_types":[{"type":"trigger"}]},{"id":"continued_speech_trigger","group":"continued_speech_trigger","type":"StatelessSourcePad","value":null,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"trigger"}]},{"id":"vad_threshold","group":"vad_threshold","type":"PropertySinkPad","value":0.5,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"float","maximum":1.0,"minimum":0.0}]},{"id":"silence_duration_ms","group":"silence_duration_ms","type":"PropertySinkPad","value":500,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"float","maximum":3000.0,"minimum":0.0}]},{"id":"speech_duration_ms","group":"speech_duration_ms","type":"PropertySinkPad","value":400,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"float","maximum":3000.0,"minimum":0.0}]},{"id":"pre_speech_duration_ms","group":"pre_speech_duration_ms","type":"PropertySinkPad","value":100,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"float","maximum":1000.0,"minimum":0.0}]}],"description":"Voice Activity Detection - detects when someone is speaking","metadata":{"primary":"ai","secondary":"audio","tags":["vad","detection"]}},{"id":"localllm_ec07ef49","type":"LocalLLM","editor_name":"LocalLLM","editor_position":[1980.0,132.0],"editor_dimensions":[256.0,504.0],"pads":[{"id":"run_trigger","group":"run_trigger","type":"StatelessSinkPad","value":null,"next_pads":[],"previous_pad":{"node":"autoconvert_12571325","pad":"source"},"allowed_types":[{"type":"trigger"}]},{"id":"started","group":"started","type":"StatelessSourcePad","value":null,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"trigger"}]},{"id":"tool_calls_started","group":"tool_calls_started","type":"StatelessSourcePad","value":null,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"trigger"}]},{"id":"tool_calls_finished","group":"tool_calls_finished","type":"StatelessSourcePad","value":null,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"trigger"}]},{"id":"first_token","group":"first_token","type":"StatelessSourcePad","value":null,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"trigger"}]},{"id":"text","group":"text","type":"StatelessSourcePad","value":null,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"text_stream"}]},{"id":"thinking_stream","group":"thinking_stream","type":"StatelessSourcePad","value":null,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"text_stream"}]},{"id":"context_message","group":"context_message","type":"StatelessSourcePad","value":null,"next_pads":[{"node":"llmcontext_ed05a485","pad":"insert_1"}],"previous_pad":null,"allowed_types":[{"type":"context_message"}]},{"id":"finished","group":"finished","type":"StatelessSourcePad","value":null,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"trigger"}]},{"id":"cancel_trigger","group":"cancel_trigger","type":"StatelessSinkPad","value":null,"next_pads":[],"previous_pad":{"node":"silerovad_8b46b458","pad":"speech_started_trigger"},"allowed_types":[{"type":"trigger"}]},{"id":"context","group":"context","type":"PropertySinkPad","value":[{"role":"system","content":[{"type":"text","content":"You are a helpful assistant."}],"tool_calls":[],"tool_call_id":null}],"next_pads":[],"previous_pad":{"node":"llmcontext_ed05a485","pad":"source"},"allowed_types":[{"type":"list","max_length":null,"item_type_constraints":[{}]}]},{"id":"tool_group","group":"tool_group","type":"PropertySinkPad","value":null,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"node_reference","node_types":["ToolGroup"]}]},{"id":"port","group":"port","type":"PropertySinkPad","value":7002,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"integer","maximum":null,"minimum":null}]},{"id":"text_stream","group":"text_stream","type":"StatelessSourcePad","value":null,"next_pads":[{"node":"kittentts_af3695c4","pad":"text"}],"previous_pad":null,"allowed_types":[{"type":"text_stream"}]}],"description":"Send and receive responses from any Qwen-omni language model","metadata":{"primary":"ai","secondary":"local","tags":["completion","text","qwen-omni"]}},{"id":"llmcontext_ed05a485","type":"LLMContext","editor_name":"LLMContext","editor_position":[1392.0,240.0],"editor_dimensions":[371.0,428.0],"pads":[{"id":"source","group":"source","type":"PropertySourcePad","value":[{"role":"system","content":[{"type":"text","content":"You are a helpful assistant."}],"tool_calls":[],"tool_call_id":null}],"next_pads":[{"node":"localllm_ec07ef49","pad":"context"}],"previous_pad":null,"allowed_types":[{"type":"list","max_length":null,"item_type_constraints":[{}]}]},{"id":"system_message","group":"system_message","type":"PropertySinkPad","value":{"role":"system","content":[{"type":"text","content":"You are a helpful assistant."}],"tool_calls":[],"tool_call_id":null},"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"context_message"}]},{"id":"new_user_message","group":"new_user_message","type":"StatelessSourcePad","value":null,"next_pads":[{"node":"autoconvert_12571325","pad":"sink"}],"previous_pad":null,"allowed_types":[{"type":"context_message"}]},{"id":"max_non_system_messages","group":"max_non_system_messages","type":"PropertySourcePad","value":64,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"integer","maximum":null,"minimum":0}]},{"id":"max_images","group":"max_images","type":"PropertySinkPad","value":2,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"integer","maximum":null,"minimum":0}]},{"id":"max_audios","group":"max_audios","type":"PropertySinkPad","value":2,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"integer","maximum":null,"minimum":0}]},{"id":"max_videos","group":"max_videos","type":"PropertySinkPad","value":2,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"integer","maximum":null,"minimum":0}]},{"id":"insert_0","group":"insert","type":"StatelessSinkPad","value":null,"next_pads":[],"previous_pad":{"node":"createcontextmessage_41a7bd4c","pad":"context_message"},"allowed_types":[{"type":"context_message"}]},{"id":"insert_1","group":"insert","type":"StatelessSinkPad","value":null,"next_pads":[],"previous_pad":{"node":"localllm_ec07ef49","pad":"context_message"},"allowed_types":[{"type":"context_message"}]},{"id":"insert_2","group":"insert","type":"StatelessSinkPad","value":null,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"context_message"}]}],"description":"Manages conversation context for language models","metadata":{"primary":"ai","secondary":"llm","tags":["context","memory"]}},{"id":"fps_eedcaf02","type":"FPS","editor_name":"FPS","editor_position":[168.0,648.0],"editor_dimensions":[256.0,204.0],"pads":[{"id":"video_in","group":"video_in","type":"StatelessSinkPad","value":null,"next_pads":[],"previous_pad":{"node":"publish_51d485ce","pad":"video"},"allowed_types":[{"type":"video"}]},{"id":"video_out","group":"video_out","type":"StatelessSourcePad","value":null,"next_pads":[{"node":"slidingwindow_80c47f54","pad":"video"}],"previous_pad":null,"allowed_types":[{"type":"video"}]},{"id":"fps","group":"fps","type":"PropertySinkPad","value":0.5,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"float","maximum":30.0,"minimum":0.0}]}],"description":"Controls the frame rate of the video being processed","metadata":{"primary":"core","secondary":"media","tags":["control","fps"]}},{"id":"avclipzip_215e33c4","type":"AVClipZip","editor_name":"AVClipZip","editor_position":[768.0,408.0],"editor_dimensions":[256.0,184.0],"pads":[{"id":"video_clip","group":"video_clip","type":"StatelessSinkPad","value":null,"next_pads":[],"previous_pad":{"node":"slidingwindow_80c47f54","pad":"clip"},"allowed_types":[{"type":"video_clip"}]},{"id":"audio_clip","group":"audio_clip","type":"StatelessSinkPad","value":null,"next_pads":[],"previous_pad":{"node":"silerovad_8b46b458","pad":"audio_clip"},"allowed_types":[{"type":"audio_clip"}]},{"id":"av_clip","group":"av_clip","type":"StatelessSourcePad","value":null,"next_pads":[{"node":"createcontextmessage_41a7bd4c","pad":"content"}],"previous_pad":null,"allowed_types":[{"type":"av_clip"}]}],"description":"Combines audio and video clips into a single av clip.","metadata":{"primary":"core","secondary":"media","tags":["control","clip","zip"]}},{"id":"slidingwindow_80c47f54","type":"SlidingWindow","editor_name":"SlidingWindow","editor_position":[528.0,648.0],"editor_dimensions":[292.0,288.0],"pads":[{"id":"video","group":"video","type":"StatelessSinkPad","value":null,"next_pads":[],"previous_pad":{"node":"fps_eedcaf02","pad":"video_out"},"allowed_types":[{"type":"video"}]},{"id":"audio","group":"audio","type":"StatelessSinkPad","value":null,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"audio"}]},{"id":"flush","group":"flush","type":"StatelessSinkPad","value":null,"next_pads":[],"previous_pad":{"node":"silerovad_8b46b458","pad":"speech_ended_trigger"},"allowed_types":[{"type":"trigger"}]},{"id":"reset","group":"reset","type":"StatelessSinkPad","value":null,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"trigger"}]},{"id":"clip","group":"clip","type":"StatelessSourcePad","value":null,"next_pads":[{"node":"avclipzip_215e33c4","pad":"video_clip"}],"previous_pad":null,"allowed_types":[{"type":"video_clip"}]},{"id":"window_size_s","group":"window_size_s","type":"PropertySinkPad","value":1,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"float","maximum":null,"minimum":null}]}],"description":"Slides a window of media and writes based on input trigger.","metadata":{"primary":"core","secondary":"media","tags":["control","sliding_window"]}},{"id":"createcontextmessage_41a7bd4c","type":"CreateContextMessage","editor_name":"CreateContextMessage","editor_position":[1080.0,408.0],"editor_dimensions":[268.0,196.0],"pads":[{"id":"role","group":"role","type":"PropertySinkPad","value":"user","next_pads":[],"previous_pad":null,"allowed_types":[{"type":"context_message_role"}]},{"id":"content","group":"content","type":"StatelessSinkPad","value":null,"next_pads":[],"previous_pad":{"node":"avclipzip_215e33c4","pad":"av_clip"},"allowed_types":[{"type":"av_clip"}]},{"id":"context_message","group":"context_message","type":"StatelessSourcePad","value":null,"next_pads":[{"node":"llmcontext_ed05a485","pad":"insert_0"}],"previous_pad":null,"allowed_types":[{"type":"context_message"}]}],"description":"Creates new context messages with specified role and content","metadata":{"primary":"ai","secondary":"llm","tags":["context","message"]}},{"id":"autoconvert_12571325","type":"AutoConvert","editor_name":"AutoConvert","editor_position":[1812.0,420.0],"editor_dimensions":[80.0,48.0],"pads":[{"id":"sink","group":"sink","type":"StatelessSinkPad","value":null,"next_pads":[],"previous_pad":{"node":"llmcontext_ed05a485","pad":"new_user_message"},"allowed_types":[{"type":"context_message"}]},{"id":"source","group":"source","type":"StatelessSourcePad","value":null,"next_pads":[{"node":"localllm_ec07ef49","pad":"run_trigger"}],"previous_pad":null,"allowed_types":[{"type":"trigger"}]}],"description":"Automatically converts data between compatible types","metadata":{"primary":"core","secondary":"utility","tags":["auto","type"]}},{"id":"kittentts_af3695c4","type":"KittenTTS","editor_name":"KittenTTS","editor_position":[2496.0,204.0],"editor_dimensions":[256.0,252.0],"pads":[{"id":"voice_id","group":"voice_id","type":"PropertySinkPad","value":"expr-voice-2-m","next_pads":[],"previous_pad":null,"allowed_types":[{"type":"enum","options":["expr-voice-2-m","expr-voice-2-f","expr-voice-3-m","expr-voice-3-f","expr-voice-4-m","expr-voice-4-f","expr-voice-5-m","expr-voice-5-f"]}]},{"id":"text","group":"text","type":"StatelessSinkPad","value":null,"next_pads":[],"previous_pad":{"node":"localllm_ec07ef49","pad":"text_stream"},"allowed_types":[{"type":"text_stream"}]},{"id":"audio","group":"audio","type":"StatelessSourcePad","value":null,"next_pads":[{"node":"output_c591f96d","pad":"audio_sink"}],"previous_pad":null,"allowed_types":[{"type":"audio"}]},{"id":"cancel_trigger","group":"cancel_trigger","type":"StatelessSinkPad","value":null,"next_pads":[],"previous_pad":{"node":"silerovad_8b46b458","pad":"speech_started_trigger"},"allowed_types":[{"type":"trigger"}]},{"id":"complete_transcription","group":"complete_transcription","type":"StatelessSourcePad","value":null,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"string","max_length":null,"min_length":null}]}],"description":"Converts text to speech using Gabber's native TTS model","metadata":{"primary":"local","secondary":"audio","tags":["tts","speech","gabber"]}},{"id":"output_c591f96d","type":"Output","editor_name":"Output","editor_position":[2916.0,192.0],"editor_dimensions":[256.0,300.0],"pads":[{"id":"audio_sink","group":"audio_sink","type":"StatelessSinkPad","value":null,"next_pads":[],"previous_pad":{"node":"kittentts_af3695c4","pad":"audio"},"allowed_types":[{"type":"audio"}]},{"id":"video_sink","group":"video_sink","type":"StatelessSinkPad","value":null,"next_pads":[],"previous_pad":null,"allowed_types":[{"type":"video"}]}],"description":"Outputs audio and video to the end user","metadata":{"primary":"core","secondary":"media","tags":["output","display"]}}]}}
+{
+    "id": "local-conversational",
+    "name": "Local Conversational W/ Vision",
+    "created_at": "2025-08-18T17:36:49.997790",
+    "updated_at": "2025-08-29T16:03:24.621943",
+    "graph": {
+        "nodes": [
+            {
+                "id": "comment_6d13e5c0",
+                "type": "Comment",
+                "editor_name": "Comment",
+                "editor_position": [
+                    1428.0,
+                    600.0
+                ],
+                "editor_dimensions": [
+                    320.0,
+                    270.0
+                ],
+                "pads": [
+                    {
+                        "id": "text",
+                        "group": "text",
+                        "type": "PropertySinkPad",
+                        "default_allowed_types": null,
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ],
+                        "value": "This Example requires that you run qwen-omni locally. See README for instructions.",
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    }
+                ],
+                "description": "A comment node for adding notes and documentation to your graph",
+                "metadata": {
+                    "primary": "core",
+                    "secondary": "utility",
+                    "tags": [
+                        "documentation",
+                        "comment"
+                    ]
+                }
+            },
+            {
+                "id": "publish_1505c18b",
+                "type": "Publish",
+                "editor_name": "Publish",
+                "editor_position": [
+                    -252.0,
+                    1188.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    424.0
+                ],
+                "pads": [
+                    {
+                        "id": "audio",
+                        "group": "audio",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "silerovad_60fe592a",
+                                "pad": "audio"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "video",
+                        "group": "video",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "video"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "video"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "fps_24bdcf73",
+                                "pad": "video_in"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "audio_enabled",
+                        "group": "audio_enabled",
+                        "type": "PropertySourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "boolean"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "boolean"
+                            }
+                        ],
+                        "value": false,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "video_enabled",
+                        "group": "video_enabled",
+                        "type": "PropertySourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "boolean"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "boolean"
+                            }
+                        ],
+                        "value": false,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    }
+                ],
+                "description": "Stream audio and video into your Gabber flow",
+                "metadata": {
+                    "primary": "core",
+                    "secondary": "media",
+                    "tags": [
+                        "input",
+                        "stream"
+                    ]
+                }
+            },
+            {
+                "id": "silerovad_60fe592a",
+                "type": "SileroVAD",
+                "editor_name": "SileroVAD",
+                "editor_position": [
+                    384.0,
+                    1080.0
+                ],
+                "editor_dimensions": [
+                    362.0,
+                    432.0
+                ],
+                "pads": [
+                    {
+                        "id": "audio",
+                        "group": "audio",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "publish_1505c18b",
+                            "pad": "audio"
+                        },
+                        "pad_links": []
+                    },
+                    {
+                        "id": "audio_clip",
+                        "group": "audio_clip",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "audio_clip"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "audio_clip"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "avclipzip_72441925",
+                                "pad": "audio_clip"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "speech_started_trigger",
+                        "group": "speech_started_trigger",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "localllm_69e9d280",
+                                "pad": "cancel_trigger"
+                            },
+                            {
+                                "node": "kittentts_3c3b7423",
+                                "pad": "cancel_trigger"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "speech_ended_trigger",
+                        "group": "speech_ended_trigger",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "slidingwindow_1b182aba",
+                                "pad": "flush"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "continued_speech_trigger",
+                        "group": "continued_speech_trigger",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "vad_threshold",
+                        "group": "vad_threshold",
+                        "type": "PropertySinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "float",
+                                "maximum": 1.0,
+                                "minimum": 0.0
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "float",
+                                "maximum": 1.0,
+                                "minimum": 0.0
+                            }
+                        ],
+                        "value": 0.5,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "silence_duration_ms",
+                        "group": "silence_duration_ms",
+                        "type": "PropertySinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "float",
+                                "maximum": 3000.0,
+                                "minimum": 0.0
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "float",
+                                "maximum": 3000.0,
+                                "minimum": 0.0
+                            }
+                        ],
+                        "value": 500,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "speech_duration_ms",
+                        "group": "speech_duration_ms",
+                        "type": "PropertySinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "float",
+                                "maximum": 3000.0,
+                                "minimum": 0.0
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "float",
+                                "maximum": 3000.0,
+                                "minimum": 0.0
+                            }
+                        ],
+                        "value": 400,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "pre_speech_duration_ms",
+                        "group": "pre_speech_duration_ms",
+                        "type": "PropertySinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "float",
+                                "maximum": 1000.0,
+                                "minimum": 0.0
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "float",
+                                "maximum": 1000.0,
+                                "minimum": 0.0
+                            }
+                        ],
+                        "value": 100,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    }
+                ],
+                "description": "Voice Activity Detection - detects when someone is speaking",
+                "metadata": {
+                    "primary": "ai",
+                    "secondary": "audio",
+                    "tags": [
+                        "vad",
+                        "detection"
+                    ]
+                }
+            },
+            {
+                "id": "fps_24bdcf73",
+                "type": "FPS",
+                "editor_name": "FPS",
+                "editor_position": [
+                    360.0,
+                    1668.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    204.0
+                ],
+                "pads": [
+                    {
+                        "id": "video_in",
+                        "group": "video_in",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "video"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "video"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "publish_1505c18b",
+                            "pad": "video"
+                        },
+                        "pad_links": []
+                    },
+                    {
+                        "id": "video_out",
+                        "group": "video_out",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "video"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "video"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "slidingwindow_1b182aba",
+                                "pad": "video"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "fps",
+                        "group": "fps",
+                        "type": "PropertySinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "float",
+                                "maximum": 30.0,
+                                "minimum": 0.0
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "float",
+                                "maximum": 30.0,
+                                "minimum": 0.0
+                            }
+                        ],
+                        "value": 0.5,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    }
+                ],
+                "description": "Controls the frame rate of the video being processed",
+                "metadata": {
+                    "primary": "core",
+                    "secondary": "media",
+                    "tags": [
+                        "control",
+                        "fps"
+                    ]
+                }
+            },
+            {
+                "id": "slidingwindow_1b182aba",
+                "type": "SlidingWindow",
+                "editor_name": "SlidingWindow",
+                "editor_position": [
+                    816.0,
+                    1524.0
+                ],
+                "editor_dimensions": [
+                    292.0,
+                    288.0
+                ],
+                "pads": [
+                    {
+                        "id": "video",
+                        "group": "video",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "video"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "video"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "fps_24bdcf73",
+                            "pad": "video_out"
+                        },
+                        "pad_links": []
+                    },
+                    {
+                        "id": "audio",
+                        "group": "audio",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "flush",
+                        "group": "flush",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "silerovad_60fe592a",
+                            "pad": "speech_ended_trigger"
+                        },
+                        "pad_links": []
+                    },
+                    {
+                        "id": "reset",
+                        "group": "reset",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "clip",
+                        "group": "clip",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "video_clip"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "video_clip"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "avclipzip_72441925",
+                                "pad": "video_clip"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "window_size_s",
+                        "group": "window_size_s",
+                        "type": "PropertySinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "float",
+                                "maximum": null,
+                                "minimum": null
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "float",
+                                "maximum": null,
+                                "minimum": null
+                            }
+                        ],
+                        "value": 5,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    }
+                ],
+                "description": "Slides a window of media and writes based on input trigger.",
+                "metadata": {
+                    "primary": "core",
+                    "secondary": "media",
+                    "tags": [
+                        "control",
+                        "sliding_window"
+                    ]
+                }
+            },
+            {
+                "id": "avclipzip_72441925",
+                "type": "AVClipZip",
+                "editor_name": "AVClipZip",
+                "editor_position": [
+                    1188.0,
+                    1332.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    184.0
+                ],
+                "pads": [
+                    {
+                        "id": "audio_clip",
+                        "group": "audio_clip",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "audio_clip"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "audio_clip"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "silerovad_60fe592a",
+                            "pad": "audio_clip"
+                        },
+                        "pad_links": []
+                    },
+                    {
+                        "id": "video_clip",
+                        "group": "video_clip",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "video_clip"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "video_clip"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "slidingwindow_1b182aba",
+                            "pad": "clip"
+                        },
+                        "pad_links": []
+                    },
+                    {
+                        "id": "av_clip",
+                        "group": "av_clip",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "av_clip"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "av_clip"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "createcontextmessage_4c007096",
+                                "pad": "content"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "pad_links": []
+                    }
+                ],
+                "description": "Combines audio and video clips into a single av clip.",
+                "metadata": {
+                    "primary": "core",
+                    "secondary": "media",
+                    "tags": [
+                        "control",
+                        "clip",
+                        "zip"
+                    ]
+                }
+            },
+            {
+                "id": "createcontextmessage_4c007096",
+                "type": "CreateContextMessage",
+                "editor_name": "CreateContextMessage",
+                "editor_position": [
+                    1548.0,
+                    1284.0
+                ],
+                "editor_dimensions": [
+                    288.0,
+                    196.0
+                ],
+                "pads": [
+                    {
+                        "id": "role",
+                        "group": "role",
+                        "type": "PropertySinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "context_message_role"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "context_message_role"
+                            }
+                        ],
+                        "value": "user",
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "content",
+                        "group": "content",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "audio_clip"
+                            },
+                            {
+                                "type": "video_clip"
+                            },
+                            {
+                                "type": "av_clip"
+                            },
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            },
+                            {
+                                "type": "video"
+                            },
+                            {
+                                "type": "text_stream"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "av_clip"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "avclipzip_72441925",
+                            "pad": "av_clip"
+                        },
+                        "pad_links": []
+                    },
+                    {
+                        "id": "context_message",
+                        "group": "context_message",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "context_message"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "context_message"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "llmcontext_ed1e9a92",
+                                "pad": "insert_0"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "pad_links": []
+                    }
+                ],
+                "description": "Creates new context messages with specified role and content",
+                "metadata": {
+                    "primary": "ai",
+                    "secondary": "llm",
+                    "tags": [
+                        "context",
+                        "message"
+                    ]
+                }
+            },
+            {
+                "id": "llmcontext_ed1e9a92",
+                "type": "LLMContext",
+                "editor_name": "LLMContext",
+                "editor_position": [
+                    2004.0,
+                    1044.0
+                ],
+                "editor_dimensions": [
+                    371.0,
+                    440.0
+                ],
+                "pads": [
+                    {
+                        "id": "num_inserts",
+                        "group": "config",
+                        "type": "PropertySinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "integer",
+                                "maximum": null,
+                                "minimum": 1
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "integer",
+                                "maximum": null,
+                                "minimum": 1
+                            }
+                        ],
+                        "value": 2,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "max_non_system_messages",
+                        "group": "max_non_system_messages",
+                        "type": "PropertySinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "integer",
+                                "maximum": null,
+                                "minimum": 0
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "integer",
+                                "maximum": null,
+                                "minimum": 0
+                            }
+                        ],
+                        "value": 64,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "max_videos",
+                        "group": "max_videos",
+                        "type": "PropertySinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "integer",
+                                "maximum": null,
+                                "minimum": 0
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "integer",
+                                "maximum": null,
+                                "minimum": 0
+                            }
+                        ],
+                        "value": 2,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "max_audios",
+                        "group": "max_audios",
+                        "type": "PropertySinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "integer",
+                                "maximum": null,
+                                "minimum": 0
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "integer",
+                                "maximum": null,
+                                "minimum": 0
+                            }
+                        ],
+                        "value": 2,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "max_images",
+                        "group": "max_images",
+                        "type": "PropertySinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "integer",
+                                "maximum": null,
+                                "minimum": 0
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "integer",
+                                "maximum": null,
+                                "minimum": 0
+                            }
+                        ],
+                        "value": 2,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "system_message",
+                        "group": "system_message",
+                        "type": "PropertySinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "context_message"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "context_message"
+                            }
+                        ],
+                        "value": {
+                            "role": "system",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "content": "You are a helpful assistant."
+                                }
+                            ],
+                            "tool_calls": [],
+                            "tool_call_id": null
+                        },
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "contextmessage_f1e45e78",
+                            "pad": "context_message"
+                        },
+                        "pad_links": []
+                    },
+                    {
+                        "id": "insert_0",
+                        "group": "insert",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "context_message"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "context_message"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "createcontextmessage_4c007096",
+                            "pad": "context_message"
+                        },
+                        "pad_links": []
+                    },
+                    {
+                        "id": "insert_1",
+                        "group": "insert",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "context_message"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "context_message"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "localllm_69e9d280",
+                            "pad": "context_message"
+                        },
+                        "pad_links": []
+                    },
+                    {
+                        "id": "source",
+                        "group": "source",
+                        "type": "PropertySourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "list",
+                                "max_length": null,
+                                "item_type_constraints": [
+                                    {}
+                                ]
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "list",
+                                "max_length": null,
+                                "item_type_constraints": [
+                                    {}
+                                ]
+                            }
+                        ],
+                        "value": [
+                            {
+                                "role": "system",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "content": "You are a helpful assistant."
+                                    }
+                                ],
+                                "tool_calls": [],
+                                "tool_call_id": null
+                            }
+                        ],
+                        "next_pads": [
+                            {
+                                "node": "localllm_69e9d280",
+                                "pad": "context"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "new_user_message",
+                        "group": "new_user_message",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "context_message"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "context_message"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "autoconvert_8d35e3b8",
+                                "pad": "sink"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "pad_links": []
+                    }
+                ],
+                "description": "Manages conversation context for language models",
+                "metadata": {
+                    "primary": "ai",
+                    "secondary": "llm",
+                    "tags": [
+                        "context",
+                        "memory"
+                    ]
+                }
+            },
+            {
+                "id": "contextmessage_f1e45e78",
+                "type": "ContextMessage",
+                "editor_name": "ContextMessage",
+                "editor_position": [
+                    1572.0,
+                    1032.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    208.0
+                ],
+                "pads": [
+                    {
+                        "id": "role",
+                        "group": "role",
+                        "type": "PropertySinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "context_message_role"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "context_message_role"
+                            }
+                        ],
+                        "value": "system",
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "content",
+                        "group": "content",
+                        "type": "PropertySinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ],
+                        "value": "You are a helpful assistant.",
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "context_message",
+                        "group": "context_message",
+                        "type": "PropertySourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "context_message"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "context_message"
+                            }
+                        ],
+                        "value": {
+                            "role": "system",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "content": "You are a helpful assistant."
+                                }
+                            ],
+                            "tool_calls": [],
+                            "tool_call_id": null
+                        },
+                        "next_pads": [
+                            {
+                                "node": "llmcontext_ed1e9a92",
+                                "pad": "system_message"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "pad_links": []
+                    }
+                ],
+                "description": "Stores and manages conversation context messages",
+                "metadata": {
+                    "primary": "ai",
+                    "secondary": "llm",
+                    "tags": [
+                        "context",
+                        "message"
+                    ]
+                }
+            },
+            {
+                "id": "localllm_69e9d280",
+                "type": "LocalLLM",
+                "editor_name": "LocalLLM",
+                "editor_position": [
+                    2688.0,
+                    960.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    476.0
+                ],
+                "pads": [
+                    {
+                        "id": "run_trigger",
+                        "group": "run_trigger",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "autoconvert_8d35e3b8",
+                            "pad": "source"
+                        },
+                        "pad_links": []
+                    },
+                    {
+                        "id": "started",
+                        "group": "started",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "tool_calls_started",
+                        "group": "tool_calls_started",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "tool_calls_finished",
+                        "group": "tool_calls_finished",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "first_token",
+                        "group": "first_token",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "text_stream",
+                        "group": "text_stream",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "text_stream"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "text_stream"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "kittentts_3c3b7423",
+                                "pad": "text"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "thinking_stream",
+                        "group": "thinking_stream",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "text_stream"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "text_stream"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "context_message",
+                        "group": "context_message",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "context_message"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "context_message"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "llmcontext_ed1e9a92",
+                                "pad": "insert_1"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "finished",
+                        "group": "finished",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "cancel_trigger",
+                        "group": "cancel_trigger",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "silerovad_60fe592a",
+                            "pad": "speech_started_trigger"
+                        },
+                        "pad_links": []
+                    },
+                    {
+                        "id": "context",
+                        "group": "context",
+                        "type": "PropertySinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "list",
+                                "max_length": null,
+                                "item_type_constraints": [
+                                    {}
+                                ]
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "list",
+                                "max_length": null,
+                                "item_type_constraints": [
+                                    {}
+                                ]
+                            }
+                        ],
+                        "value": [
+                            {
+                                "role": "system",
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "content": "You are a helpful assistant."
+                                    }
+                                ],
+                                "tool_calls": [],
+                                "tool_call_id": null
+                            }
+                        ],
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "llmcontext_ed1e9a92",
+                            "pad": "source"
+                        },
+                        "pad_links": []
+                    },
+                    {
+                        "id": "tool_group",
+                        "group": "tool_group",
+                        "type": "PropertySinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "node_reference",
+                                "node_types": [
+                                    "ToolGroup"
+                                ]
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "node_reference",
+                                "node_types": [
+                                    "ToolGroup"
+                                ]
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "port",
+                        "group": "port",
+                        "type": "PropertySinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "integer",
+                                "maximum": null,
+                                "minimum": null
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "integer",
+                                "maximum": null,
+                                "minimum": null
+                            }
+                        ],
+                        "value": 7002,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    }
+                ],
+                "description": "Send and receive responses from any Qwen-omni language model",
+                "metadata": {
+                    "primary": "ai",
+                    "secondary": "local",
+                    "tags": [
+                        "completion",
+                        "text",
+                        "qwen-omni"
+                    ]
+                }
+            },
+            {
+                "id": "autoconvert_8d35e3b8",
+                "type": "AutoConvert",
+                "editor_name": "AutoConvert",
+                "editor_position": [
+                    2484.0,
+                    1224.0
+                ],
+                "editor_dimensions": [
+                    80.0,
+                    48.0
+                ],
+                "pads": [
+                    {
+                        "id": "sink",
+                        "group": "sink",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": null,
+                        "allowed_types": [
+                            {
+                                "type": "context_message"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "llmcontext_ed1e9a92",
+                            "pad": "new_user_message"
+                        },
+                        "pad_links": []
+                    },
+                    {
+                        "id": "source",
+                        "group": "source",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": null,
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "localllm_69e9d280",
+                                "pad": "run_trigger"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "pad_links": []
+                    }
+                ],
+                "description": "Automatically converts data between compatible types",
+                "metadata": {
+                    "primary": "core",
+                    "secondary": "utility",
+                    "tags": [
+                        "auto",
+                        "type"
+                    ]
+                }
+            },
+            {
+                "id": "kittentts_3c3b7423",
+                "type": "KittenTTS",
+                "editor_name": "KittenTTS",
+                "editor_position": [
+                    3132.0,
+                    1056.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    246.0
+                ],
+                "pads": [
+                    {
+                        "id": "voice_id",
+                        "group": "voice_id",
+                        "type": "PropertySinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "enum",
+                                "options": [
+                                    "expr-voice-2-m",
+                                    "expr-voice-2-f",
+                                    "expr-voice-3-m",
+                                    "expr-voice-3-f",
+                                    "expr-voice-4-m",
+                                    "expr-voice-4-f",
+                                    "expr-voice-5-m",
+                                    "expr-voice-5-f"
+                                ]
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "enum",
+                                "options": [
+                                    "expr-voice-2-m",
+                                    "expr-voice-2-f",
+                                    "expr-voice-3-m",
+                                    "expr-voice-3-f",
+                                    "expr-voice-4-m",
+                                    "expr-voice-4-f",
+                                    "expr-voice-5-m",
+                                    "expr-voice-5-f"
+                                ]
+                            }
+                        ],
+                        "value": "expr-voice-2-m",
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "text",
+                        "group": "text",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "text_stream"
+                            },
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "text_stream"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "localllm_69e9d280",
+                            "pad": "text_stream"
+                        },
+                        "pad_links": []
+                    },
+                    {
+                        "id": "audio",
+                        "group": "audio",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [
+                            {
+                                "node": "output_8a08420e",
+                                "pad": "audio"
+                            }
+                        ],
+                        "previous_pad": null,
+                        "pad_links": []
+                    },
+                    {
+                        "id": "cancel_trigger",
+                        "group": "cancel_trigger",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "trigger"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "silerovad_60fe592a",
+                            "pad": "speech_started_trigger"
+                        },
+                        "pad_links": []
+                    },
+                    {
+                        "id": "complete_transcription",
+                        "group": "complete_transcription",
+                        "type": "StatelessSourcePad",
+                        "default_allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "string",
+                                "max_length": null,
+                                "min_length": null
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    }
+                ],
+                "description": "Converts text to speech using Gabber's native TTS model",
+                "metadata": {
+                    "primary": "local",
+                    "secondary": "audio",
+                    "tags": [
+                        "tts",
+                        "speech",
+                        "gabber"
+                    ]
+                }
+            },
+            {
+                "id": "output_8a08420e",
+                "type": "Output",
+                "editor_name": "Output",
+                "editor_position": [
+                    3468.0,
+                    1020.0
+                ],
+                "editor_dimensions": [
+                    256.0,
+                    300.0
+                ],
+                "pads": [
+                    {
+                        "id": "audio",
+                        "group": "audio",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "audio"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": {
+                            "node": "kittentts_3c3b7423",
+                            "pad": "audio"
+                        },
+                        "pad_links": []
+                    },
+                    {
+                        "id": "video",
+                        "group": "video",
+                        "type": "StatelessSinkPad",
+                        "default_allowed_types": [
+                            {
+                                "type": "video"
+                            }
+                        ],
+                        "allowed_types": [
+                            {
+                                "type": "video"
+                            }
+                        ],
+                        "value": null,
+                        "next_pads": [],
+                        "previous_pad": null,
+                        "pad_links": []
+                    }
+                ],
+                "description": "Outputs audio and video to the end user",
+                "metadata": {
+                    "primary": "core",
+                    "secondary": "media",
+                    "tags": [
+                        "output",
+                        "display"
+                    ]
+                }
+            }
+        ]
+    }
+}

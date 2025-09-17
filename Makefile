@@ -2,32 +2,52 @@
 
 GABBER_REPOSITORY_DIR ?= $(shell pwd)/.gabber
 GABBER_SECRET_FILE ?= $(shell pwd)/.secret
+GABBER_MCP_CONFIG ?= $(shell pwd)/mcp.yaml
 
 engine:
 	export GABBER_REPOSITORY_DIR=$(GABBER_REPOSITORY_DIR) && \
 	export GABBER_SECRET_FILE=$(GABBER_SECRET_FILE) && \
+	export GABBER_MCP_CONFIG=$(GABBER_MCP_CONFIG) && \
 	cd engine && \
 	make engine
 
 editor:
 	export GABBER_REPOSITORY_DIR=$(GABBER_REPOSITORY_DIR) && \
 	export GABBER_SECRET_FILE=$(GABBER_SECRET_FILE) && \
+	export GABBER_MCP_CONFIG=$(GABBER_MCP_CONFIG) && \
 	cd engine && \
 	make editor
 
 repository:
 	export GABBER_REPOSITORY_DIR=$(GABBER_REPOSITORY_DIR) && \
 	export GABBER_SECRET_FILE=$(GABBER_SECRET_FILE) && \
+	export GABBER_MCP_CONFIG=$(GABBER_MCP_CONFIG) && \
 	cd engine && \
 	make repository 
 
-generate:
-	engine/.venv/bin/python engine/src/main.py generate-editor-schema | json2ts -o frontend/generated/editor.ts
-	engine/.venv/bin/python engine/src/main.py generate-repository-schema | json2ts -o frontend/generated/repository.ts
-	engine/.venv/bin/python engine/src/main.py generate-state-machine-schema | json2ts -o frontend/generated/stateMachine.ts
+mcp-proxy-client:
+	cd engine && \
+	make mcp-proxy-client
 
-	engine/.venv/bin/python engine/src/main.py generate-runtime-schema | json2ts -o sdks/javascript/src/generated/runtime.ts
-	engine/.venv/bin/python engine/src/main.py generate-runtime-schema | json2ts -o sdks/react/src/generated/runtime.ts
+generate:
+	engine/.venv/bin/python engine/gabber/main.py generate-editor-schema | json2ts -o frontend/generated/editor.ts
+	engine/.venv/bin/python engine/gabber/main.py generate-repository-schema | json2ts -o frontend/generated/repository.ts
+	engine/.venv/bin/python engine/gabber/main.py generate-state-machine-schema | json2ts -o frontend/generated/stateMachine.ts
+
+	engine/.venv/bin/python engine/gabber/main.py generate-runtime-schema | json2ts -o sdks/javascript/src/generated/runtime.ts
+	make generate-python
+
+generate-python:
+	mkdir -p .gabber/.generate/python && \
+	engine/.venv/bin/python engine/gabber/main.py generate-runtime-schema > .gabber/.generate/python/runtime.json && \
+	cd .gabber/.generate/python && \
+	uv venv && uv pip install datamodel-code-generator && \
+	uv run datamodel-codegen --input runtime.json --input-file-type jsonschema --output runtime.py --use-standard-collections --output-model pydantic_v2.BaseModel --use-annotated  && \
+	mkdir -p ../../../sdks/python/gabber/generated && \
+	touch ../../../sdks/python/gabber/generated/__init__.py && \
+	echo "from . import runtime" > ../../../sdks/python/gabber/generated/__init__.py && \
+	echo "__all__ = ['runtime']" >> ../../../sdks/python/gabber/generated/__init__.py && \
+	cp runtime.py ../../../sdks/python/gabber/generated/runtime.py
 
 frontend:
 	cd frontend && \

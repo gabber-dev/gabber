@@ -7,6 +7,7 @@
 import React from "react";
 
 import { AppList } from "@/components/home/AppList";
+import { PreMadeSubGraphs } from "@/components/home/PreMadeSubGraphs";
 import { SubGraphList } from "@/components/home/SubGraphList";
 
 export function ClientPage() {
@@ -14,6 +15,7 @@ export function ClientPage() {
     <div className="h-full w-full p-2 flex flex-col gap-2">
       <AppList />
       <SubGraphList />
+      <PreMadeSubGraphs />
     </div>
   );
 }

@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
+import { PadType } from "@/generated/editor";
+
 export interface DataTypeColor {
   background: string;
   border: string;
@@ -156,20 +158,14 @@ export const DATA_TYPE_COLORS: Record<string, DataTypeColor> = {
 };
 
 export function getDataTypeColor(dataType: string): DataTypeColor {
-  // Handle both string types and object types with a 'type' property
-  const typeKey =
-    typeof dataType === "string"
-      ? dataType
-      : dataType && typeof dataType === "object" && "type" in dataType
-        ? (dataType as any).type
-        : "default";
-
-  return DATA_TYPE_COLORS[typeKey] || DATA_TYPE_COLORS.default;
+  return DATA_TYPE_COLORS[dataType] || DATA_TYPE_COLORS.default;
 }
 
-export function getPrimaryDataType(allowedTypes: any[]): string | null {
+export function getPrimaryDataType(
+  allowedTypes: PadType[],
+): string | undefined {
   if (!allowedTypes || allowedTypes.length === 0) {
-    return null;
+    return undefined;
   }
 
   // If there's only one type, return it
@@ -178,8 +174,8 @@ export function getPrimaryDataType(allowedTypes: any[]): string | null {
     return typeof type === "string"
       ? type
       : type && typeof type === "object" && "type" in type
-        ? (type as any).type
-        : null;
+        ? type.type
+        : undefined;
   }
 
   // For multiple types, try to find a common type or return the first one
@@ -188,10 +184,10 @@ export function getPrimaryDataType(allowedTypes: any[]): string | null {
       typeof type === "string"
         ? type
         : type && typeof type === "object" && "type" in type
-          ? (type as any).type
-          : null,
+          ? type.type
+          : undefined,
     )
     .filter(Boolean);
 
-  return typeNames.length > 0 ? typeNames[0] : null;
+  return typeNames.length > 0 ? typeNames[0] : undefined;
 }

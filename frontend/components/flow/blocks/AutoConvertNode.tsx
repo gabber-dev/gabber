@@ -11,6 +11,10 @@ import {
   getDataTypeColor,
   getPrimaryDataType,
 } from "./components/pads/utils/dataTypeColors";
+import {
+  NodeEditorRepresentation,
+  PadEditorRepresentation,
+} from "@/generated/editor";
 
 export function AutoConvertNode() {
   const [hovered, setHovered] = useState(false);
@@ -19,18 +23,24 @@ export function AutoConvertNode() {
 
   // Find the AutoConvert node data
   const nodeData = useMemo(() => {
-    return editorRepresentation.nodes.find((node: any) => node.id === nodeId);
+    return editorRepresentation.nodes.find(
+      (node: NodeEditorRepresentation) => node.id === nodeId,
+    );
   }, [editorRepresentation.nodes, nodeId]);
 
   // Get input and output pad data
   const inputPad = useMemo(() => {
     if (!nodeData?.pads) return null;
-    return nodeData.pads.find((pad: any) => pad.type.includes("Sink"));
+    return nodeData.pads.find((pad: PadEditorRepresentation) =>
+      pad.type.includes("Sink"),
+    );
   }, [nodeData?.pads]);
 
   const outputPad = useMemo(() => {
     if (!nodeData?.pads) return null;
-    return nodeData.pads.find((pad: any) => pad.type.includes("Source"));
+    return nodeData.pads.find((pad: PadEditorRepresentation) =>
+      pad.type.includes("Source"),
+    );
   }, [nodeData?.pads]);
 
   // Get data types for color coding
@@ -43,15 +53,6 @@ export function AutoConvertNode() {
     if (!outputPad) return null;
     return getPrimaryDataType(outputPad.allowed_types || []);
   }, [outputPad]);
-
-  // Get colors for the data types
-  const inputColor = useMemo(() => {
-    return getDataTypeColor(inputDataType || "default");
-  }, [inputDataType]);
-
-  const outputColor = useMemo(() => {
-    return getDataTypeColor(outputDataType || "default");
-  }, [outputDataType]);
 
   // Determine if there are connections to show actual types
   const hasInputConnection = inputPad?.previous_pad !== null;
@@ -80,7 +81,6 @@ export function AutoConvertNode() {
       `}
       title="Auto Convert"
     >
-      {/* Input handle (sink) */}
       <Handle
         type="target"
         position={Position.Left}

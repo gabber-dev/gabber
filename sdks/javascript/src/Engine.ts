@@ -16,11 +16,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Room } from 'livekit-client';
+import { DataPacket_Kind, RemoteParticipant, Room } from 'livekit-client';
 import { PropertyPad, SinkPad, SourcePad } from './pad/Pad';
 import { LocalAudioTrack, LocalVideoTrack, LocalTrack } from './LocalTrack';
 import { Subscription } from './Subscription';
-import { Value1 as PadTriggeredValue } from './generated/runtime';
+import { MCPServer, PadValue, Payload, RuntimeEvent, RuntimeRequest, RuntimeRequestPayload_LockPublisher, RuntimeResponsePayload } from './generated/runtime';
 import { Publication } from './Publication';
 
 export interface EngineHandler {
@@ -31,6 +31,9 @@ export class Engine  {
   private livekitRoom: Room;
   private handler?: EngineHandler;
   private lastEmittedConnectionState: ConnectionState = "disconnected";
+  private runtimeRequestIdCounter: number = 1;
+  private pendingRequests: Map<string, {res: (response: any) => void, rej: (error: string) => void}> = new Map();
+  private padValueHandlers: Map<string, Array<(data: PadValue) => void>> = new Map();
 
   constructor(params: {handler?: EngineHandler}) {
     console.debug("Creating new Engine instance");
@@ -38,6 +41,7 @@ export class Engine  {
     this.handler = params.handler;
     this.connect = this.connect.bind(this);
     this.disconnect = this.disconnect.bind(this);
+    this.onData = this.onData.bind(this);
     this.getLocalTrack = this.getLocalTrack.bind(this);
     this.publishToNode = this.publishToNode.bind(this);
     this.subscribeToNode = this.subscribeToNode.bind(this);
@@ -104,6 +108,15 @@ export class Engine  {
   }
 
   public async publishToNode(params: PublishParams): Promise<Publication> {
+    const lockPayload: RuntimeRequestPayload_LockPublisher = {
+      type: "lock_publisher",
+      publish_node: params.publishNodeId
+    }
+    const pubLock = await this.runtimeRequest({payload: lockPayload})
+    if(!pubLock.success) {
+      throw new Error("Publisher node already locked");
+    }
+
     if(params.localTrack.type === 'audio') {
       const track = params.localTrack as LocalAudioTrack;
       const mediaStreamTrack = track.mediaStream.getAudioTracks()[0];
@@ -111,6 +124,7 @@ export class Engine  {
         throw new Error('No audio track available to publish.');
       }
       const trackName = params.publishNodeId + ":audio";
+
       await this.livekitRoom.localParticipant.publishTrack(mediaStreamTrack, {name: trackName});
       return new Publication({ nodeId: params.publishNodeId, livekitRoom: this.livekitRoom, trackName });
     } else if (params.localTrack.type === 'video') {
@@ -127,19 +141,34 @@ export class Engine  {
   }
 
   public async subscribeToNode(params: SubscribeParams): Promise<Subscription> {
-    return new Subscription({nodeId: params.outputNodeId, livekitRoom: this.livekitRoom});
+    return new Subscription({nodeId: params.outputOrPublishNodeId, livekitRoom: this.livekitRoom});
   }
 
-  public getSourcePad<DataType extends PadTriggeredValue>(nodeId: string, padId: string): SourcePad<DataType> {
-    return new SourcePad<DataType>({ nodeId, padId, livekitRoom: this.livekitRoom });
+  public async runtimeRequest(params: {payload: Payload}): Promise<RuntimeResponsePayload> {
+    const { payload } = params;
+    let topic = "runtime_api"
+    const requestId = (this.runtimeRequestIdCounter++).toString();
+    const req: RuntimeRequest = {
+      req_id: requestId,
+      payload,
+    }
+    const prom = new Promise<RuntimeResponsePayload>((res, rej) => {
+      this.pendingRequests.set(requestId, { res, rej });
+      this.livekitRoom.localParticipant.publishData(new TextEncoder().encode(JSON.stringify(req)), { topic, destinationIdentities: ["gabber-engine"] });
+    });
+    return prom;
   }
 
-  public getSinkPad<DataType extends PadTriggeredValue>(nodeId: string, padId: string): SinkPad<DataType> {
-    return new SinkPad<DataType>({ nodeId, padId, livekitRoom: this.livekitRoom });
+  public getSourcePad<DataType extends PadValue>(nodeId: string, padId: string): SourcePad<DataType> {
+    return new SourcePad<DataType>({ nodeId, padId, livekitRoom: this.livekitRoom, engine: this });
   }
 
-  public getPropertyPad<DataType extends PadTriggeredValue>(nodeId: string, padId: string): PropertyPad<DataType> {
-    return new PropertyPad<DataType>({ nodeId, padId, livekitRoom: this.livekitRoom });
+  public getSinkPad<DataType extends PadValue>(nodeId: string, padId: string): SinkPad<DataType> {
+    return new SinkPad<DataType>({ nodeId, padId, livekitRoom: this.livekitRoom, engine: this });
+  }
+
+  public getPropertyPad<DataType extends PadValue>(nodeId: string, padId: string): PropertyPad<DataType> {
+    return new PropertyPad<DataType>({ nodeId, padId, livekitRoom: this.livekitRoom, engine: this });
   }
 
   private setupRoomEventListeners(): void {
@@ -158,6 +187,65 @@ export class Engine  {
     this.livekitRoom.on('participantDisconnected', (participant) => {
       this.emitConnectionStateChange();
     });
+
+    this.livekitRoom.on('dataReceived', this.onData);
+  }
+
+  _addPadValueHandler(nodeId: string, padId: string, handler: (data: PadValue) => void): void {
+    const key = `${nodeId}:${padId}`;
+    if (!this.padValueHandlers.has(key)) {
+      this.padValueHandlers.set(key, []);
+    }
+    this.padValueHandlers.get(key)!.push(handler);
+  }
+
+  _removePadValueHandler(nodeId: string, padId: string, handler: (data: PadValue) => void): void {
+    const key = `${nodeId}:${padId}`;
+    const handlers = this.padValueHandlers.get(key);
+    if (handlers) {
+      this.padValueHandlers.set(key, handlers.filter(h => h !== handler));
+    }
+  }
+
+  private onData(data: Uint8Array, rp: RemoteParticipant | undefined, __: DataPacket_Kind | undefined, topic: string | undefined): void {
+    if(rp?.identity !== "gabber-engine") {
+      return;
+    }
+
+    if (topic !== "runtime_api") {
+      return; // Ignore data not on this pad's channel
+    }
+
+    const msg = JSON.parse(new TextDecoder().decode(data));
+    if (msg.type === "ack") {
+        console.log("Received ACK for request:", msg.req_id);
+    } else if (msg.type === "complete") {
+        console.log("Received COMPLETE for request:", msg.req_id);
+        if(msg.error) {
+            console.error("Error in request:", msg.error);
+            const pendingRequest = this.pendingRequests.get(msg.req_id);
+            if (pendingRequest) {
+                pendingRequest.rej(msg.error);
+            }
+        } else {
+            const pendingRequest = this.pendingRequests.get(msg.req_id);
+            if (pendingRequest) {
+                pendingRequest.res(msg.payload);
+            }
+        }
+        this.pendingRequests.delete(msg.req_id);
+    } else if (msg.type === "event") {
+        const castedMsg: RuntimeEvent = msg
+        const payload = castedMsg.payload;
+        if(payload.type === "value") {
+          const nodeId = payload.node_id;
+          const padId = payload.pad_id;
+          const handlers = this.padValueHandlers.get(`${nodeId}:${padId}`);
+          for(const handler of handlers || []) {
+            handler(payload.value);
+          }
+        }
+    }
   }
 }
 
@@ -193,7 +281,7 @@ export type PublishParams = {
 }
 
 export type SubscribeParams = {
-  outputNodeId: string;
+  outputOrPublishNodeId: string;
 }
 
 export type ConnectionState = 'disconnected' | 'connecting' | 'waiting_for_engine' | 'connected';

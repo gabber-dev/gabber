@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "gabber-engine"
 version = "0.1.0"
@@ -17,8 +21,8 @@ dependencies = [
     "json-repair~=0.47.4",
     "pydantic-to-typescript",
     "click",
-    "livekit-agents~=1.0.23",
-    "livekit~=1.0.11",
+    "livekit-agents~=1.2.9",
+    "livekit~=1.0.13",
     "opencv-python-headless~=4.12.0",
     "nltk",
     "posthog",
@@ -28,12 +32,15 @@ dependencies = [
     "elevenlabs==1.12.1",
     "pyvips~=2.0.2",
     "av~=14.4.0",
-    "openai~=1.93.0",
+    "openai~=1.107.1",
     "pillow~=11.1.0",
     "msgpack~=1.1.1",
     "python-dotenv~=1.1.1",
     "aiofiles~=24.1.0",
     "aiohttp-cors~=0.8.1",
+    "jinja2~=3.1.6",
+    "mcp>=1.13.1",
+    "pyyaml>=6.0.2",
 ]
 
 [dependency-groups]
@@ -71,7 +78,7 @@ exclude = [
     "venv",
 ]
 
-src = ["src"]
+src = ["gabber"]
 
 # Enable a broad set of lint rules for comprehensive checks
 [tool.ruff.lint]
@@ -81,3 +88,6 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 # Use Google-style docstring conventions (common in projects like Pandas)
 [tool.ruff.lint.pydocstyle]
 convention = "google"
+
+[tool.hatch.build.targets.wheel]
+packages = ["gabber"]
