@@ -24,14 +24,20 @@ import axios from "axios";
 import { v4 } from "uuid";
 
 function getBaseUrl() {
-  if (typeof window !== "undefined") {
-    return "http://localhost:8001";
-  }
   const host = process.env.REPOSITORY_HOST;
+  const publicHost = process.env.GABBER_PUBLIC_HOST;
   if (host) {
     return `http://${host}`;
   }
-  return "http://localhost:8001";
+  return `http://${publicHost || "localhost"}:8001`;
+}
+
+export function getEditorUrl() {
+  if (typeof window !== "undefined") {
+    throw new Error("getEditorUrl should only be called on the server");
+  }
+  const publicHost = process.env.GABBER_PUBLIC_HOST;
+  return `ws://${publicHost || "localhost"}:8000/ws`;
 }
 
 export async function getApp(appId: string) {

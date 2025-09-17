@@ -14,8 +14,9 @@ import toast from "react-hot-toast";
 
 type Props = {
   initialSubGraph: RepositorySubGraph;
+  editorUrl: string;
 };
-export function ClientPage({ initialSubGraph }: Props) {
+export function ClientPage({ initialSubGraph, editorUrl }: Props) {
   const saveImpl = useCallback(async () => {
     toast.error("Premade subgraphs can't be modified");
   }, []);
@@ -28,7 +29,7 @@ export function ClientPage({ initialSubGraph }: Props) {
     <div className="absolute top-0 left-0 right-0 bottom-0">
       <EditorProvider
         debug={false}
-        editor_url="ws://localhost:8000/ws"
+        editor_url={editorUrl}
         saveImpl={saveImpl}
         savedGraph={initialSubGraph.graph}
       >

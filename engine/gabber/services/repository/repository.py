@@ -649,7 +649,8 @@ class RepositoryServer:
             )
 
     async def app_run(self, request: aiohttp.web.Request):
-        livekit_url = "ws://localhost:7880"
+        public_host = os.environ.get("GABBER_PUBLIC_HOST", "localhost")
+        livekit_url = f"ws://{public_host}:7880"
         internal_livekit_url = os.environ.get("LIVEKIT_URL", livekit_url)
         livekit_api_key = "devkey"
         livekit_api_secret = "secret"
@@ -693,7 +694,8 @@ class RepositoryServer:
         )
 
     async def debug_connection(self, request: aiohttp.web.Request):
-        livekit_url = "ws://localhost:7880"
+        public_host = os.environ.get("GABBER_PUBLIC_HOST", "localhost")
+        livekit_url = f"ws://{public_host}:7880"
         internal_livekit_url = os.environ.get("LIVEKIT_URL", livekit_url)
         livekit_api_key = "devkey"
         livekit_api_secret = "secret"

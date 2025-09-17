@@ -27,6 +27,7 @@ services:
       - GABBER_SECRET_FILE=.secret
       - GABBER_REPOSITORY_DIR=.gabber
       - LIVEKIT_URL=ws://livekit:7880
+      - GABBER_PUBLIC_HOST=${GABBER_PUBLIC_HOST:-localhost}
 
   engine:
     depends_on:
@@ -70,6 +71,7 @@ services:
       - "3000:3000"
     environment:
       - REPOSITORY_HOST=repository:8001
+      - GABBER_PUBLIC_HOST=${GABBER_PUBLIC_HOST:-localhost}
 
   kitten_tts:
     build:
