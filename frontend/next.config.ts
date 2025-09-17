@@ -7,6 +7,16 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // output: "standalone",
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "gabber-v2.gabber.dev",
+        port: "",
+        pathname: "/**",
+      },
+    ],
+  },
 };
 
 export default nextConfig;
