@@ -3,45 +3,21 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { RepositorySubGraph } from "@/generated/repository";
 import { useRepository } from "@/hooks/useRepository";
 import {
   CubeIcon,
   DocumentDuplicateIcon,
   ChevronRightIcon,
 } from "@heroicons/react/24/solid";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import Link from "next/link";
-import { listPreMadeSubGraphs } from "@/lib/repository";
 
 export function PreMadeSubGraphs() {
-  const { saveSubGraph, refreshSubGraphs } = useRepository();
-  const [preMadeSubGraphs, setPreMadeSubGraphs] = useState<
-    RepositorySubGraph[]
-  >([]);
+  const { saveSubGraph, refreshSubGraphs, premadeSubGraphs } = useRepository();
   const [selectedSubGraphs, setSelectedSubGraphs] = useState<Set<string>>(
     new Set(),
   );
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const loadPreMadeSubGraphs = async () => {
-      try {
-        setLoading(true);
-        // Load both premade subgraphs
-        const premade = await listPreMadeSubGraphs();
-        setPreMadeSubGraphs(premade);
-      } catch (error) {
-        console.error("Error loading premade subgraphs:", error);
-        toast.error("Failed to load premade subgraphs");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadPreMadeSubGraphs();
-  }, []);
 
   const handleCopySelected = async () => {
     const selectedArray = Array.from(selectedSubGraphs);
@@ -52,7 +28,7 @@ export function PreMadeSubGraphs() {
 
     // Copy all selected subgraphs
     for (const subGraphId of selectedArray) {
-      const subGraph = preMadeSubGraphs.find((sg) => sg.id === subGraphId);
+      const subGraph = premadeSubGraphs.find((sg) => sg.id === subGraphId);
       if (subGraph) {
         try {
           const newName = `${subGraph.name} (Copy)`;
@@ -73,25 +49,6 @@ export function PreMadeSubGraphs() {
 
     toast.success("Subgraphs copied successfully!");
   };
-
-  if (loading) {
-    return (
-      <div className="relative w-full">
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-bangers text-2xl tracking-wider">
-              Pre-made Sub Graphs
-            </h2>
-          </div>
-          <div className="border-2 border-black border-b-4 border-r-4 rounded-xl p-4 bg-base-200">
-            <div className="flex justify-center items-center py-8">
-              <div className="loading loading-spinner loading-lg"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="relative w-full">
@@ -114,7 +71,7 @@ export function PreMadeSubGraphs() {
         </div>
         <div className="border-2 border-black border-b-4 border-r-4 rounded-xl p-4 bg-base-200">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-            {preMadeSubGraphs.map((subGraph) => (
+            {premadeSubGraphs.map((subGraph) => (
               <Link
                 key={subGraph.id}
                 href={`/premade_graph/${subGraph.id}`}
