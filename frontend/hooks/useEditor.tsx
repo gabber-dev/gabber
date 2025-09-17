@@ -132,7 +132,7 @@ export function EditorProvider({
   >(undefined);
   const [saving, setSaving] = useState(false);
   const [reactFlowRepresentation, setReactFlowRepresentation] = useState<{
-    nodes: Node[];
+    nodes: Node<NodeEditorRepresentation>[];
     edges: Edge[];
   }>({
     nodes: [],
@@ -1081,5 +1081,5 @@ function graphToReact(
 
   const allNodes = [...nodes, ...portalStarts, ...portalEnds];
 
-  return { nodes: allNodes, edges };
+  return { nodes: allNodes as Node<NodeEditorRepresentation>[], edges };
 }

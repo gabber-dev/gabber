@@ -35,7 +35,7 @@ class Json(node.Node):
                 group="value",
                 owner_node=self,
                 default_type_constraints=[pad.types.Object()],
-                value={},
+                value="",
             )
 
         # Add optional string input pad for JSON strings

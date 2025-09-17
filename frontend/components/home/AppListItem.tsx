@@ -4,6 +4,7 @@
  */
 
 import { RepositoryApp } from "@/generated/repository";
+import { useRepository } from "@/hooks/useRepository";
 import { ChevronRightIcon, CubeIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 
@@ -21,10 +22,11 @@ export function AppListItem({
     e.stopPropagation();
     onSelect(!isSelected);
   };
+  const { appEditPath } = useRepository();
 
   return (
     <Link
-      href={`/app/${app.id}`}
+      href={appEditPath(app.id)}
       className="relative overflow-visible card bg-base-200 hover:bg-base-300 border-2 border-black border-b-4 border-r-4 transform hover:translate-y-1 active:translate-y-2 transition-all group"
     >
       <div className="card-body p-4 relative">

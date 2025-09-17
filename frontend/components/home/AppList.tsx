@@ -16,12 +16,11 @@ import { AppListItem } from "./AppListItem";
 import ReactModal from "react-modal";
 import { CreateAppModal } from "./CreateAppModal";
 import toast from "react-hot-toast";
-import { importApp } from "@/lib/repository";
 
 export function AppList() {
   const [showModal, setShowModal] = useState(false);
   const [appsExpanded, setAppsExpanded] = useState(false);
-  const { apps, deleteApp, saveApp, refreshApps } = useRepository();
+  const { apps, deleteApp, saveApp, refreshApps, importApp } = useRepository();
   const [selectedApps, setSelectedApps] = useState<Set<string>>(new Set());
   const [renameModal, setRenameModal] = useState<{
     isOpen: boolean;
@@ -113,7 +112,7 @@ export function AppList() {
         toast.error("Failed to import app");
       }
     },
-    [refreshApps],
+    [importApp, refreshApps],
   );
 
   const hasMoreThanFourApps = apps.length > 4;
