@@ -33,7 +33,10 @@ function getBaseUrl() {
 }
 
 export function getEditorUrl() {
-  const publicHost = process.env.NEXT_PUBLIC_GABBER_PUBLIC_HOST;
+  if (typeof window !== "undefined") {
+    throw new Error("getEditorUrl should only be called on the server");
+  }
+  const publicHost = process.env.GABBER_PUBLIC_HOST;
   return `ws://${publicHost || "localhost"}:8000/ws`;
 }
 

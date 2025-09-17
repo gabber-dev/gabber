@@ -71,7 +71,7 @@ services:
       - "3000:3000"
     environment:
       - REPOSITORY_HOST=repository:8001
-      - NEXT_PUBLIC_GABBER_PUBLIC_HOST=${GABBER_PUBLIC_HOST:-localhost}
+      - GABBER_PUBLIC_HOST=${GABBER_PUBLIC_HOST:-localhost}
 
   kitten_tts:
     build:
