@@ -97,7 +97,7 @@ ANTHROPIC_API_KEY=your_anthropic_api_key_here
 3. Once your secrets are configured, they will automatically appear in dropdown menus for any node that requires them
 4. The actual secret values are never stored in the graph data, ensuring safe sharing of your applications without risk of exposing your API keys
 
-**Important**: Make sure to add `.secret` to your `.gitignore` file to prevent accidentally committing your API keys to version control. This should be configured by default.
+**Important**: Make sure `.secret` is added to your `.gitignore` file to prevent accidentally committing your API keys to version control. This should be configured by default.
 
 ## Technical Implementation
 
