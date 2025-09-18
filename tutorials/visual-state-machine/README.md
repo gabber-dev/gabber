@@ -80,6 +80,25 @@ This pattern is ideal for applications that need to:
 3. Run the application to see the state machine in action
 4. Try different scenarios (paying, showing/hiding phone) to see how the AI responds
 
+## Setting Up Secrets
+
+Some nodes in this application require API keys to function properly. To configure these secrets:
+
+1. Access the `.secret` file in your Gabber project root directory
+2. Add your API keys in the following format:
+
+```bash
+# Example .secret file
+OPENAI_API_KEY=your_openai_api_key_here
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+# Add other required API keys as needed
+```
+
+3. Once your secrets are configured, they will automatically appear in dropdown menus for any node that requires them
+4. The actual secret values are never stored in the graph data, ensuring safe sharing of your applications without risk of exposing your API keys
+
+**Important**: Make sure to add `.secret` to your `.gitignore` file to prevent accidentally committing your API keys to version control. This should be configured by default.
+
 ## Technical Implementation
 
 The state machine uses:
