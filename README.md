@@ -13,7 +13,7 @@
 
 If you found this interesting, please consider leaving a star ⭐️. We will be updating this repo frequently with new nodes and functionality.
 
-**[Getting Started Video](https://youtube.com/watch?v=https://youtu.be/1rQkxvAIDGc)** - Watch a walkthrough of building your first app with Gabber
+📺 **[Getting Started Video](https://youtu.be/1rQkxvAIDGc)** - Watch a walkthrough of building your first app with Gabber
 
 ## Quickstart 
 
@@ -169,7 +169,17 @@ creating more nodes and examples. Here is a non-ordered list of things we find i
 ## Example Apps 
 After starting Gabber using `make all`, you can navigate to the examples tab to play around with different pre-made apps. SDK minimal examples are located within the corresponding SDK directories when appropriate. 
 
-More elaborate examples (for example a Unity app) will be in their own dedicated repos.
+More elaborate examples can be found in the tutorials directory.
+
+Here are a number of sample videos showcasing what can be made with Gabber:
+
+- **[Multiparticipant Conversational AI](https://youtu.be/nCsxHFvA7q0)**
+- **[AI Security Guard](https://youtu.be/fBtSoBcXhBA)** (state machines, video, conversational AI)
+- **[AI Visual Companion + Paywall](https://youtu.be/LgesCzGhGzc)**
+- **[AI Screen Viewer That Keeps You On Task](https://youtu.be/hqn5KQxFCLI)**
+- **[AI Conversational Onboarding Concierge](https://youtu.be/sI5gJIDEgyM)**
+- **[Voice Based Smart Assistant](https://youtu.be/qqJf-BBnQtQ)** 
+
 
 ## Community
 Gabber is source-available and developer-first — we’d love for you to build with us.
