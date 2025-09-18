@@ -13,7 +13,7 @@
 
 If you found this interesting, please consider leaving a star ⭐️. We will be updating this repo frequently with new nodes and functionality.
 
-**[Getting Started Video](https://youtu.be/1rQkxvAIDGc)** - Watch a walkthrough of building your first app with Gabber
+**[Getting Started Video](https://youtu.be/8ZNxZLmr9XY)** - Watch a walkthrough of building your first app with Gabber
 
 ## Quickstart 
 
@@ -46,7 +46,7 @@ docker compose up
 
 If you are using the `LocalLLM` node, you'll need to start an LLM server. LLM scripts are provided for convenience in the `services/local-llm` directory.
 
-On MacOS, make sure [llama.cpp](https://https://github.com/ggml-org/llama.cpp) is installed and use llama.cpp scripts. As of making this, the brew package for llama.cpp didn't seem to be built with Metal support (GPU acceleration for MacOS), therefore it's recommended you build from source.
+On MacOS, make sure [llama.cpp](https://github.com/ggml-org/llama.cpp) is installed and use llama.cpp scripts. As of making this, the brew package for llama.cpp didn't seem to be built with Metal support (GPU acceleration for MacOS), therefore it's recommended you build from source.
 
 On Linux or WSL you can use the vllm scripts.
 
