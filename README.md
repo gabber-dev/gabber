@@ -169,7 +169,7 @@ creating more nodes and examples. Here is a non-ordered list of things we find i
 ## Example Apps 
 After starting Gabber using `make all`, you can navigate to the examples tab to play around with different pre-made apps. SDK minimal examples are located within the corresponding SDK directories when appropriate. 
 
-More elaborate examples can be found in the tutorials directory.
+More elaborate examples can be found in the [tutorials directory](https://github.com/gabber-dev/gabber/tree/main/tutorials).
 
 Here are a number of sample videos showcasing what can be made with Gabber:
 
