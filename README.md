@@ -13,7 +13,7 @@
 
 If you found this interesting, please consider leaving a star ⭐️. We will be updating this repo frequently with new nodes and functionality.
 
-📺 **[Getting Started Video](https://youtu.be/1rQkxvAIDGc)** - Watch a walkthrough of building your first app with Gabber
+**[Getting Started Video](https://youtu.be/1rQkxvAIDGc)** - Watch a walkthrough of building your first app with Gabber
 
 ## Quickstart 
 
