@@ -1,6 +1,6 @@
 # Visual State Machine - Phone Detector
 
-![Visual State Machine - Phone Detector](visual-state-machine-phone-detector.png)
+![Visual State Machine - Phone Detector](https://readme-assets.gabber.dev/visual-state-machine-phone-detector.png)
 
 This tutorial demonstrates how to build a conversational AI application using Gabber's visual state machine capabilities. The application tracks user payment status and phone visibility to provide context-aware responses in real-time.
 

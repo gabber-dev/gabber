@@ -1,6 +1,6 @@
 
 <p align="center">
-  <img src="frontend/public/banner.png" alt="Gabber Logo" width="100%"/>
+  <img src="https://readme-assets.gabber.dev/banner.png" alt="Gabber Banner" width="100%"/>
 </p>
 
 # Gabber - Real-time AI Engine
@@ -8,7 +8,7 @@
 [Gabber](https://gabber.dev) is an engine for building real-time AI across all modalities — voice, text, video, and more. It supports graph-based apps with multiple participants and simultaneous media streams. Our goal is to give developers the **most powerful, developer-friendly AI app builder** available.
 
 <p align="center">
-  <img src="frontend/public/graph-example.png" alt="Gabber Graph Example" width="100%"/>
+  <img src="https://readme-assets.gabber.dev/graph-example.png" alt="Gabber Graph Example" width="100%"/>
 </p>
 
 If you found this interesting, please consider leaving a star ⭐️. We will be updating this repo frequently with new nodes and functionality.
