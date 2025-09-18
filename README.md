@@ -143,9 +143,9 @@ All entities are stored in the `.gabber` directory. It runs on port `8001`.
 Gabber provides SDKs to help you integrate these services into your applications quickly.
 
 Currently available SDKs include:
-- **JavaScript/TypeScript SDK** — framework-agnostic client library for Node.js, browsers, Bun, and Deno. Ideal for backend services or non-React frontends.
-- **React SDK**: prebuilt hooks, providers, and UI components for building Gabber-powered apps in React or React Native with minimal setup. Wraps the Typescript SDK.
-- **Python SDK**: for backend integrations, prototyping, scripting, Rasberry Pi, etc. (Coming Soon)
+- **[JavaScript/TypeScript SDK](sdks/javascript/)** — framework-agnostic client library for Node.js, browsers, Bun, and Deno. Ideal for backend services or non-React frontends.
+- **[React SDK](sdks/react/)**: prebuilt hooks, providers, and UI components for building Gabber-powered apps in React or React Native with minimal setup. Wraps the TypeScript SDK.
+- **[Python SDK](sdks/python/)**: for backend integrations, prototyping, scripting, Raspberry Pi, etc.
 - **Unity SDK**: for giving eyes, ears, and a voice to your Unity games & simulations. (Coming Soon)
 - **iOS SDK**: (Coming Soon, let us know if this is a priority for you.)
 - **Android SDK**: (Coming Soon, let us know if this is a priority for you.)
@@ -188,7 +188,7 @@ Gabber is source-available and developer-first — we’d love for you to build 
 - **See something missing?** We welcome contributions — new nodes or bugfixes are all appreciated.
 - **Early access or enterprise?** [Reach out](mailto:brian@gabber.dev) or file an issue with the label `enterprise`.
 - **Stay in the loop:** Follow [@gabberdev](https://x.com/gabberdev) on Twitter/X or star the repo to get updates.
-- **Join the community** Join the [Discord](https://discord.gg/hJdjwBRc7g) to leave feedback, chat with the team & other builders, and stay up to date.
+- **Community:** Join the [Discord](https://discord.gg/hJdjwBRc7g) to leave feedback, chat with the team & other builders, and stay up to date.
 
 ## License
 
