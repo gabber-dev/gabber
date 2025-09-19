@@ -16,8 +16,14 @@ type Props = {
   connectionDetails: AppRunConnectionDetails;
   runId: string;
   graph: GraphEditorRepresentation;
+  editorUrl: string;
 };
-export function ClientPage({ graph, connectionDetails, runId }: Props) {
+export function ClientPage({
+  graph,
+  connectionDetails,
+  runId,
+  editorUrl,
+}: Props) {
   const saveImpl = useCallback(async () => {
     throw new Error("saveImpl is not implemented for Debug mode");
   }, []);
@@ -30,7 +36,7 @@ export function ClientPage({ graph, connectionDetails, runId }: Props) {
     <div className="absolute top-0 left-0 right-0 bottom-0">
       <EditorProvider
         debug={true}
-        editor_url="ws://localhost:8000/ws"
+        editor_url={editorUrl}
         saveImpl={saveImpl}
         savedGraph={graph}
       >

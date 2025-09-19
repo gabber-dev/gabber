@@ -17,11 +17,12 @@ export function TopBar() {
       <div className="flex items-center gap-4">
         <Link href={`/`} className="flex items-center py-2">
           <Image
-            src="/logo.png"
+            src="https://gabber-v2.gabber.dev/gabber-logo%201.png"
             alt="Gabber"
             width={100}
             height={100}
             className="object-contain"
+            priority
           />
         </Link>
         <Link

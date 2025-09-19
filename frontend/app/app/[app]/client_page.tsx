@@ -16,9 +16,10 @@ import { createAppRun } from "@/lib/repository";
 
 type Props = {
   existingApp: RepositoryApp;
+  editorUrl: string;
 };
 
-export function ClientPage({ existingApp }: Props) {
+export function ClientPage({ existingApp, editorUrl }: Props) {
   const { saveApp } = useRepository();
   const [savedGraph, setSavedGraph] = useState<GraphEditorRepresentation>(
     existingApp.graph as GraphEditorRepresentation,
@@ -48,7 +49,7 @@ export function ClientPage({ existingApp }: Props) {
       <div className="absolute top-0 left-0 right-0 bottom-0">
         <EditorProvider
           debug={false}
-          editor_url="ws://localhost:8000/ws"
+          editor_url={editorUrl}
           savedGraph={savedGraph}
           saveImpl={saveImpl}
         >

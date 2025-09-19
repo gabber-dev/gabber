@@ -1,13 +1,19 @@
 
 <p align="center">
-  <img src="frontend/public/banner.png" alt="Gabber Logo" width="100%"/>
+  <img src="https://readme-assets.gabber.dev/banner.png" alt="Gabber Banner" width="100%"/>
 </p>
 
 # Gabber - Real-time AI Engine
 
 [Gabber](https://gabber.dev) is an engine for building real-time AI across all modalities — voice, text, video, and more. It supports graph-based apps with multiple participants and simultaneous media streams. Our goal is to give developers the **most powerful, developer-friendly AI app builder** available.
 
+<p align="center">
+  <img src="https://readme-assets.gabber.dev/graph-example.png" alt="Gabber Graph Example" width="100%"/>
+</p>
+
 If you found this interesting, please consider leaving a star ⭐️. We will be updating this repo frequently with new nodes and functionality.
+
+**[Getting Started Video](https://youtu.be/8ZNxZLmr9XY)** - Watch a walkthrough of building your first app with Gabber
 
 ## Quickstart 
 
@@ -40,7 +46,7 @@ docker compose up
 
 If you are using the `LocalLLM` node, you'll need to start an LLM server. LLM scripts are provided for convenience in the `services/local-llm` directory.
 
-On MacOS, make sure [llama.cpp](https://https://github.com/ggml-org/llama.cpp) is installed and use llama.cpp scripts. As of making this, the brew package for llama.cpp didn't seem to be built with Metal support (GPU acceleration for MacOS), therefore it's recommended you build from source.
+On MacOS, make sure [llama.cpp](https://github.com/ggml-org/llama.cpp) is installed and use llama.cpp scripts. As of making this, the brew package for llama.cpp didn't seem to be built with Metal support (GPU acceleration for MacOS), therefore it's recommended you build from source.
 
 On Linux or WSL you can use the vllm scripts.
 
@@ -137,9 +143,9 @@ All entities are stored in the `.gabber` directory. It runs on port `8001`.
 Gabber provides SDKs to help you integrate these services into your applications quickly.
 
 Currently available SDKs include:
-- **JavaScript/TypeScript SDK** — framework-agnostic client library for Node.js, browsers, Bun, and Deno. Ideal for backend services or non-React frontends.
-- **React SDK**: prebuilt hooks, providers, and UI components for building Gabber-powered apps in React or React Native with minimal setup. Wraps the Typescript SDK.
-- **Python SDK**: for backend integrations, prototyping, scripting, Rasberry Pi, etc. (Coming Soon)
+- **[JavaScript/TypeScript SDK](sdks/javascript/)** — framework-agnostic client library for Node.js, browsers, Bun, and Deno. Ideal for backend services or non-React frontends.
+- **[React SDK](sdks/react/)**: prebuilt hooks, providers, and UI components for building Gabber-powered apps in React or React Native with minimal setup. Wraps the TypeScript SDK.
+- **[Python SDK](sdks/python/)**: for backend integrations, prototyping, scripting, Raspberry Pi, etc.
 - **Unity SDK**: for giving eyes, ears, and a voice to your Unity games & simulations. (Coming Soon)
 - **iOS SDK**: (Coming Soon, let us know if this is a priority for you.)
 - **Android SDK**: (Coming Soon, let us know if this is a priority for you.)
@@ -163,7 +169,17 @@ creating more nodes and examples. Here is a non-ordered list of things we find i
 ## Example Apps 
 After starting Gabber using `make all`, you can navigate to the examples tab to play around with different pre-made apps. SDK minimal examples are located within the corresponding SDK directories when appropriate. 
 
-More elaborate examples (for example a Unity app) will be in their own dedicated repos.
+More elaborate examples can be found in the [tutorials directory](https://github.com/gabber-dev/gabber/tree/main/tutorials).
+
+Here are a number of sample videos showcasing what can be made with Gabber:
+
+- **[Multiparticipant Conversational AI](https://youtu.be/nCsxHFvA7q0)**
+- **[AI Security Guard](https://youtu.be/fBtSoBcXhBA)** (state machines, video, conversational AI)
+- **[AI Visual Companion + Paywall](https://youtu.be/LgesCzGhGzc)**
+- **[AI Screen Viewer That Keeps You On Task](https://youtu.be/hqn5KQxFCLI)**
+- **[AI Conversational Onboarding Concierge](https://youtu.be/sI5gJIDEgyM)**
+- **[Voice Based Smart Assistant](https://youtu.be/qqJf-BBnQtQ)** 
+
 
 ## Community
 Gabber is source-available and developer-first — we’d love for you to build with us.
@@ -172,7 +188,7 @@ Gabber is source-available and developer-first — we’d love for you to build 
 - **See something missing?** We welcome contributions — new nodes or bugfixes are all appreciated.
 - **Early access or enterprise?** [Reach out](mailto:brian@gabber.dev) or file an issue with the label `enterprise`.
 - **Stay in the loop:** Follow [@gabberdev](https://x.com/gabberdev) on Twitter/X or star the repo to get updates.
-- **Join the community** Join the [Discord](https://discord.gg/hJdjwBRc7g) to leave feedback, chat with the team & other builders, and stay up to date.
+- **Community:** Join the [Discord](https://discord.gg/hJdjwBRc7g) to leave feedback, chat with the team & other builders, and stay up to date.
 
 ## License
 

@@ -6,6 +6,7 @@
 import ReactModal from "react-modal";
 import { useEditor } from "@/hooks/useEditor";
 import { useNodeId } from "@xyflow/react";
+
 export function StateMachineGraphMini() {
   const { clearAllSelection, setStateMachineEditing } = useEditor();
   const nodeId = useNodeId();

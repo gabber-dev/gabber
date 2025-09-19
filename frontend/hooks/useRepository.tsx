@@ -28,6 +28,8 @@ type RepositoryContextType = {
   deleteSubGraph: (subGraphId: string) => Promise<void>;
   refreshSubGraphs: () => Promise<void>;
 
+  premadeSubGraphs: RepositorySubGraph[];
+
   importApp(exp: AppExport): Promise<RepositoryApp>;
   exportApp(appId: string): Promise<AppExport>;
 
@@ -57,6 +59,8 @@ type Props = {
   listSubgraphsImpl: () => Promise<RepositorySubGraph[]>;
   deleteSubGraphImpl: (subGraphId: string) => Promise<void>;
 
+  initialPremadeSubGraphs: RepositorySubGraph[];
+
   importAppImpl: (exp: AppExport) => Promise<RepositoryApp>;
   exportAppImpl: (appId: string) => Promise<AppExport>;
 
@@ -78,6 +82,8 @@ export function RepositoryProvider({
   saveSubGraphImpl,
   listSubgraphsImpl,
   deleteSubGraphImpl,
+
+  initialPremadeSubGraphs,
 
   importAppImpl,
   exportAppImpl,
@@ -224,6 +230,8 @@ export function RepositoryProvider({
         subgraphEditPath,
         appEditPath,
         debugRunPath,
+
+        premadeSubGraphs: initialPremadeSubGraphs,
 
         examples,
       }}

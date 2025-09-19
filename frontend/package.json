@@ -21,7 +21,7 @@
     "axios": "^1.11.0",
     "json-edit-react": "^1.28.2",
     "livekit-server-sdk": "^2.13.1",
-    "next": "15.4.4",
+    "next": "15.5.3",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-markdown": "^9.0.3",
@@ -44,6 +44,9 @@
     "eslint-plugin-prettier": "^5.5.3",
     "prettier": "3.6.2",
     "tailwindcss": "^4.1.11",
-    "typescript": "^5"
+    "typescript": "^5.7.2",
+    "@typescript-eslint/eslint-plugin": "^8.44.0",
+    "@typescript-eslint/parser": "^8.44.0",
+    "autoprefixer": "^10.4.20"
   }
 }
