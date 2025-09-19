@@ -1,0 +1,5068 @@
+{
+  "app": {
+    "id": "353d10fb-aea7-44ab-9ac6-e703100faffd",
+    "name": "Visual State Machine - Phone Detector",
+    "created_at": "2025-09-02T10:52:23.507063",
+    "updated_at": "2025-09-17T18:06:38.249583",
+    "graph": {
+      "nodes": [
+        {
+          "id": "publish_7b0ba55d",
+          "type": "Publish",
+          "editor_name": "Publish",
+          "editor_position": [
+            -3768,
+            -588
+          ],
+          "editor_dimensions": [
+            256,
+            423
+          ],
+          "pads": [
+            {
+              "id": "audio",
+              "group": "audio",
+              "type": "StatelessSourcePad",
+              "default_allowed_types": [
+                {
+                  "type": "audio"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "audio"
+                }
+              ],
+              "value": null,
+              "next_pads": [
+                {
+                  "node": "subgraph_df75e317",
+                  "pad": "audio_in"
+                }
+              ],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "video",
+              "group": "video",
+              "type": "StatelessSourcePad",
+              "default_allowed_types": [
+                {
+                  "type": "video"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "video"
+                }
+              ],
+              "value": null,
+              "next_pads": [
+                {
+                  "node": "subgraph_786f4c29",
+                  "pad": "video-in"
+                }
+              ],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "audio_enabled",
+              "group": "audio_enabled",
+              "type": "PropertySourcePad",
+              "default_allowed_types": [
+                {
+                  "type": "boolean"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "boolean"
+                }
+              ],
+              "value": false,
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "video_enabled",
+              "group": "video_enabled",
+              "type": "PropertySourcePad",
+              "default_allowed_types": [
+                {
+                  "type": "boolean"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "boolean"
+                }
+              ],
+              "value": false,
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            }
+          ],
+          "description": "Stream audio and video into your Gabber flow",
+          "metadata": {
+            "primary": "core",
+            "secondary": "media",
+            "tags": [
+              "input",
+              "stream"
+            ]
+          }
+        },
+        {
+          "id": "output_dc99463d",
+          "type": "Output",
+          "editor_name": "Output",
+          "editor_position": [
+            420,
+            -876
+          ],
+          "editor_dimensions": [
+            256,
+            300
+          ],
+          "pads": [
+            {
+              "id": "audio",
+              "group": "audio",
+              "type": "StatelessSinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "audio"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "audio"
+                }
+              ],
+              "value": null,
+              "next_pads": [],
+              "previous_pad": {
+                "node": "subgraph_df75e317",
+                "pad": "audio_out"
+              },
+              "pad_links": []
+            },
+            {
+              "id": "video",
+              "group": "video",
+              "type": "StatelessSinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "video"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "video"
+                }
+              ],
+              "value": null,
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            }
+          ],
+          "description": "Outputs audio and video to the end user",
+          "metadata": {
+            "primary": "core",
+            "secondary": "media",
+            "tags": [
+              "output",
+              "display"
+            ]
+          }
+        },
+        {
+          "id": "llmcontext_fdc08f62",
+          "type": "LLMContext",
+          "editor_name": "LLMContext",
+          "editor_position": [
+            -1068,
+            -948
+          ],
+          "editor_dimensions": [
+            370,
+            467
+          ],
+          "pads": [
+            {
+              "id": "num_inserts",
+              "group": "config",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "integer",
+                  "maximum": null,
+                  "minimum": 1
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "integer",
+                  "maximum": null,
+                  "minimum": 1
+                }
+              ],
+              "value": 3,
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "max_non_system_messages",
+              "group": "max_non_system_messages",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "integer",
+                  "maximum": null,
+                  "minimum": 0
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "integer",
+                  "maximum": null,
+                  "minimum": 0
+                }
+              ],
+              "value": 64,
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "max_videos",
+              "group": "max_videos",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "integer",
+                  "maximum": null,
+                  "minimum": 0
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "integer",
+                  "maximum": null,
+                  "minimum": 0
+                }
+              ],
+              "value": 2,
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "max_audios",
+              "group": "max_audios",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "integer",
+                  "maximum": null,
+                  "minimum": 0
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "integer",
+                  "maximum": null,
+                  "minimum": 0
+                }
+              ],
+              "value": 2,
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "max_images",
+              "group": "max_images",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "integer",
+                  "maximum": null,
+                  "minimum": 0
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "integer",
+                  "maximum": null,
+                  "minimum": 0
+                }
+              ],
+              "value": 2,
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "system_message",
+              "group": "system_message",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "context_message"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "context_message"
+                }
+              ],
+              "value": {
+                "role": "system",
+                "content": [
+                  {
+                    "type": "text",
+                    "content": "You are a companion that is interested in what kind of phone the user has. The possible states are: PAID_SHOWING_PHONE, PAID_NOT_SHOWING_PHONE, NOT_PAID_SHOWING_PHONE, NOT_PAID_NOT_SHOWING_PHONE.\n\nIf the state has changed, I want you to respond in the following ways:\n\nPAID_SHOWING_PHONE: The user is showing their phone. Guess what kind of phone it is. Ask how long the user has had it.\n\nPAID_NOT_SHOWING_PHONE: The user has paid. Thank them for paying. Tell the user that you're interested in knowing what kind of phone they have and if they have one to show it.\n\nNOT_PAID_NOT_SHOWING_PHONE: Tell the user they need to pay to get started.\n\nNOT_PAID_SHOWING_PHONE: The user is showing their phone but they need to pay. Tell the user they need to pay before showing their phone. You are interested in what kind of phone they have.\n\nThe current state is: NOT_PAID_NOT_SHOWING_PHONE\nThe previous state was: NOT_PAID_NOT_SHOWING_PHONE"
+                  }
+                ],
+                "tool_calls": [],
+                "tool_call_id": null
+              },
+              "next_pads": [],
+              "previous_pad": {
+                "node": "contextmessage_4005a474",
+                "pad": "context_message"
+              },
+              "pad_links": []
+            },
+            {
+              "id": "insert_0",
+              "group": "insert",
+              "type": "StatelessSinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "context_message"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "context_message"
+                }
+              ],
+              "value": null,
+              "next_pads": [],
+              "previous_pad": {
+                "node": "subgraph_df75e317",
+                "pad": "new_user_message"
+              },
+              "pad_links": []
+            },
+            {
+              "id": "insert_1",
+              "group": "insert",
+              "type": "StatelessSinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "context_message"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "context_message"
+                }
+              ],
+              "value": null,
+              "next_pads": [],
+              "previous_pad": {
+                "node": "subgraph_df75e317",
+                "pad": "new_assistant_message"
+              },
+              "pad_links": []
+            },
+            {
+              "id": "insert_2",
+              "group": "insert",
+              "type": "StatelessSinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "context_message"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "context_message"
+                }
+              ],
+              "value": null,
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "source",
+              "group": "source",
+              "type": "PropertySourcePad",
+              "default_allowed_types": [
+                {
+                  "type": "list",
+                  "max_length": null,
+                  "item_type_constraints": [
+                    {}
+                  ]
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "list",
+                  "max_length": null,
+                  "item_type_constraints": [
+                    {}
+                  ]
+                }
+              ],
+              "value": [
+                {
+                  "role": "system",
+                  "content": [
+                    {
+                      "type": "text",
+                      "content": "You are a companion that is interested in what kind of phone the user has. The possible states are: PAID_SHOWING_PHONE, PAID_NOT_SHOWING_PHONE, NOT_PAID_SHOWING_PHONE, NOT_PAID_NOT_SHOWING_PHONE.\n\nIf the state has changed, I want you to respond in the following ways:\n\nPAID_SHOWING_PHONE: The user is showing their phone. Guess what kind of phone it is. Ask how long the user has had it.\n\nPAID_NOT_SHOWING_PHONE: The user has paid. Thank them for paying. Tell the user that you're interested in knowing what kind of phone they have and if they have one to show it.\n\nNOT_PAID_NOT_SHOWING_PHONE: Tell the user they need to pay to get started.\n\nNOT_PAID_SHOWING_PHONE: The user is showing their phone but they need to pay. Tell the user they need to pay before showing their phone. You are interested in what kind of phone they have.\n\nThe current state is: NOT_PAID_NOT_SHOWING_PHONE\nThe previous state was: NOT_PAID_NOT_SHOWING_PHONE"
+                    }
+                  ],
+                  "tool_calls": [],
+                  "tool_call_id": null
+                }
+              ],
+              "next_pads": [
+                {
+                  "node": "subgraph_df75e317",
+                  "pad": "llm_context"
+                }
+              ],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "new_user_message",
+              "group": "new_user_message",
+              "type": "StatelessSourcePad",
+              "default_allowed_types": [
+                {
+                  "type": "context_message"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "context_message"
+                }
+              ],
+              "value": null,
+              "next_pads": [
+                {
+                  "node": "merge_2c2aa3b6",
+                  "pad": "sink_0"
+                }
+              ],
+              "previous_pad": null,
+              "pad_links": []
+            }
+          ],
+          "description": "Manages conversation context for language models",
+          "metadata": {
+            "primary": "ai",
+            "secondary": "llm",
+            "tags": [
+              "context",
+              "memory"
+            ]
+          }
+        },
+        {
+          "id": "autoconvert_b1ec70c1",
+          "type": "AutoConvert",
+          "editor_name": "AutoConvert",
+          "editor_position": [
+            -264,
+            -420
+          ],
+          "editor_dimensions": [
+            80,
+            48
+          ],
+          "pads": [
+            {
+              "id": "sink",
+              "group": "sink",
+              "type": "StatelessSinkPad",
+              "default_allowed_types": null,
+              "allowed_types": [
+                {
+                  "type": "context_message"
+                }
+              ],
+              "value": null,
+              "next_pads": [],
+              "previous_pad": {
+                "node": "merge_2c2aa3b6",
+                "pad": "source"
+              },
+              "pad_links": []
+            },
+            {
+              "id": "source",
+              "group": "source",
+              "type": "StatelessSourcePad",
+              "default_allowed_types": null,
+              "allowed_types": [
+                {
+                  "type": "trigger"
+                }
+              ],
+              "value": null,
+              "next_pads": [
+                {
+                  "node": "subgraph_df75e317",
+                  "pad": "run_trigger"
+                }
+              ],
+              "previous_pad": null,
+              "pad_links": []
+            }
+          ],
+          "description": "Automatically converts data between compatible types",
+          "metadata": {
+            "primary": "core",
+            "secondary": "utility",
+            "tags": [
+              "auto",
+              "type"
+            ]
+          }
+        },
+        {
+          "id": "subgraph_a0630cea",
+          "type": "SubGraph",
+          "editor_name": "LLM Classify",
+          "editor_position": [
+            -2772,
+            -444
+          ],
+          "editor_dimensions": [
+            308,
+            285
+          ],
+          "pads": [
+            {
+              "id": "__subgraph_id__",
+              "group": "subgraph",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "value": "66ce7ccb-1832-425d-99f8-439ea5a310c6",
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "ingest_video_clip",
+              "group": "content",
+              "type": "StatelessSinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "audio_clip"
+                },
+                {
+                  "type": "video_clip"
+                },
+                {
+                  "type": "av_clip"
+                },
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                },
+                {
+                  "type": "video"
+                },
+                {
+                  "type": "text_stream"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "video_clip"
+                }
+              ],
+              "value": null,
+              "next_pads": [],
+              "previous_pad": {
+                "node": "subgraph_786f4c29",
+                "pad": "video-clip-out"
+              },
+              "pad_links": []
+            },
+            {
+              "id": "detect_item",
+              "group": "sink",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "value": "phone",
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "detected",
+              "group": "value",
+              "type": "PropertySourcePad",
+              "default_allowed_types": [
+                {
+                  "type": "boolean"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "boolean"
+                }
+              ],
+              "value": false,
+              "next_pads": [
+                {
+                  "node": "statemachine_309a4ba5",
+                  "pad": "parameter_value_1"
+                }
+              ],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "llm_response",
+              "group": "value",
+              "type": "PropertySourcePad",
+              "default_allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "value": "",
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            }
+          ],
+          "description": "A reusable subgraph that can be used as a node in other graphs",
+          "metadata": {
+            "primary": "subgraph",
+            "secondary": "composite",
+            "tags": [
+              "reusable",
+              "nested"
+            ]
+          }
+        },
+        {
+          "id": "buttontrigger_e1747b10",
+          "type": "ButtonTrigger",
+          "editor_name": "Simulate Payment",
+          "editor_position": [
+            -3300,
+            -696
+          ],
+          "editor_dimensions": [
+            256,
+            127
+          ],
+          "pads": [
+            {
+              "id": "trigger",
+              "group": "trigger",
+              "type": "StatelessSourcePad",
+              "default_allowed_types": [
+                {
+                  "type": "trigger"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "trigger"
+                }
+              ],
+              "value": null,
+              "next_pads": [
+                {
+                  "node": "boolean_ea15a548",
+                  "pad": "emit"
+                }
+              ],
+              "previous_pad": null,
+              "pad_links": []
+            }
+          ],
+          "description": "Manually activate a trigger to run an action",
+          "metadata": {
+            "primary": "core",
+            "secondary": "utility",
+            "tags": [
+              "trigger",
+              "debug"
+            ]
+          }
+        },
+        {
+          "id": "statemachine_309a4ba5",
+          "type": "StateMachine",
+          "editor_name": "StateMachine",
+          "editor_position": [
+            -2292,
+            -672
+          ],
+          "editor_dimensions": [
+            256,
+            403
+          ],
+          "pads": [
+            {
+              "id": "configuration",
+              "group": "configuration",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "object",
+                  "object_schema": null
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "object",
+                  "object_schema": null
+                }
+              ],
+              "value": {
+                "states": [
+                  {
+                    "id": "a48b1360-9a83-4f5b-ae17-eb183628d938",
+                    "name": "NOT_PAID_NOT_SHOWING_PHONE",
+                    "position": {
+                      "x": -48,
+                      "y": 132
+                    }
+                  },
+                  {
+                    "id": "e3eccd64-dbc6-40c1-9bda-b3c3f6bc352f",
+                    "name": "PAID_NOT_SHOWING_PHONE",
+                    "position": {
+                      "x": -24,
+                      "y": 240
+                    }
+                  },
+                  {
+                    "id": "9f8a6f26-af2e-4d80-ad7e-55edb21da3f1",
+                    "name": "NOT_PAID_SHOWING_PHONE",
+                    "position": {
+                      "x": 276,
+                      "y": 192
+                    }
+                  },
+                  {
+                    "id": "bcd4917c-608d-4bad-a29b-a51c277bcd3f",
+                    "name": "PAID_SHOWING_PHONE",
+                    "position": {
+                      "x": 96,
+                      "y": 324
+                    }
+                  }
+                ],
+                "transitions": [
+                  {
+                    "id": "cf2f6e03-f10b-4bfb-aaa0-4ff6ea2ae0ff",
+                    "from_state": "a48b1360-9a83-4f5b-ae17-eb183628d938",
+                    "to_state": "e3eccd64-dbc6-40c1-9bda-b3c3f6bc352f",
+                    "conditions": [
+                      {
+                        "parameter_name": "paid",
+                        "operator": "TRUE",
+                        "value": null
+                      }
+                    ]
+                  },
+                  {
+                    "id": "007321e2-becb-4cef-9ac7-21c6208d6d8e",
+                    "from_state": "a48b1360-9a83-4f5b-ae17-eb183628d938",
+                    "to_state": "9f8a6f26-af2e-4d80-ad7e-55edb21da3f1",
+                    "conditions": [
+                      {
+                        "parameter_name": "paid",
+                        "operator": "FALSE",
+                        "value": null
+                      },
+                      {
+                        "parameter_name": "item_detected",
+                        "operator": "TRUE",
+                        "value": null
+                      }
+                    ]
+                  },
+                  {
+                    "id": "7cca5ebf-c15b-4b4f-b5ad-784c06bb6acd",
+                    "from_state": "9f8a6f26-af2e-4d80-ad7e-55edb21da3f1",
+                    "to_state": "e3eccd64-dbc6-40c1-9bda-b3c3f6bc352f",
+                    "conditions": [
+                      {
+                        "parameter_name": "paid",
+                        "operator": "TRUE",
+                        "value": null
+                      }
+                    ]
+                  },
+                  {
+                    "id": "df6285a3-4454-4d55-a1b2-be0ed88c02a7",
+                    "from_state": "e3eccd64-dbc6-40c1-9bda-b3c3f6bc352f",
+                    "to_state": "bcd4917c-608d-4bad-a29b-a51c277bcd3f",
+                    "conditions": [
+                      {
+                        "parameter_name": "paid",
+                        "operator": "TRUE",
+                        "value": null
+                      },
+                      {
+                        "parameter_name": "item_detected",
+                        "operator": "TRUE",
+                        "value": null
+                      }
+                    ]
+                  }
+                ],
+                "entry_state": "a48b1360-9a83-4f5b-ae17-eb183628d938",
+                "entry_node_position": {
+                  "x": 0,
+                  "y": 0
+                },
+                "special_any_state_position": {
+                  "x": 156,
+                  "y": 0
+                }
+              },
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "num_parameters",
+              "group": "num_parameters",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "integer",
+                  "maximum": null,
+                  "minimum": null
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "integer",
+                  "maximum": null,
+                  "minimum": null
+                }
+              ],
+              "value": 2,
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "current_state",
+              "group": "current_state",
+              "type": "PropertySourcePad",
+              "default_allowed_types": [
+                {
+                  "type": "enum",
+                  "options": [
+                    "NOT_PAID_NOT_SHOWING_PHONE",
+                    "PAID_NOT_SHOWING_PHONE",
+                    "NOT_PAID_SHOWING_PHONE",
+                    "PAID_SHOWING_PHONE"
+                  ]
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "enum",
+                  "options": [
+                    "NOT_PAID_NOT_SHOWING_PHONE",
+                    "PAID_NOT_SHOWING_PHONE",
+                    "PAID_SHOWING_PHONE",
+                    "NOT_PAID_SHOWING_PHONE"
+                  ]
+                }
+              ],
+              "value": "NOT_PAID_NOT_SHOWING_PHONE",
+              "next_pads": [
+                {
+                  "node": "jinja2_eb0bc249",
+                  "pad": "property_value_0"
+                }
+              ],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "previous_state",
+              "group": "previous_state",
+              "type": "PropertySourcePad",
+              "default_allowed_types": [
+                {
+                  "type": "enum",
+                  "options": [
+                    "NOT_PAID_NOT_SHOWING_PHONE",
+                    "PAID_NOT_SHOWING_PHONE",
+                    "NOT_PAID_SHOWING_PHONE",
+                    "PAID_SHOWING_PHONE"
+                  ]
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "enum",
+                  "options": [
+                    "NOT_PAID_NOT_SHOWING_PHONE",
+                    "PAID_NOT_SHOWING_PHONE",
+                    "PAID_SHOWING_PHONE",
+                    "NOT_PAID_SHOWING_PHONE"
+                  ]
+                }
+              ],
+              "value": "NOT_PAID_NOT_SHOWING_PHONE",
+              "next_pads": [
+                {
+                  "node": "jinja2_eb0bc249",
+                  "pad": "property_value_1"
+                }
+              ],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "parameter_name_0",
+              "group": "parameters",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "value": "paid",
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "parameter_value_0",
+              "group": "parameter_values",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "float",
+                  "maximum": null,
+                  "minimum": null
+                },
+                {
+                  "type": "integer",
+                  "maximum": null,
+                  "minimum": null
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "trigger"
+                },
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "boolean"
+                }
+              ],
+              "value": false,
+              "next_pads": [],
+              "previous_pad": {
+                "node": "boolean_c94472e8",
+                "pad": "value"
+              },
+              "pad_links": []
+            },
+            {
+              "id": "parameter_name_1",
+              "group": "parameters",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "value": "item_detected",
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "parameter_value_1",
+              "group": "parameter_values",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "float",
+                  "maximum": null,
+                  "minimum": null
+                },
+                {
+                  "type": "integer",
+                  "maximum": null,
+                  "minimum": null
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "trigger"
+                },
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "boolean"
+                }
+              ],
+              "value": false,
+              "next_pads": [],
+              "previous_pad": {
+                "node": "subgraph_a0630cea",
+                "pad": "detected"
+              },
+              "pad_links": []
+            }
+          ],
+          "description": "Create logic to control the flow of your application based on parameter conditions.",
+          "metadata": {
+            "primary": "core",
+            "secondary": "logic",
+            "tags": [
+              "state_machine",
+              "container"
+            ]
+          }
+        },
+        {
+          "id": "boolean_ea15a548",
+          "type": "Boolean",
+          "editor_name": "Boolean",
+          "editor_position": [
+            -2952,
+            -804
+          ],
+          "editor_dimensions": [
+            256,
+            249
+          ],
+          "pads": [
+            {
+              "id": "emit",
+              "group": "emit",
+              "type": "StatelessSinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "trigger"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "trigger"
+                }
+              ],
+              "value": null,
+              "next_pads": [],
+              "previous_pad": {
+                "node": "buttontrigger_e1747b10",
+                "pad": "trigger"
+              },
+              "pad_links": []
+            },
+            {
+              "id": "set",
+              "group": "set",
+              "type": "StatelessSinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "boolean"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "boolean"
+                }
+              ],
+              "value": null,
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "toggle",
+              "group": "toggle",
+              "type": "StatelessSinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "trigger"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "trigger"
+                }
+              ],
+              "value": null,
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "value",
+              "group": "value",
+              "type": "PropertySourcePad",
+              "default_allowed_types": [
+                {
+                  "type": "boolean"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "boolean"
+                }
+              ],
+              "value": true,
+              "next_pads": [
+                {
+                  "node": "boolean_c94472e8",
+                  "pad": "set"
+                }
+              ],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "changed",
+              "group": "changed",
+              "type": "StatelessSourcePad",
+              "default_allowed_types": [
+                {
+                  "type": "boolean"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "boolean"
+                }
+              ],
+              "value": null,
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            }
+          ],
+          "description": "Stores and manages boolean values",
+          "metadata": {
+            "primary": "core",
+            "secondary": "primitive",
+            "tags": [
+              "storage",
+              "boolean"
+            ]
+          }
+        },
+        {
+          "id": "boolean_c94472e8",
+          "type": "Boolean",
+          "editor_name": "Boolean",
+          "editor_position": [
+            -2628,
+            -792
+          ],
+          "editor_dimensions": [
+            256,
+            249
+          ],
+          "pads": [
+            {
+              "id": "emit",
+              "group": "emit",
+              "type": "StatelessSinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "trigger"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "trigger"
+                }
+              ],
+              "value": null,
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "set",
+              "group": "set",
+              "type": "StatelessSinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "boolean"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "boolean"
+                }
+              ],
+              "value": null,
+              "next_pads": [],
+              "previous_pad": {
+                "node": "boolean_ea15a548",
+                "pad": "value"
+              },
+              "pad_links": []
+            },
+            {
+              "id": "toggle",
+              "group": "toggle",
+              "type": "StatelessSinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "trigger"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "trigger"
+                }
+              ],
+              "value": null,
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "value",
+              "group": "value",
+              "type": "PropertySourcePad",
+              "default_allowed_types": [
+                {
+                  "type": "boolean"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "boolean"
+                }
+              ],
+              "value": false,
+              "next_pads": [
+                {
+                  "node": "statemachine_309a4ba5",
+                  "pad": "parameter_value_0"
+                }
+              ],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "changed",
+              "group": "changed",
+              "type": "StatelessSourcePad",
+              "default_allowed_types": [
+                {
+                  "type": "boolean"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "boolean"
+                }
+              ],
+              "value": null,
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            }
+          ],
+          "description": "Stores and manages boolean values",
+          "metadata": {
+            "primary": "core",
+            "secondary": "primitive",
+            "tags": [
+              "storage",
+              "boolean"
+            ]
+          }
+        },
+        {
+          "id": "contextmessage_4005a474",
+          "type": "ContextMessage",
+          "editor_name": "ContextMessage",
+          "editor_position": [
+            -1452,
+            -600
+          ],
+          "editor_dimensions": [
+            256,
+            207
+          ],
+          "pads": [
+            {
+              "id": "role",
+              "group": "role",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "context_message_role"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "context_message_role"
+                }
+              ],
+              "value": "system",
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "content",
+              "group": "content",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "value": "You are a companion that is interested in what kind of phone the user has. The possible states are: PAID_SHOWING_PHONE, PAID_NOT_SHOWING_PHONE, NOT_PAID_SHOWING_PHONE, NOT_PAID_NOT_SHOWING_PHONE.\n\nIf the state has changed, I want you to respond in the following ways:\n\nPAID_SHOWING_PHONE: The user is showing their phone. Guess what kind of phone it is. Ask how long the user has had it.\n\nPAID_NOT_SHOWING_PHONE: The user has paid. Thank them for paying. Tell the user that you're interested in knowing what kind of phone they have and if they have one to show it.\n\nNOT_PAID_NOT_SHOWING_PHONE: Tell the user they need to pay to get started.\n\nNOT_PAID_SHOWING_PHONE: The user is showing their phone but they need to pay. Tell the user they need to pay before showing their phone. You are interested in what kind of phone they have.\n\nThe current state is: NOT_PAID_NOT_SHOWING_PHONE\nThe previous state was: NOT_PAID_NOT_SHOWING_PHONE",
+              "next_pads": [],
+              "previous_pad": {
+                "node": "jinja2_eb0bc249",
+                "pad": "rendered_output"
+              },
+              "pad_links": []
+            },
+            {
+              "id": "context_message",
+              "group": "context_message",
+              "type": "PropertySourcePad",
+              "default_allowed_types": [
+                {
+                  "type": "context_message"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "context_message"
+                }
+              ],
+              "value": {
+                "role": "system",
+                "content": [
+                  {
+                    "type": "text",
+                    "content": "You are a companion that is interested in what kind of phone the user has. The possible states are: PAID_SHOWING_PHONE, PAID_NOT_SHOWING_PHONE, NOT_PAID_SHOWING_PHONE, NOT_PAID_NOT_SHOWING_PHONE.\n\nIf the state has changed, I want you to respond in the following ways:\n\nPAID_SHOWING_PHONE: The user is showing their phone. Guess what kind of phone it is. Ask how long the user has had it.\n\nPAID_NOT_SHOWING_PHONE: The user has paid. Thank them for paying. Tell the user that you're interested in knowing what kind of phone they have and if they have one to show it.\n\nNOT_PAID_NOT_SHOWING_PHONE: Tell the user they need to pay to get started.\n\nNOT_PAID_SHOWING_PHONE: The user is showing their phone but they need to pay. Tell the user they need to pay before showing their phone. You are interested in what kind of phone they have.\n\nThe current state is: NOT_PAID_NOT_SHOWING_PHONE\nThe previous state was: NOT_PAID_NOT_SHOWING_PHONE"
+                  }
+                ],
+                "tool_calls": [],
+                "tool_call_id": null
+              },
+              "next_pads": [
+                {
+                  "node": "llmcontext_fdc08f62",
+                  "pad": "system_message"
+                },
+                {
+                  "node": "delay_50378a29",
+                  "pad": "sink"
+                }
+              ],
+              "previous_pad": null,
+              "pad_links": []
+            }
+          ],
+          "description": "Stores and manages conversation context messages",
+          "metadata": {
+            "primary": "ai",
+            "secondary": "llm",
+            "tags": [
+              "context",
+              "message"
+            ]
+          }
+        },
+        {
+          "id": "jinja2_eb0bc249",
+          "type": "Jinja2",
+          "editor_name": "System Prompt",
+          "editor_position": [
+            -1968,
+            -876
+          ],
+          "editor_dimensions": [
+            400,
+            536
+          ],
+          "pads": [
+            {
+              "id": "num_properties",
+              "group": "num_properties",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "integer",
+                  "maximum": null,
+                  "minimum": null
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "integer",
+                  "maximum": null,
+                  "minimum": null
+                }
+              ],
+              "value": 2,
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "jinja_template",
+              "group": "jinja_template",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "value": "You are a companion that is interested in what kind of phone the user has. The possible states are: PAID_SHOWING_PHONE, PAID_NOT_SHOWING_PHONE, NOT_PAID_SHOWING_PHONE, NOT_PAID_NOT_SHOWING_PHONE.\n\nIf the state has changed, I want you to respond in the following ways:\n\nPAID_SHOWING_PHONE: The user is showing their phone. Guess what kind of phone it is. Ask how long the user has had it.\n\nPAID_NOT_SHOWING_PHONE: The user has paid. Thank them for paying. Tell the user that you're interested in knowing what kind of phone they have and if they have one to show it.\n\nNOT_PAID_NOT_SHOWING_PHONE: Tell the user they need to pay to get started.\n\nNOT_PAID_SHOWING_PHONE: The user is showing their phone but they need to pay. Tell the user they need to pay before showing their phone. You are interested in what kind of phone they have.\n\nThe current state is: {{current_state}}\nThe previous state was: {{previous_state}}",
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "property_name_0",
+              "group": "property_name",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "value": "current_state",
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "property_name_1",
+              "group": "property_name",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "value": "previous_state",
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "property_value_0",
+              "group": "property_value",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                },
+                {
+                  "type": "integer",
+                  "maximum": null,
+                  "minimum": null
+                },
+                {
+                  "type": "float",
+                  "maximum": null,
+                  "minimum": null
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "enum",
+                  "options": null
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "enum",
+                  "options": [
+                    "NOT_PAID_NOT_SHOWING_PHONE",
+                    "PAID_NOT_SHOWING_PHONE",
+                    "PAID_SHOWING_PHONE",
+                    "NOT_PAID_SHOWING_PHONE"
+                  ]
+                }
+              ],
+              "value": "NOT_PAID_NOT_SHOWING_PHONE",
+              "next_pads": [],
+              "previous_pad": {
+                "node": "statemachine_309a4ba5",
+                "pad": "current_state"
+              },
+              "pad_links": []
+            },
+            {
+              "id": "property_value_1",
+              "group": "property_value",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                },
+                {
+                  "type": "integer",
+                  "maximum": null,
+                  "minimum": null
+                },
+                {
+                  "type": "float",
+                  "maximum": null,
+                  "minimum": null
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "enum",
+                  "options": null
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "enum",
+                  "options": [
+                    "NOT_PAID_NOT_SHOWING_PHONE",
+                    "PAID_NOT_SHOWING_PHONE",
+                    "PAID_SHOWING_PHONE",
+                    "NOT_PAID_SHOWING_PHONE"
+                  ]
+                }
+              ],
+              "value": "NOT_PAID_NOT_SHOWING_PHONE",
+              "next_pads": [],
+              "previous_pad": {
+                "node": "statemachine_309a4ba5",
+                "pad": "previous_state"
+              },
+              "pad_links": []
+            },
+            {
+              "id": "rendered_output",
+              "group": "rendered_output",
+              "type": "PropertySourcePad",
+              "default_allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "value": "You are a companion that is interested in what kind of phone the user has. The possible states are: PAID_SHOWING_PHONE, PAID_NOT_SHOWING_PHONE, NOT_PAID_SHOWING_PHONE, NOT_PAID_NOT_SHOWING_PHONE.\n\nIf the state has changed, I want you to respond in the following ways:\n\nPAID_SHOWING_PHONE: The user is showing their phone. Guess what kind of phone it is. Ask how long the user has had it.\n\nPAID_NOT_SHOWING_PHONE: The user has paid. Thank them for paying. Tell the user that you're interested in knowing what kind of phone they have and if they have one to show it.\n\nNOT_PAID_NOT_SHOWING_PHONE: Tell the user they need to pay to get started.\n\nNOT_PAID_SHOWING_PHONE: The user is showing their phone but they need to pay. Tell the user they need to pay before showing their phone. You are interested in what kind of phone they have.\n\nThe current state is: NOT_PAID_NOT_SHOWING_PHONE\nThe previous state was: NOT_PAID_NOT_SHOWING_PHONE",
+              "next_pads": [
+                {
+                  "node": "contextmessage_4005a474",
+                  "pad": "content"
+                }
+              ],
+              "previous_pad": null,
+              "pad_links": []
+            }
+          ],
+          "description": "Template strings using Jinja2",
+          "metadata": {
+            "primary": "core",
+            "secondary": "utility",
+            "tags": []
+          }
+        },
+        {
+          "id": "subgraph_df75e317",
+          "type": "SubGraph",
+          "editor_name": "Conversational w/ Remote Services",
+          "editor_position": [
+            -48,
+            -900
+          ],
+          "editor_dimensions": [
+            346,
+            642
+          ],
+          "pads": [
+            {
+              "id": "__subgraph_id__",
+              "group": "subgraph",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "value": "conversational-services",
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "llm_api_key",
+              "group": "api_key",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "secret",
+                  "options": []
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "secret",
+                  "options": []
+                }
+              ],
+              "value": "OPEN_AI_API_KEY",
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "stt_api_key",
+              "group": "api_key",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "secret",
+                  "options": []
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "secret",
+                  "options": []
+                }
+              ],
+              "value": "ASSEMBLY_API_KEY",
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "tts_api_key",
+              "group": "api_key",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "secret",
+                  "options": []
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "secret",
+                  "options": []
+                }
+              ],
+              "value": "GABBER_API_KEY",
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "audio_in",
+              "group": "audio",
+              "type": "StatelessSinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "audio"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "audio"
+                }
+              ],
+              "value": null,
+              "next_pads": [],
+              "previous_pad": {
+                "node": "publish_7b0ba55d",
+                "pad": "audio"
+              },
+              "pad_links": []
+            },
+            {
+              "id": "audio_out",
+              "group": "audio",
+              "type": "StatelessSourcePad",
+              "default_allowed_types": [
+                {
+                  "type": "audio"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "audio"
+                }
+              ],
+              "value": null,
+              "next_pads": [
+                {
+                  "node": "output_dc99463d",
+                  "pad": "audio"
+                }
+              ],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "llm_base_url",
+              "group": "base_url",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "value": "https://api.openai.com/v1",
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "llm_context",
+              "group": "context",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "list",
+                  "max_length": null,
+                  "item_type_constraints": [
+                    {}
+                  ]
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "list",
+                  "max_length": null,
+                  "item_type_constraints": [
+                    {}
+                  ]
+                }
+              ],
+              "value": [
+                {
+                  "role": "system",
+                  "content": [
+                    {
+                      "type": "text",
+                      "content": "You are a companion that is interested in what kind of phone the user has. The possible states are: PAID_SHOWING_PHONE, PAID_NOT_SHOWING_PHONE, NOT_PAID_SHOWING_PHONE, NOT_PAID_NOT_SHOWING_PHONE.\n\nIf the state has changed, I want you to respond in the following ways:\n\nPAID_SHOWING_PHONE: The user is showing their phone. Guess what kind of phone it is. Ask how long the user has had it.\n\nPAID_NOT_SHOWING_PHONE: The user has paid. Thank them for paying. Tell the user that you're interested in knowing what kind of phone they have and if they have one to show it.\n\nNOT_PAID_NOT_SHOWING_PHONE: Tell the user they need to pay to get started.\n\nNOT_PAID_SHOWING_PHONE: The user is showing their phone but they need to pay. Tell the user they need to pay before showing their phone. You are interested in what kind of phone they have.\n\nThe current state is: NOT_PAID_NOT_SHOWING_PHONE\nThe previous state was: NOT_PAID_NOT_SHOWING_PHONE"
+                    }
+                  ],
+                  "tool_calls": [],
+                  "tool_call_id": null
+                }
+              ],
+              "next_pads": [],
+              "previous_pad": {
+                "node": "llmcontext_fdc08f62",
+                "pad": "source"
+              },
+              "pad_links": []
+            },
+            {
+              "id": "new_assistant_message",
+              "group": "context_message",
+              "type": "StatelessSourcePad",
+              "default_allowed_types": [
+                {
+                  "type": "context_message"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "context_message"
+                }
+              ],
+              "value": null,
+              "next_pads": [
+                {
+                  "node": "llmcontext_fdc08f62",
+                  "pad": "insert_1"
+                }
+              ],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "new_user_message",
+              "group": "context_message",
+              "type": "StatelessSourcePad",
+              "default_allowed_types": [
+                {
+                  "type": "context_message"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "context_message"
+                }
+              ],
+              "value": null,
+              "next_pads": [
+                {
+                  "node": "llmcontext_fdc08f62",
+                  "pad": "insert_0"
+                }
+              ],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "llm_model",
+              "group": "model",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "value": "gpt-4.1-mini",
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "run_trigger",
+              "group": "run_trigger",
+              "type": "StatelessSinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "trigger"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "trigger"
+                }
+              ],
+              "value": null,
+              "next_pads": [],
+              "previous_pad": {
+                "node": "autoconvert_b1ec70c1",
+                "pad": "source"
+              },
+              "pad_links": []
+            },
+            {
+              "id": "stt_service",
+              "group": "service",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "enum",
+                  "options": [
+                    "assembly_ai",
+                    "local_kyutai",
+                    "deepgram"
+                  ]
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "enum",
+                  "options": [
+                    "local_kyutai",
+                    "assembly_ai",
+                    "deepgram"
+                  ]
+                }
+              ],
+              "value": "assembly_ai",
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "tts_service",
+              "group": "service",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "enum",
+                  "options": [
+                    "gabber",
+                    "cartesia",
+                    "elevenlabs"
+                  ]
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "enum",
+                  "options": [
+                    "elevenlabs",
+                    "gabber",
+                    "cartesia"
+                  ]
+                }
+              ],
+              "value": "gabber",
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "tool_group",
+              "group": "tool_group",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "node_reference",
+                  "node_types": [
+                    "ToolGroup"
+                  ]
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "node_reference",
+                  "node_types": [
+                    "ToolGroup"
+                  ]
+                }
+              ],
+              "value": null,
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "tts_voice_id",
+              "group": "voice_id",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "value": "9f3bf013-8fab-4a91-922e-ad6b80e5d6c4",
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            }
+          ],
+          "description": "A reusable subgraph that can be used as a node in other graphs",
+          "metadata": {
+            "primary": "subgraph",
+            "secondary": "composite",
+            "tags": [
+              "reusable",
+              "nested"
+            ]
+          }
+        },
+        {
+          "id": "delay_50378a29",
+          "type": "Delay",
+          "editor_name": "Delay",
+          "editor_position": [
+            -1020,
+            -456
+          ],
+          "editor_dimensions": [
+            256,
+            195
+          ],
+          "pads": [
+            {
+              "id": "sink",
+              "group": "sink",
+              "type": "StatelessSinkPad",
+              "default_allowed_types": null,
+              "allowed_types": [
+                {
+                  "type": "context_message"
+                }
+              ],
+              "value": null,
+              "next_pads": [],
+              "previous_pad": {
+                "node": "contextmessage_4005a474",
+                "pad": "context_message"
+              },
+              "pad_links": [
+                "source"
+              ]
+            },
+            {
+              "id": "source",
+              "group": "source",
+              "type": "StatelessSourcePad",
+              "default_allowed_types": null,
+              "allowed_types": [
+                {
+                  "type": "context_message"
+                }
+              ],
+              "value": null,
+              "next_pads": [
+                {
+                  "node": "merge_2c2aa3b6",
+                  "pad": "sink_1"
+                }
+              ],
+              "previous_pad": null,
+              "pad_links": [
+                "sink"
+              ]
+            },
+            {
+              "id": "delay_ms",
+              "group": "delay_ms",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "integer",
+                  "maximum": null,
+                  "minimum": 0
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "integer",
+                  "maximum": null,
+                  "minimum": 0
+                }
+              ],
+              "value": 250,
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            }
+          ],
+          "description": "Delays a stateless stream",
+          "metadata": {
+            "primary": "core",
+            "secondary": "timing",
+            "tags": [
+              "delay"
+            ]
+          }
+        },
+        {
+          "id": "merge_2c2aa3b6",
+          "type": "Merge",
+          "editor_name": "Merge",
+          "editor_position": [
+            -624,
+            -696
+          ],
+          "editor_dimensions": [
+            256,
+            223
+          ],
+          "pads": [
+            {
+              "id": "num_sinks",
+              "group": "num_sinks",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "integer",
+                  "maximum": null,
+                  "minimum": null
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "integer",
+                  "maximum": null,
+                  "minimum": null
+                }
+              ],
+              "value": 2,
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "source",
+              "group": "source",
+              "type": "StatelessSourcePad",
+              "default_allowed_types": null,
+              "allowed_types": [
+                {
+                  "type": "context_message"
+                }
+              ],
+              "value": null,
+              "next_pads": [
+                {
+                  "node": "autoconvert_b1ec70c1",
+                  "pad": "sink"
+                }
+              ],
+              "previous_pad": null,
+              "pad_links": [
+                "sink_0",
+                "sink_1"
+              ]
+            },
+            {
+              "id": "sink_0",
+              "group": "sink",
+              "type": "PropertySinkPad",
+              "default_allowed_types": null,
+              "allowed_types": [
+                {
+                  "type": "context_message"
+                }
+              ],
+              "value": null,
+              "next_pads": [],
+              "previous_pad": {
+                "node": "llmcontext_fdc08f62",
+                "pad": "new_user_message"
+              },
+              "pad_links": [
+                "source"
+              ]
+            },
+            {
+              "id": "sink_1",
+              "group": "sink",
+              "type": "PropertySinkPad",
+              "default_allowed_types": null,
+              "allowed_types": [
+                {
+                  "type": "context_message"
+                }
+              ],
+              "value": null,
+              "next_pads": [],
+              "previous_pad": {
+                "node": "delay_50378a29",
+                "pad": "source"
+              },
+              "pad_links": [
+                "source"
+              ]
+            }
+          ],
+          "description": "Merges multiple data streams of similar type into one",
+          "metadata": {
+            "primary": "core",
+            "secondary": "utility",
+            "tags": [
+              "merge",
+              "flow"
+            ]
+          }
+        },
+        {
+          "id": "subgraph_786f4c29",
+          "type": "SubGraph",
+          "editor_name": "Video FPS/Sliding Window Clipper",
+          "editor_position": [
+            -3228,
+            -456
+          ],
+          "editor_dimensions": [
+            337,
+            291
+          ],
+          "pads": [
+            {
+              "id": "__subgraph_id__",
+              "group": "subgraph",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "string",
+                  "max_length": null,
+                  "min_length": null
+                }
+              ],
+              "value": "6f116d63-9083-447b-95a4-db2b7e5574cc",
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "video-clip-out",
+              "group": "clip",
+              "type": "StatelessSourcePad",
+              "default_allowed_types": [
+                {
+                  "type": "video_clip"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "video_clip"
+                }
+              ],
+              "value": null,
+              "next_pads": [
+                {
+                  "node": "subgraph_a0630cea",
+                  "pad": "ingest_video_clip"
+                }
+              ],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "fps",
+              "group": "fps",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "float",
+                  "maximum": 30,
+                  "minimum": 0
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "float",
+                  "maximum": 30,
+                  "minimum": 0
+                }
+              ],
+              "value": 0.1,
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            },
+            {
+              "id": "video-in",
+              "group": "video_in",
+              "type": "StatelessSinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "video"
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "video"
+                }
+              ],
+              "value": null,
+              "next_pads": [],
+              "previous_pad": {
+                "node": "publish_7b0ba55d",
+                "pad": "video"
+              },
+              "pad_links": []
+            },
+            {
+              "id": "window size",
+              "group": "window_size_s",
+              "type": "PropertySinkPad",
+              "default_allowed_types": [
+                {
+                  "type": "float",
+                  "maximum": null,
+                  "minimum": null
+                }
+              ],
+              "allowed_types": [
+                {
+                  "type": "float",
+                  "maximum": null,
+                  "minimum": null
+                }
+              ],
+              "value": 5,
+              "next_pads": [],
+              "previous_pad": null,
+              "pad_links": []
+            }
+          ],
+          "description": "A reusable subgraph that can be used as a node in other graphs",
+          "metadata": {
+            "primary": "subgraph",
+            "secondary": "composite",
+            "tags": [
+              "reusable",
+              "nested"
+            ]
+          }
+        }
+      ],
+      "portals": [
+        {
+          "id": "portal_907fdb85",
+          "name": "publish_7b0ba55d:audio",
+          "source_node": "publish_7b0ba55d",
+          "source_pad": "audio",
+          "editor_position": [
+            -3420,
+            -396
+          ],
+          "ends": [
+            {
+              "id": "portal_end_02651c82",
+              "editor_position": [
+                -132,
+                -600
+              ],
+              "next_pads": [
+                {
+                  "node": "subgraph_df75e317",
+                  "pad": "audio_in"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "subgraphs": [
+    {
+      "id": "6f116d63-9083-447b-95a4-db2b7e5574cc",
+      "name": "Video FPS/Sliding Window Clipper",
+      "created_at": "2025-09-10T09:13:51.168265",
+      "updated_at": "2025-09-10T16:31:28.844180",
+      "graph": {
+        "nodes": [
+          {
+            "id": "fps_084eb038",
+            "type": "FPS",
+            "editor_name": "FPS",
+            "editor_position": [
+              480,
+              216
+            ],
+            "editor_dimensions": [
+              256,
+              204
+            ],
+            "pads": [
+              {
+                "id": "video_in",
+                "group": "video_in",
+                "type": "StatelessSinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "video"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "video"
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": {
+                  "node": "proxystatelesssink_d907e088",
+                  "pad": "proxy"
+                },
+                "pad_links": []
+              },
+              {
+                "id": "video_out",
+                "group": "video_out",
+                "type": "StatelessSourcePad",
+                "default_allowed_types": [
+                  {
+                    "type": "video"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "video"
+                  }
+                ],
+                "value": null,
+                "next_pads": [
+                  {
+                    "node": "slidingwindow_0c069379",
+                    "pad": "video"
+                  },
+                  {
+                    "node": "delay_a0b5af15",
+                    "pad": "sink"
+                  }
+                ],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "fps",
+                "group": "fps",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "float",
+                    "maximum": 30,
+                    "minimum": 0
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "float",
+                    "maximum": 30,
+                    "minimum": 0
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": {
+                  "node": "proxypropertysink_dd5b8fb6",
+                  "pad": "proxy"
+                },
+                "pad_links": []
+              }
+            ],
+            "description": "Controls the frame rate of the video being processed",
+            "metadata": {
+              "primary": "core",
+              "secondary": "media",
+              "tags": [
+                "control",
+                "fps"
+              ]
+            }
+          },
+          {
+            "id": "slidingwindow_0c069379",
+            "type": "SlidingWindow",
+            "editor_name": "SlidingWindow",
+            "editor_position": [
+              1308,
+              336
+            ],
+            "editor_dimensions": [
+              292,
+              288
+            ],
+            "pads": [
+              {
+                "id": "video",
+                "group": "video",
+                "type": "StatelessSinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "video"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "video"
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": {
+                  "node": "fps_084eb038",
+                  "pad": "video_out"
+                },
+                "pad_links": []
+              },
+              {
+                "id": "audio",
+                "group": "audio",
+                "type": "StatelessSinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "audio"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "audio"
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "flush",
+                "group": "flush",
+                "type": "StatelessSinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "trigger"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "trigger"
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": {
+                  "node": "autoconvert_71f5292a",
+                  "pad": "source"
+                },
+                "pad_links": []
+              },
+              {
+                "id": "reset",
+                "group": "reset",
+                "type": "StatelessSinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "trigger"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "trigger"
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "clip",
+                "group": "clip",
+                "type": "StatelessSourcePad",
+                "default_allowed_types": [
+                  {
+                    "type": "video_clip"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "video_clip"
+                  }
+                ],
+                "value": null,
+                "next_pads": [
+                  {
+                    "node": "proxystatelesssource_82930bce",
+                    "pad": "proxy"
+                  }
+                ],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "window_size_s",
+                "group": "window_size_s",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "float",
+                    "maximum": null,
+                    "minimum": null
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "float",
+                    "maximum": null,
+                    "minimum": null
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": {
+                  "node": "proxypropertysink_b45ae19f",
+                  "pad": "proxy"
+                },
+                "pad_links": []
+              }
+            ],
+            "description": "Slides a window of media and writes based on input trigger.",
+            "metadata": {
+              "primary": "core",
+              "secondary": "media",
+              "tags": [
+                "control",
+                "sliding_window"
+              ]
+            }
+          },
+          {
+            "id": "delay_a0b5af15",
+            "type": "Delay",
+            "editor_name": "Delay",
+            "editor_position": [
+              492,
+              492
+            ],
+            "editor_dimensions": [
+              256,
+              196
+            ],
+            "pads": [
+              {
+                "id": "sink",
+                "group": "sink",
+                "type": "StatelessSinkPad",
+                "default_allowed_types": null,
+                "allowed_types": [
+                  {
+                    "type": "video"
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": {
+                  "node": "fps_084eb038",
+                  "pad": "video_out"
+                },
+                "pad_links": [
+                  "source"
+                ]
+              },
+              {
+                "id": "source",
+                "group": "source",
+                "type": "StatelessSourcePad",
+                "default_allowed_types": null,
+                "allowed_types": [
+                  {
+                    "type": "video"
+                  }
+                ],
+                "value": null,
+                "next_pads": [
+                  {
+                    "node": "autoconvert_71f5292a",
+                    "pad": "sink"
+                  }
+                ],
+                "previous_pad": null,
+                "pad_links": [
+                  "sink"
+                ]
+              },
+              {
+                "id": "delay_ms",
+                "group": "delay_ms",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "integer",
+                    "maximum": null,
+                    "minimum": 0
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "integer",
+                    "maximum": null,
+                    "minimum": 0
+                  }
+                ],
+                "value": 1000,
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              }
+            ],
+            "description": "Delays a stateless stream",
+            "metadata": {
+              "primary": "core",
+              "secondary": "timing",
+              "tags": [
+                "delay"
+              ]
+            }
+          },
+          {
+            "id": "autoconvert_71f5292a",
+            "type": "AutoConvert",
+            "editor_name": "AutoConvert",
+            "editor_position": [
+              792,
+              468
+            ],
+            "editor_dimensions": [
+              80,
+              48
+            ],
+            "pads": [
+              {
+                "id": "sink",
+                "group": "sink",
+                "type": "StatelessSinkPad",
+                "default_allowed_types": null,
+                "allowed_types": [
+                  {
+                    "type": "video"
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": {
+                  "node": "delay_a0b5af15",
+                  "pad": "source"
+                },
+                "pad_links": []
+              },
+              {
+                "id": "source",
+                "group": "source",
+                "type": "StatelessSourcePad",
+                "default_allowed_types": null,
+                "allowed_types": [
+                  {
+                    "type": "trigger"
+                  }
+                ],
+                "value": null,
+                "next_pads": [
+                  {
+                    "node": "slidingwindow_0c069379",
+                    "pad": "flush"
+                  }
+                ],
+                "previous_pad": null,
+                "pad_links": []
+              }
+            ],
+            "description": "Automatically converts data between compatible types",
+            "metadata": {
+              "primary": "core",
+              "secondary": "utility",
+              "tags": [
+                "auto",
+                "type"
+              ]
+            }
+          },
+          {
+            "id": "proxystatelesssink_d907e088",
+            "type": "ProxyStatelessSink",
+            "editor_name": "ProxyStatelessSink",
+            "editor_position": [
+              96,
+              156
+            ],
+            "editor_dimensions": [
+              273,
+              168
+            ],
+            "pads": [
+              {
+                "id": "proxy",
+                "group": "proxy",
+                "type": "StatelessSourcePad",
+                "default_allowed_types": null,
+                "allowed_types": [
+                  {
+                    "type": "video"
+                  }
+                ],
+                "value": null,
+                "next_pads": [
+                  {
+                    "node": "fps_084eb038",
+                    "pad": "video_in"
+                  }
+                ],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "pad_id",
+                "group": "pad_id",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "value": "video-in",
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              }
+            ],
+            "description": "Create a stateless sink pad that is exposed when using your subgraph in a flow",
+            "metadata": {
+              "primary": "subgraph",
+              "secondary": "sink",
+              "tags": [
+                "stateless",
+                "proxy"
+              ]
+            }
+          },
+          {
+            "id": "proxystatelesssource_82930bce",
+            "type": "ProxyStatelessSource",
+            "editor_name": "ProxyStatelessSource",
+            "editor_position": [
+              1740,
+              216
+            ],
+            "editor_dimensions": [
+              288,
+              168
+            ],
+            "pads": [
+              {
+                "id": "proxy",
+                "group": "proxy",
+                "type": "StatelessSinkPad",
+                "default_allowed_types": null,
+                "allowed_types": [
+                  {
+                    "type": "video_clip"
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": {
+                  "node": "slidingwindow_0c069379",
+                  "pad": "clip"
+                },
+                "pad_links": []
+              },
+              {
+                "id": "pad_id",
+                "group": "pad_id",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "value": "video-clip-out",
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              }
+            ],
+            "description": "Proxy source pad for subgraph connections",
+            "metadata": {
+              "primary": "subgraph",
+              "secondary": "source",
+              "tags": [
+                "stateless",
+                "proxy"
+              ]
+            }
+          },
+          {
+            "id": "proxypropertysink_dd5b8fb6",
+            "type": "ProxyPropertySink",
+            "editor_name": "ProxyPropertySink",
+            "editor_position": [
+              96,
+              372
+            ],
+            "editor_dimensions": [
+              266,
+              188
+            ],
+            "pads": [
+              {
+                "id": "proxy",
+                "group": "proxy",
+                "type": "PropertySourcePad",
+                "default_allowed_types": null,
+                "allowed_types": [
+                  {
+                    "type": "float",
+                    "maximum": 30,
+                    "minimum": 0
+                  }
+                ],
+                "value": null,
+                "next_pads": [
+                  {
+                    "node": "fps_084eb038",
+                    "pad": "fps"
+                  }
+                ],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "pad_id",
+                "group": "pad_id",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "value": "fps",
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              }
+            ],
+            "description": "Create a property sink pad that is exposed when using your subgraph in a flow",
+            "metadata": {
+              "primary": "subgraph",
+              "secondary": "sink",
+              "tags": [
+                "property",
+                "sink"
+              ]
+            }
+          },
+          {
+            "id": "proxypropertysink_b45ae19f",
+            "type": "ProxyPropertySink",
+            "editor_name": "ProxyPropertySink",
+            "editor_position": [
+              936,
+              552
+            ],
+            "editor_dimensions": [
+              266,
+              188
+            ],
+            "pads": [
+              {
+                "id": "proxy",
+                "group": "proxy",
+                "type": "PropertySourcePad",
+                "default_allowed_types": null,
+                "allowed_types": [
+                  {
+                    "type": "float",
+                    "maximum": null,
+                    "minimum": null
+                  }
+                ],
+                "value": null,
+                "next_pads": [
+                  {
+                    "node": "slidingwindow_0c069379",
+                    "pad": "window_size_s"
+                  }
+                ],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "pad_id",
+                "group": "pad_id",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "value": "window size",
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              }
+            ],
+            "description": "Create a property sink pad that is exposed when using your subgraph in a flow",
+            "metadata": {
+              "primary": "subgraph",
+              "secondary": "sink",
+              "tags": [
+                "property",
+                "sink"
+              ]
+            }
+          }
+        ],
+        "portals": []
+      }
+    },
+    {
+      "id": "66ce7ccb-1832-425d-99f8-439ea5a310c6",
+      "name": "LLM Classify",
+      "created_at": "2025-09-02T10:52:23.412152",
+      "updated_at": "2025-09-10T13:41:44.346229",
+      "graph": {
+        "nodes": [
+          {
+            "id": "llmcontext_25888ea0",
+            "type": "LLMContext",
+            "editor_name": "LLMContext",
+            "editor_position": [
+              -36,
+              72
+            ],
+            "editor_dimensions": [
+              371,
+              412
+            ],
+            "pads": [
+              {
+                "id": "num_inserts",
+                "group": "config",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "integer",
+                    "maximum": null,
+                    "minimum": 1
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "integer",
+                    "maximum": null,
+                    "minimum": 1
+                  }
+                ],
+                "value": 1,
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "max_non_system_messages",
+                "group": "max_non_system_messages",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "integer",
+                    "maximum": null,
+                    "minimum": 0
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "integer",
+                    "maximum": null,
+                    "minimum": 0
+                  }
+                ],
+                "value": 2,
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "max_videos",
+                "group": "max_videos",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "integer",
+                    "maximum": null,
+                    "minimum": 0
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "integer",
+                    "maximum": null,
+                    "minimum": 0
+                  }
+                ],
+                "value": 2,
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "max_audios",
+                "group": "max_audios",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "integer",
+                    "maximum": null,
+                    "minimum": 0
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "integer",
+                    "maximum": null,
+                    "minimum": 0
+                  }
+                ],
+                "value": 2,
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "max_images",
+                "group": "max_images",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "integer",
+                    "maximum": null,
+                    "minimum": 0
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "integer",
+                    "maximum": null,
+                    "minimum": 0
+                  }
+                ],
+                "value": 2,
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "system_message",
+                "group": "system_message",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "context_message"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "context_message"
+                  }
+                ],
+                "value": {
+                  "role": "system",
+                  "content": [
+                    {
+                      "type": "text",
+                      "content": "Given the images, determine whether or not you see a  in the frame. You should be extra sure there's a phone present. We don't want false positives. If so, return 'true'. Otherwise, return 'false'. Do not return anything other than 'true' or 'false'."
+                    }
+                  ],
+                  "tool_calls": [],
+                  "tool_call_id": null
+                },
+                "next_pads": [],
+                "previous_pad": {
+                  "node": "contextmessage_fbbd6915",
+                  "pad": "context_message"
+                },
+                "pad_links": []
+              },
+              {
+                "id": "insert_0",
+                "group": "insert",
+                "type": "StatelessSinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "context_message"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "context_message"
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": {
+                  "node": "createcontextmessage_1af91aed",
+                  "pad": "context_message"
+                },
+                "pad_links": []
+              },
+              {
+                "id": "source",
+                "group": "source",
+                "type": "PropertySourcePad",
+                "default_allowed_types": [
+                  {
+                    "type": "list",
+                    "max_length": null,
+                    "item_type_constraints": [
+                      {}
+                    ]
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "list",
+                    "max_length": null,
+                    "item_type_constraints": [
+                      {}
+                    ]
+                  }
+                ],
+                "value": [
+                  {
+                    "role": "system",
+                    "content": [
+                      {
+                        "type": "text",
+                        "content": "Given the images, determine whether or not you see a  in the frame. You should be extra sure there's a phone present. We don't want  If so, return 'true'. Otherwise, return 'false'. Do not return anything other than 'true' or 'false'."
+                      }
+                    ],
+                    "tool_calls": [],
+                    "tool_call_id": null
+                  }
+                ],
+                "next_pads": [
+                  {
+                    "node": "openaicompatiblellm_f9c8391d",
+                    "pad": "context"
+                  }
+                ],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "new_user_message",
+                "group": "new_user_message",
+                "type": "StatelessSourcePad",
+                "default_allowed_types": [
+                  {
+                    "type": "context_message"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "context_message"
+                  }
+                ],
+                "value": null,
+                "next_pads": [
+                  {
+                    "node": "autoconvert_d8508030",
+                    "pad": "sink"
+                  }
+                ],
+                "previous_pad": null,
+                "pad_links": []
+              }
+            ],
+            "description": "Manages conversation context for language models",
+            "metadata": {
+              "primary": "ai",
+              "secondary": "llm",
+              "tags": [
+                "context",
+                "memory"
+              ]
+            }
+          },
+          {
+            "id": "createcontextmessage_1af91aed",
+            "type": "CreateContextMessage",
+            "editor_name": "CreateContextMessage",
+            "editor_position": [
+              -420,
+              300
+            ],
+            "editor_dimensions": [
+              288,
+              196
+            ],
+            "pads": [
+              {
+                "id": "role",
+                "group": "role",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "context_message_role"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "context_message_role"
+                  }
+                ],
+                "value": "user",
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "content",
+                "group": "content",
+                "type": "StatelessSinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "audio_clip"
+                  },
+                  {
+                    "type": "video_clip"
+                  },
+                  {
+                    "type": "av_clip"
+                  },
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  },
+                  {
+                    "type": "video"
+                  },
+                  {
+                    "type": "text_stream"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "audio_clip"
+                  },
+                  {
+                    "type": "video_clip"
+                  },
+                  {
+                    "type": "av_clip"
+                  },
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  },
+                  {
+                    "type": "video"
+                  },
+                  {
+                    "type": "text_stream"
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": {
+                  "node": "proxystatelesssink_e6a6e860",
+                  "pad": "proxy"
+                },
+                "pad_links": []
+              },
+              {
+                "id": "context_message",
+                "group": "context_message",
+                "type": "StatelessSourcePad",
+                "default_allowed_types": [
+                  {
+                    "type": "context_message"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "context_message"
+                  }
+                ],
+                "value": null,
+                "next_pads": [
+                  {
+                    "node": "llmcontext_25888ea0",
+                    "pad": "insert_0"
+                  }
+                ],
+                "previous_pad": null,
+                "pad_links": []
+              }
+            ],
+            "description": "Creates new context messages with specified role and content",
+            "metadata": {
+              "primary": "ai",
+              "secondary": "llm",
+              "tags": [
+                "context",
+                "message"
+              ]
+            }
+          },
+          {
+            "id": "jinja2_796115e2",
+            "type": "Jinja2",
+            "editor_name": "Jinja2",
+            "editor_position": [
+              -888,
+              -300
+            ],
+            "editor_dimensions": [
+              400,
+              472
+            ],
+            "pads": [
+              {
+                "id": "num_properties",
+                "group": "num_properties",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "integer",
+                    "maximum": null,
+                    "minimum": null
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "integer",
+                    "maximum": null,
+                    "minimum": null
+                  }
+                ],
+                "value": 1,
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "jinja_template",
+                "group": "jinja_template",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "value": "Given the images, determine whether or not you see a {{item}} in the frame. You should be extra sure there's a phone present. We don't want false positives. If so, return 'true'. Otherwise, return 'false'. Do not return anything other than 'true' or 'false'.",
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "property_name_0",
+                "group": "property_name",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "value": "item",
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "property_value_0",
+                "group": "property_value",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  },
+                  {
+                    "type": "integer",
+                    "maximum": null,
+                    "minimum": null
+                  },
+                  {
+                    "type": "float",
+                    "maximum": null,
+                    "minimum": null
+                  },
+                  {
+                    "type": "boolean"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "value": "",
+                "next_pads": [],
+                "previous_pad": {
+                  "node": "typeconstraint_d1fbf71b",
+                  "pad": "source"
+                },
+                "pad_links": []
+              },
+              {
+                "id": "rendered_output",
+                "group": "rendered_output",
+                "type": "PropertySourcePad",
+                "default_allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "value": "Given the images, determine whether or not you see a  in the frame. You should be extra sure there's a phone present. We don't want false positives. If so, return 'true'. Otherwise, return 'false'. Do not return anything other than 'true' or 'false'.",
+                "next_pads": [
+                  {
+                    "node": "contextmessage_fbbd6915",
+                    "pad": "content"
+                  }
+                ],
+                "previous_pad": null,
+                "pad_links": []
+              }
+            ],
+            "description": "Template strings using Jinja2",
+            "metadata": {
+              "primary": "core",
+              "secondary": "utility",
+              "tags": []
+            }
+          },
+          {
+            "id": "contextmessage_fbbd6915",
+            "type": "ContextMessage",
+            "editor_name": "ContextMessage",
+            "editor_position": [
+              -384,
+              60
+            ],
+            "editor_dimensions": [
+              256,
+              208
+            ],
+            "pads": [
+              {
+                "id": "role",
+                "group": "role",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "context_message_role"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "context_message_role"
+                  }
+                ],
+                "value": "system",
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "content",
+                "group": "content",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "value": "Given the images, determine whether or not you see a  in the frame. You should be extra sure there's a phone present. We don't want false positives. If so, return 'true'. Otherwise, return 'false'. Do not return anything other than 'true' or 'false'.",
+                "next_pads": [],
+                "previous_pad": {
+                  "node": "jinja2_796115e2",
+                  "pad": "rendered_output"
+                },
+                "pad_links": []
+              },
+              {
+                "id": "context_message",
+                "group": "context_message",
+                "type": "PropertySourcePad",
+                "default_allowed_types": [
+                  {
+                    "type": "context_message"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "context_message"
+                  }
+                ],
+                "value": {
+                  "role": "system",
+                  "content": [
+                    {
+                      "type": "text",
+                      "content": "Given the images, determine whether or not you see a  in the frame. You should be extra sure there's a phone present. We don't want false positives. If so, return 'true'. Otherwise, return 'false'. Do not return anything other than 'true' or 'false'."
+                    }
+                  ],
+                  "tool_calls": [],
+                  "tool_call_id": null
+                },
+                "next_pads": [
+                  {
+                    "node": "llmcontext_25888ea0",
+                    "pad": "system_message"
+                  }
+                ],
+                "previous_pad": null,
+                "pad_links": []
+              }
+            ],
+            "description": "Stores and manages conversation context messages",
+            "metadata": {
+              "primary": "ai",
+              "secondary": "llm",
+              "tags": [
+                "context",
+                "message"
+              ]
+            }
+          },
+          {
+            "id": "autoconvert_d8508030",
+            "type": "AutoConvert",
+            "editor_name": "AutoConvert",
+            "editor_position": [
+              384,
+              228
+            ],
+            "editor_dimensions": [
+              80,
+              48
+            ],
+            "pads": [
+              {
+                "id": "sink",
+                "group": "sink",
+                "type": "StatelessSinkPad",
+                "default_allowed_types": null,
+                "allowed_types": [
+                  {
+                    "type": "context_message"
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": {
+                  "node": "llmcontext_25888ea0",
+                  "pad": "new_user_message"
+                },
+                "pad_links": []
+              },
+              {
+                "id": "source",
+                "group": "source",
+                "type": "StatelessSourcePad",
+                "default_allowed_types": null,
+                "allowed_types": [
+                  {
+                    "type": "trigger"
+                  }
+                ],
+                "value": null,
+                "next_pads": [
+                  {
+                    "node": "openaicompatiblellm_f9c8391d",
+                    "pad": "run_trigger"
+                  }
+                ],
+                "previous_pad": null,
+                "pad_links": []
+              }
+            ],
+            "description": "Automatically converts data between compatible types",
+            "metadata": {
+              "primary": "core",
+              "secondary": "utility",
+              "tags": [
+                "auto",
+                "type"
+              ]
+            }
+          },
+          {
+            "id": "compare_33fec690",
+            "type": "Compare",
+            "editor_name": "Compare",
+            "editor_position": [
+              1368,
+              36
+            ],
+            "editor_dimensions": [
+              216,
+              282
+            ],
+            "pads": [
+              {
+                "id": "num_conditions",
+                "group": "num_conditions",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "integer",
+                    "maximum": null,
+                    "minimum": null
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "integer",
+                    "maximum": null,
+                    "minimum": null
+                  }
+                ],
+                "value": 1,
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "mode",
+                "group": "mode",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "enum",
+                    "options": [
+                      "AND",
+                      "OR"
+                    ]
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "enum",
+                    "options": [
+                      "AND",
+                      "OR"
+                    ]
+                  }
+                ],
+                "value": "OR",
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "value",
+                "group": "value",
+                "type": "PropertySourcePad",
+                "default_allowed_types": [
+                  {
+                    "type": "boolean"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "boolean"
+                  }
+                ],
+                "value": false,
+                "next_pads": [
+                  {
+                    "node": "proxystatelesssource_b135fccb",
+                    "pad": "proxy"
+                  }
+                ],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "condition_0_A",
+                "group": "condition_A",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  },
+                  {
+                    "type": "integer",
+                    "maximum": null,
+                    "minimum": null
+                  },
+                  {
+                    "type": "float",
+                    "maximum": null,
+                    "minimum": null
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "enum",
+                    "options": null
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "value": "",
+                "next_pads": [],
+                "previous_pad": {
+                  "node": "string_275030e1",
+                  "pad": "value"
+                },
+                "pad_links": [
+                  "condition_0_B"
+                ]
+              },
+              {
+                "id": "condition_0_B",
+                "group": "condition_B",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  },
+                  {
+                    "type": "integer",
+                    "maximum": null,
+                    "minimum": null
+                  },
+                  {
+                    "type": "float",
+                    "maximum": null,
+                    "minimum": null
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "enum",
+                    "options": null
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "value": "true",
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": [
+                  "condition_0_A"
+                ]
+              },
+              {
+                "id": "condition_0_operator",
+                "group": "condition_operator",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "enum",
+                    "options": [
+                      "==",
+                      "!=",
+                      "CONTAINS",
+                      "NOT_CONTAINS",
+                      "STARTS_WITH",
+                      "ENDS_WITH"
+                    ]
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "enum",
+                    "options": [
+                      "NOT_CONTAINS",
+                      "CONTAINS",
+                      "STARTS_WITH",
+                      "==",
+                      "ENDS_WITH",
+                      "!="
+                    ]
+                  }
+                ],
+                "value": "==",
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              }
+            ],
+            "description": "Node of type Compare",
+            "metadata": {
+              "primary": "core",
+              "secondary": "logic",
+              "tags": [
+                "compare"
+              ]
+            }
+          },
+          {
+            "id": "string_275030e1",
+            "type": "String",
+            "editor_name": "String",
+            "editor_position": [
+              1020,
+              60
+            ],
+            "editor_dimensions": [
+              256,
+              224
+            ],
+            "pads": [
+              {
+                "id": "set",
+                "group": "set",
+                "type": "StatelessSinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": {
+                  "node": "autoconvert_fa232db7",
+                  "pad": "source"
+                },
+                "pad_links": []
+              },
+              {
+                "id": "emit",
+                "group": "emit",
+                "type": "StatelessSinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "trigger"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "trigger"
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "value",
+                "group": "value",
+                "type": "PropertySourcePad",
+                "default_allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "value": "",
+                "next_pads": [
+                  {
+                    "node": "compare_33fec690",
+                    "pad": "condition_0_A"
+                  },
+                  {
+                    "node": "proxypropertysource_0c253ecb",
+                    "pad": "proxy"
+                  }
+                ],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "changed",
+                "group": "changed",
+                "type": "StatelessSourcePad",
+                "default_allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              }
+            ],
+            "description": "Stores and manages string values",
+            "metadata": {
+              "primary": "core",
+              "secondary": "primitive",
+              "tags": [
+                "storage",
+                "string"
+              ]
+            }
+          },
+          {
+            "id": "autoconvert_fa232db7",
+            "type": "AutoConvert",
+            "editor_name": "AutoConvert",
+            "editor_position": [
+              864,
+              192
+            ],
+            "editor_dimensions": [
+              80,
+              48
+            ],
+            "pads": [
+              {
+                "id": "sink",
+                "group": "sink",
+                "type": "StatelessSinkPad",
+                "default_allowed_types": null,
+                "allowed_types": [
+                  {
+                    "type": "text_stream"
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": {
+                  "node": "openaicompatiblellm_f9c8391d",
+                  "pad": "text_stream"
+                },
+                "pad_links": []
+              },
+              {
+                "id": "source",
+                "group": "source",
+                "type": "StatelessSourcePad",
+                "default_allowed_types": null,
+                "allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "value": null,
+                "next_pads": [
+                  {
+                    "node": "string_275030e1",
+                    "pad": "set"
+                  }
+                ],
+                "previous_pad": null,
+                "pad_links": []
+              }
+            ],
+            "description": "Automatically converts data between compatible types",
+            "metadata": {
+              "primary": "core",
+              "secondary": "utility",
+              "tags": [
+                "auto",
+                "type"
+              ]
+            }
+          },
+          {
+            "id": "proxystatelesssource_b135fccb",
+            "type": "ProxyStatelessSource",
+            "editor_name": "ProxyStatelessSource",
+            "editor_position": [
+              1680,
+              108
+            ],
+            "editor_dimensions": [
+              288,
+              168
+            ],
+            "pads": [
+              {
+                "id": "proxy",
+                "group": "proxy",
+                "type": "StatelessSinkPad",
+                "default_allowed_types": null,
+                "allowed_types": [
+                  {
+                    "type": "boolean"
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": {
+                  "node": "compare_33fec690",
+                  "pad": "value"
+                },
+                "pad_links": []
+              },
+              {
+                "id": "pad_id",
+                "group": "pad_id",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "value": "detected",
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              }
+            ],
+            "description": "Proxy source pad for subgraph connections",
+            "metadata": {
+              "primary": "subgraph",
+              "secondary": "source",
+              "tags": [
+                "stateless",
+                "proxy"
+              ]
+            }
+          },
+          {
+            "id": "proxypropertysink_a3008227",
+            "type": "ProxyPropertySink",
+            "editor_name": "ProxyPropertySink",
+            "editor_position": [
+              -1584,
+              -108
+            ],
+            "editor_dimensions": [
+              266,
+              180
+            ],
+            "pads": [
+              {
+                "id": "proxy",
+                "group": "proxy",
+                "type": "PropertySourcePad",
+                "default_allowed_types": null,
+                "allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "value": "",
+                "next_pads": [
+                  {
+                    "node": "typeconstraint_d1fbf71b",
+                    "pad": "sink"
+                  }
+                ],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "pad_id",
+                "group": "pad_id",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "value": "detect_item",
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              }
+            ],
+            "description": "Create a property sink pad that is exposed when using your subgraph in a flow",
+            "metadata": {
+              "primary": "subgraph",
+              "secondary": "sink",
+              "tags": [
+                "property",
+                "sink"
+              ]
+            }
+          },
+          {
+            "id": "typeconstraint_d1fbf71b",
+            "type": "TypeConstraint",
+            "editor_name": "TypeConstraint",
+            "editor_position": [
+              -1260,
+              -108
+            ],
+            "editor_dimensions": [
+              256,
+              214
+            ],
+            "pads": [
+              {
+                "id": "sink",
+                "group": "sink",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "value": "",
+                "next_pads": [],
+                "previous_pad": {
+                  "node": "proxypropertysink_a3008227",
+                  "pad": "proxy"
+                },
+                "pad_links": []
+              },
+              {
+                "id": "source",
+                "group": "source",
+                "type": "PropertySourcePad",
+                "default_allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "value": "",
+                "next_pads": [
+                  {
+                    "node": "jinja2_796115e2",
+                    "pad": "property_value_0"
+                  }
+                ],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "type_selector",
+                "group": "type_selector",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "enum",
+                    "options": [
+                      "string",
+                      "integer",
+                      "float",
+                      "boolean",
+                      "trigger"
+                    ]
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "enum",
+                    "options": [
+                      "string",
+                      "integer",
+                      "float",
+                      "boolean",
+                      "trigger"
+                    ]
+                  }
+                ],
+                "value": "string",
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              }
+            ],
+            "description": "Node of type TypeConstraint",
+            "metadata": {
+              "primary": "core",
+              "secondary": "utility",
+              "tags": []
+            }
+          },
+          {
+            "id": "proxypropertysource_0c253ecb",
+            "type": "ProxyPropertySource",
+            "editor_name": "ProxyPropertySource",
+            "editor_position": [
+              1344,
+              540
+            ],
+            "editor_dimensions": [
+              280,
+              180
+            ],
+            "pads": [
+              {
+                "id": "proxy",
+                "group": "proxy",
+                "type": "PropertySinkPad",
+                "default_allowed_types": null,
+                "allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "value": "",
+                "next_pads": [],
+                "previous_pad": {
+                  "node": "string_275030e1",
+                  "pad": "value"
+                },
+                "pad_links": []
+              },
+              {
+                "id": "pad_id",
+                "group": "pad_id",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "value": "llm_response",
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              }
+            ],
+            "description": "Create a property source pad that is exposed when using your subgraph in a flow",
+            "metadata": {
+              "primary": "subgraph",
+              "secondary": "source",
+              "tags": [
+                "property",
+                "source"
+              ]
+            }
+          },
+          {
+            "id": "openaicompatiblellm_f9c8391d",
+            "type": "OpenAICompatibleLLM",
+            "editor_name": "OpenAICompatibleLLM",
+            "editor_position": [
+              552,
+              -24
+            ],
+            "editor_dimensions": [
+              280,
+              556
+            ],
+            "pads": [
+              {
+                "id": "run_trigger",
+                "group": "run_trigger",
+                "type": "StatelessSinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "trigger"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "trigger"
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": {
+                  "node": "autoconvert_d8508030",
+                  "pad": "source"
+                },
+                "pad_links": []
+              },
+              {
+                "id": "started",
+                "group": "started",
+                "type": "StatelessSourcePad",
+                "default_allowed_types": [
+                  {
+                    "type": "trigger"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "trigger"
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "tool_calls_started",
+                "group": "tool_calls_started",
+                "type": "StatelessSourcePad",
+                "default_allowed_types": [
+                  {
+                    "type": "trigger"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "trigger"
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "tool_calls_finished",
+                "group": "tool_calls_finished",
+                "type": "StatelessSourcePad",
+                "default_allowed_types": [
+                  {
+                    "type": "trigger"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "trigger"
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "first_token",
+                "group": "first_token",
+                "type": "StatelessSourcePad",
+                "default_allowed_types": [
+                  {
+                    "type": "trigger"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "trigger"
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "text_stream",
+                "group": "text_stream",
+                "type": "StatelessSourcePad",
+                "default_allowed_types": [
+                  {
+                    "type": "text_stream"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "text_stream"
+                  }
+                ],
+                "value": null,
+                "next_pads": [
+                  {
+                    "node": "autoconvert_fa232db7",
+                    "pad": "sink"
+                  }
+                ],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "thinking_stream",
+                "group": "thinking_stream",
+                "type": "StatelessSourcePad",
+                "default_allowed_types": [
+                  {
+                    "type": "text_stream"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "text_stream"
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "context_message",
+                "group": "context_message",
+                "type": "StatelessSourcePad",
+                "default_allowed_types": [
+                  {
+                    "type": "context_message"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "context_message"
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "finished",
+                "group": "finished",
+                "type": "StatelessSourcePad",
+                "default_allowed_types": [
+                  {
+                    "type": "trigger"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "trigger"
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "cancel_trigger",
+                "group": "cancel_trigger",
+                "type": "StatelessSinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "trigger"
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "trigger"
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "context",
+                "group": "context",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "list",
+                    "max_length": null,
+                    "item_type_constraints": [
+                      {}
+                    ]
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "list",
+                    "max_length": null,
+                    "item_type_constraints": [
+                      {}
+                    ]
+                  }
+                ],
+                "value": [
+                  {
+                    "role": "system",
+                    "content": [
+                      {
+                        "type": "text",
+                        "content": "Given the images, determine whether or not you see a  in the frame. You should be extra sure there's a phone present. We don't want  If so, return 'true'. Otherwise, return 'false'. Do not return anything other than 'true' or 'false'."
+                      }
+                    ],
+                    "tool_calls": [],
+                    "tool_call_id": null
+                  }
+                ],
+                "next_pads": [],
+                "previous_pad": {
+                  "node": "llmcontext_25888ea0",
+                  "pad": "source"
+                },
+                "pad_links": []
+              },
+              {
+                "id": "tool_group",
+                "group": "tool_group",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "node_reference",
+                    "node_types": [
+                      "ToolGroup"
+                    ]
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "node_reference",
+                    "node_types": [
+                      "ToolGroup"
+                    ]
+                  }
+                ],
+                "value": null,
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "base_url",
+                "group": "base_url",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "value": "https://api.openai.com/v1",
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "api_key",
+                "group": "api_key",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "secret",
+                    "options": []
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "secret",
+                    "options": []
+                  }
+                ],
+                "value": "OPEN_AI_API_KEY",
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "model",
+                "group": "model",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "value": "gpt-4.1-mini",
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              }
+            ],
+            "description": "Send and receive responses from any OpenAI-compatible language model",
+            "metadata": {
+              "primary": "ai",
+              "secondary": "llm",
+              "tags": [
+                "completion",
+                "text",
+                "openai"
+              ]
+            }
+          },
+          {
+            "id": "proxystatelesssink_e6a6e860",
+            "type": "ProxyStatelessSink",
+            "editor_name": "ProxyStatelessSink",
+            "editor_position": [
+              -864,
+              396
+            ],
+            "editor_dimensions": [
+              273,
+              168
+            ],
+            "pads": [
+              {
+                "id": "proxy",
+                "group": "proxy",
+                "type": "StatelessSourcePad",
+                "default_allowed_types": null,
+                "allowed_types": [
+                  {
+                    "type": "audio_clip"
+                  },
+                  {
+                    "type": "video_clip"
+                  },
+                  {
+                    "type": "av_clip"
+                  },
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  },
+                  {
+                    "type": "video"
+                  },
+                  {
+                    "type": "text_stream"
+                  }
+                ],
+                "value": null,
+                "next_pads": [
+                  {
+                    "node": "createcontextmessage_1af91aed",
+                    "pad": "content"
+                  }
+                ],
+                "previous_pad": null,
+                "pad_links": []
+              },
+              {
+                "id": "pad_id",
+                "group": "pad_id",
+                "type": "PropertySinkPad",
+                "default_allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "allowed_types": [
+                  {
+                    "type": "string",
+                    "max_length": null,
+                    "min_length": null
+                  }
+                ],
+                "value": "ingest_video_clip",
+                "next_pads": [],
+                "previous_pad": null,
+                "pad_links": []
+              }
+            ],
+            "description": "Create a stateless sink pad that is exposed when using your subgraph in a flow",
+            "metadata": {
+              "primary": "subgraph",
+              "secondary": "sink",
+              "tags": [
+                "stateless",
+                "proxy"
+              ]
+            }
+          }
+        ],
+        "portals": []
+      }
+    }
+  ]
+}
