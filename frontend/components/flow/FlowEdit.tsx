@@ -277,17 +277,7 @@ function ExportButton() {
     <button
       onClick={onClick}
       title="Export"
-      className="btn btn-sm gap-2 font-vt323 tracking-wider btn-primary group overflow-hidden transition-all duration-300 ease-in-out relative flex items-center justify-center"
-      style={{
-        width: '40px',
-        transition: 'width 300ms ease-in-out'
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.width = '80px';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.width = '40px';
-      }}
+      className="btn btn-sm gap-2 font-vt323 tracking-wider btn-primary group overflow-hidden transition-all duration-300 ease-in-out relative flex items-center justify-center w-10 hover:w-20"
     >
       <ArrowUpTrayIcon className="h-4 w-4 flex-shrink-0 absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 group-hover:opacity-0" />
       <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out whitespace-nowrap">
