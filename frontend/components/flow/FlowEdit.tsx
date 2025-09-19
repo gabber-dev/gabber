@@ -276,7 +276,7 @@ function ExportButton() {
   return (
     <button
       onClick={onClick}
-      title="Share graph"
+      title="Export"
       className="btn btn-sm gap-2 font-vt323 tracking-wider btn-primary group overflow-hidden transition-all duration-300 ease-in-out relative flex items-center justify-center"
       style={{
         width: '40px',
