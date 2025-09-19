@@ -4,3 +4,9 @@ servers:
       type: stdio
       command: uvx
       args: [blender-mcp]
+  - name: google-docs 
+    transport:
+      type: stdio
+      cwd: /home/<your username>/google-docs-mcp
+      command: node 
+      args: ["dist/server.js"]
