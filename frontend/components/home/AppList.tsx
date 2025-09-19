@@ -10,12 +10,16 @@ import {
   TrashIcon,
   DocumentDuplicateIcon,
   PencilIcon,
+  PlusIcon,
+  BeakerIcon,
+  ArrowDownTrayIcon,
 } from "@heroicons/react/24/solid";
 import { useCallback, useRef, useState } from "react";
 import { AppListItem } from "./AppListItem";
 import ReactModal from "react-modal";
 import { CreateAppModal } from "./CreateAppModal";
 import toast from "react-hot-toast";
+import Link from "next/link";
 
 export function AppList() {
   const [showModal, setShowModal] = useState(false);
@@ -193,9 +197,23 @@ export function AppList() {
             <h2 className="font-bangers text-2xl tracking-wider">Your Apps</h2>
             <button
               onClick={handleImportClick}
-              className="btn btn-accent btn-sm"
+              title="Import app from JSON file"
+              className="btn btn-sm gap-2 font-vt323 tracking-wider btn-primary group overflow-hidden transition-all duration-300 ease-in-out relative flex items-center justify-center"
+              style={{
+                width: '40px',
+                transition: 'width 300ms ease-in-out'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.width = '80px';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.width = '40px';
+              }}
             >
-              Import
+              <ArrowDownTrayIcon className="h-4 w-4 flex-shrink-0 absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 group-hover:opacity-0" />
+              <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out whitespace-nowrap">
+                Import
+              </span>
             </button>
           </div>
           <button className="btn" onClick={() => setShowModal(true)}>
@@ -238,26 +256,47 @@ export function AppList() {
         </div>
         <div className="border-2 border-black border-b-4 border-r-4 rounded-xl p-4 bg-base-200">
           <div className={`pr-2 ${appsContainerClass}`}>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-              {displayedApps.map((app) => (
-                <AppListItem
-                  key={app.id}
-                  app={app}
-                  isSelected={selectedApps.has(app.id)}
-                  onSelect={(selected) => {
-                    setSelectedApps((prev) => {
-                      const newSet = new Set(prev);
-                      if (selected) {
-                        newSet.add(app.id);
-                      } else {
-                        newSet.delete(app.id);
-                      }
-                      return newSet;
-                    });
-                  }}
-                />
-              ))}
-            </div>
+             {apps.length === 0 ? (
+                <div className="flex items-center justify-center py-8 text-center">
+                    <p className="text-base-content/60 font-vt323 text-base">
+                    No apps yet. 
+                    <button
+                      onClick={() => setShowModal(true)}
+                      className="link link-primary mx-1 font-vt323"
+                    >
+                      Create one
+                    </button>
+                    or
+                    <Link
+                      href="/example"
+                      className="link link-primary mx-1"
+                    >
+                      view examples
+                    </Link>
+                  </p>
+                </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                {displayedApps.map((app) => (
+                  <AppListItem
+                    key={app.id}
+                    app={app}
+                    isSelected={selectedApps.has(app.id)}
+                    onSelect={(selected) => {
+                      setSelectedApps((prev) => {
+                        const newSet = new Set(prev);
+                        if (selected) {
+                          newSet.add(app.id);
+                        } else {
+                          newSet.delete(app.id);
+                        }
+                        return newSet;
+                      });
+                    }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
           {hasMoreThanFourApps && (
             <div className="flex justify-center mt-3">
