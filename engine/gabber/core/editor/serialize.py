@@ -32,15 +32,7 @@ def deserialize_pad_value(
 ):
     if isinstance(tc, pad.types.Trigger):
         return runtime_types.Trigger()
-    elif isinstance(v, str | float | int):
-        # For Object type constraints, try to parse string as JSON
-        if isinstance(tc, pad.types.Object) and isinstance(v, str):
-            try:
-                import json
-                return json.loads(v)
-            except (json.JSONDecodeError, ValueError):
-                # If JSON parsing fails, return the string as-is
-                return v
+    if isinstance(v, str | float | int):
         return v
     elif isinstance(v, BaseModel):
         return v
