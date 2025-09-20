@@ -7,7 +7,7 @@
 // import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { BeakerIcon } from "@heroicons/react/24/outline";
+import { BeakerIcon, KeyIcon } from "@heroicons/react/24/outline";
 
 export function TopBar() {
   // const params = useParams<{ app?: string; graph?: string }>();
@@ -31,6 +31,13 @@ export function TopBar() {
         >
           <BeakerIcon className="w-4 h-4" />
           Examples
+        </Link>
+        <Link
+          href={`/secrets`}
+          className="btn btn-sm btn-secondary gap-2 normal-case font-semibold hover:scale-105 transition-transform duration-200 rounded-xs"
+        >
+          <KeyIcon className="w-4 h-4" />
+          Secrets
         </Link>
       </div>
 

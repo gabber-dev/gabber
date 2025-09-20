@@ -7,6 +7,7 @@
 
 import {
   AppExport,
+  PublicSecret,
   RepositoryApp,
   RepositorySubGraph,
   SaveAppRequest,
@@ -38,6 +39,12 @@ type RepositoryContextType = {
   debugRunPath: (id: string) => string;
 
   examples: RepositoryApp[];
+
+  secrets: PublicSecret[];
+  secretsLoading: boolean;
+  refreshSecrets: () => Promise<void>;
+  addSecret: (name: string, value: string) => Promise<void>;
+  updateSecret: (name: string, value: string) => Promise<void>;
 };
 
 export const RepositoryContext = createContext<
@@ -69,6 +76,11 @@ type Props = {
   debugRunPath: (id: string) => string;
 
   examples: RepositoryApp[];
+
+  initialSecrets: PublicSecret[];
+  listSecretsImpl: () => Promise<PublicSecret[]>;
+  addSecretImpl: (name: string, value: string) => Promise<void>;
+  updateSecretImpl: (name: string, value: string) => Promise<void>;
 };
 
 export function RepositoryProvider({
@@ -93,6 +105,11 @@ export function RepositoryProvider({
   debugRunPath,
 
   examples,
+
+  initialSecrets,
+  listSecretsImpl,
+  addSecretImpl,
+  updateSecretImpl,
 }: Props) {
   const [apps, setApps] = useState<RepositoryApp[]>(initialApps);
   const [appsLoading, setAppsLoading] = useState<boolean>(false);
@@ -100,6 +117,9 @@ export function RepositoryProvider({
   const [subGraphs, setSubGraphs] =
     useState<RepositorySubGraph[]>(initialSubGraphs);
   const [subGraphsLoading, setSubGraphsLoading] = useState<boolean>(false);
+
+  const [secrets, setSecrets] = useState<PublicSecret[]>(initialSecrets);
+  const [secretsLoading, setSecretsLoading] = useState<boolean>(false);
 
   const refreshApps = useCallback(async () => {
     if (appsLoading) {
@@ -185,6 +205,46 @@ export function RepositoryProvider({
     }
   };
 
+  const refreshSecrets = useCallback(async () => {
+    if (secretsLoading) {
+      return;
+    }
+    setSecretsLoading(true);
+    try {
+      const response = await listSecretsImpl();
+      setSecrets(response);
+    } catch (error) {
+      console.error("Error loading secrets:", error);
+      toast.error("Failed to load secrets. Please try again later.");
+    } finally {
+      setSecretsLoading(false);
+    }
+  }, [secretsLoading, listSecretsImpl]);
+
+  const addSecret = async (name: string, value: string): Promise<void> => {
+    try {
+      await addSecretImpl(name, value);
+      await refreshSecrets();
+      toast.success("Secret added successfully");
+    } catch (error) {
+      toast.error("Error adding secret. Please try again.");
+      console.error("Error adding secret:", error);
+      throw error;
+    }
+  };
+
+  const updateSecret = async (name: string, value: string): Promise<void> => {
+    try {
+      await updateSecretImpl(name, value);
+      await refreshSecrets();
+      toast.success("Secret updated successfully");
+    } catch (error) {
+      toast.error("Error updating secret. Please try again.");
+      console.error("Error updating secret:", error);
+      throw error;
+    }
+  };
+
   const importApp = async (exp: AppExport): Promise<RepositoryApp> => {
     try {
       const resp = await importAppImpl(exp);
@@ -234,6 +294,12 @@ export function RepositoryProvider({
         premadeSubGraphs: initialPremadeSubGraphs,
 
         examples,
+
+        secrets,
+        secretsLoading,
+        refreshSecrets,
+        addSecret,
+        updateSecret,
       }}
     >
       {children}

@@ -21,6 +21,7 @@ import {
   listApps,
   listExamples,
   listPreMadeSubGraphs,
+  listSecrets,
   listSubGraphs,
 } from "@/lib/repository";
 
@@ -41,6 +42,7 @@ export default async function RootLayout({
   const subgraphs = await listSubGraphs();
   const examples = await listExamples();
   const premadeSubGraphs = await listPreMadeSubGraphs();
+  const secrets = await listSecrets();
 
   return (
     <html lang="en" data-theme="gabber-arcade">
@@ -50,6 +52,7 @@ export default async function RootLayout({
           initialSubGraphs={subgraphs}
           initialPremadeSubGraphs={premadeSubGraphs}
           examples={examples}
+          initialSecrets={secrets}
         >
           {children}
         </ClientLayout>

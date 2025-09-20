@@ -6,6 +6,7 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, Field
 
 from gabber.core.editor import models
+from gabber.core.secret import PublicSecret
 
 from .models import (
     AppRunConnectionDetails,
@@ -50,13 +51,26 @@ class ImportAppRequest(BaseModel):
     export: AppExport
 
 
+class AddSecretRequest(BaseModel):
+    type: Literal["add_secret"] = "add_secret"
+    name: str
+    value: str
+
+
+class UpdateSecretRequest(BaseModel):
+    type: Literal["update_secret"] = "update_secret"
+    value: str
+
+
 Request = Annotated[
     SaveSubgraphRequest
     | SaveAppRequest
     | CreateAppRunRequest
     | DebugConnectionRequest
     | ImportAppRequest
-    | MCPProxyConnectionRequest,
+    | MCPProxyConnectionRequest
+    | AddSecretRequest
+    | UpdateSecretRequest,
     Field(discriminator="type", description="Request to perform on the graph editor"),
 ]
 
@@ -116,6 +130,21 @@ class ExportAppResponse(BaseModel):
     export: AppExport
 
 
+class ListSecretsResponse(BaseModel):
+    type: Literal["list_secrets"] = "list_secrets"
+    secrets: list[PublicSecret]
+
+
+class AddSecretResponse(BaseModel):
+    type: Literal["add_secret"] = "add_secret"
+    success: bool
+
+
+class UpdateSecretResponse(BaseModel):
+    type: Literal["update_secret"] = "update_secret"
+    success: bool
+
+
 Response = Annotated[
     SaveSubgraphResponse
     | SaveAppResponse
@@ -127,6 +156,9 @@ Response = Annotated[
     | DebugConnectionResponse
     | ImportAppResponse
     | ExportAppResponse
-    | MCPProxyConnectionResponse,
+    | MCPProxyConnectionResponse
+    | ListSecretsResponse
+    | AddSecretResponse
+    | UpdateSecretResponse,
     Field(discriminator="type", description="Response from the graph editor"),
 ]

@@ -8,6 +8,7 @@
 import { TopBar } from "@/components/TopBar";
 import {
   AppExport,
+  PublicSecret,
   RepositoryApp,
   RepositorySubGraph,
   SaveAppRequest,
@@ -15,14 +16,17 @@ import {
 } from "@/generated/repository";
 import { RepositoryProvider } from "@/hooks/useRepository";
 import {
+  addSecret,
   deleteApp,
   deleteSubGraph,
   exportApp,
   importApp,
   listApps,
+  listSecrets,
   listSubGraphs,
   saveApp,
   saveSubGraph,
+  updateSecret,
 } from "@/lib/repository";
 import { useCallback } from "react";
 import { Toaster } from "react-hot-toast";
@@ -32,6 +36,7 @@ type Props = {
   initialSubGraphs: RepositorySubGraph[];
   initialPremadeSubGraphs: RepositorySubGraph[];
   examples: RepositoryApp[];
+  initialSecrets: PublicSecret[];
   children: React.ReactNode;
 };
 export function ClientLayout({
@@ -40,6 +45,7 @@ export function ClientLayout({
   initialSubGraphs,
   initialPremadeSubGraphs,
   examples: initialExamples,
+  initialSecrets,
 }: Props) {
   const listAppsImpl = useCallback(async () => {
     return listApps();
@@ -74,6 +80,18 @@ export function ClientLayout({
     return res;
   }, []);
 
+  const listSecretsImpl = useCallback(async () => {
+    return listSecrets();
+  }, []);
+
+  const addSecretImpl = useCallback(async (name: string, value: string) => {
+    return await addSecret(name, value);
+  }, []);
+
+  const updateSecretImpl = useCallback(async (name: string, value: string) => {
+    return await updateSecret(name, value);
+  }, []);
+
   return (
     <RepositoryProvider
       initialApps={initialApps}
@@ -88,6 +106,10 @@ export function ClientLayout({
       importAppImpl={importAppImpl}
       exportAppImpl={exportAppImpl}
       examples={initialExamples}
+      initialSecrets={initialSecrets}
+      listSecretsImpl={listSecretsImpl}
+      addSecretImpl={addSecretImpl}
+      updateSecretImpl={updateSecretImpl}
       subgraphEditPath={(id: string) => `/graph/${id}`}
       appEditPath={(id: string) => `/app/${id}`}
       debugRunPath={(id: string) => `/debug/${id}`}
