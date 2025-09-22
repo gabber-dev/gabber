@@ -115,4 +115,5 @@ def node_editor_rep(n: node.Node) -> "NodeEditorRepresentation":
         pads=pads,
         description=n.get_description(),
         metadata=n.get_metadata(),
+        notes=n.get_notes(),
     )

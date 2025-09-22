@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { PadEditorRepresentation } from "@/generated/editor";
+import { NodeNote, PadEditorRepresentation } from "@/generated/editor";
 import { PadHandle } from "./PadHandle";
 import { PropertyEdit } from "./property_edit/PropertyEdit";
 import { usePropertyPad } from "./hooks/usePropertyPad";
@@ -11,8 +11,9 @@ import { usePropertyPad } from "./hooks/usePropertyPad";
 type Props = {
   nodeId: string;
   data: PadEditorRepresentation;
+  notes: NodeNote[];
 };
-export function PropertyPad({ data, nodeId }: Props) {
+export function PropertyPad({ data, nodeId, notes }: Props) {
   const isSource = data.type.indexOf("Source") !== -1;
   const { runtimeChanged } = usePropertyPad(nodeId, data.id);
 
@@ -29,7 +30,7 @@ export function PropertyPad({ data, nodeId }: Props) {
           )}
           <div className="text-sm text-accent font-medium">{data.id}</div>
           <div className={`absolute ${isSource ? "-right-4" : "-left-4"}`}>
-            <PadHandle data={data} />
+            <PadHandle notes={notes} data={data} />
           </div>
         </div>
         <div className="flex-1">

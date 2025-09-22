@@ -4,17 +4,21 @@
  */
 
 import { Handle, Position } from "@xyflow/react";
-import { PadEditorRepresentation } from "@/generated/editor";
-import { useMemo, useState } from "react";
+import { NodeNote, PadEditorRepresentation } from "@/generated/editor";
+import { useMemo, useState, useRef } from "react";
 import { getDataTypeColor, getPrimaryDataType } from "./utils/dataTypeColors";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
+import { PadInfo } from "./PadInfo";
 
 type Props = {
   data: PadEditorRepresentation;
+  notes: NodeNote[];
   isActive?: boolean;
 };
 
-export function PadHandle({ data, isActive = false }: Props) {
+export function PadHandle({ data, isActive = false, notes }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const direction = useMemo(() => {
     if (data.type.indexOf("Source") !== -1) {
@@ -94,12 +98,37 @@ export function PadHandle({ data, isActive = false }: Props) {
     return baseStyle;
   }, [hasConnections, dataTypeColor, isActive, direction]);
 
+  const handleMouseEnter = () => {
+    setIsModalOpen(true);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => {
+      setIsModalOpen(false);
+      timeoutRef.current = null;
+    }, 300);
+  };
+
   return (
     <div
       className="relative items-center justify-center"
-      onMouseEnter={() => setIsModalOpen(true)}
-      onMouseLeave={() => setIsModalOpen(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
+      {notes.length > 0 && (
+        <div
+          className={`absolute ${position === Position.Right ? "-top-2 left-2" : "-top-2 right-2"} w-4 h-4`}
+        >
+          <ExclamationTriangleIcon />
+        </div>
+      )}
       <div
         className="absolute"
         style={{
@@ -117,59 +146,14 @@ export function PadHandle({ data, isActive = false }: Props) {
       {/* inner dot rendered via backgroundImage when connected */}
       {isModalOpen && (
         <div
-          className={`absolute z-20 ${direction === "source" ? "-left-56" : "left-4"} -top-2 w-52 bg-base-200 border-2 border-primary rounded-lg shadow-lg p-3 text-sm`}
+          className={`absolute z-20 ${direction === "source" ? "-left-68" : "left-4"} -top-2 w-64 bg-base-200 border-2 border-primary rounded-lg shadow-lg p-3 text-sm`}
         >
-          <div className="space-y-2">
-            <div className="border-b border-primary/30 pb-2">
-              <h3 className="text-accent font-medium">Pad Info</h3>
-            </div>
-            <div className="space-y-1">
-              <div className="flex justify-between items-start">
-                <span className="text-primary font-medium text-xs">ID:</span>
-                <span className="text-accent text-xs break-all ml-2">
-                  {data.id}
-                </span>
-              </div>
-              <div className="flex justify-between items-start">
-                <span className="text-primary font-medium text-xs">Type:</span>
-                <span className="text-accent text-xs break-all ml-2">
-                  {data.type}
-                </span>
-              </div>
-              <div className="flex justify-between items-start">
-                <span className="text-primary font-medium text-xs">
-                  Direction:
-                </span>
-                <span className="text-accent text-xs break-all ml-2">
-                  {direction}
-                </span>
-              </div>
-              <div className="flex justify-between items-start">
-                <span className="text-primary font-medium text-xs">
-                  Allowed:
-                </span>
-                <div className="flex flex-wrap gap-1 ml-2">
-                  {allowedTypeNames === null && (
-                    <span className="text-accent text-xs">ANY</span>
-                  )}
-                  {allowedTypeNames !== null &&
-                    allowedTypeNames.length > 0 &&
-                    allowedTypeNames.map((name, idx) => (
-                      <span
-                        key={idx}
-                        className="border rounded-sm text-xs px-1 text-accent break-normal"
-                      >
-                        {name}
-                      </span>
-                    ))}
-                  {allowedTypeNames !== null &&
-                    allowedTypeNames.length === 0 && (
-                      <span className="text-accent text-xs">NONE</span>
-                    )}
-                </div>
-              </div>
-            </div>
-          </div>
+          <PadInfo
+            data={data}
+            direction={direction === "source" ? "source" : "sink"}
+            allowedTypeNames={allowedTypeNames}
+            notes={notes}
+          />
         </div>
       )}
     </div>

@@ -92,7 +92,7 @@ function StatePad({ label, padId }: { label: string; padId: string }) {
       </div>
       {pad && (
         <div className="absolute right-0">
-          <PadHandle data={pad} />
+          <PadHandle notes={[]} data={pad} />
         </div>
       )}
     </div>
@@ -113,7 +113,7 @@ function Parameter({ pads }: { pads: StateMachineParameterPads }) {
         <div className="relative flex basis-0 grow items-center">
           {pad && (
             <div className="absolute -left-2">
-              <PadHandle data={pad} />
+              <PadHandle notes={[]} data={pad} />
             </div>
           )}{" "}
           <div className="text-sm ml-1">value</div>
