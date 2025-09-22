@@ -4,7 +4,11 @@
  */
 
 import { useRepository } from "@/hooks/useRepository";
-import { BeakerIcon, ChevronRightIcon, DocumentDuplicateIcon } from "@heroicons/react/24/solid";
+import {
+  BeakerIcon,
+  ChevronRightIcon,
+  DocumentDuplicateIcon,
+} from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useCallback } from "react";
 import toast from "react-hot-toast";
@@ -12,21 +16,24 @@ import toast from "react-hot-toast";
 export function ExampleList() {
   const { examples, saveApp } = useRepository();
 
-  const handleCopyExample = useCallback(async (example: any, event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    
-    try {
-      await saveApp({
-        name: `${example.name} (Copy)`,
-        graph: example.graph,
-      });
-      toast.success(`"${example.name}" copied to your apps!`);
-    } catch (error) {
-      console.error("Error copying example:", error);
-      toast.error(`Failed to copy "${example.name}"`);
-    }
-  }, [saveApp]);
+  const handleCopyExample = useCallback(
+    async (example: any, event: React.MouseEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      try {
+        await saveApp({
+          name: `${example.name} (Copy)`,
+          graph: example.graph,
+        });
+        toast.success(`"${example.name}" copied to your apps!`);
+      } catch (error) {
+        console.error("Error copying example:", error);
+        toast.error(`Failed to copy "${example.name}"`);
+      }
+    },
+    [saveApp],
+  );
 
   return (
     <div className="relative w-full">
@@ -37,11 +44,11 @@ export function ExampleList() {
         <div className="border-2 border-black border-b-4 border-r-4 rounded-xl p-4 bg-base-200">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
             {examples.map((example) => (
-              <div key={example.id} className="relative overflow-visible card bg-base-200 hover:bg-base-300 border-2 border-black border-b-4 border-r-4 transform hover:translate-y-1 active:translate-y-2 transition-all group">
-                <Link
-                  href={`/example/${example.id}`}
-                  className="block"
-                >
+              <div
+                key={example.id}
+                className="relative overflow-visible card bg-base-200 hover:bg-base-300 border-2 border-black border-b-4 border-r-4 transform hover:translate-y-1 active:translate-y-2 transition-all group"
+              >
+                <Link href={`/example/${example.id}`} className="block">
                   <div className="card-body p-4 relative">
                     <div className="flex items-start justify-between mb-3">
                       <h3 className="font-vt323 text-xl text-base-content group-hover:text-warning tracking-wider transition-colors">

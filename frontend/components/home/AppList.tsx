@@ -246,25 +246,22 @@ export function AppList() {
         </div>
         <div className="border-2 border-black border-b-4 border-r-4 rounded-xl p-4 bg-base-200">
           <div className={`pr-2 ${appsContainerClass}`}>
-             {apps.length === 0 ? (
-                <div className="flex items-center justify-center py-8 text-center">
-                    <p className="text-base-content/60 font-vt323 text-base">
-                    No apps yet. 
-                    <button
-                      onClick={() => setShowModal(true)}
-                      className="link link-primary mx-1 font-vt323"
-                    >
-                      Create one
-                    </button>
-                    or
-                    <Link
-                      href="/example"
-                      className="link link-primary mx-1"
-                    >
-                      view examples
-                    </Link>
-                  </p>
-                </div>
+            {apps.length === 0 ? (
+              <div className="flex items-center justify-center py-8 text-center">
+                <p className="text-base-content/60 font-vt323 text-base">
+                  No apps yet.
+                  <button
+                    onClick={() => setShowModal(true)}
+                    className="link link-primary mx-1 font-vt323"
+                  >
+                    Create one
+                  </button>
+                  or
+                  <Link href="/example" className="link link-primary mx-1">
+                    view examples
+                  </Link>
+                </p>
+              </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                 {displayedApps.map((app) => (

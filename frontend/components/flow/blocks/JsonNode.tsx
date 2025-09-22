@@ -40,10 +40,12 @@ export function JsonNode({ data }: BaseBlockProps) {
       <div className="flex flex-col">
         <div className="relative w-full flex items-center justify-end">
           <div className="mr-4 text-accent">value</div>
-          <div className="">{pad && <PadHandle data={pad} />}</div>
+          <div className="">{pad && <PadHandle data={pad} notes={[]} />}</div>
         </div>
         <div className="relative w-full flex items-center">
-          <div className="">{emitData && <PadHandle data={emitData} />}</div>
+          <div className="">
+            {emitData && <PadHandle data={emitData} notes={[]} />}
+          </div>
           <div className="text-accent ml-4">emit</div>
         </div>
       </div>

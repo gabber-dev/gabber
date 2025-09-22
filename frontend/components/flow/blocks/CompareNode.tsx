@@ -156,7 +156,7 @@ function Condition({ idx }: { idx: number }) {
         <div className="relative flex basis-0 grow items-center">
           {padA.pad && (
             <div className="absolute -left-2">
-              <PadHandle data={padA.pad} />
+              <PadHandle data={padA.pad} notes={[]} />
             </div>
           )}{" "}
           {padA.singleAllowedType ? (
@@ -169,7 +169,7 @@ function Condition({ idx }: { idx: number }) {
         <div className="relative flex basis-0 grow items-center">
           {padB.pad && (
             <div className="absolute -left-2">
-              <PadHandle data={padB.pad} />
+              <PadHandle data={padB.pad} notes={[]} />
             </div>
           )}{" "}
           {padB.singleAllowedType ? (
