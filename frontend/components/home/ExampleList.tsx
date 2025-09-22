@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
+import { GraphEditorRepresentation } from "@/generated/editor";
 import { useRepository } from "@/hooks/useRepository";
 import {
   BeakerIcon,
@@ -17,7 +18,10 @@ export function ExampleList() {
   const { examples, saveApp } = useRepository();
 
   const handleCopyExample = useCallback(
-    async (example: any, event: React.MouseEvent) => {
+    async (
+      example: { id: string; name: string; graph: GraphEditorRepresentation },
+      event: React.MouseEvent,
+    ) => {
       event.preventDefault();
       event.stopPropagation();
 

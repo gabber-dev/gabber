@@ -10,8 +10,6 @@ import {
   TrashIcon,
   DocumentDuplicateIcon,
   PencilIcon,
-  PlusIcon,
-  BeakerIcon,
   ArrowDownTrayIcon,
 } from "@heroicons/react/24/solid";
 import { useCallback, useRef, useState } from "react";

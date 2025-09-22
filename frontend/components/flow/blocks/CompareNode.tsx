@@ -46,7 +46,7 @@ function ValuePad() {
       <div className="text-xs italic text-base-content/60">Current Value:</div>
       {pad.pad && (
         <div className="absolute -right-2">
-          <PadHandle data={pad.pad} />
+          <PadHandle data={pad.pad} notes={[]} />
         </div>
       )}{" "}
       {pad.singleAllowedType ? (
