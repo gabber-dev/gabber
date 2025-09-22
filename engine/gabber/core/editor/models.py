@@ -164,7 +164,7 @@ class GraphEditorRepresentation(BaseModel):
 class GraphLibraryItem_Node(BaseModel):
     type: Literal["node"] = "node"
     name: str = Field(..., description="Name of the node")
-    node_type: Type = Field(..., description="Class of the node", exclude=True)
+    node_type: Any = Field(..., description="Class of the node", exclude=True)
     description: str = Field(
         ..., description="Human-readable description of what the node does"
     )

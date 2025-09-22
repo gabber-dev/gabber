@@ -267,6 +267,7 @@ export type Tags = string[];
 export type Notes = NodeNote[] | null;
 export type Level = "info" | "warning" | "error";
 export type Message = string;
+export type Pad4 = string | null;
 export type Recommendations = NodeNoteRecommendation[] | null;
 export type Message1 = string;
 export type Edits1 =
@@ -286,7 +287,6 @@ export type Edits1 =
       | UpdatePortalEndEdit
     )[]
   | null;
-export type Pad4 = string | null;
 export type Nodes = NodeEditorRepresentation[];
 export type Portals = Portal[] | null;
 export type Id6 = string;
@@ -325,7 +325,16 @@ export type Type41 = "load_from_snapshot";
 export type ReqId5 = string;
 export type Type42 = "node_library";
 export type ReqId6 = string;
-export type Type43 = "subgraph";
+export type Type43 = "node";
+/**
+ * Name of the node
+ */
+export type Name2 = string;
+/**
+ * Human-readable description of what the node does
+ */
+export type Description1 = string;
+export type Type44 = "subgraph";
 /**
  * ID of the subgraph
  */
@@ -333,7 +342,7 @@ export type Id8 = string;
 /**
  * Name of the subgraph
  */
-export type Name2 = string;
+export type Name3 = string;
 /**
  * Whether the subgraph can be edited in the editor
  */
@@ -341,13 +350,13 @@ export type Editable = boolean;
 /**
  * List of available nodes in the library
  */
-export type NodeLibrary = GraphLibraryItem_SubGraph[];
-export type Type44 = "query_eligible_node_library_items";
+export type NodeLibrary = (GraphLibraryItem_Node | GraphLibraryItem_SubGraph)[];
+export type Type45 = "query_eligible_node_library_items";
 export type ReqId7 = string;
 /**
  * Type of graph library item
  */
-export type LibraryItem = GraphLibraryItem_SubGraph;
+export type LibraryItem = GraphLibraryItem_Node | GraphLibraryItem_SubGraph;
 export type Pads1 = PadEditorRepresentation[];
 /**
  * List of eligible items from the node library
@@ -356,7 +365,7 @@ export type DirectEligibleItems = EligibleLibraryItem[];
 /**
  * List of autoconvert eligible items from the node library
  */
-export type AutoconvertEligibleItems = GraphLibraryItem_SubGraph[];
+export type AutoconvertEligibleItems = (GraphLibraryItem_Node | GraphLibraryItem_SubGraph)[];
 /**
  * Type of edit to perform on the graph editor
  */
@@ -396,12 +405,19 @@ export type PadType =
   | Schema
   | Object
   | NodeReference;
+/**
+ * Type of graph library item
+ */
+export type GraphLibraryItem = GraphLibraryItem_Node | GraphLibraryItem_SubGraph;
 
 export interface DummyModel {
   request: Request;
   response: Response;
   edit: Edit;
   pad_type: PadType;
+  graph_library_item: GraphLibraryItem;
+  graph_library_item_node: GraphLibraryItem_Node;
+  graph_library_item_subgraph: GraphLibraryItem_SubGraph;
   [k: string]: unknown;
 }
 export interface GetNodeLibraryRequest {
@@ -671,8 +687,8 @@ export interface NodeMetadata {
 export interface NodeNote {
   level: Level;
   message: Message;
-  recommendations?: Recommendations;
   pad?: Pad4;
+  recommendations?: Recommendations;
   [k: string]: unknown;
 }
 export interface NodeNoteRecommendation {
@@ -736,10 +752,33 @@ export interface NodeLibraryResponse {
   node_library?: NodeLibrary;
   [k: string]: unknown;
 }
-export interface GraphLibraryItem_SubGraph {
+export interface GraphLibraryItem_Node {
   type?: Type43;
-  id: Id8;
   name: Name2;
+  node_type: NodeType1;
+  description: Description1;
+  metadata: NodeMetadata1;
+  [k: string]: unknown;
+}
+/**
+ * Class of the node
+ */
+export interface NodeType1 {
+  [k: string]: unknown;
+}
+/**
+ * Metadata for categorizing and filtering nodes
+ */
+export interface NodeMetadata1 {
+  primary: Primary;
+  secondary: Secondary;
+  tags?: Tags;
+  [k: string]: unknown;
+}
+export interface GraphLibraryItem_SubGraph {
+  type?: Type44;
+  id: Id8;
+  name: Name3;
   graph: GraphEditorRepresentation3;
   editable?: Editable;
   [k: string]: unknown;
@@ -753,7 +792,7 @@ export interface GraphEditorRepresentation3 {
   [k: string]: unknown;
 }
 export interface QueryEligibleNodeLibraryItemsResponse {
-  type?: Type44;
+  type?: Type45;
   req_id: ReqId7;
   direct_eligible_items?: DirectEligibleItems;
   autoconvert_eligible_items?: AutoconvertEligibleItems;

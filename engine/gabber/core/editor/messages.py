@@ -11,6 +11,8 @@ from .models import (
     Edit,
     GraphEditorRepresentation,
     GraphLibraryItem,
+    GraphLibraryItem_Node,
+    GraphLibraryItem_SubGraph,
     EligibleLibraryItem,
 )
 
@@ -126,3 +128,6 @@ class DummyModel(BaseModel):
     response: Response
     edit: Edit
     pad_type: PadType
+    graph_library_item: GraphLibraryItem
+    graph_library_item_node: GraphLibraryItem_Node
+    graph_library_item_subgraph: GraphLibraryItem_SubGraph
