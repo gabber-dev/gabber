@@ -131,6 +131,7 @@ export type Tags = string[];
 export type Notes = NodeNote[] | null;
 export type Level = "info" | "warning" | "error";
 export type Message = string;
+export type Pad1 = string | null;
 export type Recommendations = NodeNoteRecommendation[] | null;
 export type Message1 = string;
 export type Edits =
@@ -189,7 +190,7 @@ export type Node1 = string;
 /**
  * Handle ID of the source pad
  */
-export type Pad1 = string;
+export type Pad2 = string;
 /**
  * ID of the target node
  */
@@ -206,7 +207,7 @@ export type Node2 = string;
 /**
  * Handle ID of the source pad
  */
-export type Pad2 = string;
+export type Pad3 = string;
 /**
  * ID of the target node
  */
@@ -223,7 +224,7 @@ export type Node3 = string;
 /**
  * ID of the pad to update
  */
-export type Pad3 = string;
+export type Pad4 = string;
 export type Type31 = "create_portal";
 export type SourceNode = string;
 export type SourcePad = string;
@@ -260,7 +261,6 @@ export type PortalEndId1 = string;
  */
 export type EditorPosition7 = [unknown, unknown];
 export type NextPads1 = PadReference[];
-export type Pad4 = string | null;
 export type Nodes = NodeEditorRepresentation[];
 export type Portals = Portal[] | null;
 export type Id7 = string;
@@ -486,8 +486,8 @@ export interface NodeMetadata {
 export interface NodeNote {
   level: Level;
   message: Message;
+  pad?: Pad1;
   recommendations?: Recommendations;
-  pad?: Pad4;
   [k: string]: unknown;
 }
 export interface NodeNoteRecommendation {
@@ -530,7 +530,7 @@ export interface RemoveNodeEdit {
 export interface ConnectPadEdit {
   type?: Type28;
   node: Node1;
-  pad: Pad1;
+  pad: Pad2;
   connected_node: ConnectedNode;
   connected_pad: ConnectedPad;
   [k: string]: unknown;
@@ -538,7 +538,7 @@ export interface ConnectPadEdit {
 export interface DisconnectPadEdit {
   type?: Type29;
   node: Node2;
-  pad: Pad2;
+  pad: Pad3;
   connected_node: ConnectedNode1;
   connected_pad: ConnectedPad1;
   [k: string]: unknown;
@@ -546,7 +546,7 @@ export interface DisconnectPadEdit {
 export interface UpdatePadEdit {
   type?: Type30;
   node: Node3;
-  pad: Pad3;
+  pad: Pad4;
   value: Value1;
   [k: string]: unknown;
 }
