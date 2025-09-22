@@ -128,43 +128,176 @@ export type Description = string | null;
 export type Primary = string;
 export type Secondary = string;
 export type Tags = string[];
-export type Nodes = NodeEditorRepresentation[];
-export type Portals = Portal[] | null;
-export type Id4 = string;
-export type Name2 = string;
+export type Notes = NodeNote[] | null;
+export type Level = "info" | "warning" | "error";
+export type Message = string;
+export type Recommendations = NodeNoteRecommendation[] | null;
+export type Message1 = string;
+export type Edits =
+  | (
+      | InsertNodeEdit
+      | InsertSubGraphEdit
+      | UpdateNodeEdit
+      | RemoveNodeEdit
+      | ConnectPadEdit
+      | DisconnectPadEdit
+      | UpdatePadEdit
+      | CreatePortalEdit
+      | CreatePortalEndEdit
+      | DeletePortalEdit
+      | DeletePortalEndEdit
+      | UpdatePortalEdit
+      | UpdatePortalEndEdit
+    )[]
+  | null;
+export type Type24 = "insert_node";
+export type Id4 = string | null;
+export type NodeType = string;
+/**
+ * @minItems 2
+ * @maxItems 2
+ */
+export type EditorPosition1 = [unknown, unknown];
+export type EditorDimensions1 = [unknown, unknown] | null;
+export type EditorName1 = string;
+export type Type25 = "insert_sub_graph";
+export type Id5 = string | null;
+export type SubgraphId = string;
+/**
+ * @minItems 2
+ * @maxItems 2
+ */
+export type EditorPosition2 = [unknown, unknown];
+export type EditorDimensions2 = [unknown, unknown] | null;
+export type EditorName2 = string;
+export type Type26 = "update_node";
+export type Id6 = string;
+export type EditorPosition3 = [unknown, unknown] | null;
+export type EditorDimensions3 = [unknown, unknown] | null;
+export type EditorName3 = string | null;
+export type NewId = string | null;
+export type Type27 = "remove_node";
+/**
+ * ID of the node to remove
+ */
+export type NodeId = string;
+export type Type28 = "connect_pad";
+/**
+ * ID of the source node
+ */
+export type Node1 = string;
+/**
+ * Handle ID of the source pad
+ */
+export type Pad1 = string;
+/**
+ * ID of the target node
+ */
+export type ConnectedNode = string;
+/**
+ * Handle ID of the target pad
+ */
+export type ConnectedPad = string;
+export type Type29 = "disconnect_pad";
+/**
+ * ID of the source node
+ */
+export type Node2 = string;
+/**
+ * Handle ID of the source pad
+ */
+export type Pad2 = string;
+/**
+ * ID of the target node
+ */
+export type ConnectedNode1 = string;
+/**
+ * Handle ID of the target pad
+ */
+export type ConnectedPad1 = string;
+export type Type30 = "update_pad";
+/**
+ * ID of the node containing the pad
+ */
+export type Node3 = string;
+/**
+ * ID of the pad to update
+ */
+export type Pad3 = string;
+export type Type31 = "create_portal";
 export type SourceNode = string;
 export type SourcePad = string;
 /**
  * @minItems 2
  * @maxItems 2
  */
-export type EditorPosition1 = [unknown, unknown];
-export type Id5 = string;
+export type EditorPosition4 = [unknown, unknown];
+export type Type32 = "create_portal_end";
+export type PortalId = string;
 /**
  * @minItems 2
  * @maxItems 2
  */
-export type EditorPosition2 = [unknown, unknown];
+export type EditorPosition5 = [unknown, unknown];
+export type Type33 = "delete_portal";
+export type PortalId1 = string;
+export type Type34 = "delete_portal_end";
+export type PortalId2 = string;
+export type PortalEndId = string;
+export type Type35 = "update_portal";
+export type PortalId3 = string;
+/**
+ * @minItems 2
+ * @maxItems 2
+ */
+export type EditorPosition6 = [unknown, unknown];
+export type Type36 = "update_portal_end";
+export type PortalId4 = string;
+export type PortalEndId1 = string;
+/**
+ * @minItems 2
+ * @maxItems 2
+ */
+export type EditorPosition7 = [unknown, unknown];
 export type NextPads1 = PadReference[];
-export type Ends = PortalEnd[];
-export type Type24 = "save_app";
-export type Id6 = string | null;
-export type Name3 = string;
-export type Type25 = "create_app_run";
-export type RunId = string;
-export type Type26 = "create_debug_connection";
-export type RunId1 = string;
-export type Type27 = "import_app";
+export type Pad4 = string | null;
+export type Nodes = NodeEditorRepresentation[];
+export type Portals = Portal[] | null;
 export type Id7 = string;
+export type Name2 = string;
+export type SourceNode1 = string;
+export type SourcePad1 = string;
+/**
+ * @minItems 2
+ * @maxItems 2
+ */
+export type EditorPosition8 = [unknown, unknown];
+export type Id8 = string;
+/**
+ * @minItems 2
+ * @maxItems 2
+ */
+export type EditorPosition9 = [unknown, unknown];
+export type NextPads2 = PadReference[];
+export type Ends = PortalEnd[];
+export type Type37 = "save_app";
+export type Id9 = string | null;
+export type Name3 = string;
+export type Type38 = "create_app_run";
+export type RunId = string;
+export type Type39 = "create_debug_connection";
+export type RunId1 = string;
+export type Type40 = "import_app";
+export type Id10 = string;
 export type Name4 = string;
 export type CreatedAt1 = string;
 export type UpdatedAt1 = string;
-export type Id8 = string;
+export type Id11 = string;
 export type Name5 = string;
 export type CreatedAt2 = string;
 export type UpdatedAt2 = string;
 export type Subgraphs = RepositorySubGraph[];
-export type Type28 = "mcp_proxy_connection";
+export type Type41 = "mcp_proxy_connection";
 export type RunId2 = string;
 /**
  * Response from the graph editor
@@ -177,28 +310,25 @@ export type Response =
   | GetSubgraphResponse
   | ListSubgraphsResponse
   | CreateAppRunResponse
-  | ListAppRunsResponse
   | DebugConnectionResponse
   | ImportAppResponse
   | ExportAppResponse
   | MCPProxyConnectionResponse;
-export type Type29 = "save_subgraph";
-export type Type30 = "save_app";
-export type Type31 = "list_apps";
+export type Type42 = "save_subgraph";
+export type Type43 = "save_app";
+export type Type44 = "list_apps";
 export type Apps = RepositoryApp[];
-export type Type32 = "get_app";
-export type Type33 = "get_subgraph";
-export type Type34 = "list_subgraphs";
+export type Type45 = "get_app";
+export type Type46 = "get_subgraph";
+export type Type47 = "list_subgraphs";
 export type SubGraphs = RepositorySubGraph[];
-export type Type35 = "create_app_run";
+export type Type48 = "create_app_run";
 export type Url = string;
 export type Token = string;
-export type Type36 = "list_app_runs";
-export type Runs = string[];
-export type Type37 = "debug_connection";
-export type Type38 = "import_app";
-export type Type39 = "export_app";
-export type Type40 = "mcp_proxy_connection";
+export type Type49 = "debug_connection";
+export type Type50 = "import_app";
+export type Type51 = "export_app";
+export type Type52 = "mcp_proxy_connection";
 
 export interface SaveSubgraphRequest {
   type?: Type;
@@ -221,6 +351,7 @@ export interface NodeEditorRepresentation {
   pads: Pads;
   description?: Description;
   metadata: NodeMetadata;
+  notes?: Notes;
   [k: string]: unknown;
 }
 export interface PadEditorRepresentation {
@@ -352,41 +483,152 @@ export interface NodeMetadata {
   tags?: Tags;
   [k: string]: unknown;
 }
-export interface Portal {
-  id: Id4;
-  name: Name2;
+export interface NodeNote {
+  level: Level;
+  message: Message;
+  recommendations?: Recommendations;
+  pad?: Pad4;
+  [k: string]: unknown;
+}
+export interface NodeNoteRecommendation {
+  message: Message1;
+  edits?: Edits;
+  [k: string]: unknown;
+}
+export interface InsertNodeEdit {
+  type?: Type24;
+  id?: Id4;
+  node_type: NodeType;
+  editor_position: EditorPosition1;
+  editor_dimensions?: EditorDimensions1;
+  editor_name: EditorName1;
+  [k: string]: unknown;
+}
+export interface InsertSubGraphEdit {
+  type?: Type25;
+  id?: Id5;
+  subgraph_id: SubgraphId;
+  editor_position: EditorPosition2;
+  editor_dimensions?: EditorDimensions2;
+  editor_name: EditorName2;
+  [k: string]: unknown;
+}
+export interface UpdateNodeEdit {
+  type?: Type26;
+  id: Id6;
+  editor_position: EditorPosition3;
+  editor_dimensions: EditorDimensions3;
+  editor_name: EditorName3;
+  new_id?: NewId;
+  [k: string]: unknown;
+}
+export interface RemoveNodeEdit {
+  type?: Type27;
+  node_id: NodeId;
+  [k: string]: unknown;
+}
+export interface ConnectPadEdit {
+  type?: Type28;
+  node: Node1;
+  pad: Pad1;
+  connected_node: ConnectedNode;
+  connected_pad: ConnectedPad;
+  [k: string]: unknown;
+}
+export interface DisconnectPadEdit {
+  type?: Type29;
+  node: Node2;
+  pad: Pad2;
+  connected_node: ConnectedNode1;
+  connected_pad: ConnectedPad1;
+  [k: string]: unknown;
+}
+export interface UpdatePadEdit {
+  type?: Type30;
+  node: Node3;
+  pad: Pad3;
+  value: Value1;
+  [k: string]: unknown;
+}
+/**
+ * New value for the pad
+ */
+export interface Value1 {
+  [k: string]: unknown;
+}
+export interface CreatePortalEdit {
+  type?: Type31;
   source_node: SourceNode;
   source_pad: SourcePad;
-  editor_position: EditorPosition1;
+  editor_position: EditorPosition4;
+  [k: string]: unknown;
+}
+export interface CreatePortalEndEdit {
+  type?: Type32;
+  portal_id: PortalId;
+  editor_position: EditorPosition5;
+  [k: string]: unknown;
+}
+export interface DeletePortalEdit {
+  type?: Type33;
+  portal_id: PortalId1;
+  [k: string]: unknown;
+}
+export interface DeletePortalEndEdit {
+  type?: Type34;
+  portal_id: PortalId2;
+  portal_end_id: PortalEndId;
+  [k: string]: unknown;
+}
+export interface UpdatePortalEdit {
+  type?: Type35;
+  portal_id: PortalId3;
+  editor_position: EditorPosition6;
+  [k: string]: unknown;
+}
+export interface UpdatePortalEndEdit {
+  type?: Type36;
+  portal_id: PortalId4;
+  portal_end_id: PortalEndId1;
+  editor_position: EditorPosition7;
+  next_pads: NextPads1;
+  [k: string]: unknown;
+}
+export interface Portal {
+  id: Id7;
+  name: Name2;
+  source_node: SourceNode1;
+  source_pad: SourcePad1;
+  editor_position: EditorPosition8;
   ends?: Ends;
   [k: string]: unknown;
 }
 export interface PortalEnd {
-  id: Id5;
-  editor_position: EditorPosition2;
-  next_pads: NextPads1;
+  id: Id8;
+  editor_position: EditorPosition9;
+  next_pads: NextPads2;
   [k: string]: unknown;
 }
 export interface SaveAppRequest {
-  type?: Type24;
-  id?: Id6;
+  type?: Type37;
+  id?: Id9;
   name: Name3;
   graph: GraphEditorRepresentation;
   [k: string]: unknown;
 }
 export interface CreateAppRunRequest {
-  type?: Type25;
+  type?: Type38;
   run_id: RunId;
   graph: GraphEditorRepresentation;
   [k: string]: unknown;
 }
 export interface DebugConnectionRequest {
-  type?: Type26;
+  type?: Type39;
   run_id: RunId1;
   [k: string]: unknown;
 }
 export interface ImportAppRequest {
-  type?: Type27;
+  type?: Type40;
   export: AppExport;
   [k: string]: unknown;
 }
@@ -396,7 +638,7 @@ export interface AppExport {
   [k: string]: unknown;
 }
 export interface RepositoryApp {
-  id: Id7;
+  id: Id10;
   name: Name4;
   created_at: CreatedAt1;
   updated_at: UpdatedAt1;
@@ -404,7 +646,7 @@ export interface RepositoryApp {
   [k: string]: unknown;
 }
 export interface RepositorySubGraph {
-  id: Id8;
+  id: Id11;
   name: Name5;
   created_at: CreatedAt2;
   updated_at: UpdatedAt2;
@@ -412,42 +654,42 @@ export interface RepositorySubGraph {
   [k: string]: unknown;
 }
 export interface MCPProxyConnectionRequest {
-  type?: Type28;
+  type?: Type41;
   run_id: RunId2;
   [k: string]: unknown;
 }
 export interface SaveSubgraphResponse {
-  type?: Type29;
+  type?: Type42;
   sub_graph: RepositorySubGraph;
   [k: string]: unknown;
 }
 export interface SaveAppResponse {
-  type?: Type30;
+  type?: Type43;
   app: RepositoryApp;
   [k: string]: unknown;
 }
 export interface ListAppsResponse {
-  type?: Type31;
+  type?: Type44;
   apps: Apps;
   [k: string]: unknown;
 }
 export interface GetAppResponse {
-  type?: Type32;
+  type?: Type45;
   app: RepositoryApp;
   [k: string]: unknown;
 }
 export interface GetSubgraphResponse {
-  type?: Type33;
+  type?: Type46;
   sub_graph: RepositorySubGraph;
   [k: string]: unknown;
 }
 export interface ListSubgraphsResponse {
-  type?: Type34;
+  type?: Type47;
   sub_graphs: SubGraphs;
   [k: string]: unknown;
 }
 export interface CreateAppRunResponse {
-  type?: Type35;
+  type?: Type48;
   connection_details: AppRunConnectionDetails;
   [k: string]: unknown;
 }
@@ -456,28 +698,23 @@ export interface AppRunConnectionDetails {
   token: Token;
   [k: string]: unknown;
 }
-export interface ListAppRunsResponse {
-  type?: Type36;
-  runs: Runs;
-  [k: string]: unknown;
-}
 export interface DebugConnectionResponse {
-  type?: Type37;
+  type?: Type49;
   connection_details: AppRunConnectionDetails;
   graph: GraphEditorRepresentation;
   [k: string]: unknown;
 }
 export interface ImportAppResponse {
-  type?: Type38;
+  type?: Type50;
   [k: string]: unknown;
 }
 export interface ExportAppResponse {
-  type?: Type39;
+  type?: Type51;
   export: AppExport;
   [k: string]: unknown;
 }
 export interface MCPProxyConnectionResponse {
-  type?: Type40;
+  type?: Type52;
   connection_details: AppRunConnectionDetails;
   [k: string]: unknown;
 }

@@ -84,6 +84,7 @@ export function BaseBlock({ data }: BaseBlockProps) {
           <NodeName />
           <NodeId />
         </div>
+
         <div className="absolute right-0">
           {selfPad && <SelfPad data={selfPad} nodeId={data.id} />}
         </div>
@@ -98,13 +99,24 @@ export function BaseBlock({ data }: BaseBlockProps) {
           if (pad.type === "StatelessSourcePad") {
             return (
               <div key={pad.id}>
-                <StatelessPad data={pad} />
+                <StatelessPad
+                  data={pad}
+                  notes={(data.notes || []).filter(
+                    (note) => note.pad === pad.id,
+                  )}
+                />
               </div>
             );
           } else if (pad.type === "PropertySourcePad") {
             return (
               <div key={pad.id}>
-                <PropertyPad nodeId={data.id} data={pad} />
+                <PropertyPad
+                  nodeId={data.id}
+                  data={pad}
+                  notes={(data.notes || []).filter(
+                    (note) => note.pad === pad.id,
+                  )}
+                />
               </div>
             );
           }
@@ -113,13 +125,24 @@ export function BaseBlock({ data }: BaseBlockProps) {
           if (pad.type === "StatelessSinkPad") {
             return (
               <div key={pad.id}>
-                <StatelessPad data={pad} />
+                <StatelessPad
+                  data={pad}
+                  notes={(data.notes || []).filter(
+                    (note) => note.pad === pad.id,
+                  )}
+                />
               </div>
             );
           } else if (pad.type === "PropertySinkPad") {
             return (
               <div key={pad.id}>
-                <PropertyPad nodeId={data.id} data={pad} />
+                <PropertyPad
+                  nodeId={data.id}
+                  data={pad}
+                  notes={(data.notes || []).filter(
+                    (note) => note.pad === pad.id,
+                  )}
+                />
               </div>
             );
           }

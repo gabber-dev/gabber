@@ -4,13 +4,13 @@
 import asyncio
 import logging
 from abc import ABC, abstractmethod
-from typing import cast, Tuple
+from typing import cast
 
-from gabber.core import node, pad, runtime_types
+from gabber.core import node, pad, runtime_types, editor
 from gabber.nodes.core.tool import mcp
 from gabber.lib.llm import AsyncLLMResponseHandle, LLMRequest, openai_compatible
 from gabber.utils import get_full_content_from_deltas, get_tool_calls_from_choice_deltas
-from gabber.nodes.core.tool import Tool, ToolGroup
+from gabber.nodes.core.tool import ToolGroup
 from mcp.types import (
     ContentBlock,
     TextContent,
@@ -543,6 +543,43 @@ class BaseLLM(node.Node, ABC):
             raise ValueError("Tool group is not configured for tool calls.")
         tg = cast(ToolGroup, tool_group_sink.get_value())
         return await tg.call_tools(tg_tool_calls, ctx)
+
+    def get_notes(self) -> list[node.NodeNote]:
+        notes: list[node.NodeNote] = []
+        run_trigger = cast(pad.StatelessSinkPad, self.get_pad("run_trigger"))
+        if not run_trigger or run_trigger.get_previous_pad() is None:
+            notes.append(
+                node.NodeNote(
+                    level="warning",
+                    message="Run Trigger pad is not connected. This node will never execute.",
+                    pad="run_trigger",
+                )
+            )
+
+        context_sink = cast(pad.PropertySinkPad, self.get_pad("context"))
+        if not context_sink or context_sink.get_previous_pad() is None:
+            notes.append(
+                node.NodeNote(
+                    level="warning",
+                    message="Context pad is not connected. The LLM is unable to run without an LLMContext.",
+                    pad="context",
+                    recommendations=[
+                        editor.models.NodeNoteRecommendation(
+                            message="Create an LLMContext and connect it to the context pad.",
+                            edits=[
+                                editor.models.InsertNodeEdit(
+                                    node_type="LLMContext",
+                                    editor_dimensions=(10, 10),
+                                    editor_position=(0, 0),
+                                    editor_name="LLMContext",
+                                ),
+                            ],
+                        )
+                    ],
+                )
+            )
+
+        return notes
 
     async def _supports_video(self, llm: openai_compatible.OpenAICompatibleLLM) -> bool:
         dummy_request = LLMRequest(

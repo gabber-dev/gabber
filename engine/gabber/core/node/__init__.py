@@ -2,6 +2,6 @@
 # SPDX-License-Identifier: SUL-1.0
 
 
-from .node import Node, NodeMetadata
+from .node import Node, NodeMetadata, NodeNote
 
-__all__ = ["Node", "NodeMetadata"]
+__all__ = ["Node", "NodeMetadata", "NodeNote"]
