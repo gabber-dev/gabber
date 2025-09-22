@@ -75,7 +75,7 @@ export function ChatInputNode({ data }: ChatInputNodeProps) {
 
         {sourcePad && (
           <div>
-            <StatelessPad data={sourcePad} />
+            <StatelessPad data={sourcePad} notes={[]} />
           </div>
         )}
       </div>
