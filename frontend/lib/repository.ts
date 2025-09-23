@@ -12,6 +12,7 @@ import {
   GetSubgraphResponse,
   ListAppsResponse,
   ListSubgraphsResponse,
+  PublicSecret,
   RepositoryApp,
   RepositorySubGraph,
   SaveAppRequest,
@@ -145,4 +146,24 @@ export async function importApp(app: AppExport): Promise<RepositoryApp> {
 export async function exportApp(appId: string): Promise<AppExport> {
   const resp = await axios.get(`${getBaseUrl()}/app/${appId}/export`);
   return (resp.data as ExportAppResponse).export;
+}
+
+export async function listSecrets(): Promise<PublicSecret[]> {
+  const resp = await axios.get(`${getBaseUrl()}/secret/list`);
+  return resp.data.secrets;
+}
+
+export async function addSecret(name: string, value: string): Promise<void> {
+  await axios.post(`${getBaseUrl()}/secret`, {
+    type: "add_secret",
+    name,
+    value,
+  });
+}
+
+export async function updateSecret(name: string, value: string): Promise<void> {
+  await axios.put(`${getBaseUrl()}/secret/${encodeURIComponent(name)}`, {
+    type: "update_secret",
+    value,
+  });
 }
