@@ -9,7 +9,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 
 export function CreateAppModal() {
-  const { saveApp } = useRepository();
+  const { saveApp, appEditPath } = useRepository();
   const router = useRouter();
   const [appName, setAppName] = useState("");
 
@@ -20,7 +20,7 @@ export function CreateAppModal() {
         const newApp = await saveApp({ name: appName, graph: { nodes: [] } });
         setAppName("");
         // Navigate to the newly created app
-        router.push(`app/${newApp.id}`);
+        router.push(appEditPath(newApp.id));
       } catch (error) {
         toast.error("Error creating app. Please refresh.");
         console.error("Error creating app:", error);
