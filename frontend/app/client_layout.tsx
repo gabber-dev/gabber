@@ -18,6 +18,7 @@ import { RepositoryProvider } from "@/hooks/useRepository";
 import {
   addSecret,
   deleteApp,
+  deleteSecret,
   deleteSubGraph,
   exportApp,
   importApp,
@@ -88,8 +89,15 @@ export function ClientLayout({
     return await addSecret(name, value);
   }, []);
 
-  const updateSecretImpl = useCallback(async (name: string, value: string) => {
-    return await updateSecret(name, value);
+  const updateSecretImpl = useCallback(
+    async (id: string, name: string, value: string) => {
+      return await updateSecret(id, name, value);
+    },
+    [],
+  );
+
+  const deleteSecretImpl = useCallback(async (id: string) => {
+    return await deleteSecret(id);
   }, []);
 
   return (
@@ -110,6 +118,7 @@ export function ClientLayout({
       listSecretsImpl={listSecretsImpl}
       addSecretImpl={addSecretImpl}
       updateSecretImpl={updateSecretImpl}
+      deleteSecretImpl={deleteSecretImpl}
       subgraphEditPath={(id: string) => `/graph/${id}`}
       appEditPath={(id: string) => `/app/${id}`}
       debugRunPath={(id: string) => `/debug/${id}`}

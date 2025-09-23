@@ -7,16 +7,53 @@
 
 import { useRepository } from "@/hooks/useRepository";
 import { useState } from "react";
-import { PlusIcon, KeyIcon, PencilIcon } from "@heroicons/react/24/outline";
+import {
+  PlusIcon,
+  KeyIcon,
+  PencilIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
 
-export function SecretsPage() {
-  const { secrets, secretsLoading, refreshSecrets, addSecret, updateSecret } = useRepository();
+interface SecretsPageProps {
+  storageDescription?: string | null;
+}
+
+export function SecretsPage({ storageDescription }: SecretsPageProps = {}) {
+  const {
+    secrets,
+    secretsLoading,
+    refreshSecrets,
+    addSecret,
+    updateSecret,
+    deleteSecret,
+  } = useRepository();
   const [showAddForm, setShowAddForm] = useState(false);
   const [newSecretName, setNewSecretName] = useState("");
   const [newSecretValue, setNewSecretValue] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [editingSecret, setEditingSecret] = useState<string | null>(null);
+  const [editingSecret, setEditingSecret] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const [editValue, setEditValue] = useState("");
+
+  const handleDeleteSecret = async (secretId: string, secretName: string) => {
+    if (
+      window.confirm(
+        `Are you sure you want to delete the secret "${secretName}"? This action cannot be undone.`,
+      )
+    ) {
+      setIsSubmitting(true);
+      try {
+        await deleteSecret(secretId);
+      } catch (error) {
+        console.error("Failed to delete secret:", error);
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+  };
+
   const handleAddSecret = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSecretName.trim() || !newSecretValue.trim()) return;
@@ -40,7 +77,7 @@ export function SecretsPage() {
 
     setIsSubmitting(true);
     try {
-      await updateSecret(editingSecret, editValue);
+      await updateSecret(editingSecret.id, editingSecret.name, editValue);
       setEditingSecret(null);
       setEditValue("");
     } catch (error) {
@@ -50,8 +87,8 @@ export function SecretsPage() {
     }
   };
 
-  const startEditing = (secretName: string) => {
-    setEditingSecret(secretName);
+  const startEditing = (secretId: string, secretName: string) => {
+    setEditingSecret({ id: secretId, name: secretName });
     setEditValue("");
     setShowAddForm(false); // Close add form if open
   };
@@ -66,7 +103,9 @@ export function SecretsPage() {
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-3">
           <KeyIcon className="w-8 h-8 text-primary" />
-          <h1 className="text-3xl font-bold text-base-content">Secrets Management</h1>
+          <h1 className="text-3xl font-bold text-base-content">
+            Secrets Management
+          </h1>
         </div>
         <button
           onClick={() => {
@@ -145,11 +184,15 @@ export function SecretsPage() {
       {editingSecret && (
         <div className="card bg-base-200 shadow-lg mb-6">
           <div className="card-body">
-            <h2 className="card-title text-lg mb-4">Update Secret: {editingSecret}</h2>
+            <h2 className="card-title text-lg mb-4">
+              Update Secret: {editingSecret.name}
+            </h2>
             <form onSubmit={handleUpdateSecret} className="space-y-4">
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text font-medium">New Secret Value</span>
+                  <span className="label-text font-medium">
+                    New Secret Value
+                  </span>
                 </label>
                 <input
                   type="password"
@@ -210,7 +253,9 @@ export function SecretsPage() {
           ) : secrets.length === 0 ? (
             <div className="text-center py-8">
               <KeyIcon className="w-16 h-16 text-base-300 mx-auto mb-4" />
-              <p className="text-base-content/60 text-lg">No secrets configured</p>
+              <p className="text-base-content/60 text-lg">
+                No secrets configured
+              </p>
               <p className="text-base-content/40 text-sm">
                 Add your first secret to get started
               </p>
@@ -234,15 +279,36 @@ export function SecretsPage() {
                         </div>
                       </td>
                       <td className="text-right">
-                        <button
-                          onClick={() => startEditing(secret.name)}
-                          className="btn btn-ghost btn-sm gap-1"
-                          disabled={editingSecret !== null || showAddForm}
-                          title="Edit secret value"
-                        >
-                          <PencilIcon className="w-4 h-4" />
-                          Edit
-                        </button>
+                        <div className="flex gap-2 justify-end">
+                          <button
+                            onClick={() => startEditing(secret.id, secret.name)}
+                            className="btn btn-ghost btn-sm gap-1"
+                            disabled={
+                              editingSecret !== null ||
+                              showAddForm ||
+                              isSubmitting
+                            }
+                            title="Edit secret value"
+                          >
+                            <PencilIcon className="w-4 h-4" />
+                            Edit
+                          </button>
+                          <button
+                            onClick={() =>
+                              handleDeleteSecret(secret.id, secret.name)
+                            }
+                            className="btn btn-ghost btn-sm gap-1 text-error hover:bg-error hover:text-error-content"
+                            disabled={
+                              editingSecret !== null ||
+                              showAddForm ||
+                              isSubmitting
+                            }
+                            title="Delete secret"
+                          >
+                            <TrashIcon className="w-4 h-4" />
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -253,12 +319,15 @@ export function SecretsPage() {
         </div>
       </div>
 
-      <div className="mt-6 text-sm text-base-content/60">
-        <p>
-          <strong>Note:</strong> Secrets are stored in your configured .secret file. 
-          Make sure to keep this file secure and never commit it to version control.
-        </p>
-      </div>
+      {storageDescription !== null && (
+        <div className="mt-6 text-sm text-base-content/60">
+          <p>
+            <strong>Note:</strong>{" "}
+            {storageDescription ||
+              "Secrets are stored in your configured .secret file. Make sure to keep this file secure and never commit it to version control."}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
