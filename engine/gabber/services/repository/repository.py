@@ -66,6 +66,7 @@ class RepositoryServer:
         self.app.router.add_get("/secret/list", self.list_secrets)
         self.app.router.add_post("/secret", self.add_secret)
         self.app.router.add_put("/secret/{name}", self.update_secret)
+        self.app.router.add_delete("/secret/{name}", self.delete_secret)
 
     async def ensure_dir(self, dir_path: str):
         await asyncio.to_thread(os.makedirs, dir_path, exist_ok=True)
@@ -857,6 +858,43 @@ class RepositoryServer:
             )
         except Exception as e:
             logging.error(f"Error updating secret: {e}")
+            return aiohttp.web.json_response(
+                {"status": "error", "message": str(e)}, status=500
+            )
+
+    async def delete_secret(self, request: aiohttp.web.Request):
+        secret_name = request.match_info.get("name")
+        if not secret_name:
+            return aiohttp.web.json_response(
+                {"status": "error", "message": "Missing secret name"}, status=400
+            )
+        
+        try:
+            # Read current secrets
+            secrets = await self.secret_provider._read_secrets()
+            
+            # Check if secret exists
+            if secret_name not in secrets:
+                return aiohttp.web.json_response(
+                    {"status": "error", "message": "Secret not found"}, status=404
+                )
+            
+            # Remove the secret
+            del secrets[secret_name]
+            
+            # Write back to file
+            secret_file = self.secret_provider.secret_file
+            await asyncio.to_thread(os.makedirs, os.path.dirname(secret_file), exist_ok=True)
+            async with aiofiles.open(secret_file, mode="w") as f:
+                for key, value in secrets.items():
+                    await f.write(f"{key}={value}\n")
+            
+            response = messages.DeleteSecretResponse(success=True)
+            return aiohttp.web.Response(
+                body=response.model_dump_json(), content_type="application/json"
+            )
+        except Exception as e:
+            logging.error(f"Error deleting secret: {e}")
             return aiohttp.web.json_response(
                 {"status": "error", "message": str(e)}, status=500
             )

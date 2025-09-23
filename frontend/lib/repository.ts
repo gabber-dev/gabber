@@ -161,9 +161,31 @@ export async function addSecret(name: string, value: string): Promise<void> {
   });
 }
 
-export async function updateSecret(name: string, value: string): Promise<void> {
-  await axios.put(`${getBaseUrl()}/secret/${encodeURIComponent(name)}`, {
-    type: "update_secret",
-    value,
-  });
+export async function updateSecret(
+  id: string,
+  name: string,
+  value: string,
+): Promise<void> {
+  // In the current implementation, id and name are the same for local deployment
+  // If the name has changed, we need to delete the old secret and create a new one
+  if (id !== name) {
+    // Delete the old secret
+    await axios.delete(`${getBaseUrl()}/secret/${encodeURIComponent(id)}`);
+    // Create a new secret with the new name
+    await axios.post(`${getBaseUrl()}/secret`, {
+      type: "add_secret",
+      name,
+      value,
+    });
+  } else {
+    // Just update the value
+    await axios.put(`${getBaseUrl()}/secret/${encodeURIComponent(name)}`, {
+      type: "update_secret",
+      value,
+    });
+  }
+}
+
+export async function deleteSecret(id: string): Promise<void> {
+  await axios.delete(`${getBaseUrl()}/secret/${encodeURIComponent(id)}`);
 }

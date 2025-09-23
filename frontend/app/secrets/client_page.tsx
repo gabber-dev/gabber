@@ -8,5 +8,7 @@
 import { SecretsPage } from "@/components/secrets/SecretsPage";
 
 export function ClientPage() {
-  return <SecretsPage />;
+  return (
+    <SecretsPage storageDescription="Secrets are stored in your configured .secret file. Make sure to keep this file secure and never commit it to version control." />
+  );
 }

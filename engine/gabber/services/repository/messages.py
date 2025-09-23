@@ -145,6 +145,11 @@ class UpdateSecretResponse(BaseModel):
     success: bool
 
 
+class DeleteSecretResponse(BaseModel):
+    type: Literal["delete_secret"] = "delete_secret"
+    success: bool
+
+
 Response = Annotated[
     SaveSubgraphResponse
     | SaveAppResponse

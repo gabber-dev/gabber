@@ -44,7 +44,8 @@ type RepositoryContextType = {
   secretsLoading: boolean;
   refreshSecrets: () => Promise<void>;
   addSecret: (name: string, value: string) => Promise<void>;
-  updateSecret: (name: string, value: string) => Promise<void>;
+  updateSecret: (id: string, name: string, value: string) => Promise<void>;
+  deleteSecret: (id: string) => Promise<void>;
 };
 
 export const RepositoryContext = createContext<
@@ -80,7 +81,8 @@ type Props = {
   initialSecrets: PublicSecret[];
   listSecretsImpl: () => Promise<PublicSecret[]>;
   addSecretImpl: (name: string, value: string) => Promise<void>;
-  updateSecretImpl: (name: string, value: string) => Promise<void>;
+  updateSecretImpl: (id: string, name: string, value: string) => Promise<void>;
+  deleteSecretImpl: (id: string) => Promise<void>;
 };
 
 export function RepositoryProvider({
@@ -110,6 +112,7 @@ export function RepositoryProvider({
   listSecretsImpl,
   addSecretImpl,
   updateSecretImpl,
+  deleteSecretImpl,
 }: Props) {
   const [apps, setApps] = useState<RepositoryApp[]>(initialApps);
   const [appsLoading, setAppsLoading] = useState<boolean>(false);
@@ -233,14 +236,30 @@ export function RepositoryProvider({
     }
   };
 
-  const updateSecret = async (name: string, value: string): Promise<void> => {
+  const updateSecret = async (
+    id: string,
+    name: string,
+    value: string,
+  ): Promise<void> => {
     try {
-      await updateSecretImpl(name, value);
+      await updateSecretImpl(id, name, value);
       await refreshSecrets();
       toast.success("Secret updated successfully");
     } catch (error) {
       toast.error("Error updating secret. Please try again.");
       console.error("Error updating secret:", error);
+      throw error;
+    }
+  };
+
+  const deleteSecret = async (id: string): Promise<void> => {
+    try {
+      await deleteSecretImpl(id);
+      await refreshSecrets();
+      toast.success("Secret deleted successfully");
+    } catch (error) {
+      toast.error("Error deleting secret. Please try again.");
+      console.error("Error deleting secret:", error);
       throw error;
     }
   };
@@ -300,6 +319,7 @@ export function RepositoryProvider({
         refreshSecrets,
         addSecret,
         updateSecret,
+        deleteSecret,
       }}
     >
       {children}
