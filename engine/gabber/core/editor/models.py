@@ -2,12 +2,29 @@
 # SPDX-License-Identifier: SUL-1.0
 
 from enum import Enum
-from typing import Annotated, Any, Generic, Literal, Type, TypeVar
+from typing import Annotated, Any, Literal, Type
 
 from pydantic import BaseModel, Field
 
-from ..node import Node, NodeMetadata
 from ..pad import types
+
+
+class NodeMetadata(BaseModel):
+    primary: str
+    secondary: str
+    tags: list[str] = []
+
+
+class NodeNoteRecommendation(BaseModel):
+    message: str
+    edits: list["Edit"] | None = None
+
+
+class NodeNote(BaseModel):
+    level: Literal["info", "warning", "error"]
+    message: str
+    pad: str | None = None
+    recommendations: list[NodeNoteRecommendation] | None = None
 
 
 class EditType(str, Enum):
@@ -144,13 +161,10 @@ class GraphEditorRepresentation(BaseModel):
     portals: list["Portal"] | None = []
 
 
-K = TypeVar("K", bound=Node, covariant=True)
-
-
-class GraphLibraryItem_Node(BaseModel, Generic[K]):
+class GraphLibraryItem_Node(BaseModel):
     type: Literal["node"] = "node"
     name: str = Field(..., description="Name of the node")
-    node_type: Type[K] = Field(..., description="Class of the node", exclude=True)
+    node_type: Any = Field(..., description="Class of the node", exclude=True)
     description: str = Field(
         ..., description="Human-readable description of what the node does"
     )
@@ -212,6 +226,7 @@ class NodeEditorRepresentation(BaseModel):
     pads: list[PadEditorRepresentation]
     description: str | None = None
     metadata: NodeMetadata
+    notes: list[NodeNote] | None = None
 
 
 class PortalEnd(BaseModel):

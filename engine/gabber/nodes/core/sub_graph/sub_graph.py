@@ -38,6 +38,7 @@ class SubGraph(node.Node):
         super().__init__(secret_provider=secret_provider, secrets=secrets)
         self.graph = graph
         self.loaded = False
+        self.node_pad_names_map: dict[tuple[str, str], str] = {}
 
     async def run(self):
         await self.graph.run(room=self.room)
@@ -56,6 +57,7 @@ class SubGraph(node.Node):
         subgraph_id_pad.set_value(subgraph_id)
 
     def resolve_pads(self):
+        self.node_pad_names_map = {}
         subgraph_id_pad = cast(pad.PropertySinkPad, self.get_pad("__subgraph_id__"))
         if not subgraph_id_pad:
             subgraph_id_pad = pad.PropertySinkPad(
@@ -189,6 +191,9 @@ class SubGraph(node.Node):
 
         # Create proxy pads for remaining subgraph pad references
         for sg_pr in subgraph_pad_refs:
+            self.node_pad_names_map[
+                (sg_pr.pad.get_owner_node().id, sg_pr.pad.get_id())
+            ] = sg_pr.new_proxy_id
             proxy_pad = sg_pr.create_proxy_pad()
             self.pads.append(proxy_pad)
 
@@ -205,6 +210,20 @@ class SubGraph(node.Node):
             [p for p in self.pads if p.get_id() != "__subgraph_id__"],
             key=lambda p: (p.get_group(), p.get_id()),
         )
+
+    def get_notes(self) -> list[node.NodeNote]:
+        res: list[node.NodeNote] = []
+        for n in self.graph.nodes:
+            notes = n.get_notes()
+            for note in notes:
+                if note.pad:
+                    mapped_pad = self.node_pad_names_map.get((n.id, note.pad))
+                    copyd_note = note.model_copy()
+                    copyd_note.pad = mapped_pad
+                    res.append(copyd_note)
+                else:
+                    res.append(note)
+        return res
 
 
 class SubgraphPadReference:

@@ -538,8 +538,8 @@ class RepositoryServer:
         )
         runner = web.AppRunner(self.app)
         await runner.setup()
-        site = web.TCPSite(runner, "0.0.0.0", self.port)
-        print(f"Starting repository server on 0.0.0.0:{self.port}")
+        site = web.TCPSite(runner, ("0.0.0.0", "::"), self.port)
+        print(f"Starting repository server on [::]:{self.port}")
         await site.start()
 
         # Keep the server running

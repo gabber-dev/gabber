@@ -117,12 +117,12 @@ export function Jinja2Node({ data }: BaseBlockProps) {
         {renderedOutputPad && (
           <div className="flex justify-end">
             <div className="text-xs w-24 mr-2">rendered_output</div>
-            <PadHandle data={renderedOutputPad} />
+            <PadHandle data={renderedOutputPad} notes={[]} />
           </div>
         )}
         {numPropertiesPad && (
           <div className="w-full relative px-4 py-2">
-            <PropertyPad nodeId={data.id} data={numPropertiesPad} />
+            <PropertyPad nodeId={data.id} data={numPropertiesPad} notes={[]} />
           </div>
         )}
 
@@ -138,7 +138,7 @@ export function Jinja2Node({ data }: BaseBlockProps) {
               </div>
             </div>
             <div className="flex gap-1 items-center">
-              <PadHandle data={valuePad} />
+              <PadHandle data={valuePad} notes={[]} />
               <div className="text-xs ml-2 text-accent">value</div>
               <div className="text-neutral-200 text-xs italic">
                 {(valuePad.value as string) || ""}

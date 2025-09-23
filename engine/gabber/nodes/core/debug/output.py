@@ -9,7 +9,7 @@ from gabber.core import pad
 from gabber.core.node import Node
 from gabber.core.runtime_types import AudioFrame, VideoFrame
 from livekit import rtc
-from gabber.core.node import NodeMetadata
+from gabber.core.node import NodeMetadata, NodeNote
 
 
 class Output(Node):
@@ -42,6 +42,36 @@ class Output(Node):
             )
 
         self.pads = [audio, video]
+
+    def get_notes(self) -> list[NodeNote]:
+        audio_pad = cast(pad.StatelessSinkPad, self.get_pad("audio"))
+        video_pad = cast(pad.StatelessSinkPad, self.get_pad("video"))
+        notes: list[NodeNote] = []
+        any_connections = False
+
+        if audio_pad and audio_pad.get_previous_pad():
+            any_connections = True
+
+        if video_pad and video_pad.get_previous_pad():
+            any_connections = True
+
+        if not any_connections:
+            notes.extend(
+                [
+                    NodeNote(
+                        level="warning",
+                        message="Output node has no connected pads. No media will be sent to the user.",
+                        pad="audio",
+                    ),
+                    NodeNote(
+                        level="warning",
+                        message="Output node has no connected pads. No media will be sent to the user.",
+                        pad="video",
+                    ),
+                ]
+            )
+
+        return notes
 
     async def run(self):
         audio = cast(pad.StatelessSinkPad, self.get_pad_required("audio"))

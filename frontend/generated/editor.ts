@@ -264,6 +264,29 @@ export type Description = string | null;
 export type Primary = string;
 export type Secondary = string;
 export type Tags = string[];
+export type Notes = NodeNote[] | null;
+export type Level = "info" | "warning" | "error";
+export type Message = string;
+export type Pad4 = string | null;
+export type Recommendations = NodeNoteRecommendation[] | null;
+export type Message1 = string;
+export type Edits1 =
+  | (
+      | InsertNodeEdit
+      | InsertSubGraphEdit
+      | UpdateNodeEdit
+      | RemoveNodeEdit
+      | ConnectPadEdit
+      | DisconnectPadEdit
+      | UpdatePadEdit
+      | CreatePortalEdit
+      | CreatePortalEndEdit
+      | DeletePortalEdit
+      | DeletePortalEndEdit
+      | UpdatePortalEdit
+      | UpdatePortalEndEdit
+    )[]
+  | null;
 export type Nodes = NodeEditorRepresentation[];
 export type Portals = Portal[] | null;
 export type Id6 = string;
@@ -382,12 +405,19 @@ export type PadType =
   | Schema
   | Object
   | NodeReference;
+/**
+ * Type of graph library item
+ */
+export type GraphLibraryItem = GraphLibraryItem_Node | GraphLibraryItem_SubGraph;
 
 export interface DummyModel {
   request: Request;
   response: Response;
   edit: Edit;
   pad_type: PadType;
+  graph_library_item: GraphLibraryItem;
+  graph_library_item_node: GraphLibraryItem_Node;
+  graph_library_item_subgraph: GraphLibraryItem_SubGraph;
   [k: string]: unknown;
 }
 export interface GetNodeLibraryRequest {
@@ -527,6 +557,7 @@ export interface NodeEditorRepresentation {
   pads: Pads;
   description?: Description;
   metadata: NodeMetadata;
+  notes?: Notes;
   [k: string]: unknown;
 }
 export interface PadEditorRepresentation {
@@ -651,6 +682,18 @@ export interface NodeMetadata {
   primary: Primary;
   secondary: Secondary;
   tags?: Tags;
+  [k: string]: unknown;
+}
+export interface NodeNote {
+  level: Level;
+  message: Message;
+  pad?: Pad4;
+  recommendations?: Recommendations;
+  [k: string]: unknown;
+}
+export interface NodeNoteRecommendation {
+  message: Message1;
+  edits?: Edits1;
   [k: string]: unknown;
 }
 export interface Portal {

@@ -46,14 +46,7 @@ class BouncingBall(node.Node):
     async def run(self):
         audio_source = cast(pad.StatelessSourcePad, self.get_pad_required("audio"))
         video_source = cast(pad.StatelessSourcePad, self.get_pad_required("video"))
-        audio_enabled = cast(
-            pad.PropertySourcePad, self.get_pad_required("audio_enabled")
-        )
-        video_enabled = cast(
-            pad.PropertySourcePad, self.get_pad_required("video_enabled")
-        )
 
-        last_audio_frame_time: float | None = None
         last_video_frame_time: float | None = None
 
         async def play_impact_sound():
@@ -152,49 +145,4 @@ class BouncingBall(node.Node):
                 sim_time += dt
                 await asyncio.sleep(dt)
 
-        async def frame_timeout():
-            while True:
-                await asyncio.sleep(0.5)
-                current_time = time.time()
-
-                if last_audio_frame_time is None:
-                    if audio_enabled.get_value():
-                        audio_enabled.push_item(
-                            False, pad.RequestContext(parent=None, originator=self.id)
-                        )
-                else:
-                    if current_time - last_audio_frame_time > 1:
-                        if audio_enabled.get_value():
-                            audio_enabled.push_item(
-                                False,
-                                pad.RequestContext(parent=None, originator=self.id),
-                            )
-                    else:
-                        if not audio_enabled.get_value():
-                            audio_enabled.push_item(
-                                True,
-                                pad.RequestContext(parent=None, originator=self.id),
-                            )
-                if last_video_frame_time is None:
-                    if video_enabled.get_value():
-                        video_enabled.push_item(
-                            False, pad.RequestContext(parent=None, originator=self.id)
-                        )
-                else:
-                    if current_time - last_video_frame_time > 1:
-                        if video_enabled.get_value():
-                            video_enabled.push_item(
-                                False,
-                                pad.RequestContext(parent=None, originator=self.id),
-                            )
-                    else:
-                        if not video_enabled.get_value():
-                            video_enabled.push_item(
-                                True,
-                                pad.RequestContext(parent=None, originator=self.id),
-                            )
-
-        await asyncio.gather(
-            video_generate(),
-            frame_timeout(),
-        )
+        await asyncio.gather(video_generate())

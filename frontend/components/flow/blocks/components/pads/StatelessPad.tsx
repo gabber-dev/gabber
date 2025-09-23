@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { PadEditorRepresentation } from "@/generated/editor";
+import { NodeNote, PadEditorRepresentation } from "@/generated/editor";
 import { PadHandle } from "./PadHandle";
 import { useStatelessPad } from "./hooks/useStatelessPad";
 import { useRun } from "@/hooks/useRun";
@@ -13,9 +13,10 @@ import { useEffect, useState } from "react";
 
 type Props = {
   data: PadEditorRepresentation;
+  notes: NodeNote[];
 };
 
-export function StatelessPad({ data }: Props) {
+export function StatelessPad({ data, notes }: Props) {
   const isSource = data.type.indexOf("Source") !== -1;
   const { singleAllowedType } = useStatelessPad(data.id);
   const { connectionState } = useRun();
@@ -59,7 +60,7 @@ export function StatelessPad({ data }: Props) {
         <div className={`text-sm text-accent font-medium`}>{data.id}</div>
 
         <div className={`absolute ${isSource ? "-right-4" : "-left-4"}`}>
-          <PadHandle data={data} isActive={isActive} />
+          <PadHandle notes={notes} data={data} isActive={isActive} />
         </div>
       </div>
     </div>

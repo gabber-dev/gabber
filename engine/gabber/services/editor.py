@@ -52,8 +52,8 @@ class GraphEditorServer:
     async def run(self):
         runner = web.AppRunner(self.app)
         await runner.setup()
-        site = web.TCPSite(runner, "0.0.0.0", self.port)
-        print(f"Starting editor server on 0.0.0.0:{self.port}")
+        site = web.TCPSite(runner, ("0.0.0.0", "::"), self.port)
+        print(f"Starting editor server on [::]:{self.port}")
         await site.start()
 
         # Keep the server running

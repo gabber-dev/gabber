@@ -5,17 +5,11 @@ import logging
 from abc import abstractmethod
 
 from livekit import rtc
-from pydantic import BaseModel
 
 from ..secret import PublicSecret, SecretProvider
 
 from ..pad import Pad, SinkPad, SourcePad
-
-
-class NodeMetadata(BaseModel):
-    primary: str
-    secondary: str
-    tags: list[str] = []
+from ..editor.models import NodeMetadata, NodeNote
 
 
 class Node:
@@ -46,6 +40,9 @@ class Node:
     def get_metadata(cls) -> NodeMetadata:
         """Get the metadata structure for this node type"""
         return NodeMetadata(primary="core", secondary="general", tags=["default"])
+
+    def get_notes(self) -> list[NodeNote]:
+        return []
 
     @abstractmethod
     def resolve_pads(self): ...
