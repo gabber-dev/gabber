@@ -46,7 +46,6 @@ type RepositoryContextType = {
   addSecret: (name: string, value: string) => Promise<void>;
   updateSecret: (id: string, name: string, value: string) => Promise<void>;
   deleteSecret: (id: string) => Promise<void>;
-  storageDescription?: string | null;
 };
 
 export const RepositoryContext = createContext<
@@ -84,7 +83,6 @@ type Props = {
   addSecretImpl: (name: string, value: string) => Promise<void>;
   updateSecretImpl: (id: string, name: string, value: string) => Promise<void>;
   deleteSecretImpl: (id: string) => Promise<void>;
-  storageDescription?: string | null;
 };
 
 export function RepositoryProvider({
@@ -115,7 +113,6 @@ export function RepositoryProvider({
   addSecretImpl,
   updateSecretImpl,
   deleteSecretImpl,
-  storageDescription,
 }: Props) {
   const [apps, setApps] = useState<RepositoryApp[]>(initialApps);
   const [appsLoading, setAppsLoading] = useState<boolean>(false);
@@ -239,7 +236,11 @@ export function RepositoryProvider({
     }
   };
 
-  const updateSecret = async (id: string, name: string, value: string): Promise<void> => {
+  const updateSecret = async (
+    id: string,
+    name: string,
+    value: string,
+  ): Promise<void> => {
     try {
       await updateSecretImpl(id, name, value);
       await refreshSecrets();
@@ -319,7 +320,6 @@ export function RepositoryProvider({
         addSecret,
         updateSecret,
         deleteSecret,
-        storageDescription,
       }}
     >
       {children}

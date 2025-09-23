@@ -89,22 +89,16 @@ export function ClientLayout({
     return await addSecret(name, value);
   }, []);
 
-  const updateSecretImpl = useCallback(async (id: string, name: string, value: string) => {
-    return await updateSecret(id, name, value);
-  }, []);
+  const updateSecretImpl = useCallback(
+    async (id: string, name: string, value: string) => {
+      return await updateSecret(id, name, value);
+    },
+    [],
+  );
 
   const deleteSecretImpl = useCallback(async (id: string) => {
     return await deleteSecret(id);
   }, []);
-
-  // Determine if this is a local deployment to show the .secret file message
-  // Local deployment is indicated by the absence of specific environment variables
-  const isLocalDeployment =
-    !process.env.REPOSITORY_HOST && !process.env.GABBER_PUBLIC_HOST;
-
-  const storageDescription = isLocalDeployment
-    ? "Secrets are stored in your configured .secret file. Make sure to keep this file secure and never commit it to version control."
-    : null; // Hide the message for cloud deployments
 
   return (
     <RepositoryProvider
@@ -125,7 +119,6 @@ export function ClientLayout({
       addSecretImpl={addSecretImpl}
       updateSecretImpl={updateSecretImpl}
       deleteSecretImpl={deleteSecretImpl}
-      storageDescription={storageDescription}
       subgraphEditPath={(id: string) => `/graph/${id}`}
       appEditPath={(id: string) => `/app/${id}`}
       debugRunPath={(id: string) => `/debug/${id}`}

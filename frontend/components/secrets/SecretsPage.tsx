@@ -14,7 +14,11 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 
-export function SecretsPage() {
+interface SecretsPageProps {
+  storageDescription?: string | null;
+}
+
+export function SecretsPage({ storageDescription }: SecretsPageProps = {}) {
   const {
     secrets,
     secretsLoading,
@@ -22,7 +26,6 @@ export function SecretsPage() {
     addSecret,
     updateSecret,
     deleteSecret,
-    storageDescription,
   } = useRepository();
   const [showAddForm, setShowAddForm] = useState(false);
   const [newSecretName, setNewSecretName] = useState("");
