@@ -37,6 +37,7 @@ type RepositoryContextType = {
   subgraphEditPath: (id: string) => string;
   appEditPath: (id: string) => string;
   debugRunPath: (id: string) => string;
+  premadeGraphPath: (id: string) => string;
 
   examples: RepositoryApp[];
 
@@ -75,6 +76,7 @@ type Props = {
   subgraphEditPath: (id: string) => string;
   appEditPath: (id: string) => string;
   debugRunPath: (id: string) => string;
+  premadeGraphPath: (id: string) => string;
 
   examples: RepositoryApp[];
 
@@ -105,6 +107,7 @@ export function RepositoryProvider({
   subgraphEditPath,
   appEditPath,
   debugRunPath,
+  premadeGraphPath,
 
   examples,
 
@@ -309,6 +312,7 @@ export function RepositoryProvider({
         subgraphEditPath,
         appEditPath,
         debugRunPath,
+        premadeGraphPath,
 
         premadeSubGraphs: initialPremadeSubGraphs,
 

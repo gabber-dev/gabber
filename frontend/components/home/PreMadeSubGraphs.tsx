@@ -14,7 +14,8 @@ import toast from "react-hot-toast";
 import Link from "next/link";
 
 export function PreMadeSubGraphs() {
-  const { saveSubGraph, refreshSubGraphs, premadeSubGraphs } = useRepository();
+  const { saveSubGraph, refreshSubGraphs, premadeSubGraphs, premadeGraphPath } =
+    useRepository();
   const [selectedSubGraphs, setSelectedSubGraphs] = useState<Set<string>>(
     new Set(),
   );
@@ -74,7 +75,7 @@ export function PreMadeSubGraphs() {
             {premadeSubGraphs.map((subGraph) => (
               <Link
                 key={subGraph.id}
-                href={`/premade_graph/${subGraph.id}`}
+                href={premadeGraphPath(subGraph.id)}
                 className="relative overflow-visible card bg-base-200 hover:bg-base-300 border-2 border-black border-b-4 border-r-4 transform hover:translate-y-1 active:translate-y-2 transition-all group"
               >
                 <div className="card-body p-4 relative">

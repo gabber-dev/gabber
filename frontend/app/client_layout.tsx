@@ -122,6 +122,7 @@ export function ClientLayout({
       subgraphEditPath={(id: string) => `/graph/${id}`}
       appEditPath={(id: string) => `/app/${id}`}
       debugRunPath={(id: string) => `/debug/${id}`}
+      premadeGraphPath={(id: string) => `/premade_graph/${id}`}
     >
       <Toaster />
       <div className="absolute top-0 left-0 right-0 h-[70px]">
