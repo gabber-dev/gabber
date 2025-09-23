@@ -540,7 +540,7 @@ class Graph:
                     if isinstance(tcs[0], pad.types.Secret):
                         tcs[0].options = secret_options
                         if isinstance(p, pad.PropertyPad) and p.get_value() not in [
-                            s.name for s in secret_options
+                            s.id for s in secret_options
                         ]:
                             p.set_value(None)
                 if d_tcs and len(d_tcs) == 1:
