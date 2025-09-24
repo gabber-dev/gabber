@@ -16,11 +16,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Engine, EngineHandler, MCPServer, Publication, Subscription } from "@gabber/client"
+import { Engine, EngineHandler, Publication, Subscription, RuntimeEventPayload_LogItem } from "@gabber/client"
 import { LocalTrack } from "@gabber/client";
 import { GetLocalTrackOptions } from "@gabber/client";
 import { ConnectionDetails, PublishParams, SubscribeParams, ConnectionState } from "@gabber/client";
-import { createContext, useCallback, useContext, useRef, useState } from "react";
+import { createContext, useContext, useRef, useState } from "react";
 
 type EngineContextType = {
     connectionState: ConnectionState;
@@ -29,6 +29,7 @@ type EngineContextType = {
     disconnect: () => Promise<void>;
     publishToNode: (params: PublishParams) => Promise<Publication>;
     subscribeToNode: (params: SubscribeParams) => Promise<Subscription>;
+    logItems: RuntimeEventPayload_LogItem[];
 };
 
 type InternalEngineContextType = {
@@ -37,14 +38,24 @@ type InternalEngineContextType = {
 
 export const EngineContext = createContext<({main: EngineContextType, internal: InternalEngineContextType}) | undefined>(undefined);
 
-export function EngineProvider({ children }: { children: React.ReactNode }) {
+export function EngineProvider({ children, maxLogItems }: { children: React.ReactNode, maxLogItems?: number }) {
     const [connectionState, setConnectionState] = useState<ConnectionState>("disconnected");
+    const [logItems, setLogItems] = useState<RuntimeEventPayload_LogItem[]>([]);
 
     const handlerRef = useRef<EngineHandler>(undefined);
     if (!handlerRef.current) {
         handlerRef.current = {
             onConnectionStateChange: (state) => {
                 setConnectionState(state);
+            },
+            onLogItem: (item) => {
+                setLogItems((items) => {
+                    const newItems = [item, ...items];
+                    if(newItems.length > (maxLogItems || 100)) {
+                        newItems.splice(maxLogItems || 100);
+                    }
+                    return newItems;
+                });
             }
         };
     }
@@ -63,6 +74,7 @@ export function EngineProvider({ children }: { children: React.ReactNode }) {
                 disconnect: engineRef.current.disconnect,
                 publishToNode: engineRef.current.publishToNode,
                 subscribeToNode: engineRef.current.subscribeToNode,
+                logItems,
             },
             internal: {
                 engineRef: engineRef as React.RefObject<Engine>
