@@ -30,6 +30,7 @@ type EngineContextType = {
     publishToNode: (params: PublishParams) => Promise<Publication>;
     subscribeToNode: (params: SubscribeParams) => Promise<Subscription>;
     logItems: RuntimeEventPayload_LogItem[];
+    clearLogItems: () => void;
 };
 
 type InternalEngineContextType = {
@@ -75,6 +76,7 @@ export function EngineProvider({ children, maxLogItems }: { children: React.Reac
                 publishToNode: engineRef.current.publishToNode,
                 subscribeToNode: engineRef.current.subscribeToNode,
                 logItems,
+                clearLogItems: () => setLogItems([]),
             },
             internal: {
                 engineRef: engineRef as React.RefObject<Engine>

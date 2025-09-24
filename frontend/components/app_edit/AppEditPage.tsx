@@ -78,7 +78,7 @@ function AppEditPageInner() {
       </div>
 
       <div
-        className={`absolute top-0 right-0 bottom-16 w-96 bg-gray-primary transition-transform duration-300 ease-in-out z-10 ${logsShowing ? "translate-x-0" : "translate-x-full"}`}
+        className={`absolute top-0 right-0 bottom-16 w-1/3 bg-gray-primary transition-transform duration-300 ease-in-out z-10 ${logsShowing ? "translate-x-0" : "translate-x-full"}`}
       >
         <LogList />
       </div>

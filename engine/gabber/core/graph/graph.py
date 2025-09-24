@@ -587,8 +587,15 @@ class Graph:
                 runtime_api.run(nodes=self.nodes) if runtime_api else asyncio.sleep(0)
             )
 
+            async def node_run_wrapper(n: Node):
+                try:
+                    await n.run()
+                    n.logger.info(f"Node {n.id} run completed.")
+                except Exception as e:
+                    n.logger.error(f"Error in node {n.id} run: {e}", exc_info=e)
+
             await asyncio.gather(
-                *[node.run() for node in self.nodes],
+                *[node_run_wrapper(n) for n in self.nodes],
                 runtime_api_coro,
             )
         except Exception as e:

@@ -43,23 +43,19 @@ export function LogItem({ logItem }: Props) {
   return (
     <div className={`alert ${alertClass} shadow-lg`}>
       <div className="flex flex-col w-full">
-        {/* Header: Timestamp and Level */}
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
+        {/* Header: Level, Message, and Timestamp on the same line */}
+        <div className="flex justify-between items-start gap-2">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
             <div className={`badge ${badgeClass} gap-2`}>
               {level.toUpperCase()}
             </div>
+            <p className="font-mono flex-1 min-w-0 break-words">
+              {typeof message === "string" ? message : JSON.stringify(message)}
+            </p>
           </div>
-          <div className="text-xs opacity-75 font-mono">
+          <div className="text-xs opacity-75 font-mono flex-shrink-0">
             {new Date(timestamp).toLocaleString()}
           </div>
-        </div>
-
-        {/* Message */}
-        <div className="alert-content">
-          <p className="font-mono">
-            {typeof message === "string" ? message : JSON.stringify(message)}
-          </p>
         </div>
 
         {/* Optional fields as badges */}
