@@ -48,7 +48,7 @@ async def entrypoint(ctx: agents.JobContext):
     room = ctx.room
 
     try:
-        await graph.run(room=room)
+        await graph.run(room=room, runtime_api=runtime_api)
     except asyncio.CancelledError:
         logging.info("Job cancelled, shutting down gracefully.")
     except Exception as e:

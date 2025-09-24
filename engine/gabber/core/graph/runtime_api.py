@@ -15,6 +15,12 @@ from gabber.nodes.core.media.publish import Publish
 PING_BYTES = "ping".encode("utf-8")
 
 
+@dataclass(frozen=True)
+class QueueItem:
+    payload: BaseModel
+    participant: rtc.RemoteParticipant | None
+
+
 class RuntimeApi:
     def __init__(
         self,
@@ -23,6 +29,7 @@ class RuntimeApi:
     ):
         self.room = room
         self._publish_locks: dict[str, PublishLock] = {}
+        self._dc_queue = asyncio.Queue[QueueItem | None]()
 
     def _trigger_value_from_pad_value(self, value: Any):
         v = serialize.serialize_pad_value(value)
@@ -47,9 +54,13 @@ class RuntimeApi:
 
     def emit_logs(self, items: list["RuntimeEventPayload_LogItem"]):
         logging.info(f"NEIL Emitting {len(items)} log items")
-        dc_queue = asyncio.Queue()
-        dc_queue.put_nowait(
-            RuntimeEvent(payload=RuntimeEventPayload_Logs(type="logs", items=items))
+        self._dc_queue.put_nowait(
+            QueueItem(
+                payload=RuntimeEvent(
+                    payload=RuntimeEventPayload_Logs(type="logs", items=items)
+                ),
+                participant=None,
+            )
         )
 
     async def run(self, nodes: list[node.Node]):
@@ -58,16 +69,9 @@ class RuntimeApi:
         }
         all_pads = list(node_pad_lookup.values())
 
-        @dataclass(frozen=True)
-        class QueueItem:
-            payload: BaseModel
-            participant: rtc.RemoteParticipant | None
-
-        dc_queue = asyncio.Queue[QueueItem | None]()
-
         def on_pad(p: pad.Pad, value: Any):
             ev_value = self._trigger_value_from_pad_value(value)
-            dc_queue.put_nowait(
+            self._dc_queue.put_nowait(
                 QueueItem(
                     payload=RuntimeEvent(
                         payload=RuntimeEventPayload_Value(
@@ -96,7 +100,7 @@ class RuntimeApi:
             ack_resp = RuntimeRequestAck(req_id=req_id, type="ack")
             complete_resp = RuntimeResponse(req_id=req_id, type="complete")
 
-            dc_queue.put_nowait(
+            self._dc_queue.put_nowait(
                 QueueItem(payload=ack_resp, participant=packet.participant)
             )
 
@@ -105,7 +109,7 @@ class RuntimeApi:
                 existing_lock = self._publish_locks.get(payload.publish_node)
                 if not packet.participant:
                     complete_resp.error = "Participant is required."
-                    dc_queue.put_nowait(
+                    self._dc_queue.put_nowait(
                         QueueItem(payload=complete_resp, participant=packet.participant)
                     )
                     return
@@ -118,7 +122,7 @@ class RuntimeApi:
                         complete_resp.payload = RuntimeResponsePayload_LockPublisher(
                             success=False
                         )
-                        dc_queue.put_nowait(
+                        self._dc_queue.put_nowait(
                             QueueItem(
                                 payload=complete_resp, participant=packet.participant
                             )
@@ -128,7 +132,7 @@ class RuntimeApi:
                 pub_node = [n for n in nodes if n.id == payload.publish_node]
                 if len(pub_node) != 1 or not isinstance(pub_node[0], Publish):
                     complete_resp.error = "Publish node not found."
-                    dc_queue.put_nowait(
+                    self._dc_queue.put_nowait(
                         QueueItem(payload=complete_resp, participant=packet.participant)
                     )
                     return
@@ -143,7 +147,7 @@ class RuntimeApi:
                 complete_resp.payload = RuntimeResponsePayload_LockPublisher(
                     type="lock_publisher", success=True
                 )
-                dc_queue.put_nowait(
+                self._dc_queue.put_nowait(
                     QueueItem(payload=complete_resp, participant=packet.participant)
                 )
             elif request.payload.type == "push_value":
@@ -154,7 +158,7 @@ class RuntimeApi:
                 if not pad_obj:
                     logging.error(f"Pad {pad_id} in node {node_id} not found.")
                     complete_resp.error = f"Pad {pad_id} in node {node_id} not found."
-                    dc_queue.put_nowait(
+                    self._dc_queue.put_nowait(
                         QueueItem(payload=complete_resp, participant=packet.participant)
                     )
                     return
@@ -163,7 +167,7 @@ class RuntimeApi:
                     complete_resp.error = (
                         f"Pad {pad_id} in node {node_id} is not a SourcePad."
                     )
-                    dc_queue.put_nowait(
+                    self._dc_queue.put_nowait(
                         QueueItem(payload=complete_resp, participant=packet.participant)
                     )
                     return
@@ -176,7 +180,7 @@ class RuntimeApi:
                     complete_resp.error = (
                         f"Pad {pad_id} in node {node_id} has no type constraints."
                     )
-                    dc_queue.put_nowait(
+                    self._dc_queue.put_nowait(
                         QueueItem(payload=complete_resp, participant=packet.participant)
                     )
                     return
@@ -188,7 +192,7 @@ class RuntimeApi:
                 )
                 pad_obj.push_item(value, ctx)
                 ctx.add_done_callback(
-                    lambda _: dc_queue.put_nowait(
+                    lambda _: self._dc_queue.put_nowait(
                         QueueItem(payload=complete_resp, participant=packet.participant)
                     )
                 )
@@ -205,7 +209,7 @@ class RuntimeApi:
                     complete_resp.error = (
                         f"Pad {pad_id} in node {node_id} is not a PropertyPad."
                     )
-                    dc_queue.put_nowait(
+                    self._dc_queue.put_nowait(
                         QueueItem(payload=complete_resp, participant=packet.participant)
                     )
                     return
@@ -220,13 +224,13 @@ class RuntimeApi:
                 complete_resp.payload = RuntimeResponsePayload_GetValue(
                     type="get_value", value=value_obj
                 )
-                dc_queue.put_nowait(
+                self._dc_queue.put_nowait(
                     QueueItem(payload=complete_resp, participant=packet.participant)
                 )
             else:
                 logging.error(f"Unknown request type: {request.payload.type}")
                 complete_resp.error = f"Unknown request type: {request.payload.type}"
-                dc_queue.put_nowait(
+                self._dc_queue.put_nowait(
                     QueueItem(payload=complete_resp, participant=packet.participant)
                 )
 
@@ -234,8 +238,10 @@ class RuntimeApi:
 
         async def dc_queue_consumer():
             while True:
-                item = await dc_queue.get()
+                logging.info("NEIL Waiting for data packet to send...")
+                item = await self._dc_queue.get()
                 if item is None:
+                    logging.info("NEIL DC queue consumer exiting")
                     break
 
                 try:
