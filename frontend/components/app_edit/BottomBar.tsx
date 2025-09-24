@@ -6,15 +6,24 @@
 import { useEditor } from "@/hooks/useEditor";
 import { DebugControls } from "../PlayButton";
 
-export function BottomBar() {
-  const { unsavedChanges, saveChanges, saving } = useEditor();
+type Props = {
+  logButtonEnabled: boolean;
+  saveButtonEnabled: boolean;
+  debugControlsEnabled: boolean;
+};
+
+export function BottomBar({
+  logButtonEnabled,
+  saveButtonEnabled,
+  debugControlsEnabled,
+}: Props) {
+  const { unsavedChanges, saveChanges, saving, logsShowing, setLogsShowing } =
+    useEditor();
 
   return (
     <div className="w-full h-16 bg-base-200 border-t border-base-300 z-30">
       <div className="h-full grid grid-cols-3 items-center px-4">
-        <div>
-          <DebugControls />
-        </div>
+        <div>{debugControlsEnabled && <DebugControls />}</div>
 
         <div className="flex justify-center items-center">
           {unsavedChanges && (
@@ -23,21 +32,32 @@ export function BottomBar() {
               <span className="text-sm font-medium text-warning-content">
                 Unsaved changes
               </span>
-              <button
-                className="btn btn-warning btn-sm"
-                onClick={saveChanges}
-                disabled={saving}
-              >
-                {saving ? (
-                  <div className="loading loading-dots loading-sm" />
-                ) : (
-                  "Save"
-                )}
-              </button>
+              {saveButtonEnabled && (
+                <button
+                  className="btn btn-warning btn-sm"
+                  onClick={saveChanges}
+                  disabled={saving}
+                >
+                  {saving ? (
+                    <div className="loading loading-dots loading-sm" />
+                  ) : (
+                    "Save"
+                  )}
+                </button>
+              )}
             </div>
           )}
         </div>
-        <div></div>
+        <div className="flex justify-end">
+          {logButtonEnabled && (
+            <button
+              className="btn btn-sm"
+              onClick={() => setLogsShowing(!logsShowing)}
+            >
+              Log
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
