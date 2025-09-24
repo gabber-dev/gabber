@@ -104,7 +104,7 @@ class LLMRequest:
                         }
                         new_msg["content"].append(new_cnt)
                 elif isinstance(cnt, ContextMessageContentItem_Video):
-                    if video_support:
+                    if video_support and len(cnt.clip.video) > 0:
                         if not cnt.clip.mp4_bytes:
                             encoder = MP4_Encoder()
                             encoder.push_frames(cnt.clip.video)
