@@ -47,6 +47,12 @@ class RuntimeApi:
 
         return ev_value
 
+    def emit_logs(self, items: list["RuntimeEventPayload_LogItem"]):
+        dc_queue = asyncio.Queue()
+        dc_queue.put_nowait(
+            RuntimeEvent(payload=RuntimeEventPayload_Logs(type="logs", items=items))
+        )
+
     async def run(self):
         node_pad_lookup: dict[tuple[str, str], pad.Pad] = {
             (n.id, p.get_id()): p for n in self.nodes for p in n.pads
@@ -305,8 +311,22 @@ class RuntimeEventPayload_Value(BaseModel):
     pad_id: str
 
 
+class RuntimeEventPayload_LogItem(BaseModel):
+    message: str
+    level: str
+    timestamp: str
+    node: str | None = None
+    subgraph: str | None = None
+    pad: str | None = None
+
+
+class RuntimeEventPayload_Logs(BaseModel):
+    type: Literal["logs"] = "logs"
+    items: list[RuntimeEventPayload_LogItem]
+
+
 RuntimeEventPayload = Annotated[
-    RuntimeEventPayload_Value,
+    RuntimeEventPayload_Value | RuntimeEventPayload_Logs,
     Field(discriminator="type", description="Payload for the runtime event"),
 ]
 

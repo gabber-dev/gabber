@@ -39,11 +39,13 @@ class Graph:
         secret_provider: SecretProvider,
         secrets: list[PublicSecret],
         library_items: list[GraphLibraryItem],
+        log_handler: logging.Handler,
     ):
         self.id = id
         self.secret_provider = secret_provider
         self.secrets = secrets
         self.library_items = library_items
+        self.log_handler = log_handler
 
         self.nodes: list[Node] = []
         self.portals: list[models.Portal] = []
