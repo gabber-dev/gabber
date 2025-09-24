@@ -1,3 +1,8 @@
+/**
+ * Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
+ * SPDX-License-Identifier: SUL-1.0
+ */
+
 import { useEngine } from "@gabber/client-react";
 import { useRef, useEffect } from "react";
 import { LogItem } from "./LogItem"; // Assuming LogItem is in the same or imported directory
