@@ -75,7 +75,7 @@ export type Type15 = "event";
 /**
  * Payload for the runtime event
  */
-export type Payload2 = RuntimeEventPayload_Value;
+export type Payload2 = RuntimeEventPayload_Value | RuntimeEventPayload_Logs;
 export type Type16 = "value";
 /**
  * Type of the pad triggered value
@@ -90,10 +90,18 @@ export type Value6 =
   | PadValue_VideoClip;
 export type NodeId2 = string;
 export type PadId2 = string;
+export type Type17 = "logs";
+export type Message = string;
+export type Level = string;
+export type Timestamp = string;
+export type Node = string | null;
+export type Subgraph = string | null;
+export type Pad = string | null;
+export type Items = RuntimeEventPayload_LogItem[];
 /**
  * Payload for the runtime event
  */
-export type RuntimeEventPayload = RuntimeEventPayload_Value;
+export type RuntimeEventPayload = RuntimeEventPayload_Value | RuntimeEventPayload_Logs;
 /**
  * Type of the pad triggered value
  */
@@ -114,6 +122,7 @@ export interface DummyType {
   ev: RuntimeEvent;
   runtime_event_payload: RuntimeEventPayload;
   pad_value: PadValue;
+  log_item: RuntimeEventPayload_LogItem;
   [k: string]: unknown;
 }
 export interface RuntimeRequest {
@@ -209,5 +218,19 @@ export interface RuntimeEventPayload_Value {
   value: Value6;
   node_id: NodeId2;
   pad_id: PadId2;
+  [k: string]: unknown;
+}
+export interface RuntimeEventPayload_Logs {
+  type?: Type17;
+  items: Items;
+  [k: string]: unknown;
+}
+export interface RuntimeEventPayload_LogItem {
+  message: Message;
+  level: Level;
+  timestamp: Timestamp;
+  node?: Node;
+  subgraph?: Subgraph;
+  pad?: Pad;
   [k: string]: unknown;
 }

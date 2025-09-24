@@ -1,3 +1,3 @@
-from .logger import GabberFilter, GabberLogHandler
+from .logger import GabberLogHandler
 
-__all__ = ["GabberFilter", "GabberLogHandler"]
+__all__ = ["GabberLogHandler"]

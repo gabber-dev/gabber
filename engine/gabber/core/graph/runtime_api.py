@@ -53,7 +53,6 @@ class RuntimeApi:
         return ev_value
 
     def emit_logs(self, items: list["RuntimeEventPayload_LogItem"]):
-        logging.info(f"NEIL Emitting {len(items)} log items")
         self._dc_queue.put_nowait(
             QueueItem(
                 payload=RuntimeEvent(
@@ -238,10 +237,8 @@ class RuntimeApi:
 
         async def dc_queue_consumer():
             while True:
-                logging.info("NEIL Waiting for data packet to send...")
                 item = await self._dc_queue.get()
                 if item is None:
-                    logging.info("NEIL DC queue consumer exiting")
                     break
 
                 try:
@@ -472,3 +469,4 @@ class DummyType(BaseModel):
     ev: RuntimeEvent
     runtime_event_payload: RuntimeEventPayload
     pad_value: PadValue
+    log_item: RuntimeEventPayload_LogItem

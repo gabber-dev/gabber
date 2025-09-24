@@ -4,30 +4,15 @@ import queue
 from datetime import datetime
 from ..graph.runtime_api import RuntimeApi, RuntimeEventPayload_LogItem
 
-import sys
 
-
-class GabberFilter(logging.Filter):
-    def __init__(self, *, node: str | None, subgraph: str | None = None):
-        self.node = node
-        self.subgraph = subgraph
-
-    def filter(self, record):
-        record.node = self.node
-        record.subgraph = self.subgraph
-        return True
-
-
-class GabberLogHandler(logging.StreamHandler):
+class GabberLogHandler(logging.Handler):
     def __init__(self, runtime_api: RuntimeApi):
-        super().__init__(sys.stderr)
+        super().__init__()
         self._runtime_api = runtime_api
         self.q = queue.Queue[RuntimeEventPayload_LogItem]()
         self._closed = False
 
     def emit(self, record):
-        super().emit(record)
-
         node = getattr(record, "node", None)
         subgraph = getattr(record, "subgraph", None)
         pad = getattr(record, "pad", None)

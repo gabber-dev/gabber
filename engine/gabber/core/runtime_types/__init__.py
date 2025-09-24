@@ -25,6 +25,7 @@ from .types import (
     Trigger,
     VideoClip,
     VideoFrame,
+    BaseRuntimeType,
 )
 
 __all__ = [
@@ -51,4 +52,5 @@ __all__ = [
     "ContextMessageDeltaStream",
     "Schema",
     "Trigger",
+    "BaseRuntimeType",
 ]

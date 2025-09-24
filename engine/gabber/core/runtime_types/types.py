@@ -3,6 +3,7 @@
 
 import asyncio
 import base64
+from abc import abstractmethod, ABC
 from dataclasses import dataclass
 from enum import Enum
 from typing import Annotated, Any, Literal, cast
@@ -15,16 +16,31 @@ from pydantic import BaseModel, ConfigDict, Field, field_serializer
 from .. import pad
 
 
-class Point(BaseModel):
+class BaseRuntimeType(ABC):
+    def to_log_values(self) -> dict[str, str | float | int | bool]:
+        return {"type": self.log_type()}
+
+    @abstractmethod
+    def log_type(self) -> str:
+        raise NotImplementedError()
+
+
+class Point(BaseModel, BaseRuntimeType):
     x: float
     y: float
 
+    def log_type(self) -> str:
+        return "point"
 
-class BoundingBox(BaseModel):
+
+class BoundingBox(BaseModel, BaseRuntimeType):
     x_min: float
     y_min: float
     x_max: float
     y_max: float
+
+    def log_type(self) -> str:
+        return "bounding_box"
 
 
 @dataclass
@@ -56,9 +72,12 @@ class AudioFrameData:
     def sample_count(self) -> int:
         return self.data.shape[1]
 
+    def log_type(self) -> str:
+        return "audio_frame_data"
+
 
 @dataclass
-class AudioFrame:
+class AudioFrame(BaseRuntimeType):
     original_data: AudioFrameData
     data_16000hz: AudioFrameData
     data_24000hz: AudioFrameData
@@ -80,13 +99,16 @@ class AudioFrame:
             data_48000hz=AudioFrameData(data_48000hz, 48000, 1),
         )
 
+    def log_type(self) -> str:
+        return "audio_frame"
+
 
 class VideoFormat(Enum):
     RGBA = "RGBA"
 
 
 @dataclass
-class VideoFrame:
+class VideoFrame(BaseRuntimeType):
     data: np.ndarray  # (H,W,4) array of uint8 RGBA video data
     width: int
     height: int
@@ -108,9 +130,12 @@ class VideoFrame:
         data = np.zeros((height, width, 4), dtype=np.uint8)
         return cls(data=data, width=width, height=height, timestamp=timestamp)
 
+    def log_type(self) -> str:
+        return "video_frame"
+
 
 @dataclass
-class AudioClip:
+class AudioClip(BaseRuntimeType):
     audio: list[AudioFrame]
     transcription: str | None = None
 
@@ -133,9 +158,12 @@ class AudioClip:
         total_duration = sum(frame.original_data.duration for frame in self.audio)
         return total_duration
 
+    def log_type(self) -> str:
+        return "audio_clip"
+
 
 @dataclass
-class VideoClip:
+class VideoClip(BaseRuntimeType):
     video: list[VideoFrame]
     mp4_bytes: bytes | None = None
 
@@ -159,15 +187,21 @@ class VideoClip:
         last_timestamp = self.video[-1].timestamp
         return last_timestamp - first_timestamp
 
+    def log_type(self) -> str:
+        return "video_clip"
+
 
 @dataclass
-class AVClip:
+class AVClip(BaseRuntimeType):
     video: VideoClip
     audio: AudioClip
 
+    def log_type(self) -> str:
+        return "av_clip"
+
 
 @dataclass
-class TextStream:
+class TextStream(BaseRuntimeType):
     def __init__(self):
         self._output_queue = asyncio.Queue[str | None]()
 
@@ -187,18 +221,27 @@ class TextStream:
 
         return item
 
+    def log_type(self) -> str:
+        return "text_stream"
 
-class ToolCall(BaseModel):
+
+class ToolCall(BaseModel, BaseRuntimeType):
     call_id: str
     index: int
     name: str
     arguments: dict[str, Any]
 
+    def log_type(self) -> str:
+        return "tool_call"
 
-class ToolDefinition(BaseModel):
+
+class ToolDefinition(BaseModel, BaseRuntimeType):
     name: str
     description: str
     parameters: "Schema | dict[str, Any] | None" = None
+
+    def log_type(self) -> str:
+        return "tool_definition"
 
 
 class ContextMessageContentItem_Audio(BaseModel):
@@ -243,7 +286,7 @@ class ContextMessageRole(str, Enum):
     TOOL = "tool"
 
 
-class ContextMessage(BaseModel):
+class ContextMessage(BaseModel, BaseRuntimeType):
     role: ContextMessageRole
     content: list[ContextMessageContentItem]
     tool_calls: list[ToolCall]
@@ -265,15 +308,18 @@ class ContextMessage(BaseModel):
         # Enable arbitrary types to allow Any
         arbitrary_types_allowed = True
 
+    def log_type(self) -> str:
+        return "context_message"
 
-class ContextMessageContent_ToolCallDelta(BaseModel):
+
+class ContextMessageContent_ToolCallDelta(BaseModel, BaseRuntimeType):
     index: int
     id: str | None
     name: str | None
     arguments: str | None
 
 
-class Schema(BaseModel):
+class Schema(BaseModel, BaseRuntimeType):
     properties: dict[
         str,
         pad.types.String
@@ -376,9 +422,13 @@ class Schema(BaseModel):
             defaults=defaults,
         )
 
+    def log_type(self) -> str:
+        return "schema"
 
-class Trigger(BaseModel):
-    pass
+
+class Trigger(BaseModel, BaseRuntimeType):
+    def log_type(self) -> str:
+        return "trigger"
 
 
 @dataclass
