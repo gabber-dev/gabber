@@ -18,6 +18,7 @@ class Node:
         *,
         secret_provider: SecretProvider,
         secrets: list[PublicSecret],
+        logger: logging.Logger,
     ):
         self.room: rtc.Room
         self.id: str = "ERORR"
@@ -27,6 +28,7 @@ class Node:
         self.editor_name: str = "ERROR"
         self.secret_provider = secret_provider
         self.secrets = secrets
+        self.logger = logger
 
     @classmethod
     def get_type(cls) -> str:

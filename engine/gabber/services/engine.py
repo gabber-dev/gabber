@@ -13,9 +13,11 @@ from livekit.agents import cli
 
 from gabber.core.editor import models
 from gabber.core.graph import Graph, GraphLibrary
+from gabber.core.graph.runtime_api import RuntimeApi
 from gabber.core.secret import SecretProvider
 from .default_graph_library import DefaultGraphLibrary
 from .default_secret_provider import DefaultSecretProvider
+from gabber.core.logger import GabberLogHandler
 
 
 async def entrypoint(ctx: agents.JobContext):
@@ -31,11 +33,15 @@ async def entrypoint(ctx: agents.JobContext):
 
     library_items = await graph_library.list_items()
     secrets = await secret_provider.list_secrets()
+    runtime_api = RuntimeApi(room=ctx.room)
+    log_handler = GabberLogHandler(runtime_api=runtime_api)
     graph = Graph(
         secrets=secrets,
         secret_provider=secret_provider,
         library_items=library_items,
+        log_handler=log_handler,
     )
+    log_handler_t = asyncio.create_task(log_handler.run())
     await graph.load_from_snapshot(graph_rep)
 
     await ctx.connect()
@@ -47,6 +53,9 @@ async def entrypoint(ctx: agents.JobContext):
         logging.info("Job cancelled, shutting down gracefully.")
     except Exception as e:
         logging.error(f"An error occurred while running the graph: {e}", exc_info=True)
+
+    log_handler.close()
+    await log_handler_t
 
 
 def cpu_load_fnc(worker: agents.Worker) -> float:

@@ -6,7 +6,7 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, Field
 from livekit import rtc
 from dataclasses import dataclass
-from .. import node, pad, runtime_types, mcp
+from .. import node, pad, runtime_types
 import logging
 from ..editor import serialize
 from ..node import Node
@@ -20,10 +20,8 @@ class RuntimeApi:
         self,
         *,
         room: rtc.Room,
-        nodes: list[node.Node],
     ):
         self.room = room
-        self.nodes = nodes
         self._publish_locks: dict[str, PublishLock] = {}
 
     def _trigger_value_from_pad_value(self, value: Any):
@@ -48,14 +46,15 @@ class RuntimeApi:
         return ev_value
 
     def emit_logs(self, items: list["RuntimeEventPayload_LogItem"]):
+        logging.info(f"NEIL Emitting {len(items)} log items")
         dc_queue = asyncio.Queue()
         dc_queue.put_nowait(
             RuntimeEvent(payload=RuntimeEventPayload_Logs(type="logs", items=items))
         )
 
-    async def run(self):
+    async def run(self, nodes: list[node.Node]):
         node_pad_lookup: dict[tuple[str, str], pad.Pad] = {
-            (n.id, p.get_id()): p for n in self.nodes for p in n.pads
+            (n.id, p.get_id()): p for n in nodes for p in n.pads
         }
         all_pads = list(node_pad_lookup.values())
 
@@ -126,7 +125,7 @@ class RuntimeApi:
                         )
                         return
 
-                pub_node = [n for n in self.nodes if n.id == payload.publish_node]
+                pub_node = [n for n in nodes if n.id == payload.publish_node]
                 if len(pub_node) != 1 or not isinstance(pub_node[0], Publish):
                     complete_resp.error = "Publish node not found."
                     dc_queue.put_nowait(
@@ -245,6 +244,7 @@ class RuntimeApi:
                     if item.participant:
                         destination_identities.append(item.participant.identity)
 
+                    logging.info(f"NEIL Sending data packet {item.payload}")
                     await self.room.local_participant.publish_data(
                         payload_bytes,
                         destination_identities=destination_identities,

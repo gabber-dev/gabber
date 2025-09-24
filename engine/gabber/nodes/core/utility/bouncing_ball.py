@@ -116,10 +116,12 @@ class BouncingBall(node.Node):
                     vx = -vx
                     hit = True
                     x = np.clip(x, r, width - r)
+                    self.logger.info("Ball hit vertical wall")
                 if y - r < 0 or y + r > height:
                     vy = -vy
                     hit = True
                     y = np.clip(y, r, height - r)
+                    self.logger.info("Ball hit horizontal wall")
                 if hit:
                     bg_idx = (bg_idx + 1) % len(colors)
                     # Instead of queueing, create a task to generate and push impact sound

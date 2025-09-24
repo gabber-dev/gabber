@@ -23,6 +23,7 @@ class GabberLogHandler(logging.StreamHandler):
         super().__init__(sys.stderr)
         self._runtime_api = runtime_api
         self.q = queue.Queue[RuntimeEventPayload_LogItem]()
+        self._closed = False
 
     def emit(self, record):
         super().emit(record)
@@ -42,8 +43,12 @@ class GabberLogHandler(logging.StreamHandler):
             )
         )
 
+    def close(self):
+        self._closed = True
+        super().close()
+
     async def run(self):
-        while True:
+        while not self._closed:
             entries: list[RuntimeEventPayload_LogItem] = []
             try:
                 while True:
