@@ -19,6 +19,10 @@ class TTS(Protocol):
         """Start a new TTS session with the given voice."""
         ...
 
+    async def run(self):
+        """Run the TTS service. This should be called once."""
+        ...
+
 
 class MultiplexWebSocketTTS(ABC, TTS):
     def __init__(self):

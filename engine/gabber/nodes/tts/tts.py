@@ -8,7 +8,7 @@ from typing import cast
 
 from gabber.core import node, pad, runtime_types
 from gabber.lib.tts import TTS as BaseTTS
-from gabber.lib.tts import CartesiaTTS, ElevenLabsTTS, GabberTTS
+from gabber.lib.tts import CartesiaTTS, ElevenLabsTTS, GabberTTS, OpenAITTS
 
 
 class TTS(node.Node):
@@ -34,7 +34,9 @@ class TTS(node.Node):
                 group="service",
                 owner_node=self,
                 default_type_constraints=[
-                    pad.types.Enum(options=["gabber", "cartesia", "elevenlabs"])
+                    pad.types.Enum(
+                        options=["gabber", "cartesia", "elevenlabs", "openai"]
+                    )
                 ],
             )
 
@@ -125,6 +127,8 @@ class TTS(node.Node):
             tts = ElevenLabsTTS(api_key=api_key, voice=voice_id.get_value())
         elif service.get_value() == "cartesia":
             tts = CartesiaTTS(api_key=api_key)
+        elif service.get_value() == "openai":
+            tts = OpenAITTS(model="gpt-4o-mini-tts", api_key=api_key)
         else:
             raise ValueError(f"Unknown TTS service: {service.get_value()}")
         job_queue = asyncio.Queue[TTSJob | None]()
