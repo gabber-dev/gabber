@@ -5,9 +5,9 @@
 
 import { ReactFlowProvider } from "@xyflow/react";
 import { FlowEdit } from "../flow/FlowEdit";
-import { BottomBar } from "./BottomBar";
 import { useRun } from "@/hooks/useRun";
 import { useEffect } from "react";
+import { BottomBar } from "../app_edit/BottomBar";
 
 export function DebugGraph() {
   return (
@@ -32,7 +32,11 @@ function DebugGraphInner() {
         <FlowEdit editable={false} />;
       </div>
       <div className="absolute bottom-0 left-0 right-0 h-16">
-        <BottomBar />
+        <BottomBar
+          logButtonEnabled={false}
+          saveButtonEnabled={false}
+          debugControlsEnabled={false}
+        />
       </div>
     </div>
   );

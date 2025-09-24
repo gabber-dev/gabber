@@ -6,7 +6,7 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, Field
 from livekit import rtc
 from dataclasses import dataclass
-from .. import node, pad, runtime_types, mcp
+from .. import node, pad, runtime_types
 import logging
 from ..editor import serialize
 from ..node import Node
@@ -15,16 +15,21 @@ from gabber.nodes.core.media.publish import Publish
 PING_BYTES = "ping".encode("utf-8")
 
 
+@dataclass(frozen=True)
+class QueueItem:
+    payload: BaseModel
+    participant: rtc.RemoteParticipant | None
+
+
 class RuntimeApi:
     def __init__(
         self,
         *,
         room: rtc.Room,
-        nodes: list[node.Node],
     ):
         self.room = room
-        self.nodes = nodes
         self._publish_locks: dict[str, PublishLock] = {}
+        self._dc_queue = asyncio.Queue[QueueItem | None]()
 
     def _trigger_value_from_pad_value(self, value: Any):
         v = serialize.serialize_pad_value(value)
@@ -47,22 +52,25 @@ class RuntimeApi:
 
         return ev_value
 
-    async def run(self):
+    def emit_logs(self, items: list["RuntimeEventPayload_LogItem"]):
+        self._dc_queue.put_nowait(
+            QueueItem(
+                payload=RuntimeEvent(
+                    payload=RuntimeEventPayload_Logs(type="logs", items=items)
+                ),
+                participant=None,
+            )
+        )
+
+    async def run(self, nodes: list[node.Node]):
         node_pad_lookup: dict[tuple[str, str], pad.Pad] = {
-            (n.id, p.get_id()): p for n in self.nodes for p in n.pads
+            (n.id, p.get_id()): p for n in nodes for p in n.pads
         }
         all_pads = list(node_pad_lookup.values())
 
-        @dataclass(frozen=True)
-        class QueueItem:
-            payload: BaseModel
-            participant: rtc.RemoteParticipant | None
-
-        dc_queue = asyncio.Queue[QueueItem | None]()
-
         def on_pad(p: pad.Pad, value: Any):
             ev_value = self._trigger_value_from_pad_value(value)
-            dc_queue.put_nowait(
+            self._dc_queue.put_nowait(
                 QueueItem(
                     payload=RuntimeEvent(
                         payload=RuntimeEventPayload_Value(
@@ -91,7 +99,7 @@ class RuntimeApi:
             ack_resp = RuntimeRequestAck(req_id=req_id, type="ack")
             complete_resp = RuntimeResponse(req_id=req_id, type="complete")
 
-            dc_queue.put_nowait(
+            self._dc_queue.put_nowait(
                 QueueItem(payload=ack_resp, participant=packet.participant)
             )
 
@@ -100,7 +108,7 @@ class RuntimeApi:
                 existing_lock = self._publish_locks.get(payload.publish_node)
                 if not packet.participant:
                     complete_resp.error = "Participant is required."
-                    dc_queue.put_nowait(
+                    self._dc_queue.put_nowait(
                         QueueItem(payload=complete_resp, participant=packet.participant)
                     )
                     return
@@ -113,17 +121,17 @@ class RuntimeApi:
                         complete_resp.payload = RuntimeResponsePayload_LockPublisher(
                             success=False
                         )
-                        dc_queue.put_nowait(
+                        self._dc_queue.put_nowait(
                             QueueItem(
                                 payload=complete_resp, participant=packet.participant
                             )
                         )
                         return
 
-                pub_node = [n for n in self.nodes if n.id == payload.publish_node]
+                pub_node = [n for n in nodes if n.id == payload.publish_node]
                 if len(pub_node) != 1 or not isinstance(pub_node[0], Publish):
                     complete_resp.error = "Publish node not found."
-                    dc_queue.put_nowait(
+                    self._dc_queue.put_nowait(
                         QueueItem(payload=complete_resp, participant=packet.participant)
                     )
                     return
@@ -138,7 +146,7 @@ class RuntimeApi:
                 complete_resp.payload = RuntimeResponsePayload_LockPublisher(
                     type="lock_publisher", success=True
                 )
-                dc_queue.put_nowait(
+                self._dc_queue.put_nowait(
                     QueueItem(payload=complete_resp, participant=packet.participant)
                 )
             elif request.payload.type == "push_value":
@@ -149,7 +157,7 @@ class RuntimeApi:
                 if not pad_obj:
                     logging.error(f"Pad {pad_id} in node {node_id} not found.")
                     complete_resp.error = f"Pad {pad_id} in node {node_id} not found."
-                    dc_queue.put_nowait(
+                    self._dc_queue.put_nowait(
                         QueueItem(payload=complete_resp, participant=packet.participant)
                     )
                     return
@@ -158,7 +166,7 @@ class RuntimeApi:
                     complete_resp.error = (
                         f"Pad {pad_id} in node {node_id} is not a SourcePad."
                     )
-                    dc_queue.put_nowait(
+                    self._dc_queue.put_nowait(
                         QueueItem(payload=complete_resp, participant=packet.participant)
                     )
                     return
@@ -171,7 +179,7 @@ class RuntimeApi:
                     complete_resp.error = (
                         f"Pad {pad_id} in node {node_id} has no type constraints."
                     )
-                    dc_queue.put_nowait(
+                    self._dc_queue.put_nowait(
                         QueueItem(payload=complete_resp, participant=packet.participant)
                     )
                     return
@@ -183,7 +191,7 @@ class RuntimeApi:
                 )
                 pad_obj.push_item(value, ctx)
                 ctx.add_done_callback(
-                    lambda _: dc_queue.put_nowait(
+                    lambda _: self._dc_queue.put_nowait(
                         QueueItem(payload=complete_resp, participant=packet.participant)
                     )
                 )
@@ -200,7 +208,7 @@ class RuntimeApi:
                     complete_resp.error = (
                         f"Pad {pad_id} in node {node_id} is not a PropertyPad."
                     )
-                    dc_queue.put_nowait(
+                    self._dc_queue.put_nowait(
                         QueueItem(payload=complete_resp, participant=packet.participant)
                     )
                     return
@@ -215,13 +223,13 @@ class RuntimeApi:
                 complete_resp.payload = RuntimeResponsePayload_GetValue(
                     type="get_value", value=value_obj
                 )
-                dc_queue.put_nowait(
+                self._dc_queue.put_nowait(
                     QueueItem(payload=complete_resp, participant=packet.participant)
                 )
             else:
                 logging.error(f"Unknown request type: {request.payload.type}")
                 complete_resp.error = f"Unknown request type: {request.payload.type}"
-                dc_queue.put_nowait(
+                self._dc_queue.put_nowait(
                     QueueItem(payload=complete_resp, participant=packet.participant)
                 )
 
@@ -229,7 +237,7 @@ class RuntimeApi:
 
         async def dc_queue_consumer():
             while True:
-                item = await dc_queue.get()
+                item = await self._dc_queue.get()
                 if item is None:
                     break
 
@@ -305,8 +313,22 @@ class RuntimeEventPayload_Value(BaseModel):
     pad_id: str
 
 
+class RuntimeEventPayload_LogItem(BaseModel):
+    message: str
+    level: str
+    timestamp: str
+    node: str | None = None
+    subgraph: str | None = None
+    pad: str | None = None
+
+
+class RuntimeEventPayload_Logs(BaseModel):
+    type: Literal["logs"] = "logs"
+    items: list[RuntimeEventPayload_LogItem]
+
+
 RuntimeEventPayload = Annotated[
-    RuntimeEventPayload_Value,
+    RuntimeEventPayload_Value | RuntimeEventPayload_Logs,
     Field(discriminator="type", description="Payload for the runtime event"),
 ]
 
@@ -446,3 +468,4 @@ class DummyType(BaseModel):
     ev: RuntimeEvent
     runtime_event_payload: RuntimeEventPayload
     pad_value: PadValue
+    log_item: RuntimeEventPayload_LogItem

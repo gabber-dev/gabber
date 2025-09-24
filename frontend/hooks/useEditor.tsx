@@ -71,6 +71,8 @@ type EditorContextType = {
   isConnected: boolean;
   connectionStatus: "connecting" | "connected" | "disconnected" | "error";
   nodeLibrary?: (GraphLibraryItem_Node | GraphLibraryItem_SubGraph)[];
+  logsShowing: boolean;
+  setLogsShowing: (showing: boolean) => void;
 
   unsavedChanges: boolean;
   saving: boolean;
@@ -78,7 +80,6 @@ type EditorContextType = {
   portalHighlights: { portal: string; portalEnds: Set<string> };
   highlightPortal: (portalId: string | undefined) => void;
   setStateMachineEditing: (stateMachineId: string | undefined) => void;
-  saveChanges: () => Promise<void>;
 
   onReactFlowConnect: (connection: Connection) => void;
   onReactFlowNodesChange: (changes: NodeChange[]) => void;
@@ -90,6 +91,7 @@ type EditorContextType = {
   connectPad: (req: ConnectPadEdit) => void;
   updatePad: (req: UpdatePadEdit) => void;
   updateNode: (req: UpdateNodeEdit) => void;
+  saveChanges: () => Promise<void>;
 
   createPortal: (req: CreatePortalEdit) => void;
   createPortalEnd: (req: CreatePortalEndEdit) => void;
@@ -145,6 +147,8 @@ export function EditorProvider({
   const [highlightedPortal, setHighlightedPortal] = useState<
     string | undefined
   >(undefined);
+
+  const [logsShowing, setLogsShowing] = useState(false);
 
   const { sendMessage, lastJsonMessage, readyState } = useWebSocket(
     editor_url,
@@ -902,6 +906,8 @@ export function EditorProvider({
         debug,
         stateMachineEditing,
         portalHighlights,
+        logsShowing,
+        setLogsShowing,
         saveChanges,
         onReactFlowConnect,
         onReactFlowNodesChange,

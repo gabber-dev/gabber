@@ -5,7 +5,7 @@
 
 import { ReactFlowProvider } from "@xyflow/react";
 import { FlowEdit } from "../flow/FlowEdit";
-import { BottomBar } from "./BottomBar";
+import { BottomBar } from "../app_edit/BottomBar";
 
 type Props = {
   editable: boolean;
@@ -29,7 +29,11 @@ function SubGraphEditInner({ editable }: Props) {
       </div>
       {editable && (
         <div className="absolute bottom-0 left-0 right-0 h-16">
-          <BottomBar />
+          <BottomBar
+            saveButtonEnabled={true}
+            logButtonEnabled={false}
+            debugControlsEnabled={false}
+          />
         </div>
       )}
     </div>

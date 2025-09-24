@@ -17,10 +17,12 @@ if TYPE_CHECKING:
 class Pad(Protocol):
     _update_handlers: set[Callable[["Pad", Any], None]]
     _pad_links: set["Pad"]
+    _logger: logging.LoggerAdapter | None
 
     def __init__(self):
         self._update_handlers = set()
         self._pad_links = set()
+        self._logger = None
 
     def get_id(self) -> str: ...
     def set_id(self, id: str) -> None: ...
@@ -99,6 +101,14 @@ class Pad(Protocol):
         for p in all_pads:
             p.set_type_constraints(intersection)
 
+    @property
+    def logger(self) -> logging.LoggerAdapter:
+        if self._logger is None:
+            self._logger = logging.LoggerAdapter(
+                self.get_owner_node().logger, {"pad": self.get_id()}
+            )
+        return self._logger
+
 
 @runtime_checkable
 class ProxyPad(Protocol):
@@ -136,6 +146,14 @@ class SourcePad(Pad, Protocol):
         notify_type = False
         if isinstance(value, NOTIFIABLE_TYPES):
             notify_type = True
+            if isinstance(value, runtime_types.BaseRuntimeType):
+                self.logger.info(
+                    f"Source Pad Push: {value.log_type()}", extra=value.to_log_values()
+                )
+            else:
+                self.logger.info(
+                    f"Source Pad Push: {type(value)}", extra={"value": str(value)}
+                )
 
         # Setting value notifies for itself so we skip it
         if isinstance(self, PropertyPad):

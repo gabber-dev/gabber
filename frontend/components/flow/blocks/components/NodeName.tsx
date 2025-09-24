@@ -1,3 +1,8 @@
+/**
+ * Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
+ * SPDX-License-Identifier: SUL-1.0
+ */
+
 import { NodeEditorRepresentation, UpdateNodeEdit } from "@/generated/editor";
 import { useEditor } from "@/hooks/useEditor";
 import { Node, useNodeId, useNodesData } from "@xyflow/react";

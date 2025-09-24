@@ -20,11 +20,12 @@ import { DataPacket_Kind, RemoteParticipant, Room } from 'livekit-client';
 import { PropertyPad, SinkPad, SourcePad } from './pad/Pad';
 import { LocalAudioTrack, LocalVideoTrack, LocalTrack } from './LocalTrack';
 import { Subscription } from './Subscription';
-import { MCPServer, PadValue, Payload, RuntimeEvent, RuntimeRequest, RuntimeRequestPayload_LockPublisher, RuntimeResponsePayload } from './generated/runtime';
+import { PadValue, Payload, RuntimeEvent, RuntimeEventPayload_LogItem, RuntimeRequest, RuntimeRequestPayload_LockPublisher, RuntimeResponsePayload } from './generated/runtime';
 import { Publication } from './Publication';
 
 export interface EngineHandler {
   onConnectionStateChange?: (state: ConnectionState) => void;
+  onLogItem?(item: RuntimeEventPayload_LogItem): void;
 }
 
 export class Engine  {
@@ -243,6 +244,12 @@ export class Engine  {
           const handlers = this.padValueHandlers.get(`${nodeId}:${padId}`);
           for(const handler of handlers || []) {
             handler(payload.value);
+          }
+        } else if (payload.type === "logs") {
+          if(this.handler?.onLogItem) {
+            for(const item of payload.items) {
+              this.handler.onLogItem(item);
+            }
           }
         }
     }
