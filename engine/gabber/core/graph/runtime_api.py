@@ -247,7 +247,6 @@ class RuntimeApi:
                     if item.participant:
                         destination_identities.append(item.participant.identity)
 
-                    logging.info(f"NEIL Sending data packet {item.payload}")
                     await self.room.local_participant.publish_data(
                         payload_bytes,
                         destination_identities=destination_identities,

@@ -35,27 +35,40 @@ const levelToBadgeClass = (level: string): string => {
   }
 };
 
+const levelToTextClass = (level: string): string => {
+  switch (level.toLowerCase()) {
+    case "error":
+      return "text-error";
+    case "warn":
+    case "warning":
+      return "text-warning";
+    case "success":
+      return "text-success";
+    case "info":
+    default:
+      return "text-info";
+  }
+};
+
 export function LogItem({ logItem }: Props) {
   const { message, level, timestamp, node, subgraph, pad, ...extra } = logItem;
-  const alertClass = levelToAlertClass(level);
   const badgeClass = levelToBadgeClass(level);
+  const textClass = levelToTextClass(level);
 
   return (
-    <div className={`alert ${alertClass} shadow-lg`}>
+    <div className="alert shadow-lg">
       <div className="flex flex-col w-full">
-        {/* Header: Level, Message, and Timestamp on the same line */}
-        <div className="flex justify-between items-start gap-2">
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <div className={`badge ${badgeClass} gap-2`}>
-              {level.toUpperCase()}
-            </div>
-            <p className="font-mono flex-1 min-w-0 break-words">
-              {typeof message === "string" ? message : JSON.stringify(message)}
-            </p>
+        {/* Header: Level, Timestamp, then Message on the same line */}
+        <div className="flex items-center gap-2">
+          <div className={`badge ${badgeClass} gap-2`}>
+            {level.toUpperCase()}
           </div>
           <div className="text-xs opacity-75 font-mono flex-shrink-0">
-            {new Date(timestamp).toLocaleString()}
+            {new Date(timestamp).toLocaleTimeString()}
           </div>
+          <p className={`font-mono flex-1 min-w-0 break-words ${textClass}`}>
+            {typeof message === "string" ? message : JSON.stringify(message)}
+          </p>
         </div>
 
         {/* Optional fields as badges */}
