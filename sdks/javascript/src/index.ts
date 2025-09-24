@@ -44,4 +44,5 @@ export type {
     PadValue_Integer,
     PadValue_String,
     PadValue,
+    RuntimeEventPayload_LogItem,
 } from './generated/runtime';
