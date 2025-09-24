@@ -31,12 +31,22 @@ UV for python dependency management.
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
+Create your secret file
+```bash
+cp .secret.example .secret
+```
+
 #### Run Everything
 ```bash
 make all
 ```
 
 ### Start Gabber Using Docker Compose
+
+Create your secret file
+```bash
+cp .secret.example .secret
+```
 
 ```bash
 docker compose up
