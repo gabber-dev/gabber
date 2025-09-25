@@ -7,33 +7,6 @@ import { PlayIcon, StopIcon } from "@heroicons/react/24/solid";
 import { useCallback, useMemo } from "react";
 import { useRun } from "@/hooks/useRun";
 import { useEditor } from "@/hooks/useEditor";
-import toast from "react-hot-toast";
-
-// Validation function to check for empty dropdowns only
-const validateGraphForEmptyDropdowns = (graph: any): string[] => {
-  const issues: string[] = [];
-
-  if (!graph.nodes) return issues;
-
-  for (const node of graph.nodes) {
-    if (node.pads) {
-      for (const pad of node.pads) {
-        // Check for empty string values in dropdown-like parameters
-        if (pad.value === "" && pad.allowed_types?.includes("string") && (
-          pad.id.toLowerCase().includes("secret") ||
-          pad.id.toLowerCase().includes("key") ||
-          pad.id.toLowerCase().includes("token") ||
-          pad.id.toLowerCase().includes("api") ||
-          pad.id.toLowerCase().includes("model")
-        )) {
-          issues.push(`${node.editor_name || node.id} has unselected dropdown: ${pad.id}`);
-        }
-      }
-    }
-  }
-
-  return issues;
-};
 
 export function DebugControls() {
   const { connectionState, startRun, stopRun } = useRun();
@@ -52,12 +25,6 @@ export function DebugControls() {
 
   const buttonAction = useCallback(() => {
     if (connectionState === "disconnected") {
-      // Validate for empty dropdowns before running
-      const validationIssues = validateGraphForEmptyDropdowns(editorRepresentation);
-      if (validationIssues.length > 0) {
-        toast.error("Please select all dropdown options before running:\n" + validationIssues.join("\n"));
-        return;
-      }
       startRun({ graph: editorRepresentation });
     } else if (connectionState === "connecting") {
       stopRun();
