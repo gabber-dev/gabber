@@ -798,20 +798,22 @@ class RepositoryServer:
         try:
             data = await request.json()
             req = messages.AddSecretRequest.model_validate(data)
-            
+
             # Read current secrets
             secrets = await self.secret_provider._read_secrets()
-            
+
             # Add the new secret
             secrets[req.name] = req.value
-            
+
             # Write back to file
             secret_file = self.secret_provider.secret_file
-            await asyncio.to_thread(os.makedirs, os.path.dirname(secret_file), exist_ok=True)
+            await asyncio.to_thread(
+                os.makedirs, os.path.dirname(secret_file), exist_ok=True
+            )
             async with aiofiles.open(secret_file, mode="w") as f:
                 for key, value in secrets.items():
                     await f.write(f"{key}={value}\n")
-            
+
             response = messages.AddSecretResponse(success=True)
             return aiohttp.web.Response(
                 body=response.model_dump_json(), content_type="application/json"
@@ -828,30 +830,32 @@ class RepositoryServer:
             return aiohttp.web.json_response(
                 {"status": "error", "message": "Missing secret name"}, status=400
             )
-        
+
         try:
             data = await request.json()
             req = messages.UpdateSecretRequest.model_validate(data)
-            
+
             # Read current secrets
             secrets = await self.secret_provider._read_secrets()
-            
+
             # Check if secret exists
             if secret_name not in secrets:
                 return aiohttp.web.json_response(
                     {"status": "error", "message": "Secret not found"}, status=404
                 )
-            
+
             # Update the secret
             secrets[secret_name] = req.value
-            
+
             # Write back to file
             secret_file = self.secret_provider.secret_file
-            await asyncio.to_thread(os.makedirs, os.path.dirname(secret_file), exist_ok=True)
+            await asyncio.to_thread(
+                os.makedirs, os.path.dirname(secret_file), exist_ok=True
+            )
             async with aiofiles.open(secret_file, mode="w") as f:
                 for key, value in secrets.items():
                     await f.write(f"{key}={value}\n")
-            
+
             response = messages.UpdateSecretResponse(success=True)
             return aiohttp.web.Response(
                 body=response.model_dump_json(), content_type="application/json"
@@ -868,27 +872,29 @@ class RepositoryServer:
             return aiohttp.web.json_response(
                 {"status": "error", "message": "Missing secret name"}, status=400
             )
-        
+
         try:
             # Read current secrets
             secrets = await self.secret_provider._read_secrets()
-            
+
             # Check if secret exists
             if secret_name not in secrets:
                 return aiohttp.web.json_response(
                     {"status": "error", "message": "Secret not found"}, status=404
                 )
-            
+
             # Remove the secret
             del secrets[secret_name]
-            
+
             # Write back to file
             secret_file = self.secret_provider.secret_file
-            await asyncio.to_thread(os.makedirs, os.path.dirname(secret_file), exist_ok=True)
+            await asyncio.to_thread(
+                os.makedirs, os.path.dirname(secret_file), exist_ok=True
+            )
             async with aiofiles.open(secret_file, mode="w") as f:
                 for key, value in secrets.items():
                     await f.write(f"{key}={value}\n")
-            
+
             response = messages.DeleteSecretResponse(success=True)
             return aiohttp.web.Response(
                 body=response.model_dump_json(), content_type="application/json"

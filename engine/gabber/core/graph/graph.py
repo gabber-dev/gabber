@@ -39,13 +39,13 @@ class Graph:
         secret_provider: SecretProvider,
         secrets: list[PublicSecret],
         library_items: list[GraphLibraryItem],
-        log_handler: logging.Handler,
+        logger: logging.Logger | logging.LoggerAdapter,
     ):
         self.id = id
         self.secret_provider = secret_provider
         self.secrets = secrets
         self.library_items = library_items
-        self.log_handler = log_handler
+        self.logger = logger
 
         self.nodes: list[Node] = []
         self.portals: list[models.Portal] = []
@@ -169,13 +169,10 @@ class Graph:
 
     async def _handle_insert_node(self, edit: InsertNodeEdit):
         node_cls: Type[Node] = self._node_cls_lookup[edit.node_type]
-        node_logger = logging.getLogger(f"node.{edit.id or 'new'}")
-        node_logger.setLevel(logging.INFO)
-        node_logger.addHandler(self.log_handler)
         node = node_cls(
             secret_provider=self.secret_provider,
             secrets=self.secrets,
-            logger=node_logger,
+            logger=self.logger,
         )
         if edit.id:
             node.id = edit.id
@@ -197,7 +194,7 @@ class Graph:
             secret_provider=self.secret_provider,
             secrets=self.secrets,
             library_items=self.library_items,
-            log_handler=self.log_handler,
+            logger=self.logger,
         )
         await graph.load_from_snapshot(subgraph_item.graph)
         node = SubGraph(
@@ -289,7 +286,7 @@ class Graph:
         if not isinstance(target_pad, pad.SinkPad):
             raise ValueError("Target pad is not a sink pad type.")
 
-        logging.info(
+        self.logger.info(
             f"Disconnecting pads: {source_node.id}.{source_pad.get_id()} -> {target_node.id}.{target_pad.get_id()}"
         )
         source_pad.disconnect(target_pad)
@@ -414,9 +411,9 @@ class Graph:
             node: Node
             node_cls: Type[Node] | None = self._node_cls_lookup.get(node_data.type)
             if node_cls:
-                node_logger = logging.getLogger(f"node.{node_data.id}")
-                node_logger.setLevel(logging.INFO)
-                node_logger.addHandler(self.log_handler)
+                node_logger = logging.LoggerAdapter(
+                    self.logger, extra={"node": node_data.id}
+                )
                 node = node_cls(
                     secret_provider=self.secret_provider,
                     secrets=self.secrets,
@@ -451,7 +448,7 @@ class Graph:
                     secret_provider=self.secret_provider,
                     secrets=self.secrets,
                     library_items=self.library_items,
-                    log_handler=self.log_handler,
+                    logger=self.logger,
                 )
                 await subgraph.load_from_snapshot(subgraph_li.graph)
                 node = SubGraph(

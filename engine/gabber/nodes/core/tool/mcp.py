@@ -75,7 +75,7 @@ class MCP(node.Node):
 
         mcp_server_name = mcp_server_pad.get_value()
 
-        logging.info(f"Connecting to MCP server '{mcp_server_name}'")
+        self.logger.info(f"Connecting to MCP server '{mcp_server_name}'")
         read_stream, write_stream = await exit_stack.enter_async_context(
             mcp.datachannel_host(self.room, "mcp_proxy", mcp_server_name)
         )
@@ -90,7 +90,7 @@ class MCP(node.Node):
                 await asyncio.sleep(10)
                 await asyncio.wait_for(session.send_ping(), timeout=2)
         except asyncio.CancelledError:
-            logging.info("MCP Client ping loop cancelled")
+            self.logger.info("MCP Client ping loop cancelled")
             raise
 
     async def to_tool_definitions(self) -> list[runtime_types.ToolDefinition]:
@@ -111,7 +111,7 @@ class MCP(node.Node):
             return tool_defs
 
     async def call_tool(self, tool_call: runtime_types.ToolCall):
-        logging.info(f"MCP Client calling tool '{tool_call.name}'")
+        self.logger.info(f"MCP Client calling tool '{tool_call.name}'")
         sess: ClientSession
         async with self.init_lock:
             if not self.session:
