@@ -286,7 +286,7 @@ class Graph:
         if not isinstance(target_pad, pad.SinkPad):
             raise ValueError("Target pad is not a sink pad type.")
 
-        logging.info(
+        self.logger.info(
             f"Disconnecting pads: {source_node.id}.{source_pad.get_id()} -> {target_node.id}.{target_pad.get_id()}"
         )
         source_pad.disconnect(target_pad)

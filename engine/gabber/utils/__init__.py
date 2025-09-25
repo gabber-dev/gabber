@@ -144,9 +144,6 @@ async def audio_stream_provider(room: rtc.Room, track_name: str, participant: st
                 stream = rtc.AudioStream.from_track(
                     track=track_pub.track, noise_cancellation=noise_canc
                 )
-                logging.info(
-                    f"got audio stream {track_pub.track.sid} {stream._sample_rate}"
-                )
                 return stream
 
 
