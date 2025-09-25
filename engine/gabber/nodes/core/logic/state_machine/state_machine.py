@@ -409,7 +409,7 @@ class StateMachine(node.Node):
                         )
                         continue
 
-                    logging.info(
+                    self.logger.info(
                         f"Transitioning from state '{current_state_name}' to '{next_state.name}'"
                     )
 
