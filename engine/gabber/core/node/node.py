@@ -18,7 +18,7 @@ class Node:
         *,
         secret_provider: SecretProvider,
         secrets: list[PublicSecret],
-        logger: logging.Logger,
+        logger: logging.Logger | logging.LoggerAdapter,
     ):
         self.room: rtc.Room
         self.id: str = "ERORR"

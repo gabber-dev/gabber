@@ -35,6 +35,7 @@ def start(port):
             port=port,
             graph_library_provider=lambda _: DefaultGraphLibrary(),
             secret_provider_provider=lambda _: DefaultSecretProvider(),
+            logger=logging.getLogger(),
         )
         await server.run()
 
