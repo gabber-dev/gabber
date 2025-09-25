@@ -1,6 +1,7 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
+import logging
 import base64
 from typing import Any
 
@@ -13,8 +14,9 @@ CHANNELS = 1
 
 
 class GabberTTS(MultiplexWebSocketTTS):
-    def __init__(self, *, api_key: str):
-        super().__init__()
+    def __init__(self, *, api_key: str, logger: logging.Logger | logging.LoggerAdapter):
+        super().__init__(logger=logger)
+        self.logger = logger
         self._api_key = api_key
         self._emoji_remover = EmojiRemover()
         self._italic_remover = ItalicRemover()

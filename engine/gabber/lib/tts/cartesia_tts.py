@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import base64
+import logging
 from typing import Any
 
 from gabber.utils import ItalicRemover, ParenthesisRemover, EmojiRemover
@@ -13,8 +14,14 @@ CHANNELS = 1
 
 
 class CartesiaTTS(MultiplexWebSocketTTS):
-    def __init__(self, *, api_key: str, model_id: str = "sonic-2"):
-        super().__init__()
+    def __init__(
+        self,
+        *,
+        api_key: str,
+        model_id: str = "sonic-2",
+        logger: logging.Logger | logging.LoggerAdapter,
+    ):
+        super().__init__(logger=logger)
         self._model_id = model_id
         self._api_key = api_key
         self._italic_remover = ItalicRemover()
