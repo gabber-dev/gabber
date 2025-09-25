@@ -30,6 +30,18 @@ import { StateMachineProvider } from "../state_machine/useStateMachine";
 import { usePathname } from "next/navigation";
 import toast from "react-hot-toast";
 import { QuickAddModal, QuickAddProps } from "./quick_add/QuickAddModal";
+
+// Throttling for all drag-related warnings (2 seconds for drag operations)
+let lastDragWarningTime = 0;
+const DRAG_WARNING_THROTTLE_MS = 2000; // 2 seconds for drag operations (matches global)
+
+const showDragWarningThrottled = (message: string) => {
+  const now = Date.now();
+  if (now - lastDragWarningTime > DRAG_WARNING_THROTTLE_MS) {
+    toast.error(message);
+    lastDragWarningTime = now;
+  }
+};
 import { PortalStart } from "./blocks/PortalStart";
 import { PortalEnd as PortalEndComponent } from "./blocks/PortalEnd";
 import {
@@ -123,7 +135,15 @@ function FlowEditInner({ editable }: Props) {
         <div className="absolute top-2 right-2 flex z-10 gap-2">
           <ExportButton />
           <AddBlockButton
-            onClick={() => setIsNodeLibraryOpen(!isNodeLibraryOpen)}
+            onClick={() => {
+              if (isRunning) {
+                showDragWarningThrottled(
+                  "Can't add new nodes while app is running",
+                );
+                return;
+              }
+              setIsNodeLibraryOpen(!isNodeLibraryOpen);
+            }}
           />
         </div>
       )}
@@ -162,6 +182,26 @@ function FlowEditInner({ editable }: Props) {
             nodes={reactFlowRepresentation.nodes}
             edges={reactFlowRepresentation.edges}
             onNodesChange={(changes) => {
+              // Filter out dangerous changes while running
+              const dangerousChanges = changes.filter(
+                (change) =>
+                  change.type === "position" || change.type === "remove",
+              );
+
+              if (isRunning && dangerousChanges.length > 0) {
+                showDragWarningThrottled(
+                  "Can't move or delete nodes while app is running",
+                );
+                // Only apply safe changes (like selection)
+                const safeChanges = changes.filter(
+                  (change) => change.type === "select",
+                );
+                if (safeChanges.length > 0) {
+                  onReactFlowNodesChange(safeChanges);
+                }
+                return;
+              }
+
               // Close node library if a node is selected
               const selectionChange = changes.find(
                 (change) => change.type === "select",
@@ -171,8 +211,37 @@ function FlowEditInner({ editable }: Props) {
               }
               onReactFlowNodesChange(changes);
             }}
-            onEdgesChange={onReactFlowEdgesChange}
-            onConnect={onReactFlowConnect}
+            onEdgesChange={(changes) => {
+              // Filter out dangerous changes while running
+              const dangerousChanges = changes.filter(
+                (change) => change.type === "remove",
+              );
+
+              if (isRunning && dangerousChanges.length > 0) {
+                showDragWarningThrottled(
+                  "Can't delete connections while app is running",
+                );
+                // Only apply safe changes (like selection)
+                const safeChanges = changes.filter(
+                  (change) => change.type === "select",
+                );
+                if (safeChanges.length > 0) {
+                  onReactFlowEdgesChange(safeChanges);
+                }
+                return;
+              }
+
+              onReactFlowEdgesChange(changes);
+            }}
+            onConnect={(connection) => {
+              if (isRunning) {
+                showDragWarningThrottled(
+                  "Can't create new connections while app is running",
+                );
+                return;
+              }
+              onReactFlowConnect(connection);
+            }}
             onConnectEnd={onConnectEnd}
             edgeTypes={edgeTypes}
             connectionLineComponent={CustomConnectionLine}
@@ -191,8 +260,8 @@ function FlowEditInner({ editable }: Props) {
             proOptions={{
               hideAttribution: true,
             }}
-            nodesDraggable={!isRunning}
-            nodesConnectable={!isRunning}
+            nodesDraggable={true}
+            nodesConnectable={true}
             selectNodesOnDrag={false}
             minZoom={0.1}
           >
