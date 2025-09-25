@@ -8,13 +8,14 @@ import { useRouter } from "next/navigation";
 import { FlowEdit } from "../flow/FlowEdit";
 import { BottomBar } from "./BottomBar";
 import { useEditor } from "@/hooks/useEditor";
+import { LogList } from "../log/LogList";
 
 export function AppEditPage() {
   return <AppEditPageInner />;
 }
 
 function AppEditPageInner() {
-  const { unsavedChanges } = useEditor();
+  const { unsavedChanges, logsShowing } = useEditor();
   const router = useRouter();
 
   // Add beforeunload event listener to warn about unsaved changes
@@ -71,13 +72,23 @@ function AppEditPageInner() {
   }, [unsavedChanges, router]);
 
   return (
-    <div className="relative w-full h-full flex flex-col">
+    <div className="relative w-full h-full flex flex-col overflow-hidden">
       <div className="absolute top-0 left-0 right-0 bottom-16">
         <FlowEdit editable={true} />
       </div>
 
+      <div
+        className={`absolute top-0 right-0 bottom-16 w-1/3 bg-gray-primary transition-transform duration-300 ease-in-out z-10 ${logsShowing ? "translate-x-0" : "translate-x-full"}`}
+      >
+        <LogList />
+      </div>
+
       <div className="absolute bottom-0 left-0 right-0 h-16">
-        <BottomBar />
+        <BottomBar
+          saveButtonEnabled={true}
+          logButtonEnabled={true}
+          debugControlsEnabled={true}
+        />
       </div>
     </div>
   );

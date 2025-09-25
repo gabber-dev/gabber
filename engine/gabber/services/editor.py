@@ -92,6 +92,7 @@ class GraphEditorSession:
             secrets=secrets,
             secret_provider=self.secret_provider,
             library_items=library_items,
+            log_handler=logging.StreamHandler(),
         )
         async for message in self.ws:
             if message.type == aiohttp.WSMsgType.TEXT:

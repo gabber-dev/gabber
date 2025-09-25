@@ -18,6 +18,7 @@ class Node:
         *,
         secret_provider: SecretProvider,
         secrets: list[PublicSecret],
+        logger: logging.Logger,
     ):
         self.room: rtc.Room
         self.id: str = "ERORR"
@@ -27,6 +28,14 @@ class Node:
         self.editor_name: str = "ERROR"
         self.secret_provider = secret_provider
         self.secrets = secrets
+        self._base_logger = logger
+        self._logger: logging.LoggerAdapter | None = None
+
+    @property
+    def logger(self) -> logging.LoggerAdapter:
+        if self._logger is None:
+            self._logger = logging.LoggerAdapter(self._base_logger, {"node": self.id})
+        return self._logger
 
     @classmethod
     def get_type(cls) -> str:

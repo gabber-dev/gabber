@@ -39,11 +39,13 @@ class Graph:
         secret_provider: SecretProvider,
         secrets: list[PublicSecret],
         library_items: list[GraphLibraryItem],
+        log_handler: logging.Handler,
     ):
         self.id = id
         self.secret_provider = secret_provider
         self.secrets = secrets
         self.library_items = library_items
+        self.log_handler = log_handler
 
         self.nodes: list[Node] = []
         self.portals: list[models.Portal] = []
@@ -55,8 +57,11 @@ class Graph:
         for item in self.library_items:
             if isinstance(item, GraphLibraryItem_Node):
                 self._node_cls_lookup[item.name] = item.node_type
-                n = self._node_cls_lookup[item.name](
-                    secret_provider=self.secret_provider, secrets=[]
+                node_cls: Type[Node] = self._node_cls_lookup[item.name]
+                n = node_cls(
+                    secret_provider=self.secret_provider,
+                    secrets=self.secrets,
+                    logger=logging.getLogger(f"virtual_node.{item.name}"),
                 )
                 n.resolve_pads()
                 self.virtual_nodes.append((n, item))
@@ -163,10 +168,14 @@ class Graph:
         )
 
     async def _handle_insert_node(self, edit: InsertNodeEdit):
-        node_cls = self._node_cls_lookup[edit.node_type]
+        node_cls: Type[Node] = self._node_cls_lookup[edit.node_type]
+        node_logger = logging.getLogger(f"node.{edit.id or 'new'}")
+        node_logger.setLevel(logging.INFO)
+        node_logger.addHandler(self.log_handler)
         node = node_cls(
             secret_provider=self.secret_provider,
             secrets=self.secrets,
+            logger=node_logger,
         )
         if edit.id:
             node.id = edit.id
@@ -188,6 +197,7 @@ class Graph:
             secret_provider=self.secret_provider,
             secrets=self.secrets,
             library_items=self.library_items,
+            log_handler=self.log_handler,
         )
         await graph.load_from_snapshot(subgraph_item.graph)
         node = SubGraph(
@@ -402,10 +412,15 @@ class Graph:
 
         for node_data in snapshot.nodes:
             node: Node
-            node_cls = self._node_cls_lookup.get(node_data.type)
+            node_cls: Type[Node] | None = self._node_cls_lookup.get(node_data.type)
             if node_cls:
+                node_logger = logging.getLogger(f"node.{node_data.id}")
+                node_logger.setLevel(logging.INFO)
+                node_logger.addHandler(self.log_handler)
                 node = node_cls(
-                    secret_provider=self.secret_provider, secrets=self.secrets
+                    secret_provider=self.secret_provider,
+                    secrets=self.secrets,
+                    logger=node_logger,
                 )
             elif node_data.type == "SubGraph":
                 subgraph_id_pad = next(
@@ -436,6 +451,7 @@ class Graph:
                     secret_provider=self.secret_provider,
                     secrets=self.secrets,
                     library_items=self.library_items,
+                    log_handler=self.log_handler,
                 )
                 await subgraph.load_from_snapshot(subgraph_li.graph)
                 node = SubGraph(
@@ -562,20 +578,24 @@ class Graph:
             p.set_value(node)
             return
 
-    async def run(self, room: rtc.Room):
-        # Only top level graph gets events
-        runtime_api: RuntimeApi | None = None
-        if self.id == "default":
-            runtime_api = RuntimeApi(room=room, nodes=self.nodes)
-
+    async def run(self, room: rtc.Room, runtime_api: RuntimeApi | None = None):
         for node in self.nodes:
             node.room = room
 
         try:
-            runtime_api_coro = runtime_api.run() if runtime_api else asyncio.sleep(0)
+            runtime_api_coro = (
+                runtime_api.run(nodes=self.nodes) if runtime_api else asyncio.sleep(0)
+            )
+
+            async def node_run_wrapper(n: Node):
+                try:
+                    await n.run()
+                    n.logger.info(f"Node {n.id} run completed.")
+                except Exception as e:
+                    n.logger.error(f"Error in node {n.id} run: {e}", exc_info=e)
 
             await asyncio.gather(
-                *[node.run() for node in self.nodes],
+                *[node_run_wrapper(n) for n in self.nodes],
                 runtime_api_coro,
             )
         except Exception as e:

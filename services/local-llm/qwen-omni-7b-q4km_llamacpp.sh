@@ -1,4 +1,7 @@
 #!/bin/bash
+# Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
+# SPDX-License-Identifier: SUL-1.0
+
 
 LLAMA_SERVER_PATH=${LLAMA_SERVER_PATH:-llama-server}
 

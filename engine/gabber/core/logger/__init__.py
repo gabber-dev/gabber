@@ -1,6 +1,6 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-from .datachannel_transport import datachannel_host
+from .logger import GabberLogHandler
 
-__all__ = ["datachannel_host"]
+__all__ = ["GabberLogHandler"]
