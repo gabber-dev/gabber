@@ -196,10 +196,10 @@ export function AppList() {
             <button
               onClick={handleImportClick}
               title="Import app from JSON file"
-              className="btn btn-sm gap-2 font-vt323 tracking-wider btn-primary group overflow-hidden transition-all duration-300 ease-in-out relative flex items-center justify-center w-10 hover:w-20"
+              className="btn btn-sm gap-2 font-vt323 tracking-wider btn-primary group overflow-hidden transition-all duration-300 ease-in-out relative flex items-center justify-center w-20"
             >
-              <ArrowDownTrayIcon className="h-4 w-4 flex-shrink-0 absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 group-hover:opacity-0" />
-              <span className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out whitespace-nowrap">
+              <ArrowDownTrayIcon className="h-4 w-4 flex-shrink-0 absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out" />
+              <span className="opacity-100 group-hover:opacity-0 transition-opacity duration-300 ease-in-out whitespace-nowrap">
                 Import
               </span>
             </button>
@@ -255,9 +255,7 @@ export function AppList() {
                     Create one
                   </button>
                   or
-                  <Link href="/example" className="link link-primary mx-1">
-                    view examples
-                  </Link>
+                  <span className="mx-1">view examples</span>
                 </p>
               </div>
             ) : (

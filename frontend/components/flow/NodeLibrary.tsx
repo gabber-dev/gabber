@@ -14,6 +14,20 @@ import React, {
 } from "react";
 import { useEditor } from "@/hooks/useEditor";
 import { useReactFlow } from "@xyflow/react";
+import { useRun } from "@/hooks/useRun";
+import toast from "react-hot-toast";
+
+// Throttling for NodeLibrary warnings (2 seconds for drag operations)
+let lastLibraryWarningTime = 0;
+const LIBRARY_WARNING_THROTTLE_MS = 2000; // 2 seconds for drag operations
+
+const showLibraryWarningThrottled = (message: string) => {
+  const now = Date.now();
+  if (now - lastLibraryWarningTime > LIBRARY_WARNING_THROTTLE_MS) {
+    toast.error(message);
+    lastLibraryWarningTime = now;
+  }
+};
 import {
   GraphLibraryItem_Node,
   GraphLibraryItem_SubGraph,
@@ -47,6 +61,9 @@ export function NodeLibrary({
 
   const { nodeLibrary, insertNode, insertSubGraph } = useEditor();
   const { screenToFlowPosition } = useReactFlow();
+  const { connectionState } = useRun();
+  const isRunning =
+    connectionState === "connected" || connectionState === "connecting";
 
   // Ref for search input to auto-focus when component mounts
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -194,6 +211,10 @@ export function NodeLibrary({
 
   const handleBlockSelect = useCallback(
     (block: GraphLibraryItem_Node | GraphLibraryItem_SubGraph) => {
+      if (isRunning) {
+        showLibraryWarningThrottled("Can't add new nodes while app is running");
+        return;
+      }
       if (block.type === "subgraph") {
         insertSubGraph({
           type: "insert_sub_graph",
@@ -211,7 +232,7 @@ export function NodeLibrary({
         });
       }
     },
-    [insertNode, insertSubGraph],
+    [insertNode, insertSubGraph, isRunning],
   );
 
   const handleDragStart = useCallback(
@@ -271,6 +292,11 @@ export function NodeLibrary({
       e.preventDefault();
       const dragEvent = e as DragEvent;
       if (!draggedItem) return;
+      if (isRunning) {
+        showLibraryWarningThrottled("Can't add new nodes while app is running");
+        setDraggedItem(null);
+        return;
+      }
       // Convert screen coordinates to flow coordinates
       const position = screenToFlowPosition({
         x: dragEvent.clientX,
@@ -297,7 +323,7 @@ export function NodeLibrary({
       }
       setDraggedItem(null);
     },
-    [draggedItem, insertNode, insertSubGraph, screenToFlowPosition],
+    [draggedItem, insertNode, insertSubGraph, screenToFlowPosition, isRunning],
   );
 
   // Attach global listeners for drop anywhere on canvas

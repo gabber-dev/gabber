@@ -34,7 +34,7 @@ class CreateContextMessage(Node):
                 group="role",
                 owner_node=self,
                 default_type_constraints=[types.ContextMessageRole()],
-                value=runtime_types.ContextMessageRole.SYSTEM,
+                value=runtime_types.ContextMessageRole.USER,
             )
             self.pads.append(role)
 
