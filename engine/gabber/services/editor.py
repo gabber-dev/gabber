@@ -21,11 +21,13 @@ class GraphEditorServer:
         port: int,
         graph_library_provider: Callable[[dict[str, str]], graph.GraphLibrary],
         secret_provider_provider: Callable[[dict[str, str]], secret.SecretProvider],
+        logger: logging.Logger | logging.LoggerAdapter,
     ):
         self.port = port
         self.graph_library_provider = graph_library_provider
         self.secret_provider_provider = secret_provider_provider
         self.app = web.Application()
+        self.logger = logger
 
         self.setup_routes()
 
@@ -40,10 +42,14 @@ class GraphEditorServer:
         graph_library = self.graph_library_provider(query_dict)
         secret_provider = self.secret_provider_provider(query_dict)
 
+        project = query_dict.get("project", "NONE")
+        logger = logging.LoggerAdapter(self.logger, {"project": project})
+
         editor_session = GraphEditorSession(
             ws=ws,
             graph_library=graph_library,
             secret_provider=secret_provider,
+            logger=logger,
         )
         await editor_session.run()
 
@@ -80,10 +86,12 @@ class GraphEditorSession:
         ws: web.WebSocketResponse,
         graph_library: graph.GraphLibrary,
         secret_provider: secret.SecretProvider,
+        logger: logging.Logger | logging.LoggerAdapter,
     ):
         self.ws = ws
         self.graph_library = graph_library
         self.secret_provider = secret_provider
+        self.logger = logger
 
     async def run(self):
         library_items = await self.graph_library.list_items()
@@ -92,7 +100,7 @@ class GraphEditorSession:
             secrets=secrets,
             secret_provider=self.secret_provider,
             library_items=library_items,
-            log_handler=logging.StreamHandler(),
+            logger=self.logger,
         )
         async for message in self.ws:
             if message.type == aiohttp.WSMsgType.TEXT:
@@ -101,14 +109,14 @@ class GraphEditorSession:
                     request = adapter.validate_json(message.data)
                     await self.handle_message(request)
                 except Exception as e:
-                    logging.error(f"Error handling message: {e}", exc_info=True)
+                    self.logger.error(f"Error handling message: {e}", exc_info=True)
                     # Optionally send error back to client
                     await self.ws.send_str(f"Error: {str(e)}")
             elif message.type == aiohttp.WSMsgType.ERROR:
-                print(f"WebSocket error: {self.ws.exception()}")
+                self.logger.error(f"WebSocket error: {self.ws.exception()}")
                 break
             elif message.type == aiohttp.WSMsgType.CLOSE:
-                print("WebSocket connection closed")
+                self.logger.info("WebSocket connection closed")
                 break
 
     async def handle_message(self, message: messages.Request):

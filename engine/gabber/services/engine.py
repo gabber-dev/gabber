@@ -35,11 +35,15 @@ async def entrypoint(ctx: agents.JobContext):
     secrets = await secret_provider.list_secrets()
     runtime_api = RuntimeApi(room=ctx.room)
     log_handler = GabberLogHandler(runtime_api=runtime_api)
+    logger = logging.getLogger()
+    logger.addHandler(log_handler)
+    logger.setLevel(logging.INFO)
+    logger.propagate = False
     graph = Graph(
         secrets=secrets,
         secret_provider=secret_provider,
         library_items=library_items,
-        log_handler=log_handler,
+        logger=logger,
     )
     log_handler_t = asyncio.create_task(log_handler.run())
     await graph.load_from_snapshot(graph_rep)
