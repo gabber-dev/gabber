@@ -45,7 +45,7 @@ export function RunProvider({
   generateConnectionDetailsImpl,
 }: RunProviderProps) {
   return (
-    <EngineProvider>
+    <EngineProvider maxLogItems={5000}>
       <Inner generateConnectionDetailsImpl={generateConnectionDetailsImpl}>
         {children}
       </Inner>
