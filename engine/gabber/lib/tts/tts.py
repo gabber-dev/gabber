@@ -25,12 +25,13 @@ class TTS(Protocol):
 
 
 class MultiplexWebSocketTTS(ABC, TTS):
-    def __init__(self):
+    def __init__(self, *, logger: logging.Logger | logging.LoggerAdapter):
         self._closed = False
         self._send_queue = asyncio.Queue[dict[str, Any] | None]()
         self._receive_queue = asyncio.Queue[dict[str, Any] | None]()
         self._session_lookup: dict[str, "TTSSession"] = {}
         self._session_tasks: set[asyncio.Task] = set()
+        self.logger = logger
 
     async def session_task(self, session: "TTSSession"):
         self._session_lookup[session.context_id] = session
@@ -115,6 +116,9 @@ class MultiplexWebSocketTTS(ABC, TTS):
                     )
                     sess._output_queue.put_nowait(frame)
                 elif self.is_error_message(receive_item):
+                    self.logger.error(
+                        f"TTS error for session {sess.context_id}: {self.get_error_message(receive_item)}"
+                    )
                     error_message = self.get_error_message(receive_item)
                     sess._output_queue.put_nowait(Exception(error_message))
                     self._session_lookup.pop(sess.context_id, None)
@@ -124,10 +128,10 @@ class MultiplexWebSocketTTS(ABC, TTS):
             async with aiohttp.ClientSession(headers=headers) as session:
                 try:
                     ws = await session.ws_connect(self.get_url())
-                    logging.info("Connected to WebSocket")
+                    self.logger.info("Connected to WebSocket")
                     await asyncio.gather(send_task(ws), receive_task(ws))
                 except Exception as e:
-                    logging.error("WebSocket connection failed", exc_info=e)
+                    self.logger.error("WebSocket connection failed", exc_info=e)
                     for session in self._session_lookup.values():
                         session._output_queue.put_nowait(
                             Exception("WebSocket connection failed")
