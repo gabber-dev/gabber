@@ -28,7 +28,9 @@ class OpenAITTS(TTS):
         self.task_queue: asyncio.Queue[asyncio.Task | None] = asyncio.Queue()
 
     def start_session(self, *, voice: str) -> TTSSession:
-        session = OpenAITTSSession(voice=voice, model=self.model, client=self.client)
+        session = OpenAITTSSession(
+            voice=voice, model=self.model, client=self.client, logger=self.logger
+        )
         self.task_queue.put_nowait(asyncio.create_task(session.run()))
         return session
 
@@ -41,8 +43,15 @@ class OpenAITTS(TTS):
 
 
 class OpenAITTSSession(TTSSession):
-    def __init__(self, *, voice: str, model: str, client: AsyncOpenAI):
-        super().__init__(voice=voice)
+    def __init__(
+        self,
+        *,
+        voice: str,
+        model: str,
+        client: AsyncOpenAI,
+        logger: logging.Logger | logging.LoggerAdapter,
+    ):
+        super().__init__(voice=voice, logger=self.logger)
         self.client = client
         self.voice = voice
         self.model = model
