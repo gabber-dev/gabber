@@ -7,6 +7,8 @@ import { NodeEditorRepresentation, UpdateNodeEdit } from "@/generated/editor";
 import { useEditor } from "@/hooks/useEditor";
 import { Node, useNodeId, useNodesData } from "@xyflow/react";
 import { useCallback, useRef, useState } from "react";
+import { useRun } from "@/hooks/useRun";
+import toast from "react-hot-toast";
 
 export function NodeName() {
   const nodeId = useNodeId();
@@ -17,9 +19,18 @@ export function NodeName() {
   );
   const inputRef = useRef<HTMLInputElement | null>(null);
   const { updateNode } = useEditor();
+  const { connectionState } = useRun();
 
   const save = useCallback(
     (newName: string) => {
+      // Check if app is running and show toast warning
+      const isRunning = connectionState === "connected" || connectionState === "connecting";
+      if (isRunning) {
+        toast.error("Cannot edit node name while app is running. Stop the app to make changes.");
+        setValue(nodeData?.data.editor_name || "ERROR: NO NAME"); // Reset to original value
+        return;
+      }
+      
       const req: UpdateNodeEdit = {
         type: "update_node",
         id: nodeId || "",
@@ -35,6 +46,7 @@ export function NodeName() {
       nodeData?.data.editor_position,
       nodeId,
       updateNode,
+      connectionState,
     ],
   );
 

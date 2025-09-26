@@ -8,6 +8,7 @@ import { useEditor } from "@/hooks/useEditor";
 import { Node, useNodeId, useNodesData } from "@xyflow/react";
 import { useCallback, useRef, useState } from "react";
 import toast from "react-hot-toast";
+import { useRun } from "@/hooks/useRun";
 
 export function NodeId() {
   const nodeId = useNodeId();
@@ -16,9 +17,18 @@ export function NodeId() {
   const [value, setValue] = useState(nodeId || "ERROR: NO ID");
   const inputRef = useRef<HTMLInputElement | null>(null);
   const { updateNode } = useEditor();
+  const { connectionState } = useRun();
 
   const save = useCallback(
     (newId: string) => {
+      // Check if app is running and show toast warning
+      const isRunning = connectionState === "connected" || connectionState === "connecting";
+      if (isRunning) {
+        toast.error("Cannot edit node ID while app is running. Stop the app to make changes.");
+        setValue(nodeId || "ERROR: NO ID"); // Reset to original value
+        return;
+      }
+      
       const req: UpdateNodeEdit = {
         type: "update_node",
         id: nodeId || "",
@@ -35,6 +45,7 @@ export function NodeId() {
       nodeData?.data.editor_position,
       nodeId,
       updateNode,
+      connectionState,
     ],
   );
 
