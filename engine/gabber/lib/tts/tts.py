@@ -3,6 +3,7 @@
 
 import asyncio
 import logging
+import string
 from abc import ABC, abstractmethod
 from typing import Any, Protocol
 
@@ -40,6 +41,8 @@ class MultiplexWebSocketTTS(ABC, TTS):
         )
         if start_msg is not None:
             self._send_queue.put_nowait(start_msg)
+        pending_text = ""
+        is_first = True
         while True:
             try:
                 send_item = await session._text_queue.get()
@@ -50,13 +53,32 @@ class MultiplexWebSocketTTS(ABC, TTS):
                     for payload in eos_payloads:
                         self._send_queue.put_nowait(payload)
                     break
-                self._send_queue.put_nowait(
-                    self.push_text_payload(
-                        text=send_item,
-                        context_id=session.context_id,
-                        voice=session.voice,
+                # Handle text
+                text = send_item
+                if is_first:
+                    stripped = text.strip()
+                    if not stripped or all(c in string.punctuation for c in stripped):
+                        pending_text += text
+                        continue
+                    else:
+                        combined_text = pending_text + text
+                        self._send_queue.put_nowait(
+                            self.push_text_payload(
+                                text=combined_text,
+                                context_id=session.context_id,
+                                voice=session.voice,
+                            )
+                        )
+                        pending_text = ""
+                        is_first = False
+                else:
+                    self._send_queue.put_nowait(
+                        self.push_text_payload(
+                            text=text,
+                            context_id=session.context_id,
+                            voice=session.voice,
+                        )
                     )
-                )
             except asyncio.CancelledError:
                 session._output_queue.put_nowait(Exception("Session task cancelled"))
                 break
