@@ -56,21 +56,20 @@ class MultiplexWebSocketTTS(ABC, TTS):
                 # Handle text
                 text = send_item
                 if is_first:
-                    stripped = text.strip()
-                    if not stripped or all(c in string.punctuation for c in stripped):
-                        pending_text += text
-                        continue
-                    else:
-                        combined_text = pending_text + text
+                    pending_text += text
+                    words = [w.strip(string.punctuation) for w in pending_text.split()]
+                    word_count = len([w for w in words if w])
+                    if word_count >= 10:
                         self._send_queue.put_nowait(
                             self.push_text_payload(
-                                text=combined_text,
+                                text=pending_text,
                                 context_id=session.context_id,
                                 voice=session.voice,
                             )
                         )
                         pending_text = ""
                         is_first = False
+                    continue
                 else:
                     self._send_queue.put_nowait(
                         self.push_text_payload(
