@@ -47,6 +47,16 @@ class MultiplexWebSocketTTS(ABC, TTS):
             try:
                 send_item = await session._text_queue.get()
                 if send_item is None:
+                    if pending_text:
+                        self._send_queue.put_nowait(
+                            self.push_text_payload(
+                                text=pending_text,
+                                context_id=session.context_id,
+                                voice=session.voice,
+                            )
+                        )
+                        pending_text = ""
+                        is_first = False
                     eos_payloads = self.eos_payloads(
                         context_id=session.context_id, voice=session.voice
                     )
@@ -59,6 +69,7 @@ class MultiplexWebSocketTTS(ABC, TTS):
                     pending_text += text
                     words = [w.strip(string.punctuation) for w in pending_text.split()]
                     word_count = len([w for w in words if w])
+                    # Queue up the first text a bit. Quality seems to be better for some providers and it doesn't really add latency.
                     if word_count >= 10:
                         self._send_queue.put_nowait(
                             self.push_text_payload(
