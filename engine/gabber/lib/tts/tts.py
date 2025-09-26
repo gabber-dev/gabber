@@ -47,16 +47,6 @@ class MultiplexWebSocketTTS(ABC, TTS):
             try:
                 send_item = await session._text_queue.get()
                 if send_item is None:
-                    if pending_text:
-                        self._send_queue.put_nowait(
-                            self.push_text_payload(
-                                text=pending_text,
-                                context_id=session.context_id,
-                                voice=session.voice,
-                            )
-                        )
-                        pending_text = ""
-                        is_first = False
                     eos_payloads = self.eos_payloads(
                         context_id=session.context_id, voice=session.voice
                     )
@@ -66,21 +56,21 @@ class MultiplexWebSocketTTS(ABC, TTS):
                 # Handle text
                 text = send_item
                 if is_first:
-                    pending_text += text
-                    words = [w.strip(string.punctuation) for w in pending_text.split()]
-                    word_count = len([w for w in words if w])
-                    # Queue up the first text a bit. Quality seems to be better for some providers and it doesn't really add latency.
-                    if word_count >= 10:
+                    stripped = text.strip()
+                    if not stripped or all(c in string.punctuation for c in stripped):
+                        pending_text += text
+                        continue
+                    else:
+                        combined_text = pending_text + text
                         self._send_queue.put_nowait(
                             self.push_text_payload(
-                                text=pending_text,
+                                text=combined_text,
                                 context_id=session.context_id,
                                 voice=session.voice,
                             )
                         )
                         pending_text = ""
                         is_first = False
-                    continue
                 else:
                     self._send_queue.put_nowait(
                         self.push_text_payload(
@@ -177,7 +167,7 @@ class MultiplexWebSocketTTS(ABC, TTS):
         return self
 
     def start_session(self, *, voice: str):
-        tts_sess = TTSSession(voice=voice)
+        tts_sess = TTSSession(voice=voice, logger=self.logger)
         t = asyncio.create_task(self.session_task(tts_sess))
         self._session_tasks.add(t)
         t.add_done_callback(self._session_tasks.discard)
@@ -224,11 +214,12 @@ class MultiplexWebSocketTTS(ABC, TTS):
 
 
 class TTSSession:
-    def __init__(self, *, voice: str):
+    def __init__(self, *, voice: str, logger: logging.Logger | logging.LoggerAdapter):
         self.voice = voice
         self.context_id = short_uuid()
         self._text_queue = asyncio.Queue[str | None]()
         self._output_queue = asyncio.Queue[AudioFrame | Exception | None]()
+        self.logger = logger
         self._closed = False
 
     def cancel(self):
