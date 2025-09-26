@@ -5,7 +5,6 @@
 
 import { NodeEditorRepresentation, UpdateNodeEdit } from "@/generated/editor";
 import { useEditor } from "@/hooks/useEditor";
-import { useRun } from "@/hooks/useRun";
 import { Node, useNodeId, useNodesData } from "@xyflow/react";
 import { useCallback, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -17,8 +16,6 @@ export function NodeId() {
   const [value, setValue] = useState(nodeId || "ERROR: NO ID");
   const inputRef = useRef<HTMLInputElement | null>(null);
   const { updateNode } = useEditor();
-  const { connectionState } = useRun();
-  const isRunning = connectionState === "connected" || connectionState === "connecting";
 
   const save = useCallback(
     (newId: string) => {
@@ -30,7 +27,7 @@ export function NodeId() {
         editor_dimensions: nodeData?.data.editor_dimensions || [10, 10],
         editor_position: nodeData?.data.editor_position || [0, 0],
       };
-      updateNode(req, isRunning);
+      updateNode(req);
     },
     [
       nodeData?.data.editor_dimensions,
@@ -38,7 +35,6 @@ export function NodeId() {
       nodeData?.data.editor_position,
       nodeId,
       updateNode,
-      isRunning,
     ],
   );
 

@@ -11,7 +11,6 @@ import {
 import { useCallback, useMemo } from "react";
 import { usePropertyPad as useRuntimePropertyPad } from "@gabber/client-react";
 import { useEditor } from "@/hooks/useEditor";
-import { useRun } from "@/hooks/useRun";
 
 type Result<T> = {
   pad: PadEditorRepresentation | undefined;
@@ -25,8 +24,6 @@ type Result<T> = {
 export function usePropertyPad<T>(nodeId: string, padId: string): Result<T> {
   const { editorRepresentation, updatePad } = useEditor();
   const { currentValue } = useRuntimePropertyPad(nodeId, padId);
-  const { connectionState } = useRun();
-  const isRunning = connectionState === "connected" || connectionState === "connecting";
 
   const node = editorRepresentation.nodes.find((n) => n.id === nodeId);
   const pad = node?.pads.find((p) => p.id === padId);
@@ -55,17 +52,14 @@ export function usePropertyPad<T>(nodeId: string, padId: string): Result<T> {
         console.warn(`Pad with id ${padId} not found in node ${nodeId}`);
         return;
       }
-      updatePad(
-        {
-          type: "update_pad",
-          node: nodeId,
-          pad: padId,
-          value: value as Value,
-        },
-        isRunning
-      );
+      updatePad({
+        type: "update_pad",
+        node: nodeId,
+        pad: padId,
+        value: value as Value,
+      });
     },
-    [nodeId, pad, padId, updatePad, isRunning],
+    [nodeId, pad, padId, updatePad],
   );
 
   const runtimeValue = useMemo(() => {
