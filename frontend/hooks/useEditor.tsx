@@ -59,17 +59,6 @@ import {
   getPrimaryDataType,
 } from "@/components/flow/blocks/components/pads/utils/dataTypeColors";
 
-// Throttling for parameter edit warnings
-let lastWarningTime = 0;
-const WARNING_THROTTLE_MS = 1500; // 1.5 seconds for parameter changes
-
-const showWarningThrottled = (message: string) => {
-  const now = Date.now();
-  if (now - lastWarningTime > WARNING_THROTTLE_MS) {
-    toast.error(message);
-    lastWarningTime = now;
-  }
-};
 
 // Throttling for all warnings (shared across components)
 let lastGlobalWarningTime = 0;
@@ -389,12 +378,7 @@ export function EditorProvider({
   const pendingEdits = useRef<Map<string, UpdatePadEdit>>(new Map());
   const debounceTimers = useRef<Map<string, number>>(new Map());
   const updatePad = useCallback(
-    (edit: UpdatePadEdit, isRunning: boolean = false) => {
-      // Show warning if app is running
-      if (isRunning) {
-        showWarningThrottled("Parameter changes during runtime may cause unexpected behavior");
-      }
-
+    (edit: UpdatePadEdit) => {
       const key = `${edit.node}-${edit.pad}`;
 
       // Update local representation immediately
@@ -472,11 +456,7 @@ export function EditorProvider({
   }, []);
 
   const updateNode = useCallback(
-    (edit: UpdateNodeEdit, isRunning: boolean = false) => {
-      // Show warning if app is running
-      if (isRunning) {
-        showWarningThrottled("Parameter changes during runtime may cause unexpected behavior");
-      }
+    (edit: UpdateNodeEdit) => {
 
       sendRequest({
         type: "edit",

@@ -5,7 +5,6 @@
 
 import { NodeEditorRepresentation, UpdateNodeEdit } from "@/generated/editor";
 import { useEditor } from "@/hooks/useEditor";
-import { useRun } from "@/hooks/useRun";
 import { Node, useNodeId, useNodesData } from "@xyflow/react";
 import { useCallback, useRef, useState } from "react";
 
@@ -18,8 +17,6 @@ export function NodeName() {
   );
   const inputRef = useRef<HTMLInputElement | null>(null);
   const { updateNode } = useEditor();
-  const { connectionState } = useRun();
-  const isRunning = connectionState === "connected" || connectionState === "connecting";
 
   const save = useCallback(
     (newName: string) => {
@@ -31,14 +28,13 @@ export function NodeName() {
         editor_dimensions: nodeData?.data.editor_dimensions || [10, 10],
         editor_position: nodeData?.data.editor_position || [0, 0],
       };
-      updateNode(req, isRunning);
+      updateNode(req);
     },
     [
       nodeData?.data.editor_dimensions,
       nodeData?.data.editor_position,
       nodeId,
       updateNode,
-      isRunning,
     ],
   );
 
