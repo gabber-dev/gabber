@@ -176,7 +176,6 @@ class TTS(node.Node):
         async def text_task():
             async for item in text_sink:
                 if isinstance(item.value, runtime_types.TextStream):
-                    pass
                     job = TTSJob(tts, item.ctx, voice=voice_id.get_value())
                     job_queue.put_nowait(job)
                     async for text in item.value:
