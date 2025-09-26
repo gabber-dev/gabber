@@ -10,7 +10,7 @@ import { CubeIcon } from "@heroicons/react/24/outline";
 import { NodeName } from "./components/NodeName";
 import { NodeId } from "./components/NodeId";
 import { PropertyPad } from "./components/pads/PropertyPad";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import Editor from "@monaco-editor/react";
 import { PadHandle } from "./components/pads/PadHandle";
 import { PropertyEdit } from "./components/pads/property_edit/PropertyEdit";
@@ -59,6 +59,22 @@ export function Jinja2Node({ data }: BaseBlockProps) {
 
   const [activeTab, setActiveTab] = useState<"editor" | "rendered">("editor");
 
+  const [localJinjaValue, setLocalJinjaValue] = useState(
+    (jinjaRuntimeValue as string) || "",
+  );
+
+  useEffect(() => {
+    setLocalJinjaValue((jinjaRuntimeValue as string) || "");
+  }, [jinjaRuntimeValue]);
+
+  const currentValueRef = useRef(localJinjaValue);
+
+  useEffect(() => {
+    currentValueRef.current = localJinjaValue;
+  }, [localJinjaValue]);
+
+  const editorRef = useRef<HTMLDivElement>(null);
+
   return (
     <div className="w-100 flex flex-col bg-base-200 border-2 border-black border-b-4 border-r-4 rounded-lg relative pb-2">
       <div className="flex w-full items-center gap-2 bg-base-300 border-b-2 border-black p-3 rounded-t-lg drag-handle cursor-grab active:cursor-grabbing">
@@ -85,10 +101,18 @@ export function Jinja2Node({ data }: BaseBlockProps) {
       <div className="relative p-2 w-full">
         {activeTab === "editor" ? (
           <Editor
+            ref={editorRef}
             height="200px" // Adjust height as needed
             defaultLanguage="jinja" // Using 'jinja' for Jinja2 templates
-            value={(jinjaRuntimeValue as string) || ""}
-            onChange={setEditorValue}
+            value={localJinjaValue}
+            onChange={(value) => setLocalJinjaValue(value || "")}
+            onMount={(editor) => {
+              const handleBlur = () => {
+                setEditorValue(currentValueRef.current);
+              };
+              const disposable = editor.onDidBlurEditorWidget(handleBlur);
+              return () => disposable.dispose();
+            }}
             className="nodrag focus:outline-none"
             theme="vs-dark" // Enable dark mode theme
             options={{
