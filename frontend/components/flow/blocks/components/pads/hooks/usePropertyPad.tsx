@@ -11,6 +11,8 @@ import {
 import { useCallback, useMemo } from "react";
 import { usePropertyPad as useRuntimePropertyPad } from "@gabber/client-react";
 import { useEditor } from "@/hooks/useEditor";
+import { useRun } from "@/hooks/useRun";
+import toast from "react-hot-toast";
 
 type Result<T> = {
   pad: PadEditorRepresentation | undefined;
@@ -24,6 +26,7 @@ type Result<T> = {
 export function usePropertyPad<T>(nodeId: string, padId: string): Result<T> {
   const { editorRepresentation, updatePad } = useEditor();
   const { currentValue } = useRuntimePropertyPad(nodeId, padId);
+  const { connectionState } = useRun();
 
   const node = editorRepresentation.nodes.find((n) => n.id === nodeId);
   const pad = node?.pads.find((p) => p.id === padId);
@@ -52,6 +55,14 @@ export function usePropertyPad<T>(nodeId: string, padId: string): Result<T> {
         console.warn(`Pad with id ${padId} not found in node ${nodeId}`);
         return;
       }
+      
+      // Show toast warning if app is running
+      const isRunning = connectionState === "connected" || connectionState === "connecting";
+      if (isRunning) {
+        toast.error("Cannot edit properties while app is running. Stop the app to make changes.");
+        return;
+      }
+      
       updatePad({
         type: "update_pad",
         node: nodeId,
@@ -59,7 +70,7 @@ export function usePropertyPad<T>(nodeId: string, padId: string): Result<T> {
         value: value as Value,
       });
     },
-    [nodeId, pad, padId, updatePad],
+    [nodeId, pad, padId, updatePad, connectionState],
   );
 
   const runtimeValue = useMemo(() => {

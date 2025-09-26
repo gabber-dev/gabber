@@ -9,6 +9,7 @@ import { FlowEdit } from "../flow/FlowEdit";
 import { BottomBar } from "./BottomBar";
 import { useEditor } from "@/hooks/useEditor";
 import { LogList } from "../log/LogList";
+import { useRun } from "@/hooks/useRun";
 
 export function AppEditPage() {
   return <AppEditPageInner />;
@@ -16,7 +17,13 @@ export function AppEditPage() {
 
 function AppEditPageInner() {
   const { unsavedChanges, logsShowing } = useEditor();
+  const { connectionState } = useRun();
   const router = useRouter();
+
+  // Determine if editing should be disabled while the app is running
+  const isRunning =
+    connectionState === "connected" || connectionState === "connecting";
+  const editable = !isRunning;
 
   // Add beforeunload event listener to warn about unsaved changes
   useEffect(() => {
@@ -74,7 +81,7 @@ function AppEditPageInner() {
   return (
     <div className="relative w-full h-full flex flex-col overflow-hidden">
       <div className="absolute top-0 left-0 right-0 bottom-16">
-        <FlowEdit editable={true} />
+        <FlowEdit editable={editable} />
       </div>
 
       <div
