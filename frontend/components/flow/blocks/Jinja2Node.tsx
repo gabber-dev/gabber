@@ -73,8 +73,6 @@ export function Jinja2Node({ data }: BaseBlockProps) {
     currentValueRef.current = localJinjaValue;
   }, [localJinjaValue]);
 
-  const editorRef = useRef<HTMLDivElement>(null);
-
   return (
     <div className="w-100 flex flex-col bg-base-200 border-2 border-black border-b-4 border-r-4 rounded-lg relative pb-2">
       <div className="flex w-full items-center gap-2 bg-base-300 border-b-2 border-black p-3 rounded-t-lg drag-handle cursor-grab active:cursor-grabbing">
@@ -101,7 +99,6 @@ export function Jinja2Node({ data }: BaseBlockProps) {
       <div className="relative p-2 w-full">
         {activeTab === "editor" ? (
           <Editor
-            ref={editorRef}
             height="200px" // Adjust height as needed
             defaultLanguage="jinja" // Using 'jinja' for Jinja2 templates
             value={localJinjaValue}
