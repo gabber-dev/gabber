@@ -122,13 +122,17 @@ class TTS(node.Node):
         )
         tts: BaseTTS
         if service.get_value() == "gabber":
-            tts = GabberTTS(api_key=api_key)
+            tts = GabberTTS(api_key=api_key, logger=self.logger)
         elif service.get_value() == "elevenlabs":
-            tts = ElevenLabsTTS(api_key=api_key, voice=voice_id.get_value())
+            tts = ElevenLabsTTS(
+                api_key=api_key, voice=voice_id.get_value(), logger=self.logger
+            )
         elif service.get_value() == "cartesia":
-            tts = CartesiaTTS(api_key=api_key)
+            tts = CartesiaTTS(api_key=api_key, logger=self.logger)
         elif service.get_value() == "openai":
-            tts = OpenAITTS(model="gpt-4o-mini-tts", api_key=api_key)
+            tts = OpenAITTS(
+                model="gpt-4o-mini-tts", api_key=api_key, logger=self.logger
+            )
         else:
             raise ValueError(f"Unknown TTS service: {service.get_value()}")
         job_queue = asyncio.Queue[TTSJob | None]()
@@ -172,7 +176,6 @@ class TTS(node.Node):
         async def text_task():
             async for item in text_sink:
                 if isinstance(item.value, runtime_types.TextStream):
-                    pass
                     job = TTSJob(tts, item.ctx, voice=voice_id.get_value())
                     job_queue.put_nowait(job)
                     async for text in item.value:

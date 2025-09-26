@@ -2,16 +2,27 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
+import logging
+
 import numpy as np
-from .tts import TTS, TTSSession
-from gabber.lib.audio import Resampler
-from gabber.core.runtime_types import AudioFrame, AudioFrameData
 from openai import AsyncOpenAI
+
+from gabber.core.runtime_types import AudioFrame, AudioFrameData
+from gabber.lib.audio import Resampler
+
+from .tts import TTS, TTSSession
 
 
 class OpenAITTS(TTS):
-    def __init__(self, *, model: str, api_key: str):
+    def __init__(
+        self,
+        *,
+        model: str,
+        api_key: str,
+        logger: logging.Logger | logging.LoggerAdapter,
+    ):
         super().__init__()
+        self.logger = logger
         self.model = model
         self.client = AsyncOpenAI(api_key=api_key)
         self.task_queue: asyncio.Queue[asyncio.Task | None] = asyncio.Queue()

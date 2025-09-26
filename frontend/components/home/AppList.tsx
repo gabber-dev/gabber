@@ -11,18 +11,18 @@ import {
   DocumentDuplicateIcon,
   PencilIcon,
   ArrowDownTrayIcon,
+  ArrowUpTrayIcon,
 } from "@heroicons/react/24/solid";
 import { useCallback, useRef, useState } from "react";
 import { AppListItem } from "./AppListItem";
 import ReactModal from "react-modal";
 import { CreateAppModal } from "./CreateAppModal";
 import toast from "react-hot-toast";
-import Link from "next/link";
 
 export function AppList() {
   const [showModal, setShowModal] = useState(false);
   const [appsExpanded, setAppsExpanded] = useState(false);
-  const { apps, deleteApp, saveApp, refreshApps, importApp } = useRepository();
+  const { apps, deleteApp, saveApp, refreshApps, importApp, exportApp } = useRepository();
   const [selectedApps, setSelectedApps] = useState<Set<string>>(new Set());
   const [renameModal, setRenameModal] = useState<{
     isOpen: boolean;
@@ -71,6 +71,73 @@ export function AppList() {
     await refreshApps();
 
     toast.success("Apps duplicated successfully!");
+  };
+
+  const handleExportSelected = async () => {
+    if (selectedApps.size === 0) {
+      toast.error("Please select at least one app to export");
+      return;
+    }
+
+    let successCount = 0;
+    let failureCount = 0;
+
+    toast.success("Starting export...");
+
+    // Export each selected app with a delay to avoid browser blocking
+    for (const appId of selectedApps) {
+      const app = apps.find((a) => a.id === appId);
+
+      if (!app) {
+        failureCount++;
+        continue;
+      }
+
+      try {
+        const appExport = await exportApp(appId);
+        const blob = new Blob([JSON.stringify(appExport, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${appExport.app.name || "app"}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        successCount++;
+
+        // Add a small delay between downloads to avoid browser blocking
+        if (selectedApps.size > 1) {
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+      } catch (error) {
+        console.error(`Error exporting app ${app.name}:`, error);
+        failureCount++;
+      }
+    }
+
+    // Show results after a delay to let downloads start
+    setTimeout(() => {
+      if (successCount > 0) {
+        if (failureCount === 0) {
+          toast.success(
+            `Successfully exported ${successCount} app${successCount > 1 ? "s" : ""}!`,
+          );
+        } else {
+          toast.success(
+            `Exported ${successCount} app${successCount > 1 ? "s" : ""} successfully (${
+              failureCount
+            } failed)`,
+          );
+        }
+      } else {
+        toast.error(
+          `Failed to export ${failureCount} app${failureCount > 1 ? "s" : ""}`,
+        );
+      }
+    }, 1000);
   };
 
   const handleRenameApp = async (appId: string, newName: string) => {
@@ -204,9 +271,11 @@ export function AppList() {
               </span>
             </button>
           </div>
-          <button className="btn" onClick={() => setShowModal(true)}>
-            Create App
-          </button>
+          {selectedApps.size === 0 && (
+            <button className="btn" onClick={() => setShowModal(true)}>
+              Create App
+            </button>
+          )}
           {selectedApps.size > 0 && (
             <div className="flex gap-2">
               <button
@@ -215,6 +284,13 @@ export function AppList() {
               >
                 <DocumentDuplicateIcon className="h-4 w-4" />
                 Duplicate {selectedApps.size}
+              </button>
+              <button
+                onClick={handleExportSelected}
+                className="btn btn-primary btn-sm gap-2 font-vt323"
+              >
+                <ArrowUpTrayIcon className="h-4 w-4" />
+                Export {selectedApps.size}
               </button>
               <button
                 onClick={() => {

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { useEngine } from "@gabber/client-react";
+import { RuntimeEventPayload_LogItem, useEngine } from "@gabber/client-react";
 import { useRef, useEffect } from "react";
 import { LogItem } from "./LogItem"; // Assuming LogItem is in the same or imported directory
 import { XCircleIcon } from "@heroicons/react/24/outline";
@@ -41,6 +41,26 @@ export function LogList() {
 
   const reversedLogItems = logItems.slice().reverse();
 
+  // Group consecutive duplicate log items
+  const groupedLogItems = reversedLogItems.reduce(
+    (
+      acc: { logItem: RuntimeEventPayload_LogItem; count: number }[],
+      current,
+    ) => {
+      const getKey = (item: RuntimeEventPayload_LogItem) => item.message;
+      if (
+        acc.length === 0 ||
+        getKey(current) !== getKey(acc[acc.length - 1].logItem)
+      ) {
+        acc.push({ logItem: current, count: 1 });
+      } else {
+        acc[acc.length - 1].count++;
+      }
+      return acc;
+    },
+    [],
+  );
+
   return (
     <div className="h-full flex flex-col">
       <div className="p-1 bg-base-300 border-b border-base-300 flex">
@@ -55,13 +75,13 @@ export function LogList() {
         ref={containerRef}
         className="space-y-2 overflow-y-auto flex-1 bg-base-100"
       >
-        {reversedLogItems.length === 0 && (
+        {groupedLogItems.length === 0 && (
           <div className="m-2">
             <span>No log items available.</span>
           </div>
         )}
-        {reversedLogItems.map((logItem, index) => (
-          <LogItem key={index} logItem={logItem} />
+        {groupedLogItems.map((group, index) => (
+          <LogItem key={index} logItem={group.logItem} count={group.count} />
         ))}
       </div>
     </div>

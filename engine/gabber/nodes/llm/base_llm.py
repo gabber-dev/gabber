@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
-import logging
 from abc import ABC, abstractmethod
 from typing import cast
 
@@ -266,7 +265,7 @@ class BaseLLM(node.Node, ABC):
         RETRY_LIMIT = 20
         for i in range(RETRY_LIMIT):
             if i == RETRY_LIMIT - 1:
-                logging.error("Failed to check video support after 20 attempts.")
+                self.logger.error("Failed to check video support after 20 attempts.")
                 video_supported = False
                 break
 
@@ -274,7 +273,7 @@ class BaseLLM(node.Node, ABC):
                 video_supported = await self._supports_video(llm)
                 break
             except Exception:
-                logging.error(
+                self.logger.error(
                     "Failed to check video support, trying again in 5s", exc_info=True
                 )
 
@@ -282,7 +281,9 @@ class BaseLLM(node.Node, ABC):
 
         audio_supported = await self._supports_audio(llm)
 
-        logging.info(f"LLM supports video: {video_supported} audio: {audio_supported}")
+        self.logger.info(
+            f"LLM supports video: {video_supported} audio: {audio_supported}"
+        )
 
         running_handle: AsyncLLMResponseHandle | None = None
         tasks: set[asyncio.Task] = set()
@@ -290,7 +291,7 @@ class BaseLLM(node.Node, ABC):
         async def cancel_task():
             nonlocal running_handle
             async for item in cancel_trigger:
-                logging.info("Cancelling LLM generation request.")
+                self.logger.info("Cancelling LLM generation request.")
                 if running_handle is not None:
                     running_handle.cancel()
                 item.ctx.complete()
@@ -381,7 +382,7 @@ class BaseLLM(node.Node, ABC):
             except asyncio.CancelledError:
                 pass
             except Exception as e:
-                logging.error(f"Error during LLM generation: {e}", exc_info=e)
+                self.logger.error(f"Error during LLM generation: {e}", exc_info=e)
             finally:
                 finished_source.push_item(runtime_types.Trigger(), ctx)
                 ctx.complete()
@@ -389,9 +390,9 @@ class BaseLLM(node.Node, ABC):
         def done_callback(task: asyncio.Task):
             nonlocal running_handle
             if task.exception() is not None:
-                logging.error(f"Generation task failed: {task.exception()}")
+                self.logger.error(f"Generation task failed: {task.exception()}")
             else:
-                logging.info("Generation task completed successfully.")
+                self.logger.info("Generation task completed successfully.")
             running_handle = None
 
         cancel_task_t = asyncio.create_task(cancel_task())
@@ -421,7 +422,7 @@ class BaseLLM(node.Node, ABC):
                     mcp_tool_definitions[mcp_node].extend(tdfs)
                     all_tool_definitions.extend(tdfs)
                 except Exception as e:
-                    logging.error(
+                    self.logger.error(
                         f"BaseLLM: Failed to get tool definitions from MCP node {mcp_node.id}: {e}"
                     )
 
@@ -429,7 +430,7 @@ class BaseLLM(node.Node, ABC):
                 context=messages, tool_definitions=all_tool_definitions
             )
             if running_handle is not None:
-                logging.warning(
+                self.logger.warning(
                     "LLM is already running a generation, skipping new request."
                 )
                 ctx.complete()
@@ -452,7 +453,7 @@ class BaseLLM(node.Node, ABC):
                 tasks.add(t)
                 t.add_done_callback(done_callback)
             except Exception as e:
-                logging.error(f"Failed to start LLM generation: {e}", exc_info=e)
+                self.logger.error(f"Failed to start LLM generation: {e}", exc_info=e)
                 finished_source.push_item(runtime_types.Trigger(), ctx)
         await cancel_task_t
 
@@ -513,7 +514,7 @@ class BaseLLM(node.Node, ABC):
             results.append(msg)
 
         if len(tg_tool_calls) > 0:
-            logging.info(
+            self.logger.info(
                 f"BaseLLM: Creating TG task for {len(tg_tool_calls)} tool calls"
             )
             tg_task = asyncio.create_task(run_tg_task())
