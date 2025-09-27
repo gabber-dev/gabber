@@ -579,10 +579,11 @@ class Graph:
         for node in self.nodes:
             node.room = room
 
+        runtime_api_t = asyncio.create_task(
+            runtime_api.run(nodes=self.nodes) if runtime_api else asyncio.sleep(0)
+        )
+        node_tasks: list[asyncio.Task] = []
         try:
-            runtime_api_coro = (
-                runtime_api.run(nodes=self.nodes) if runtime_api else asyncio.sleep(0)
-            )
 
             async def node_run_wrapper(n: Node):
                 try:
@@ -591,12 +592,34 @@ class Graph:
                 except Exception as e:
                     n.logger.error(f"Error in node {n.id} run: {e}", exc_info=e)
 
+            node_tasks = [
+                asyncio.create_task(node_run_wrapper(n), name=f"node_{n.id}")
+                for n in self.nodes
+            ]
             await asyncio.gather(
-                *[node_run_wrapper(n) for n in self.nodes],
-                runtime_api_coro,
+                *node_tasks,
+                runtime_api_t,
             )
+        except asyncio.CancelledError:
+            self.logger.info("Graph run cancelled, shutting down nodes.")
+            runtime_api_t.cancel()
+            for n_t in node_tasks:
+                n_t.cancel()
         except Exception as e:
             logging.error(f"Error running graph: {e}", exc_info=e)
+
+        try:
+            await runtime_api_t
+        except asyncio.CancelledError:
+            self.logger.info("Runtime API run cancelled.")
+
+        for n_t in node_tasks:
+            try:
+                await n_t
+            except asyncio.CancelledError:
+                self.logger.info(f"Node {n_t.get_name()} run cancelled.")
+
+        self.logger.info("Graph run completed.")
 
 
 def create_pad_from_editor(
