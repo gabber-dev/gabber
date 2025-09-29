@@ -24,13 +24,16 @@ export function NodeName() {
   const save = useCallback(
     (newName: string) => {
       // Check if app is running and show toast warning
-      const isRunning = connectionState === "connected" || connectionState === "connecting";
+      const isRunning =
+        connectionState === "connected" || connectionState === "connecting";
       if (isRunning) {
-        toast.error("Cannot edit node name while app is running. Stop the app to make changes.");
+        toast.error(
+          "Cannot edit node name while app is running. Stop the app to make changes.",
+        );
         setValue(nodeData?.data.editor_name || "ERROR: NO NAME"); // Reset to original value
         return;
       }
-      
+
       const req: UpdateNodeEdit = {
         type: "update_node",
         id: nodeId || "",
@@ -44,6 +47,7 @@ export function NodeName() {
     [
       nodeData?.data.editor_dimensions,
       nodeData?.data.editor_position,
+      nodeData?.data.editor_name,
       nodeId,
       updateNode,
       connectionState,

@@ -55,14 +55,17 @@ export function usePropertyPad<T>(nodeId: string, padId: string): Result<T> {
         console.warn(`Pad with id ${padId} not found in node ${nodeId}`);
         return;
       }
-      
+
       // Show toast warning if app is running
-      const isRunning = connectionState === "connected" || connectionState === "connecting";
+      const isRunning =
+        connectionState === "connected" || connectionState === "connecting";
       if (isRunning) {
-        toast.error("Cannot edit properties while app is running. Stop the app to make changes.");
+        toast.error(
+          "Cannot edit properties while app is running. Stop the app to make changes.",
+        );
         return;
       }
-      
+
       updatePad({
         type: "update_pad",
         node: nodeId,

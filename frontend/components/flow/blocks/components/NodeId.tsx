@@ -22,13 +22,16 @@ export function NodeId() {
   const save = useCallback(
     (newId: string) => {
       // Check if app is running and show toast warning
-      const isRunning = connectionState === "connected" || connectionState === "connecting";
+      const isRunning =
+        connectionState === "connected" || connectionState === "connecting";
       if (isRunning) {
-        toast.error("Cannot edit node ID while app is running. Stop the app to make changes.");
+        toast.error(
+          "Cannot edit node ID while app is running. Stop the app to make changes.",
+        );
         setValue(nodeId || "ERROR: NO ID"); // Reset to original value
         return;
       }
-      
+
       const req: UpdateNodeEdit = {
         type: "update_node",
         id: nodeId || "",
