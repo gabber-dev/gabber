@@ -3,7 +3,6 @@
 
 import asyncio
 import logging
-import string
 from abc import ABC, abstractmethod
 from typing import Any, Protocol
 
@@ -41,8 +40,6 @@ class MultiplexWebSocketTTS(ABC, TTS):
         )
         if start_msg is not None:
             self._send_queue.put_nowait(start_msg)
-        pending_text = ""
-        is_first = True
         while True:
             try:
                 send_item = await session._text_queue.get()
@@ -53,32 +50,18 @@ class MultiplexWebSocketTTS(ABC, TTS):
                     for payload in eos_payloads:
                         self._send_queue.put_nowait(payload)
                     break
+
                 # Handle text
                 text = send_item
-                if is_first:
-                    stripped = text.strip()
-                    if not stripped or all(c in string.punctuation for c in stripped):
-                        pending_text += text
-                        continue
-                    else:
-                        combined_text = pending_text + text
-                        self._send_queue.put_nowait(
-                            self.push_text_payload(
-                                text=combined_text,
-                                context_id=session.context_id,
-                                voice=session.voice,
-                            )
-                        )
-                        pending_text = ""
-                        is_first = False
-                else:
-                    self._send_queue.put_nowait(
-                        self.push_text_payload(
-                            text=text,
-                            context_id=session.context_id,
-                            voice=session.voice,
-                        )
-                    )
+                send_payload = self.push_text_payload(
+                    text=text,
+                    context_id=session.context_id,
+                    voice=session.voice,
+                )
+                if send_payload is None:
+                    self.logger.info(f"Send payload is None for text: {text}")
+                    continue
+                self._send_queue.put_nowait(send_payload)
             except asyncio.CancelledError:
                 session._output_queue.put_nowait(Exception("Session task cancelled"))
                 break
@@ -189,7 +172,7 @@ class MultiplexWebSocketTTS(ABC, TTS):
     @abstractmethod
     def push_text_payload(
         self, *, context_id: str, voice: str, text: str
-    ) -> dict[str, Any]: ...
+    ) -> dict[str, Any] | None: ...
 
     @abstractmethod
     def eos_payloads(self, *, context_id: str, voice: str) -> list[dict[str, Any]]: ...

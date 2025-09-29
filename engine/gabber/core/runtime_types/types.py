@@ -312,7 +312,7 @@ class ContextMessage(BaseModel, BaseRuntimeType):
         return "context_message"
 
 
-class ContextMessageContent_ToolCallDelta(BaseModel, BaseRuntimeType):
+class ContextMessageContent_ToolCallDelta(BaseModel):
     index: int
     id: str | None
     name: str | None

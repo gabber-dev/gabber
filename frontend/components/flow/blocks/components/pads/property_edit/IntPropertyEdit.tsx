@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
+import { useState, useEffect } from "react";
 import { usePropertyPad } from "../hooks/usePropertyPad";
 import { PropertyEditProps } from "./PropertyEdit";
 
@@ -12,8 +13,18 @@ export function IntPropertyEdit({ nodeId, padId }: PropertyEditProps) {
     padId,
   );
 
+  const [localValue, setLocalValue] = useState(runtimeValue?.toString() || "0");
+
+  useEffect(() => {
+    setLocalValue(runtimeValue?.toString() || "0");
+  }, [runtimeValue]);
+
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const intValue = parseInt(event.target.value);
+    setLocalValue(event.target.value);
+  };
+
+  const handleBlur = () => {
+    const intValue = parseInt(localValue);
     setValue(isNaN(intValue) ? 0 : intValue);
   };
 
@@ -21,8 +32,9 @@ export function IntPropertyEdit({ nodeId, padId }: PropertyEditProps) {
     <input
       type="number"
       step="1"
-      value={runtimeValue || 0}
+      value={localValue}
       onChange={handleChange}
+      onBlur={handleBlur}
       placeholder="Enter number..."
       className="input input-bordered input-sm w-full bg-base-300 border-2 border-black border-b-4 border-r-4 rounded-lg text-base-content placeholder-base-content/40 focus:border-primary focus:ring-2 focus:ring-primary font-vt323 text-xs hover:bg-base-100 transition-colors duration-150"
     />

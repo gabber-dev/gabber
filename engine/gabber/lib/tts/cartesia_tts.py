@@ -35,10 +35,14 @@ class CartesiaTTS(MultiplexWebSocketTTS):
 
     def push_text_payload(
         self, *, text: str, context_id: str, voice: str
-    ) -> dict[str, Any]:
+    ) -> dict[str, Any] | None:
         text = self._emoji_remover.push_text(text)
         text = self._parenthesis_remover.push_text(text)
         text = self._italic_remover.push_text(text)
+
+        if text.strip() == "":
+            return None
+
         return {
             "model_id": self._model_id,
             "max_buffer_delay_ms": 250,
