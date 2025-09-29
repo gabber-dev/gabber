@@ -5,7 +5,9 @@
 
 # Gabber - Real-time AI Engine
 
-[Gabber](https://gabber.dev) is an engine for building real-time AI across all modalities — voice, text, video, and more. It supports graph-based apps with multiple participants and simultaneous media streams. Our goal is to give developers the **most powerful, developer-friendly AI app builder** available.
+[Gabber](https://gabber.dev) is an engine for building real-time AI apps across voice, text, video, and other modalities. It uses a graph-based builder to connect media streams with LLMs, VLMs, and Omni models, with support for multiple participants, concurrent streams, tool-calling, state-machines, and MCP.
+
+Looking for the hosted option? Head to [gabber.dev](https://gabber.dev) which also provides low-latency inference for Orpheus TTS and Qwen 3 Omni.
 
 <p align="center">
   <img src="https://readme-assets.gabber.dev/graph-example.png" alt="Gabber Graph Example" width="100%"/>
