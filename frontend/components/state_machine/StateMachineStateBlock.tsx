@@ -4,7 +4,7 @@
  */
 
 import { Handle, Node, Position, useNodeId, useNodesData } from "@xyflow/react";
-import { ChangeEvent, useCallback, useMemo, useState, useEffect } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import { StateMachineState } from "@/generated/stateMachine";
 import { useStateMachine } from "./useStateMachine";

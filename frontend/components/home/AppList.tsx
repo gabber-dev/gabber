@@ -22,7 +22,8 @@ import toast from "react-hot-toast";
 export function AppList() {
   const [showModal, setShowModal] = useState(false);
   const [appsExpanded, setAppsExpanded] = useState(false);
-  const { apps, deleteApp, saveApp, refreshApps, importApp, exportApp } = useRepository();
+  const { apps, deleteApp, saveApp, refreshApps, importApp, exportApp } =
+    useRepository();
   const [selectedApps, setSelectedApps] = useState<Set<string>>(new Set());
   const [renameModal, setRenameModal] = useState<{
     isOpen: boolean;
