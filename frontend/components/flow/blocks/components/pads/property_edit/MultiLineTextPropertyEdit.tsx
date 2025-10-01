@@ -5,7 +5,7 @@
 
 import { usePropertyPad } from "../hooks/usePropertyPad";
 import { PropertyEditProps } from "./PropertyEdit";
-import { useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export function MultiLineTextPropertyEdit({
   nodeId,
@@ -17,6 +17,12 @@ export function MultiLineTextPropertyEdit({
   );
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
+  const [localValue, setLocalValue] = useState(runtimeValue || "");
+
+  useEffect(() => {
+    setLocalValue(runtimeValue || "");
+  }, [runtimeValue]);
+
   const autoResize = () => {
     const el = textareaRef.current;
     if (!el) return;
@@ -26,19 +32,25 @@ export function MultiLineTextPropertyEdit({
 
   useEffect(() => {
     autoResize();
-  }, [runtimeValue]);
+  }, [localValue]);
+
   const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setValue(event.target.value);
+    setLocalValue(event.target.value);
+  };
+
+  const handleBlur = () => {
+    setValue(localValue);
   };
 
   return (
     <textarea
       ref={textareaRef}
-      value={runtimeValue || ""}
+      value={localValue}
       onChange={(e) => {
         handleChange(e);
         autoResize();
       }}
+      onBlur={handleBlur}
       placeholder="Add your comment here..."
       rows={1}
       className="textarea textarea-bordered w-full bg-base-300 border-2 border-black border-b-4 border-r-4 rounded-lg text-base-content placeholder-base-content/40 focus:border-primary focus:ring-2 focus:ring-primary font-sans text-base leading-relaxed hover:bg-base-100 transition-colors duration-150 resize-none min-h-[72px]"

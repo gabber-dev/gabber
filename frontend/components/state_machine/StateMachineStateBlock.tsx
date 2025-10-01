@@ -4,7 +4,7 @@
  */
 
 import { Handle, Node, Position, useNodeId, useNodesData } from "@xyflow/react";
-import { ChangeEvent, useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import { StateMachineState } from "@/generated/stateMachine";
 import { useStateMachine } from "./useStateMachine";
@@ -15,16 +15,21 @@ export function StateMachineStateBlock() {
   const isEntry = nodeId === "__ENTRY__";
   const isAny = nodeId === "__ANY__";
   const [isEditing, setIsEditing] = useState(false);
+  const [localName, setLocalName] = useState("");
   const { selectedNodes, updateState } = useStateMachine();
 
-  const handleNameChange = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      if (!isEntry) {
-        updateState(nodeId || "", e.target.value);
-      }
-    },
-    [isEntry, nodeId, updateState],
-  );
+  const name = useMemo(() => {
+    if (isAny) {
+      return "Any State";
+    }
+    return isEntry ? "Entry" : nodeData?.data?.name || "";
+  }, [isAny, isEntry, nodeData?.data?.name]);
+
+  useEffect(() => {
+    if (!isEditing) {
+      setLocalName(name);
+    }
+  }, [name, isEditing]);
 
   const handleDoubleClick = useCallback(() => {
     if (!isEntry && !isAny) {
@@ -33,15 +38,11 @@ export function StateMachineStateBlock() {
   }, [isAny, isEntry]);
 
   const handleBlur = useCallback(() => {
-    setIsEditing(false);
-  }, []);
-
-  const name = useMemo(() => {
-    if (isAny) {
-      return "Any State";
+    if (!isEntry && !isAny) {
+      updateState(nodeId || "", localName);
     }
-    return isEntry ? "Entry" : nodeData?.data?.name || "";
-  }, [isAny, isEntry, nodeData?.data?.name]);
+    setIsEditing(false);
+  }, [isEntry, isAny, nodeId, localName, updateState]);
 
   const bgColor = useMemo(() => {
     if (isAny) {
@@ -66,8 +67,8 @@ export function StateMachineStateBlock() {
         {isEditing ? (
           <input
             type="text"
-            value={name || ""}
-            onChange={handleNameChange}
+            value={localName}
+            onChange={(e) => setLocalName(e.target.value)}
             onBlur={handleBlur}
             onFocus={(e) => e.target.select()}
             autoFocus
@@ -76,7 +77,7 @@ export function StateMachineStateBlock() {
         ) : (
           <div className="flex items-center gap-1">
             <p className="px-1">{name}</p>
-            {!isEntry && (
+            {!isEntry && !isAny && (
               <button
                 type="button"
                 className="nodrag p-0 m-0 bg-transparent border-none cursor-pointer"

@@ -1,6 +1,7 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
+import logging
 import base64
 from typing import Any
 
@@ -13,8 +14,14 @@ CHANNELS = 1
 
 
 class ElevenLabsTTS(MultiplexWebSocketTTS):
-    def __init__(self, *, api_key: str, voice: str):
-        super().__init__()
+    def __init__(
+        self,
+        *,
+        api_key: str,
+        voice: str,
+        logger: logging.Logger | logging.LoggerAdapter,
+    ):
+        super().__init__(logger=logger)
         self._voice = voice
         self._api_key = api_key
         self._italic_remover = ItalicRemover()
@@ -33,10 +40,14 @@ class ElevenLabsTTS(MultiplexWebSocketTTS):
 
     def push_text_payload(
         self, *, text: str, context_id: str, voice: str
-    ) -> dict[str, Any]:
+    ) -> dict[str, Any] | None:
         text = self._emoji_remover.push_text(text)
         text = self._parenthesis_remover.push_text(text)
         text = self._italic_remover.push_text(text)
+
+        if text.strip() == "":
+            return None
+
         if not text.endswith(" "):
             text += " "
         return {"text": text, "context_id": context_id}

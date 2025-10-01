@@ -16,7 +16,6 @@ import {
 import "@xyflow/react/dist/base.css";
 import { FlowErrorBoundary } from "./ErrorBoundary";
 import { useEditor } from "@/hooks/useEditor";
-import { useRun } from "@/hooks/useRun";
 import { BaseBlock } from "./blocks/BaseBlock";
 import { PlusIcon, ArrowUpTrayIcon } from "@heroicons/react/24/outline";
 import { NodeLibrary } from "./NodeLibrary";
@@ -30,6 +29,7 @@ import { StateMachineProvider } from "../state_machine/useStateMachine";
 import { usePathname } from "next/navigation";
 import toast from "react-hot-toast";
 import { QuickAddModal, QuickAddProps } from "./quick_add/QuickAddModal";
+
 import { PortalStart } from "./blocks/PortalStart";
 import { PortalEnd as PortalEndComponent } from "./blocks/PortalEnd";
 import {
@@ -68,9 +68,6 @@ function FlowEditInner({ editable }: Props) {
     onReactFlowNodesChange,
     onReactFlowConnect,
   } = useEditor();
-  const { connectionState } = useRun();
-  const isRunning =
-    connectionState === "connected" || connectionState === "connecting";
   const { screenToFlowPosition } = useReactFlow();
   const [quickAdd, setQuickAdd] = useState<QuickAddProps | undefined>(
     undefined,
@@ -123,7 +120,9 @@ function FlowEditInner({ editable }: Props) {
         <div className="absolute top-2 right-2 flex z-10 gap-2">
           <ExportButton />
           <AddBlockButton
-            onClick={() => setIsNodeLibraryOpen(!isNodeLibraryOpen)}
+            onClick={() => {
+              setIsNodeLibraryOpen(!isNodeLibraryOpen);
+            }}
           />
         </div>
       )}
@@ -171,7 +170,9 @@ function FlowEditInner({ editable }: Props) {
               }
               onReactFlowNodesChange(changes);
             }}
-            onEdgesChange={onReactFlowEdgesChange}
+            onEdgesChange={(changes) => {
+              onReactFlowEdgesChange(changes);
+            }}
             onConnect={onReactFlowConnect}
             onConnectEnd={onConnectEnd}
             edgeTypes={edgeTypes}
@@ -191,8 +192,8 @@ function FlowEditInner({ editable }: Props) {
             proOptions={{
               hideAttribution: true,
             }}
-            nodesDraggable={!isRunning}
-            nodesConnectable={!isRunning}
+            nodesDraggable={true}
+            nodesConnectable={true}
             selectNodesOnDrag={false}
             minZoom={0.1}
           >

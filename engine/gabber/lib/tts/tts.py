@@ -25,12 +25,13 @@ class TTS(Protocol):
 
 
 class MultiplexWebSocketTTS(ABC, TTS):
-    def __init__(self):
+    def __init__(self, *, logger: logging.Logger | logging.LoggerAdapter):
         self._closed = False
         self._send_queue = asyncio.Queue[dict[str, Any] | None]()
         self._receive_queue = asyncio.Queue[dict[str, Any] | None]()
         self._session_lookup: dict[str, "TTSSession"] = {}
         self._session_tasks: set[asyncio.Task] = set()
+        self.logger = logger
 
     async def session_task(self, session: "TTSSession"):
         self._session_lookup[session.context_id] = session
@@ -49,13 +50,18 @@ class MultiplexWebSocketTTS(ABC, TTS):
                     for payload in eos_payloads:
                         self._send_queue.put_nowait(payload)
                     break
-                self._send_queue.put_nowait(
-                    self.push_text_payload(
-                        text=send_item,
-                        context_id=session.context_id,
-                        voice=session.voice,
-                    )
+
+                # Handle text
+                text = send_item
+                send_payload = self.push_text_payload(
+                    text=text,
+                    context_id=session.context_id,
+                    voice=session.voice,
                 )
+                if send_payload is None:
+                    self.logger.info(f"Send payload is None for text: {text}")
+                    continue
+                self._send_queue.put_nowait(send_payload)
             except asyncio.CancelledError:
                 session._output_queue.put_nowait(Exception("Session task cancelled"))
                 break
@@ -115,6 +121,9 @@ class MultiplexWebSocketTTS(ABC, TTS):
                     )
                     sess._output_queue.put_nowait(frame)
                 elif self.is_error_message(receive_item):
+                    self.logger.error(
+                        f"TTS error for session {sess.context_id}: {self.get_error_message(receive_item)}"
+                    )
                     error_message = self.get_error_message(receive_item)
                     sess._output_queue.put_nowait(Exception(error_message))
                     self._session_lookup.pop(sess.context_id, None)
@@ -124,10 +133,10 @@ class MultiplexWebSocketTTS(ABC, TTS):
             async with aiohttp.ClientSession(headers=headers) as session:
                 try:
                     ws = await session.ws_connect(self.get_url())
-                    logging.info("Connected to WebSocket")
+                    self.logger.info("Connected to WebSocket")
                     await asyncio.gather(send_task(ws), receive_task(ws))
                 except Exception as e:
-                    logging.error("WebSocket connection failed", exc_info=e)
+                    self.logger.error("WebSocket connection failed", exc_info=e)
                     for session in self._session_lookup.values():
                         session._output_queue.put_nowait(
                             Exception("WebSocket connection failed")
@@ -141,7 +150,7 @@ class MultiplexWebSocketTTS(ABC, TTS):
         return self
 
     def start_session(self, *, voice: str):
-        tts_sess = TTSSession(voice=voice)
+        tts_sess = TTSSession(voice=voice, logger=self.logger)
         t = asyncio.create_task(self.session_task(tts_sess))
         self._session_tasks.add(t)
         t.add_done_callback(self._session_tasks.discard)
@@ -163,7 +172,7 @@ class MultiplexWebSocketTTS(ABC, TTS):
     @abstractmethod
     def push_text_payload(
         self, *, context_id: str, voice: str, text: str
-    ) -> dict[str, Any]: ...
+    ) -> dict[str, Any] | None: ...
 
     @abstractmethod
     def eos_payloads(self, *, context_id: str, voice: str) -> list[dict[str, Any]]: ...
@@ -188,11 +197,12 @@ class MultiplexWebSocketTTS(ABC, TTS):
 
 
 class TTSSession:
-    def __init__(self, *, voice: str):
+    def __init__(self, *, voice: str, logger: logging.Logger | logging.LoggerAdapter):
         self.voice = voice
         self.context_id = short_uuid()
         self._text_queue = asyncio.Queue[str | None]()
         self._output_queue = asyncio.Queue[AudioFrame | Exception | None]()
+        self.logger = logger
         self._closed = False
 
     def cancel(self):

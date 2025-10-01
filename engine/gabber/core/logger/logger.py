@@ -46,10 +46,9 @@ class GabberLogHandler(logging.Handler):
                 pass
 
             if entries:
-                for entry in entries:
-                    try:
-                        self._runtime_api.emit_logs(entries)
-                    except Exception as e:
-                        logging.error(f"Failed to publish log entry: {e}")
+                try:
+                    self._runtime_api.emit_logs(entries)
+                except Exception as e:
+                    logging.error(f"Failed to publish log entry: {e}")
 
             await asyncio.sleep(0.1)

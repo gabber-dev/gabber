@@ -15,6 +15,7 @@ import { StateMachineGraphMini } from "./StateMachineGraphMini";
 import { usePropertyPad } from "../flow/blocks/components/pads/hooks/usePropertyPad";
 import { useNodeId } from "@xyflow/react";
 import { PadHandle } from "../flow/blocks/components/pads/PadHandle";
+import { useState, useEffect } from "react";
 
 export function StateMachineNode({ data }: BaseBlockProps) {
   const {} = useEditor();
@@ -107,6 +108,20 @@ function Parameter({ pads }: { pads: StateMachineParameterPads }) {
   );
   const { pad } = usePropertyPad<unknown>(nodeId || "", pads.valuePadId);
 
+  const [localName, setLocalName] = useState(name || "");
+
+  useEffect(() => {
+    setLocalName(name || "");
+  }, [name]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalName(e.target.value);
+  };
+
+  const handleBlur = () => {
+    setEditorValue(localName);
+  };
+
   return (
     <div className="flex items-center border-b border-base-100 p-2">
       <div className="flex gap-2">
@@ -121,8 +136,9 @@ function Parameter({ pads }: { pads: StateMachineParameterPads }) {
         <div className="relative flex flex-col gap-1 grow-5 basis-0 pb-4">
           <input
             className="input input-sm !outline-none"
-            value={name || ""}
-            onChange={(e) => setEditorValue(e.target.value)}
+            value={localName}
+            onChange={handleChange}
+            onBlur={handleBlur}
           />
           <label className="italic absolute bottom-0 label text-xs">
             Parameter Name

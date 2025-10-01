@@ -59,6 +59,19 @@ import {
   getPrimaryDataType,
 } from "@/components/flow/blocks/components/pads/utils/dataTypeColors";
 
+
+// Throttling for all warnings (shared across components)
+let lastGlobalWarningTime = 0;
+const GLOBAL_WARNING_THROTTLE_MS = 2000; // 2 seconds for consistency
+
+const showGlobalWarningThrottled = (message: string) => {
+  const now = Date.now();
+  if (now - lastGlobalWarningTime > GLOBAL_WARNING_THROTTLE_MS) {
+    toast.error(message);
+    lastGlobalWarningTime = now;
+  }
+};
+
 type ReactFlowRepresentation = {
   nodes: Node<NodeEditorRepresentation>[];
   edges: Edge[];
@@ -444,6 +457,7 @@ export function EditorProvider({
 
   const updateNode = useCallback(
     (edit: UpdateNodeEdit) => {
+
       sendRequest({
         type: "edit",
         edits: [edit],
