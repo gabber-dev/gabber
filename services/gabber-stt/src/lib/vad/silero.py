@@ -11,6 +11,7 @@ from typing import Optional, Tuple
 import numpy as np
 import onnxruntime
 import time
+from .vad import VAD
 
 SUPPORTED_SAMPLE_RATE = 16000
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -29,7 +30,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-class Silero:
+class SileroVAD(VAD):
     def __init__(
         self, *, model_path: str = DEFAULT_WEIGHTS_PATH, loop_delta_seconds: float = 0.1
     ):
@@ -139,7 +140,7 @@ class Silero:
 
 
 class SileroSession:
-    def __init__(self, *, vad: Silero):
+    def __init__(self, *, vad: SileroVAD):
         self._vad = vad
         self._window = np.zeros((0,), dtype=np.int16) * VAD_CHUNK_SIZE
 

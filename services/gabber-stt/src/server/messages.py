@@ -2,8 +2,29 @@ from pydantic import BaseModel, Field
 from typing import Literal, Annotated
 
 
-class RequestPayload(BaseModel):
-    type: Literal["start", "stop"]
+class RequestPayload_StartSession(BaseModel):
+    type: Literal["start_session"] = "start_session"
+    sample_rate: int
+
+
+class RequestPayload_AudioData(BaseModel):
+    type: Literal["audio"] = "audio"
+    b64_data: str
+
+
+class RequestPayload_EndSession(BaseModel):
+    type: Literal["end_session"] = "end_session"
+
+
+RequestPayload = Annotated[
+    RequestPayload_StartSession | RequestPayload_AudioData | RequestPayload_EndSession,
+    Field(discriminator="type"),
+]
+
+
+class Request(BaseModel):
+    payload: RequestPayload
+    session_id: str
 
 
 class ResponsePayload_Error(BaseModel):
@@ -19,5 +40,12 @@ class ResponsePayload_Transcription(BaseModel):
     transcription: str
 
 
+ResponsePayload = Annotated[
+    ResponsePayload_Error | ResponsePayload_Transcription,
+    Field(discriminator="type"),
+]
+
+
 class Response(BaseModel):
-    payload: ResponsePayload_Error = Field(discriminator="type")
+    payload: ResponsePayload
+    session_id: str

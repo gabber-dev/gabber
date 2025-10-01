@@ -14,10 +14,12 @@ dependencies = [
     "numpy",
     "onnxruntime >= 1.17.1",
     "av ~= 14.4.0",
+    "pyaudio==0.2.14",
+    "aiohttp>=3.12.15",
 ]
 
 [dependency-groups]
-dev = ["ruff>=0.12.5"]
+dev = ["ruff>=0.12.5", "watchfiles"]
 
 [tool.ruff]
 # Set the target Python version (modern Python, aligns with projects like FastAPI and Pandas)
