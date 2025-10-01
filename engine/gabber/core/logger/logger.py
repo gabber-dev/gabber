@@ -4,25 +4,35 @@
 import asyncio
 import logging
 import queue
+import re
 from datetime import datetime
 from ..graph.runtime_api import RuntimeApi, RuntimeEventPayload_LogItem
 
 
 class GabberLogHandler(logging.Handler):
-    def __init__(self, runtime_api: RuntimeApi):
+    def __init__(self, runtime_api: RuntimeApi, secrets_to_remove: list[str]):
         super().__init__()
+        self.secrets_to_remove = secrets_to_remove
         self._runtime_api = runtime_api
         self.q = queue.Queue[RuntimeEventPayload_LogItem]()
         self._closed = False
+        self._compiled_patterns = [
+            re.compile(re.escape(secret)) for secret in secrets_to_remove
+        ]
 
     def emit(self, record):
         node = getattr(record, "node", None)
         subgraph = getattr(record, "subgraph", None)
         pad = getattr(record, "pad", None)
 
+        message = record.getMessage()
+        redacted_message = message
+        for pattern in self._compiled_patterns:
+            redacted_message = pattern.sub("*****", redacted_message)
+
         self.q.put_nowait(
             RuntimeEventPayload_LogItem(
-                message=record.getMessage(),
+                message=redacted_message,
                 timestamp=datetime.fromtimestamp(record.created).isoformat(),
                 level=record.levelname,
                 node=node,
