@@ -198,7 +198,10 @@ class Graph:
         )
         await graph.load_from_snapshot(subgraph_item.graph)
         node = SubGraph(
-            secrets=self.secrets, secret_provider=self.secret_provider, graph=graph
+            secrets=self.secrets,
+            secret_provider=self.secret_provider,
+            graph=graph,
+            logger=self.logger,
         )
         node.set_subgraph_id(subgraph_item.id)
         if edit.id:
@@ -455,6 +458,7 @@ class Graph:
                     secret_provider=self.secret_provider,
                     secrets=self.secrets,
                     graph=subgraph,
+                    logger=self.logger,
                 )
             else:
                 logging.error(f"Node type {node_data.type} not found in library.")
