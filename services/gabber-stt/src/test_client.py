@@ -92,7 +92,7 @@ class TestClient:
     def _audio_request_message(self, id: str, chunk: bytes):
         b64_chunk = base64.b64encode(chunk).decode("utf-8")
         return {
-            "session_id": "test_session_1",
+            "session_id": id,
             "payload": {
                 "type": "audio",
                 "b64_data": b64_chunk,

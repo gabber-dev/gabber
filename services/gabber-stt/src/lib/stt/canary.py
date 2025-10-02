@@ -2,4 +2,6 @@ from .stt import STT
 
 
 class CanarySTT(STT):
-    pass
+    @property
+    def sample_rate(self) -> int:
+        return 16000

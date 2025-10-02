@@ -1,17 +1,18 @@
 import logging
-from server import WebSocketServer
+
+from engine import Engine
+from lib import eot, stt, vad
+from server import WebSocketServer, messages
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
-    def engine_factory():
-        from engine import Engine
-        from lib import eot, vad, stt
-
+    def engine_factory(request: messages.RequestPayload_StartSession) -> Engine:
         return Engine(
-            eot=eot.EndOfTurn(),
-            vad=vad.VAD(),
-            stt=stt.STT(),
+            input_sample_rate=request.sample_rate,
+            eot=eot.pipecat.PipeCatEOT(),
+            vad=vad.VAD(vad_inference=vad.silero.SileroVADInference()),
+            stt=stt.canary.CanarySTT(),
         )
 
     server = WebSocketServer(engine_factory=engine_factory)

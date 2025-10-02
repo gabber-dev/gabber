@@ -4,14 +4,16 @@ import logging
 
 from aiohttp import web
 
-from .messages import Request
+from .messages import Request, RequestPayload_StartSession
 from .session import SessionManager
 from engine import Engine
 from typing import Callable
 
 
 class WebSocketServer:
-    def __init__(self, *, engine_factory: Callable[[], Engine]):
+    def __init__(
+        self, *, engine_factory: Callable[[RequestPayload_StartSession], Engine]
+    ):
         self.engine_factory = engine_factory
         self.app = web.Application()
         self.app.router.add_get("/", self.endpoint)
@@ -43,8 +45,6 @@ class WebSocketServer:
                     except Exception as e:
                         logging.error(f"Failed to parse request: {e}")
                         continue
-
-                    logging.info(f"Received request: {request}")
 
             except Exception as e:
                 await ws.send_str(json.dumps({"error": str(e)}))

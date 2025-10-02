@@ -1,10 +1,12 @@
 import asyncio
 import logging
+import base64
 
 from .messages import (
     Request,
     RequestPayload,
     RequestPayload_AudioData,
+    RequestPayload_StartSession,
     RequestPayload_EndSession,
     Response,
     ResponsePayload,
@@ -18,7 +20,9 @@ logger = logging.getLogger(__name__)
 
 
 class SessionManager:
-    def __init__(self, *, engine_factory: Callable[[], Engine]):
+    def __init__(
+        self, *, engine_factory: Callable[[RequestPayload_StartSession], Engine]
+    ):
         self._request_queue = []
         self._engine_factory = engine_factory
 
@@ -29,6 +33,7 @@ class SessionManager:
 
     def push_request(self, request: Request):
         if request.payload.type == "start_session":
+            logger.info(f"Starting session {request.session_id}")
             sess_id = request.session_id
             if sess_id in self._session_lookup:
                 logger.error(f"Session {sess_id} already exists")
@@ -39,7 +44,7 @@ class SessionManager:
             )
             session = Session(
                 id=sess_id,
-                engine=self._engine_factory(),
+                engine=self._engine_factory(request.payload),
                 output_queue=output_queue,
             )
             session_t = asyncio.create_task(session.run())
@@ -59,6 +64,15 @@ class SessionManager:
             session_send_t.add_done_callback(
                 lambda _: self._session_send_tasks.pop(sess_id, None)
             )
+            return
+
+        sess_id = request.session_id
+        session = self._session_lookup.get(sess_id, None)
+        if session is None:
+            logger.error(f"Session {sess_id} does not exist")
+            return
+
+        session.push_payload(request.payload)
 
     async def _session_send_task(
         self,
@@ -105,7 +119,7 @@ class Session:
         output_queue: asyncio.Queue[ResponsePayload | Exception | None],
     ):
         self._engine = engine
-        self._req_q: asyncio.Queue[RequestPayload | None] = asyncio.Queue(maxsize=100)
+        self._req_q: asyncio.Queue[RequestPayload | None] = asyncio.Queue(maxsize=1024)
         self.logger = logging.LoggerAdapter(logger, {"session_id": id})
         self._output_queue = output_queue
         self._closed = False
@@ -131,14 +145,8 @@ class Session:
                 break
 
             if isinstance(req, RequestPayload_AudioData):
-                self.logger.info(f"Received audio data of size {len(req.b64_data)}")
-                payload = ResponsePayload_Transcription(
-                    start_sample=0,
-                    end_sample=16000,
-                    words=[],
-                    transcription="simulated transcription",
-                )
-                await self._output_queue.put(payload)
+                audio_bytes = base64.b64decode(req.b64_data)
+                self._engine.push_audio(audio_bytes)
             elif isinstance(req, RequestPayload_EndSession):
                 self.logger.info("Received end session request")
                 break

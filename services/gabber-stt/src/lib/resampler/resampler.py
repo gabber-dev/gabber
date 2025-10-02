@@ -19,7 +19,7 @@ class Resampler:
         self, audio: np.typing.NDArray[np.int16]
     ) -> np.typing.NDArray[np.int16]:
         f = av.AudioFrame.from_ndarray(
-            audio,
+            audio.reshape(1, -1),
             format="s16",
             layout="mono",
         )
