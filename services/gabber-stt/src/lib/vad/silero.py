@@ -16,7 +16,6 @@ DEFAULT_WEIGHTS_PATH = os.path.join(
 )
 
 VAD_CHUNK_SIZE = 512
-PCM_16_NORMALIZATION_FACTOR = 32768.0
 
 
 onnxruntime.set_default_logger_severity(3)
@@ -81,22 +80,14 @@ class SileroVADInference(VADInference):
 
         audio_batch = audio_chunks.astype(np.float32) / 32768.0
 
-        sr_input = np.full((batch_size,), SUPPORTED_SAMPLE_RATE, dtype=np.int64)
+        sr_input = np.array(SUPPORTED_SAMPLE_RATE, dtype=np.int64)
 
-        state_shape = list(self._state.shape)
-        state_shape[1] = batch_size
-        initial_state = np.zeros(state_shape, dtype=self._state.dtype)
         ort_inputs = {
             "input": audio_batch,
-            "state": initial_state,
+            "state": self._state,
             "sr": sr_input,
         }
-        print(
-            "NEIL VAD ort_inputs",
-            ort_inputs["input"].shape,
-            ort_inputs["state"].shape,
-            ort_inputs["sr"].shape,
-        )
+
         ort_outputs = self._onnx_session.run(None, ort_inputs)
         out, _ = ort_outputs
         out_np = np.array(out)

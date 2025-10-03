@@ -2,17 +2,14 @@ import logging
 import asyncio
 import base64
 import pyaudio
-import wave
 import uuid
 import aiohttp
 import threading
 
 CHUNK = 441
 FORMAT = pyaudio.paInt16
-CHANNELS = 2
+CHANNELS = 1
 RATE = 44100
-RECORD_SECONDS = 5
-WAVE_OUTPUT_FILENAME = "output.wav"
 
 p = pyaudio.PyAudio()
 

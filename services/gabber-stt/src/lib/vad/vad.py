@@ -2,13 +2,14 @@ import asyncio
 import logging
 import queue
 import threading
-import time
 from dataclasses import dataclass
 from typing import Protocol
 
 import numpy as np
 
 logger = logging.getLogger(__name__)
+
+CONTEXT_SIZE = 64
 
 
 class VADInference(Protocol):
@@ -43,7 +44,7 @@ class VADInferenceBatcherPromise:
 
 
 class VADInferenceBatcher:
-    def __init__(self, *, vad_inference: VADInference, batch_size: int = 64):
+    def __init__(self, *, vad_inference: VADInference, batch_size: int = 1):
         self._batch_size = batch_size
         self._vad_inference = vad_inference
         self._fut_lookup: dict[int, asyncio.Future[float]] = {}
@@ -55,34 +56,32 @@ class VADInferenceBatcher:
     def chunk_size(self) -> int:
         return self._vad_inference.inference_chunk_sample_count
 
+    @property
+    def sample_rate(self) -> int:
+        return self._vad_inference.sample_rate
+
     def _run(self):
         while True:
-            time.sleep(0.1)
             batch_arr = np.empty(
                 (self._batch_size, self._vad_inference.inference_chunk_sample_count),
                 dtype=np.int16,
             )
             futs: list[asyncio.Future[float]] = []
-            while len(futs) < self._batch_size and not self._batch.not_empty:
-                prom = self._batch.get()
-                batch_arr = np.concatenate((batch_arr, prom.audio.reshape(1, -1)))
-                futs.append(prom.fut)
+            while len(futs) < self._batch_size:
+                try:
+                    prom = self._batch.get(timeout=0.1)
+                    batch_arr[len(futs)] = prom.audio
+                    futs.append(prom.fut)
+                except queue.Empty:
+                    break
 
-            print("NEIL got here", batch_arr.shape, len(futs))  # --- IGNORE ---
-
-            results = self._vad_inference.inference(batch_arr)
-            if len(results) != len(futs):
-                logger.error("VAD batcher returned mismatched result count")
-                for fut in futs:
-                    if not fut.done():
-                        fut.set_exception(
-                            RuntimeError("VAD batcher returned mismatched result count")
-                        )
+            if len(futs) == 0:
                 continue
 
+            results = self._vad_inference.inference(batch_arr)
+
             for i, fut in enumerate(futs):
-                if not fut.done():
-                    fut.set_result(results[i])
+                fut.set_result(results[i])
 
     async def inference(self, audio: np.typing.NDArray[np.int16]) -> float:
         try:
@@ -99,16 +98,19 @@ class VADInferenceBatcher:
 class VADSession:
     def __init__(self, *, batcher: VADInferenceBatcher):
         self._batcher = batcher
+        self._context = np.zeros(CONTEXT_SIZE, dtype=np.int16)
+
+    @property
+    def chunk_size(self) -> int:
+        return self._batcher.chunk_size - CONTEXT_SIZE
 
     async def has_voice(self, audio_chunk: np.typing.NDArray[np.int16]) -> float:
-        chunks = []
-        chunk_size = self._batcher.chunk_size
-        for i in range(0, len(audio_chunk), chunk_size):
-            chunk = audio_chunk[i : i + chunk_size]
-            if len(chunk) < chunk_size:
-                chunk = np.pad(chunk, (0, chunk_size - len(chunk)), mode="constant")
-            chunks.append(chunk)
+        if len(audio_chunk) != self.chunk_size:
+            raise ValueError(
+                f"Invalid audio chunk size: {len(audio_chunk)}, expected {self.chunk_size}"
+            )
 
-        results = await asyncio.gather(*[self._batcher.inference(c) for c in chunks])
-        print("NEIL VAD results", results)  # --- IGNORE ---
-        return max(results)
+        chunk = np.concatenate((self._context, audio_chunk))
+        prob = await self._batcher.inference(chunk)
+        self._context = chunk[-CONTEXT_SIZE:]
+        return prob

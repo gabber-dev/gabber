@@ -139,9 +139,13 @@ class Session:
         self._req_q.put_nowait(None)
 
     async def run(self):
+        engine_t = asyncio.create_task(self._engine.run())
         while True:
             req = await self._req_q.get()
             if req is None:
+                break
+
+            if engine_t.done():
                 break
 
             if isinstance(req, RequestPayload_AudioData):
@@ -150,3 +154,11 @@ class Session:
             elif isinstance(req, RequestPayload_EndSession):
                 self.logger.info("Received end session request")
                 break
+
+        try:
+            await engine_t
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            self.logger.error(f"Engine error: {e}")
+            self._output_queue.put_nowait(e)

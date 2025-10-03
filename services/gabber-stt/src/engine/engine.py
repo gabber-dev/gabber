@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 import numpy as np
 from lib import eot, resampler, stt, vad
+from enum import Enum
 
 logger = logging.getLogger(__name__)
 
@@ -21,11 +22,12 @@ class Engine:
         self._eot = eot
         self._vad = vad
         self._stt = stt
-        self._vad_session = self._vad.create_session()
+        self.vad_session = self._vad.create_session()
         self._resamplers: dict[int, resampler.Resampler] = {}
-        self._audio_window = AudioWindow(max_length_s=1.0)
+        self.audio_window = AudioWindow(max_length_s=60.0)
         self.setup_resamplers()
         self._tasks = []
+        self.current_state: BaseEngineState = EngineState_NotTalking(engine=self)
 
     def setup_resamplers(self):
         sample_rates = {
@@ -54,16 +56,16 @@ class Engine:
             frame.resampled_data[rate] = AudioData(
                 sample_rate=rate, data=resampled_np_data
             )
+        self.audio_window.push_frame(frame)
 
-        t = asyncio.create_task(
-            self._vad_session.has_voice(
-                frame.resampled_data[self._vad.sample_rate].data
-            )
-        )
-        self._tasks.append(t)
-        t.add_done_callback(lambda _: self._tasks.remove(t))
+    async def run(self):
+        while True:
+            await self.current_state.tick()
+            await asyncio.sleep(0.01)
 
-        self._audio_window.push_frame(frame)
+    def transition_to(self, new_state: "BaseEngineState"):
+        logger.info(f"Transitioning from {self.current_state.name} to {new_state.name}")
+        self.current_state = new_state
 
 
 @dataclass
@@ -126,3 +128,90 @@ class AudioWindow:
                 delta_cursor = self._start_cursors[rate]
                 self._start_cursors[rate] += old_len - new_len
                 delta_cursor -= self._start_cursors[rate]
+
+    def get_segment(
+        self, *, sample_rate: int, start_cursor: int, end_cursor: int
+    ) -> np.typing.NDArray[np.int16]:
+        if sample_rate not in self._data:
+            raise ValueError(f"Sample rate {sample_rate} not found in audio window")
+
+        if start_cursor < self._start_cursors[sample_rate]:
+            start_cursor = self._start_cursors[sample_rate]
+
+        if end_cursor > self._end_cursors[sample_rate]:
+            end_cursor = self._end_cursors[sample_rate]
+
+        if start_cursor >= end_cursor:
+            raise ValueError(f"Invalid segment: {start_cursor} >= {end_cursor}")
+
+        start_index = start_cursor - self._start_cursors[sample_rate]
+        end_index = end_cursor - self._start_cursors[sample_rate]
+        return self._data[sample_rate][start_index:end_index]
+
+
+class BaseEngineState:
+    def __init__(self, *, engine: "Engine"):
+        self.name = self.__class__.__name__.split("_")[-1]
+        self.engine = engine
+
+    async def tick(self): ...
+
+
+class EngineState_NotTalking(BaseEngineState):
+    def __init__(self, *, engine: "Engine", vad_threshold: float = 0.4):
+        super().__init__(engine=engine)
+        self._last_inference_cursor = self.engine.audio_window._end_cursors.get(
+            self.engine._input_sample_rate, 0
+        )
+
+    async def tick(self):
+        current_curs = self.engine.audio_window._end_cursors.get(
+            self.engine._input_sample_rate, 0
+        )
+
+        for i in range(
+            self._last_inference_cursor,
+            current_curs,
+            self.engine.vad_session.chunk_size,
+        ):
+            end_cursor = min(i + self.engine.vad_session.chunk_size, current_curs)
+            if end_cursor - i != self.engine.vad_session.chunk_size:
+                break
+            segment = self.engine.audio_window.get_segment(
+                sample_rate=self.engine._input_sample_rate,
+                start_cursor=i,
+                end_cursor=end_cursor,
+            )
+            res = await self.engine.vad_session.has_voice(segment)
+            print(f"NEIL VAD result: {res}")
+            self._last_inference_cursor = end_cursor
+
+
+class EngineState_TalkingWarmUp(BaseEngineState):
+    def __init__(self, *, engine: "Engine", start_cursor: int):
+        super().__init__(engine=engine)
+
+
+class EngineState_Talking(BaseEngineState):
+    def __init__(self, *, engine: "Engine"):
+        super().__init__(engine=engine)
+
+
+class EngineState_TalkingCoolDown(BaseEngineState):
+    def __init__(self, *, engine: "Engine"):
+        super().__init__(engine=engine)
+
+
+class EngineState_Finalizing(BaseEngineState):
+    def __init__(self, *, engine: "Engine"):
+        super().__init__(engine=engine)
+
+
+class EngineState_FinalizingInterrupting(BaseEngineState):
+    def __init__(self, *, engine: "Engine"):
+        super().__init__(engine=engine)
+
+
+class EngineState_Finalized(BaseEngineState):
+    def __init__(self, *, engine: "Engine"):
+        super().__init__(engine=engine)
