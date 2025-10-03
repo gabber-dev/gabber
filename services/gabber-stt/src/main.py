@@ -10,7 +10,7 @@ if __name__ == "__main__":
     def engine_factory(request: messages.RequestPayload_StartSession) -> Engine:
         return Engine(
             input_sample_rate=request.sample_rate,
-            eot=eot.pipecat.PipeCatEOT(),
+            eot=eot.EndOfTurn(eot_inference=eot.pipecat.PipeCatEOTInference()),
             vad=vad.VAD(vad_inference=vad.silero.SileroVADInference()),
             stt=stt.canary.CanarySTT(),
         )

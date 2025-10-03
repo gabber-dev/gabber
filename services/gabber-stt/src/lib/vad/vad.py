@@ -14,7 +14,7 @@ CONTEXT_SIZE = 64
 
 class VADInference(Protocol):
     @property
-    def inference_chunk_sample_count(self) -> int: ...
+    def chunk_size(self) -> int: ...
 
     @property
     def sample_rate(self) -> int: ...
@@ -24,10 +24,8 @@ class VADInference(Protocol):
 
 class VAD:
     def __init__(self, *, vad_inference: VADInference):
-        self._initialized = False
         self._vad_inference = vad_inference
         self._vad_batcher = VADInferenceBatcher(vad_inference=vad_inference)
-        self._closed = False
 
     @property
     def sample_rate(self) -> int:
@@ -54,7 +52,7 @@ class VADInferenceBatcher:
 
     @property
     def chunk_size(self) -> int:
-        return self._vad_inference.inference_chunk_sample_count
+        return self._vad_inference.chunk_size
 
     @property
     def sample_rate(self) -> int:
@@ -63,8 +61,7 @@ class VADInferenceBatcher:
     def _run(self):
         while True:
             batch_arr = np.empty(
-                (self._batch_size, self._vad_inference.inference_chunk_sample_count),
-                dtype=np.int16,
+                (self._batch_size, self._vad_inference.chunk_size), dtype=np.int16
             )
             futs: list[asyncio.Future[float]] = []
             while len(futs) < self._batch_size:
@@ -103,6 +100,10 @@ class VADSession:
     @property
     def chunk_size(self) -> int:
         return self._batcher.chunk_size - CONTEXT_SIZE
+
+    @property
+    def sample_rate(self) -> int:
+        return self._batcher.sample_rate
 
     async def has_voice(self, audio_chunk: np.typing.NDArray[np.int16]) -> float:
         if len(audio_chunk) != self.chunk_size:

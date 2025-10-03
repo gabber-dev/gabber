@@ -50,7 +50,7 @@ class SileroVADInference(VADInference):
         self._init_evt.set()
 
     @property
-    def inference_chunk_sample_count(self) -> int:
+    def chunk_size(self) -> int:
         return VAD_CHUNK_SIZE
 
     @property

@@ -16,6 +16,7 @@ dependencies = [
     "av ~= 14.4.0",
     "pyaudio==0.2.14",
     "aiohttp>=3.12.15",
+    "transformers>=4.56.2",
 ]
 
 [dependency-groups]

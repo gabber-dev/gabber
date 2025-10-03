@@ -1,5 +1,9 @@
 .PHONY: server test-client install 
 
+download-weights:
+	curl -L -o weights/smart-turn-v3.0.onnx https://huggingface.co/pipecat-ai/smart-turn-v3/resolve/main/smart-turn-v3.0.onnx?download=true
+	curl -L 
+
 install: 
 	uv sync && \
 	uv sync --group dev
