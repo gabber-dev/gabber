@@ -34,8 +34,11 @@ class SubGraph(node.Node):
         secret_provider: SecretProvider,
         secrets: list[PublicSecret],
         graph: "Graph",
+        logger: logging.Logger | logging.LoggerAdapter,
     ):
-        super().__init__(secret_provider=secret_provider, secrets=secrets)
+        super().__init__(
+            secret_provider=secret_provider, secrets=secrets, logger=logger
+        )
         self.graph = graph
         self.loaded = False
         self.node_pad_names_map: dict[tuple[str, str], str] = {}
