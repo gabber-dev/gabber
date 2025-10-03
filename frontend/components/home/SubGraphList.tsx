@@ -221,10 +221,10 @@ export function SubGraphList() {
         <div className="border-2 border-black border-b-4 border-r-4 rounded-xl p-4 bg-base-200">
           {subGraphs.length === 0 ? (
             <div className="text-center py-8">
-              <p className="font-vt323 text-lg text-gray-600 mb-2">
+              <p className="font-vt323 text-lg text-gray-400 mb-2">
                 No subgraphs yet
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-400">
                 Create reusable subgraphs to bundle common node configurations
                 into single nodes.
               </p>
