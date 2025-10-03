@@ -220,13 +220,16 @@ export function SubGraphList() {
         </div>
         <div className="border-2 border-black border-b-4 border-r-4 rounded-xl p-4 bg-base-200">
           {subGraphs.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="font-vt323 text-lg text-gray-400 mb-2">
-                No subgraphs yet
-              </p>
-              <p className="text-sm text-gray-400">
-                Create reusable subgraphs to bundle common node configurations
-                into single nodes.
+            <div className="flex items-center justify-center py-8 text-center">
+              <p className="text-base-content/60 font-vt323 text-lg">
+                No subgraphs yet.
+                <button
+                  onClick={() => setShowModal(true)}
+                  className="link link-primary mx-1 font-vt323"
+                >
+                  Create one
+                </button>
+                to condense common node configurations into single nodes.
               </p>
             </div>
           ) : (
