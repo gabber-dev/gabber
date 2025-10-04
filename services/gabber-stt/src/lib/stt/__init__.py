@@ -1,4 +1,4 @@
 from .stt import STT
-from . import canary
+from . import parakeet
 
-__all__ = ["STT", "canary"]
+__all__ = ["STT", "parakeet"]

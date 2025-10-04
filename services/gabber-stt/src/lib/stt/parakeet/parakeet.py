@@ -2,12 +2,14 @@ import threading
 
 import torch
 from nemo.collections.asr.models import ASRModel
+import numpy as np
+from typing import Any
 
-from ..stt import STT, STTInference, STTInferenceInput, STTInferenceResult
+from ..stt import STT, STTInference, STTInferenceResult
 from .model import CanaryModelInstance, load_model
 
 
-class CanarySTTInference(STTInference):
+class ParakeetSTTInference(STTInference):
     def __init__(
         self,
         *,
@@ -30,7 +32,9 @@ class CanarySTTInference(STTInference):
     def _initialize_model(self):
         self._model = load_model()
 
-    def inference(self, input: STTInferenceInput) -> STTInferenceResult:
+    def inference(
+        self, audio_batch: np.typing.NDArray[np.int16], decoder_states: Any | None
+    ) -> list[STTInferenceResult]:
         try:
             self._init_thread.join(10)
         except RuntimeError as e:
@@ -41,12 +45,11 @@ class CanarySTTInference(STTInference):
 
         assert self._model is not None
 
-        audio_batch = (
-            torch.frombuffer(input.audio_batch, dtype=torch.int16).to(torch.float16)
-            / 32768.0
+        torch_audio_batch = (
+            torch.from_numpy(audio_batch).to(torch.float16) / 32768.0
         ).to(self._model.encoder.device)
         input_signal_length = (
-            torch.Tensor([audio_batch.shape[1]])
+            torch.Tensor([torch_audio_batch.shape[1]])
             .to(torch.float16)
             .to(self._model.encoder.device)
         )
@@ -60,3 +63,5 @@ class CanarySTTInference(STTInference):
             out_len=encoder_output_len,
             prev_batched_state=None,
         )
+
+        return []
