@@ -8,16 +8,19 @@ import numpy as np
 
 
 class EndOfTurn:
-    def __init__(self, *, eot_inference: "EOTInference"):
+    def __init__(self, *, eot_inference: "EOTInference", tick_s: float):
         self._eot_inference = eot_inference
         self._eot_batcher = EOTInferenceBatcher(eot_inference=eot_inference)
+        self._tick_s = tick_s
 
     @property
     def sample_rate(self) -> int:
         return self._eot_inference.sample_rate
 
     def create_session(self) -> "EOTSession":
-        return EOTSession(batcher=self._eot_batcher)
+        return EOTSession(
+            batcher=self._eot_batcher, chunk_size=int(self._tick_s * self.sample_rate)
+        )
 
 
 class EOTInference(Protocol):
@@ -37,7 +40,7 @@ class EOTInferenceBatcherPromise:
 
 
 class EOTInferenceBatcher:
-    def __init__(self, *, eot_inference: EOTInference, batch_size: int = 1):
+    def __init__(self, *, eot_inference: EOTInference, batch_size: int = 8):
         self._batch_size = batch_size
         self._eot_inference = eot_inference
         self._fut_lookup: dict[int, asyncio.Future[float]] = {}
@@ -62,7 +65,7 @@ class EOTInferenceBatcher:
             futs: list[asyncio.Future[float]] = []
             while len(futs) < self._batch_size:
                 try:
-                    prom = self._batch.get(timeout=0.1)
+                    prom = self._batch.get(timeout=0.05)
                     batch_arr[len(futs)] = prom.audio
                     futs.append(prom.fut)
                 except queue.Empty:
@@ -89,12 +92,14 @@ class EOTInferenceBatcher:
 
 
 class EOTSession:
-    def __init__(self, *, batcher: EOTInferenceBatcher):
+    def __init__(self, *, batcher: EOTInferenceBatcher, chunk_size: int):
         self._batcher = batcher
+        self._chunk_size = chunk_size
+        self._context = np.zeros(batcher.chunk_size - chunk_size, dtype=np.int16)
 
     @property
     def chunk_size(self) -> int:
-        return self._batcher.chunk_size
+        return self._chunk_size
 
     @property
     def sample_rate(self) -> int:
@@ -105,6 +110,7 @@ class EOTSession:
             raise ValueError(
                 f"Invalid audio chunk size: {len(audio_chunk)}, expected {self.chunk_size}"
             )
-
-        prob = await self._batcher.inference(audio_chunk)
+        chunk = np.concatenate((self._context, audio_chunk))
+        prob = await self._batcher.inference(chunk)
+        self._context = chunk[-(self._batcher.chunk_size - self.chunk_size) :]
         return prob

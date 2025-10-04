@@ -10,14 +10,18 @@ dependencies = [
     "fastapi>=0.117.1",
     "httpx>=0.24.0",
     "pydantic>=2.7.0",
-    "uvicorn[standard]>=0.24.0",
     "numpy",
     "onnxruntime >= 1.17.1",
     "av ~= 14.4.0",
     "pyaudio==0.2.14",
     "aiohttp>=3.12.15",
-    "transformers>=4.56.2",
+    "transformers",
+    "nemo-toolkit[asr]>=2.4.1",
 ]
+[tool.uv]
+# Always install Werkzeug 2.3.0, regardless of whether transitive dependencies request
+# a different version.
+override-dependencies = ["numpy==2.3.3"]
 
 [dependency-groups]
 dev = ["ruff>=0.12.5", "watchfiles"]

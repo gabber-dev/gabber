@@ -22,9 +22,7 @@ class PipeCatEOTInference(EOTInference):
     def _initialize_onnx(self):
         opts = onnxruntime.SessionOptions()
         opts.add_session_config_entry("session.intra_op.allow_spinning", "0")
-        opts.add_session_config_entry("session.inter_op.allow_spinning", "0")
-        opts.inter_op_num_threads = 1
-        opts.intra_op_num_threads = 1
+        opts.intra_op_num_threads = 8
         opts.execution_mode = onnxruntime.ExecutionMode.ORT_SEQUENTIAL
 
         self._onnx_session = onnxruntime.InferenceSession(
@@ -48,9 +46,7 @@ class PipeCatEOTInference(EOTInference):
                 f"Invalid audio chunk size: {audio_chunks.shape[1]}, expected {self.chunk_size}"
             )
 
-        print("EOT AUDIO CHUNKS:", audio_chunks.shape)
-        flat_audio = audio_chunks.flatten()
-        batch = flat_audio.astype(np.float32) / 32768.0
+        batch = audio_chunks.astype(np.float32) / 32768.0
 
         inputs = self._feature_extractor(
             batch,
@@ -62,16 +58,12 @@ class PipeCatEOTInference(EOTInference):
             do_normalize=True,
         )
 
-        input_features = inputs.input_features.squeeze(0).astype(np.float32)
-        input_features = np.expand_dims(input_features, axis=0)
+        input_features = inputs.input_features.astype(np.float32)
 
         outputs = self._onnx_session.run(None, {"input_features": input_features})
-        print("EOT OUTPUTS:", outputs)
-        # out, _ = outputs
-        # out_np = np.array(out)
-        # eot_out = out_np[:, 0].astype(np.float32)
-        # print("EOT OUT:", eot_out)
-        return [0] * audio_chunks.shape[0]
+        results = outputs[0].flatten().tolist()  # type: ignore
+        print("EOT OUTPUTS:", results)
+        return results
 
     @property
     def sample_rate(self) -> int:

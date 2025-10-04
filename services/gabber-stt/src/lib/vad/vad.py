@@ -3,7 +3,7 @@ import logging
 import queue
 import threading
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Protocol, Generic, TypeVar
 
 import numpy as np
 
@@ -42,7 +42,7 @@ class VADInferenceBatcherPromise:
 
 
 class VADInferenceBatcher:
-    def __init__(self, *, vad_inference: VADInference, batch_size: int = 1):
+    def __init__(self, *, vad_inference: VADInference, batch_size: int = 32):
         self._batch_size = batch_size
         self._vad_inference = vad_inference
         self._fut_lookup: dict[int, asyncio.Future[float]] = {}
@@ -66,7 +66,7 @@ class VADInferenceBatcher:
             futs: list[asyncio.Future[float]] = []
             while len(futs) < self._batch_size:
                 try:
-                    prom = self._batch.get(timeout=0.1)
+                    prom = self._batch.get(timeout=0.01)
                     batch_arr[len(futs)] = prom.audio
                     futs.append(prom.fut)
                 except queue.Empty:

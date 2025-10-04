@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import time
 from dataclasses import dataclass
 from utils import ExponentialMovingAverage
 
@@ -224,7 +225,7 @@ class EngineState_Talking(BaseEngineState):
         vad_exp_avg: ExponentialMovingAverage,
         start_transcription: int = 0,
         last_vad_cursor: int = 0,
-        tick_rate: float = 0.25,
+        tick_rate: float = 0.4,
     ):
         super().__init__(engine=engine)
         self._vad_exp_avg = vad_exp_avg
@@ -266,8 +267,14 @@ class EngineState_Talking(BaseEngineState):
                         mode="constant",
                     )
 
-                res = await self.engine.eot_session.eot(segment)
-                print("NEIL EOT", res)
+                s_t = time.perf_counter()
+                [res_1, res_2, res_3, res_4] = await asyncio.gather(
+                    self.engine.eot_session.eot(segment),
+                    self.engine.eot_session.eot(segment),
+                    self.engine.eot_session.eot(segment),
+                    self.engine.eot_session.eot(segment),
+                )
+                print("EOT TIME:", time.perf_counter() - s_t)
 
         async def vad_check():
             pass
