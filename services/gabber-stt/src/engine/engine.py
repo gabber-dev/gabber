@@ -33,6 +33,7 @@ class Engine:
         self._stt = stt
         self.vad_session = self._vad.create_session()
         self.eot_session = self._eot.create_session()
+        self.transcription_session = self._stt.create_session()
         self._resamplers: dict[int, resampler.Resampler] = {}
         self.audio_window = AudioWindow(max_length_s=60.0)
         self.setup_resamplers()
@@ -225,15 +226,15 @@ class EngineState_Talking(BaseEngineState):
         vad_exp_avg: ExponentialMovingAverage,
         start_transcription: int = 0,
         last_vad_cursor: int = 0,
-        tick_rate: float = 0.4,
     ):
         super().__init__(engine=engine)
         self._vad_exp_avg = vad_exp_avg
         self._running_transcription = ""
+        self._transcription_tick_rate = 0.15
         self._transcription_cursor = start_transcription
         self._vad_cursor = last_vad_cursor
         self._eot_cursor = start_transcription
-        self._tick_rate = tick_rate
+        self._eot_tick_rate = 0.4
 
     async def tick(self):
         current_curs = self.engine.audio_window._end_cursors.get(
@@ -243,7 +244,7 @@ class EngineState_Talking(BaseEngineState):
         async def eot_check():
             if (
                 current_curs - self._eot_cursor
-                < self._tick_rate * self.engine.eot_session.sample_rate
+                < self._eot_tick_rate * self.engine.eot_session.sample_rate
             ):
                 return None
 
@@ -268,18 +269,48 @@ class EngineState_Talking(BaseEngineState):
                     )
 
                 s_t = time.perf_counter()
-                [res_1, res_2, res_3, res_4] = await asyncio.gather(
-                    self.engine.eot_session.eot(segment),
-                    self.engine.eot_session.eot(segment),
-                    self.engine.eot_session.eot(segment),
-                    self.engine.eot_session.eot(segment),
-                )
+                res = await self.engine.eot_session.eot(segment)
                 print("EOT TIME:", time.perf_counter() - s_t)
 
         async def vad_check():
             pass
 
         async def transcription_check():
+            if (
+                current_curs - self._transcription_cursor
+                < self._transcription_tick_rate * self.engine.eot_session.sample_rate
+            ):
+                return None
+
+            for i in range(
+                self._transcription_cursor,
+                current_curs,
+                self.engine.transcription_session.new_audio_size,
+            ):
+                end_cursor = min(
+                    i + self.engine.transcription_session.new_audio_size, current_curs
+                )
+                self._transcription_cursor = end_cursor
+                segment = self.engine.audio_window.get_segment(
+                    sample_rate=self.engine.transcription_session.sample_rate,
+                    start_cursor=i,
+                    end_cursor=end_cursor,
+                )
+                # pad beginning
+                if segment.shape[0] <= self.engine.transcription_session.new_audio_size:
+                    segment = np.pad(
+                        segment,
+                        (
+                            self.engine.transcription_session.new_audio_size
+                            - segment.shape[0],
+                            0,
+                        ),
+                        mode="constant",
+                    )
+
+                s_t = time.perf_counter()
+                # res = await self.engine.transcription_session.transcribe(segment)
+                print("TRANS TIME:", time.perf_counter() - s_t)
             pass
 
         [eot_prob, vad_prob, transcription] = await asyncio.gather(

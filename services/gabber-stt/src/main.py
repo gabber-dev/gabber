@@ -14,7 +14,11 @@ if __name__ == "__main__":
                 eot_inference=eot.pipecat.PipeCatEOTInference(), tick_s=0.4
             ),
             vad=vad.VAD(vad_inference=vad.silero.SileroVADInference()),
-            stt=stt.parakeet.CanarySTT(),
+            stt=stt.STT(
+                stt_inference=stt.parakeet.ParakeetSTTInference(
+                    left_context_secs=15.0, right_context_secs=0.2, chunk_secs=0.2
+                )
+            ),
         )
 
     server = WebSocketServer(engine_factory=engine_factory)
