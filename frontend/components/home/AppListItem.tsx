@@ -5,7 +5,7 @@
 
 import { RepositoryApp } from "@/generated/repository";
 import { useRepository } from "@/hooks/useRepository";
-import { ChevronRightIcon, CubeIcon } from "@heroicons/react/24/solid";
+import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 
 export function AppListItem({
@@ -27,9 +27,9 @@ export function AppListItem({
   return (
     <Link
       href={appEditPath(app.id)}
-      className="relative overflow-visible card bg-base-200 hover:bg-base-300 border-2 border-black border-b-4 border-r-4 transform hover:translate-y-1 active:translate-y-2 transition-all group"
+      className="relative overflow-visible card bg-base-200 hover:bg-base-300 border-2 border-black border-b-4 border-r-4 transform hover:translate-y-1 active:translate-y-2 transition-all group h-full"
     >
-      <div className="card-body p-4 relative">
+      <div className="card-body p-4 relative flex flex-col h-full">
         {/* Selection checkbox */}
         <div
           className={`absolute top-2 right-2 z-10 w-5 h-5 rounded border-2 border-warning cursor-pointer transition-all duration-200 ${
@@ -61,12 +61,14 @@ export function AppListItem({
           )}
         </div>
 
-        <h3 className="font-vt323 text-xl text-base-content group-hover:text-warning tracking-wider transition-colors mb-3">
-          {app.name}
-        </h3>
-        <div className="flex items-center justify-between text-sm text-base-content/80">
-          <span className="flex items-center gap-1">
-            <CubeIcon className="h-4 w-4 text-accent" />
+        <div className="flex-grow">
+          <h3 className="font-vt323 text-xl text-base-content group-hover:text-warning tracking-wider transition-colors mb-3">
+            {app.name}
+          </h3>
+        </div>
+        <div className="flex items-center justify-between text-sm text-base-content/80 mt-auto">
+          <span className="text-accent">
+            {new Date(app.created_at).toLocaleDateString()}
           </span>
           <span className="flex items-center gap-1 text-warning">
             Open
