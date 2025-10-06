@@ -8,7 +8,7 @@ import pyaudio
 from core import AudioInferenceSession
 from lib import vad, stt
 
-CHUNK = 16000
+CHUNK = 160
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
 RATE = 16000
@@ -39,22 +39,20 @@ class TestClient:
         thread.start()
 
         remainder = np.zeros(0, dtype=np.int16)
+        new_audio_size = self._inference_session.new_audio_size
+        last_time = time.perf_counter()
         while True:
             data = await asyncio.get_event_loop().run_in_executor(
                 None, self._input_queue.get
             )
+            last_time = time.perf_counter()
             remainder = np.concatenate((remainder, np.frombuffer(data, dtype=np.int16)))
-            for i in range(
-                0, remainder.shape[0], self._inference_session.new_audio_size
-            ):
-                segment = remainder[i : i + self._inference_session.new_audio_size]
-                if segment.shape[0] < self._inference_session.new_audio_size:
-                    remainder = segment
-                    break
+            while remainder.shape[0] >= new_audio_size:
+                segment = remainder[:new_audio_size]
+                start_time = time.perf_counter()
                 res = await self._inference_session.inference(segment)
-
-            remainder_size = remainder.shape[0] % self._inference_session.new_audio_size
-            remainder = remainder[-remainder_size:]
+                end_time = time.perf_counter()
+                remainder = remainder[new_audio_size:]
 
 
 async def main():
@@ -63,7 +61,8 @@ async def main():
     vad_session = vad_engine.create_session()
 
     stt_engine = stt.STTInferenceEngine(
-        inference_impl=stt.parakeet.ParakeetSTTInference(chunk_secs=2)
+        inference_impl=stt.parakeet.ParakeetSTTInference(chunk_secs=0.4),
+        batch_size=32,
     )
     await stt_engine.initialize()
     stt_session = stt_engine.create_session()

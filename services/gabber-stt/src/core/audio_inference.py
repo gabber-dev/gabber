@@ -2,7 +2,6 @@ import asyncio
 import time
 import queue
 import threading
-import wave
 from dataclasses import dataclass
 from typing import Any, Protocol, Generic, TypeVar
 
@@ -43,7 +42,6 @@ class AudioInferenceSession(Generic[RESULT]):
         self._audio = np.zeros(batcher._inference_impl.full_audio_size, dtype=np.int16)
         self._state: Any = None
         self._last_inference_time = time.perf_counter()
-        self._idx = 0
 
     @property
     def new_audio_size(self) -> int:
@@ -67,18 +65,15 @@ class AudioInferenceSession(Generic[RESULT]):
         if self._audio.shape[0] > self.batcher._inference_impl.full_audio_size:
             self._audio = self._audio[-self.batcher._inference_impl.full_audio_size :]
 
-        with wave.open(f"debug_{self._idx}.wav", "wb") as wf:
-            wf.setnchannels(1)
-            wf.setsampwidth(2)
-            wf.setframerate(self.sample_rate)
-            wf.writeframes(audio.tobytes())
-        self._idx += 1
-        res = await self.batcher.inference(self._audio, None)
+        res = await self.batcher.inference(self._audio, self._state)
         self._state = res.state
         return res.result
 
-    def eos(self):
-        pass
+    def reset(self):
+        self._audio = np.zeros(
+            self.batcher._inference_impl.full_audio_size, dtype=np.int16
+        )
+        self._state = None
 
 
 @dataclass
@@ -140,13 +135,13 @@ class AudioInferenceBatcher(Generic[RESULT]):
                 self._loop.call_soon_threadsafe(fut.set_result, results[i])
 
     async def inference(
-        self, audio: np.typing.NDArray[np.int16], decoder_states: Any | None
+        self, audio: np.typing.NDArray[np.int16], prev_state: Any | None
     ) -> "AudioInferenceInternalResult[RESULT]":
         try:
             fut = asyncio.Future[AudioInferenceInternalResult[RESULT]]()
             self._batch.put_nowait(
                 AudioInferenceBatcherPromise(
-                    audio=audio, decoder_states=decoder_states, fut=fut
+                    audio=audio, decoder_states=prev_state, fut=fut
                 )
             )
             res = await fut

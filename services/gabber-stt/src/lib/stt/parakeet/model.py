@@ -130,7 +130,7 @@ def load_model():
         encoder=model,
         audio_samples_per_encoder_frame=encoder_frame2audio_samples,
         decoder=decoder,
-        features_per_sec=features_per_sec,
+        encoder_features_per_sec=features_per_sec,
     )
 
 
@@ -139,4 +139,4 @@ class CanaryModelInstance:
     encoder: ASRModel
     decoder: GreedyBatchedLabelLoopingComputerBase
     audio_samples_per_encoder_frame: int
-    features_per_sec: float
+    encoder_features_per_sec: float
