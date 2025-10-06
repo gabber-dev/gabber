@@ -6,7 +6,7 @@ import queue
 import numpy as np
 import pyaudio
 from core import AudioInferenceSession
-from lib import vad
+from lib import vad, stt
 
 CHUNK = 16000
 FORMAT = pyaudio.paInt16
@@ -40,7 +40,6 @@ class TestClient:
 
         remainder = np.zeros(0, dtype=np.int16)
         while True:
-            print("NEIL waiting for audio")
             data = await asyncio.get_event_loop().run_in_executor(
                 None, self._input_queue.get
             )
@@ -53,11 +52,9 @@ class TestClient:
                     remainder = segment
                     break
                 res = await self._inference_session.inference(segment)
-                print("NEIL VAD result", res)
 
             remainder_size = remainder.shape[0] % self._inference_session.new_audio_size
             remainder = remainder[-remainder_size:]
-            print("NEIL remainder size", remainder.shape[0], remainder_size)
 
 
 async def main():
@@ -65,13 +62,13 @@ async def main():
     await vad_engine.initialize()
     vad_session = vad_engine.create_session()
 
-    # stt_engine = stt.STTInferenceEngine(
-    #     inference_impl=stt.parakeet.ParakeetSTTInference()
-    # )
-    # await stt_engine.initialize()
-    # stt_session = stt_engine.create_session()
+    stt_engine = stt.STTInferenceEngine(
+        inference_impl=stt.parakeet.ParakeetSTTInference(chunk_secs=2)
+    )
+    await stt_engine.initialize()
+    stt_session = stt_engine.create_session()
 
-    tc = TestClient(vad_session)
+    tc = TestClient(stt_session)
     await tc.run()
 
 

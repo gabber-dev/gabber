@@ -67,7 +67,6 @@ class SileroVADInference(VADInference):
     def inference(
         self, input: AudioInferenceRequest
     ) -> list[AudioInferenceInternalResult[float]]:
-        print("NEIL VAD START")
         audio_chunks = input.audio_batch
         assert self._onnx_session is not None
 
@@ -97,7 +96,6 @@ class SileroVADInference(VADInference):
         out, _ = ort_outputs
         out_np = np.array(out)
         vad_scores = out_np[:, 0].astype(np.float32)
-        print("NEIL VAD END")
         return [
             AudioInferenceInternalResult(result=score, state=None)
             for score in vad_scores

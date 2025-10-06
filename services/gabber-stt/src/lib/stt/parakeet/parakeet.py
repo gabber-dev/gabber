@@ -6,6 +6,10 @@ from core import AudioInferenceRequest, AudioInferenceInternalResult
 
 from ..stt import STTInference, STTInferenceResult
 from .model import CanaryModelInstance, load_model
+from nemo.collections.asr.parts.utils.rnnt_utils import (
+    BatchedHyps,
+    batched_hyps_to_hypotheses,
+)
 
 
 # High level strategy comes from:
@@ -60,24 +64,49 @@ class ParakeetSTTInference(STTInference):
             )
 
         torch_audio_batch = (
-            torch.from_numpy(input.audio_batch).to(torch.float16) / 32768.0
+            torch.from_numpy(input.audio_batch).to(torch.float32) / 32768.0
         ).to(self._model.encoder.device)
-        input_signal_length = (
-            torch.Tensor([torch_audio_batch.shape[1]])
-            .to(torch.float16)
-            .to(self._model.encoder.device)
+        input_signal_length = torch.Tensor([torch_audio_batch.shape[1]]).to(
+            self._model.encoder.device
         )
 
         encoder_output, encoder_output_len = self._model.encoder(
             input_signal=torch_audio_batch,
             input_signal_length=input_signal_length,
         )
+        encoder_output = encoder_output.transpose(1, 2)
         chunk_batched_hyps, _, state = self._model.decoder(
             x=encoder_output,
             out_len=encoder_output_len,
             prev_batched_state=None,
         )
+        hyp = batched_hyps_to_hypotheses(
+            chunk_batched_hyps, None, batch_size=chunk_batched_hyps.batch_size
+        )
 
-        print("NEIL DEBUG chunk_batched_hyps:", chunk_batched_hyps)
+        results: list[AudioInferenceInternalResult[STTInferenceResult]] = []
+        for h in hyp:
+            y_sequence = h.y_sequence
+            if y_sequence.shape[0] == 0:  # type: ignore
+                results.append(
+                    AudioInferenceInternalResult(
+                        result=STTInferenceResult(
+                            transcription="", start_cursor=0, end_cursor=0, words=[]
+                        ),
+                        state=state,
+                    )
+                )
+                continue
 
-        return []
+            txt = self._model.encoder.tokenizer.ids_to_text(y_sequence)  # type: ignore
+            print("NEIL empty y_sequence", txt)
+            results.append(
+                AudioInferenceInternalResult(
+                    result=STTInferenceResult(
+                        transcription=txt, start_cursor=0, end_cursor=0, words=[]
+                    ),
+                    state=state,
+                )
+            )
+
+        return results

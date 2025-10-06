@@ -2,6 +2,7 @@ import asyncio
 import time
 import queue
 import threading
+import wave
 from dataclasses import dataclass
 from typing import Any, Protocol, Generic, TypeVar
 
@@ -42,6 +43,7 @@ class AudioInferenceSession(Generic[RESULT]):
         self._audio = np.zeros(batcher._inference_impl.full_audio_size, dtype=np.int16)
         self._state: Any = None
         self._last_inference_time = time.perf_counter()
+        self._idx = 0
 
     @property
     def new_audio_size(self) -> int:
@@ -52,7 +54,6 @@ class AudioInferenceSession(Generic[RESULT]):
         return self.batcher.sample_rate
 
     async def inference(self, audio: np.typing.NDArray[np.int16]) -> RESULT:
-        self._last_inference_time = time.perf_counter()
         if audio.ndim != 1:
             raise ValueError(f"Invalid audio shape: {audio.shape}, must be 1D")
 
@@ -61,10 +62,18 @@ class AudioInferenceSession(Generic[RESULT]):
                 f"Invalid audio size: {audio.shape[0]}, must be {self.new_audio_size}"
             )
 
-        self._audio = np.concatenate((self._audio[self.new_audio_size :], audio))
+        self._audio = np.concatenate((self._audio, audio))
 
+        if self._audio.shape[0] > self.batcher._inference_impl.full_audio_size:
+            self._audio = self._audio[-self.batcher._inference_impl.full_audio_size :]
+
+        with wave.open(f"debug_{self._idx}.wav", "wb") as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)
+            wf.setframerate(self.sample_rate)
+            wf.writeframes(audio.tobytes())
+        self._idx += 1
         res = await self.batcher.inference(self._audio, None)
-        print("NEIL VAD inference done")
         self._state = res.state
         return res.result
 
@@ -110,9 +119,7 @@ class AudioInferenceBatcher(Generic[RESULT]):
             futs: list[asyncio.Future[AudioInferenceInternalResult[RESULT]]] = []
             while len(futs) < self._batch_size:
                 try:
-                    start_time = time.perf_counter()
                     prom = self._batch.get(timeout=self._batch_timeout)
-                    print("NEIL Batcher wait time", time.perf_counter() - start_time)
                     batch_arr[len(futs)] = prom.audio
                     prev_states.append(prom.decoder_states)
                     futs.append(prom.fut)
@@ -127,9 +134,7 @@ class AudioInferenceBatcher(Generic[RESULT]):
             req = AudioInferenceRequest(
                 audio_batch=batch_arr[: len(futs)], prev_states=prev_states
             )
-            start_time = time.perf_counter()
             results = self._inference_impl.inference(req)
-            print("NEIL Batcher inference time", futs, results)
 
             for i, fut in enumerate(futs):
                 self._loop.call_soon_threadsafe(fut.set_result, results[i])
