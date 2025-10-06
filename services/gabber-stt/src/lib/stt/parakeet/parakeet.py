@@ -1,11 +1,10 @@
+import asyncio
 import threading
 
 import torch
-from nemo.collections.asr.models import ASRModel
-import numpy as np
-from typing import Any
+from core import AudioInferenceRequest, AudioInferenceInternalResult
 
-from ..stt import STT, STTInference, STTInternalInferenceResult, STTInferenceRequest
+from ..stt import STTInference, STTInferenceResult
 from .model import CanaryModelInstance, load_model
 
 
@@ -22,9 +21,7 @@ class ParakeetSTTInference(STTInference):
         self._left_context_secs = left_context_secs
         self._right_context_secs = right_context_secs
         self._chunk_secs = chunk_secs
-        self._init_thread = threading.Thread(target=self._initialize_model)
-        self._init_thread.start()
-        self._init_evt = threading.Event()
+
         self._model: CanaryModelInstance | None = None
 
     @property
@@ -36,28 +33,28 @@ class ParakeetSTTInference(STTInference):
         return int(self.sample_rate * self._chunk_secs)
 
     @property
-    def left_context_size(self) -> int:
-        return int(self.sample_rate * self._left_context_secs)
-
-    @property
-    def right_context_size(self) -> int:
-        return int(self.sample_rate * self._right_context_secs)
+    def full_audio_size(self) -> int:
+        return int(
+            self.sample_rate
+            * (self._left_context_secs + self._chunk_secs + self._right_context_secs)
+        )
 
     def _initialize_model(self):
         self._model = load_model()
 
-    def inference(self, input: STTInferenceRequest) -> list[STTInternalInferenceResult]:
-        try:
-            self._init_thread.join(10)
-        except RuntimeError as e:
-            raise RuntimeError("Failed to initialize VAD model") from e
+    async def initialize(self) -> None:
+        init_thread = threading.Thread(target=self._initialize_model)
+        init_thread.start()
+        await asyncio.get_event_loop().run_in_executor(None, init_thread.join, 120)
+        if self._model is None:
+            raise RuntimeError("Parakeet model initialization timed out")
 
-        if not self._init_evt.is_set():
-            raise RuntimeError("VAD model initialization timed out")
-
+    def inference(
+        self, input: AudioInferenceRequest
+    ) -> list[AudioInferenceInternalResult[STTInferenceResult]]:
         assert self._model is not None
 
-        if input.audio_batch.shape[1] != self.new_audio_size:
+        if input.audio_batch.shape[1] != self.full_audio_size:
             raise ValueError(
                 f"Invalid audio size: {input.audio_batch.shape[1]}, must be multiple of {self.new_audio_size}"
             )

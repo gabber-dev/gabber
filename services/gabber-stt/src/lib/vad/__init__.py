@@ -1,4 +1,4 @@
-from .vad import VAD, VADSession, VADInference
+from .vad import VADInferenceEngine, VADSession, VADInference
 from . import silero
 
-__all__ = ["VAD", "VADSession", "VADInference", "silero"]
+__all__ = ["VADInferenceEngine", "VADSession", "VADInference", "silero"]

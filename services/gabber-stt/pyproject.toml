@@ -17,6 +17,7 @@ dependencies = [
     "aiohttp>=3.12.15",
     "transformers",
     "nemo-toolkit[asr]>=2.4.1",
+    "cuda-python>=13.0.1",
 ]
 [tool.uv]
 # Always install Werkzeug 2.3.0, regardless of whether transitive dependencies request
