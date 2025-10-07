@@ -128,9 +128,9 @@ def load_model():
 
     return CanaryModelInstance(
         encoder=model,
-        audio_samples_per_encoder_frame=encoder_frame2audio_samples,
         decoder=decoder,
-        encoder_features_per_sec=features_per_sec,
+        encoder_features_per_sec=features_per_sec / encoder_subsampling_factor,  # type: ignore
+        encoder_frame2audio_samples=encoder_frame2audio_samples,
     )
 
 
@@ -138,5 +138,5 @@ def load_model():
 class CanaryModelInstance:
     encoder: ASRModel
     decoder: GreedyBatchedLabelLoopingComputerBase
-    audio_samples_per_encoder_frame: int
-    encoder_features_per_sec: float
+    encoder_features_per_sec: int
+    encoder_frame2audio_samples: int

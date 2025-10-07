@@ -40,18 +40,14 @@ class TestClient:
 
         remainder = np.zeros(0, dtype=np.int16)
         new_audio_size = self._inference_session.new_audio_size
-        last_time = time.perf_counter()
         while True:
             data = await asyncio.get_event_loop().run_in_executor(
                 None, self._input_queue.get
             )
-            last_time = time.perf_counter()
             remainder = np.concatenate((remainder, np.frombuffer(data, dtype=np.int16)))
             while remainder.shape[0] >= new_audio_size:
                 segment = remainder[:new_audio_size]
-                start_time = time.perf_counter()
                 res = await self._inference_session.inference(segment)
-                end_time = time.perf_counter()
                 remainder = remainder[new_audio_size:]
 
 
@@ -61,7 +57,9 @@ async def main():
     vad_session = vad_engine.create_session()
 
     stt_engine = stt.STTInferenceEngine(
-        inference_impl=stt.parakeet.ParakeetSTTInference(chunk_secs=0.4),
+        inference_impl=stt.parakeet.ParakeetSTTInference(
+            chunk_secs=1, left_context_secs=20.0
+        ),
         batch_size=32,
     )
     await stt_engine.initialize()

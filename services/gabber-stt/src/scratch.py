@@ -148,25 +148,6 @@ features_frame2audio_samples = make_divisible_by(
 encoder_frame2audio_samples = features_frame2audio_samples * encoder_subsampling_factor
 print("NEIL encoder frame to audio", encoder_frame2audio_samples)
 
-context_encoder_frames = ContextSize(
-    left=int(cfg.left_context_secs * features_per_sec / encoder_subsampling_factor),
-    chunk=int(cfg.chunk_secs * features_per_sec / encoder_subsampling_factor),
-    right=int(cfg.right_context_secs * features_per_sec / encoder_subsampling_factor),
-)
-context_samples = ContextSize(
-    left=context_encoder_frames.left
-    * encoder_subsampling_factor
-    * features_frame2audio_samples,
-    chunk=context_encoder_frames.chunk
-    * encoder_subsampling_factor
-    * features_frame2audio_samples,
-    right=context_encoder_frames.right
-    * encoder_subsampling_factor
-    * features_frame2audio_samples,
-)
-latency_secs = (context_samples.chunk + context_samples.right) / audio_sample_rate
-print(f"Theoretical latency: {latency_secs:.2f} seconds")
-
 
 class TestClient:
     def __init__(self):
@@ -194,10 +175,6 @@ class TestClient:
         with torch.no_grad(), torch.inference_mode():
             while True:
                 data = self._input_queue.get()
-                print("NEIL got data", len(data))
-                if data is None:
-                    break
-
                 audio_batch = (
                     torch.frombuffer(data, dtype=torch.int16).to(torch.float16)
                     / 32768.0
@@ -206,28 +183,31 @@ class TestClient:
                 input_signal_length = (
                     torch.Tensor([audio_batch.shape[1]]).to(torch.float16).to(device)
                 )
-
                 encoder_output, encoder_output_len = model(
                     input_signal=audio_batch,
                     input_signal_length=input_signal_length,
                 )
-                print("NEIL got encoder_output", encoder_output.shape)
                 encoder_output = encoder_output.transpose(1, 2)
-                chunk_batched_hyps, _, state = decoding_computer(
-                    x=encoder_output,
-                    out_len=encoder_output_len,
-                    prev_batched_state=None,
-                )
-                print(
-                    "NEIL got chunk_batched_hyps state", state.predictor_outputs.shape
-                )
-                hyp = batched_hyps_to_hypotheses(chunk_batched_hyps, None, batch_size=1)
-                print("NEIL got hyp", hyp)
-                if hyp[0].y_sequence.shape[0] > 0:
+                CNT = 1
+                delta = int(encoder_output_len / CNT)
+                for i in range(CNT):
+                    encoder_context = encoder_output[:, i * delta : (i + 1) * delta]
                     print(
-                        "NEIL got y_sequence",
-                        model.tokenizer.ids_to_text(hyp[0].y_sequence),
+                        "NEIL got encoder_output",
+                        encoder_context.shape,
+                        encoder_output.shape,
                     )
+                    chunk_batched_hyps, _, state = decoding_computer(
+                        x=encoder_context,
+                        out_len=torch.Tensor([encoder_context.shape[1]]),
+                        prev_batched_state=state,
+                    )
+                    hyp = batched_hyps_to_hypotheses(
+                        chunk_batched_hyps, None, batch_size=1
+                    )
+                    if hyp[0].y_sequence.shape[0] > 0:
+                        txt = (model.tokenizer.ids_to_text(hyp[0].y_sequence),)
+                        print("NEIL got y_sequence", txt)
                 # hyp.text = model.tokenizer.ids_to_text(hyp)
                 # hyp = model.decoding.compute_rnnt_timestamps(hyp)
                 # hyp = process_timestamp_outputs(

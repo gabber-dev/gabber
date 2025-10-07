@@ -1,19 +1,21 @@
 import asyncio
 import threading
+from typing import Any, cast
+from dataclasses import dataclass
 
 import torch
-from core import AudioInferenceRequest, AudioInferenceInternalResult
-
-from ..stt import STTInference, STTInferenceResult
-from .model import CanaryModelInstance, load_model
-from nemo.collections.asr.parts.utils.rnnt_utils import (
-    BatchedHyps,
-    batched_hyps_to_hypotheses,
-)
+from core import AudioInferenceInternalResult, AudioInferenceRequest
 from nemo.collections.asr.parts.submodules.transducer_decoding.label_looping_base import (
     BatchedLabelLoopingState,
 )
-from nemo.collections.asr.parts.utils.rnnt_utils import Hypothesis
+from nemo.collections.asr.parts.utils.rnnt_utils import (
+    BatchedHyps,
+    Hypothesis,
+    batched_hyps_to_hypotheses,
+)
+
+from ..stt import STTInference, STTInferenceResult
+from .model import CanaryModelInstance, load_model
 
 
 # High level strategy comes from:
@@ -23,10 +25,12 @@ class ParakeetSTTInference(STTInference):
         self,
         *,
         left_context_secs: float = 20.0,
-        chunk_secs: float = 0.25,
+        chunk_secs: float = 1,
+        right_context_secs: float = 0,
     ):
         self._left_context_secs = left_context_secs
         self._chunk_secs = chunk_secs
+        self._right_context_secs = right_context_secs
 
         self._model: CanaryModelInstance | None = None
 
@@ -40,7 +44,10 @@ class ParakeetSTTInference(STTInference):
 
     @property
     def full_audio_size(self) -> int:
-        return int(self.sample_rate * (self._left_context_secs + self._chunk_secs))
+        return int(
+            self.sample_rate
+            * (self._left_context_secs + self._chunk_secs + self._right_context_secs)
+        )
 
     def _initialize_model(self):
         self._model = load_model()
@@ -75,21 +82,23 @@ class ParakeetSTTInference(STTInference):
         )
         encoder_output = encoder_output.transpose(1, 2)
 
-        new_encoder_features = int(
-            self._model.encoder_features_per_sec * self._chunk_secs
+        left_features = int(
+            self._left_context_secs * self._model.encoder_features_per_sec
         )
-        print(
-            "NEIL got encoder_output",
-            encoder_output.shape,
-            encoder_output_len,
-            encoder_output_len.shape,
-            new_encoder_features,
+        right_features = int(
+            self._right_context_secs * self._model.encoder_features_per_sec
         )
-        decode_out_len = torch.div(
-            encoder_output_len, new_encoder_features, rounding_mode="floor"
+        chunk_features = encoder_output_len - left_features - right_features
+
+        decode_out_len = (
+            torch.Tensor([chunk_features])
+            .to(torch.int32)
+            .to(self._model.encoder.device)
         )
 
-        encoder_context = encoder_output[:, :-new_encoder_features, :]
+        encoder_context = encoder_output[:, left_features:, :]
+
+        print("NEIL", encoder_output.shape, encoder_context.shape)
 
         # For new sessions, we handle those inferences separately
         hypotheses: list[Hypothesis | None] = [None] * input.audio_batch.shape[0]
@@ -119,9 +128,9 @@ class ParakeetSTTInference(STTInference):
                 out_len=decode_out_len,
                 prev_batched_state=None,
             )
-            split_states = split_state(state)
+            split_states = self._model.decoder.split_batched_state(state)
             for i, none_idx in enumerate(no_state_idxs):
-                new_states[none_idx] = split_states[i]
+                new_states[none_idx] = cast(BatchedLabelLoopingState, split_states[i])
 
             hyp = batched_hyps_to_hypotheses(
                 chunk_batched_hyps, None, batch_size=chunk_batched_hyps.batch_size
@@ -136,25 +145,28 @@ class ParakeetSTTInference(STTInference):
                 .to(encoder_output.dtype)
             )
             for i, with_idx in enumerate(with_state_idxs):
+                hypotheses[with_idx] = input.prev_states[with_idx].current_hyp
                 with_state_batch[i, :] = encoder_context[with_idx, :]
 
-            combined_state = combine_states(
-                [input.prev_states[i] for i in with_state_idxs]
+            combined_state = self._model.decoder.merge_to_batched_state(
+                [input.prev_states[i].decoder_state for i in with_state_idxs]
             )
             chunk_batched_hyps, _, state = self._model.decoder(
                 x=with_state_batch,
                 out_len=decode_out_len,
                 prev_batched_state=combined_state,
             )
-            split_states = split_state(state)
+            split_states = self._model.decoder.split_batched_state(state)
             for i, with_idx in enumerate(with_state_idxs):
-                new_states[with_idx] = split_states[i]
+                new_states[with_idx] = cast(BatchedLabelLoopingState, split_states[i])
             hyp = batched_hyps_to_hypotheses(
                 chunk_batched_hyps, None, batch_size=chunk_batched_hyps.batch_size
             )
-            print("NEIL got hyp with state", hyp)
             for i, with_idx in enumerate(with_state_idxs):
-                hypotheses[with_idx] = hyp[i]
+                curr_hyp = hypotheses[with_idx]
+                assert curr_hyp is not None
+                merged = curr_hyp.merge_(hyp[i])
+                hypotheses[with_idx] = merged
 
         results: list[AudioInferenceInternalResult[STTInferenceResult]] = []
         for i, h in enumerate(hypotheses):
@@ -170,55 +182,14 @@ class ParakeetSTTInference(STTInference):
                         end_cursor=0,
                         words=[],
                     ),
-                    state=new_states[i],
+                    state=State(decoder_state=new_states[i], current_hyp=h),
                 )
             )
 
         return results
 
 
-# @dataclass
-# class BatchedLabelLoopingState:
-#     """Decoding state to pass between invocations"""
-
-
-#     predictor_states: Any
-#     predictor_outputs: torch.Tensor
-#     labels: torch.Tensor
-#     decoded_lengths: torch.Tensor
-#     lm_states: Optional[torch.Tensor] = None
-#     time_jumps: Optional[torch.Tensor] = None
-def combine_states(states: list[BatchedLabelLoopingState]) -> BatchedLabelLoopingState:
-    assert len(states) > 0
-    res = states[0]
-    for s in states[1:]:
-        res.decoded_lengths = torch.cat((res.decoded_lengths, s.decoded_lengths), dim=0)
-        res.predictor_outputs = torch.cat(
-            (res.predictor_outputs, s.predictor_outputs), dim=0
-        )
-
-        res.predictor_states = (
-            torch.cat((res.predictor_states[0], s.predictor_states[0]), dim=0),
-            torch.cat((res.predictor_states[1], s.predictor_states[1]), dim=0),
-        )
-
-        res.labels = torch.cat((res.labels, s.labels), dim=0)
-    return res
-
-
-def split_state(state: BatchedLabelLoopingState) -> list[BatchedLabelLoopingState]:
-    res: list[BatchedLabelLoopingState] = []
-    for i in range(state.decoded_lengths.shape[0]):
-        res.append(
-            BatchedLabelLoopingState(
-                decoded_lengths=state.decoded_lengths[i : i + 1],
-                predictor_outputs=state.predictor_outputs[i : i + 1],
-                predictor_states=(
-                    state.predictor_states[0][i : i + 1],
-                    state.predictor_states[1][i : i + 1],
-                ),
-                labels=state.labels[i : i + 1],
-                time_jumps=state.time_jumps,
-            )
-        )
-    return res
+@dataclass
+class State:
+    decoder_state: BatchedLabelLoopingState | None
+    current_hyp: Hypothesis | None
