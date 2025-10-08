@@ -226,7 +226,6 @@ class EngineState_Talking(BaseEngineState):
 class EngineState_Finalizing(BaseEngineState):
     async def tick(self):
         await self.state.update_stt()
-        print("NEIL finalizing transcription", self.state.current_stt_result)
         self.state.reset()
         self.state.engine.transition_to(EngineState_NotTalking(state=self.state))
 
@@ -375,6 +374,9 @@ class State:
         self.vad_exp_avg.value = 0
         self.last_interim = ""
         self.trans_id += 1
+        self.engine.vad_session.reset()
+        self.engine.eot_session.reset()
+        self.engine.stt_session.reset()
 
     def emit_start_speaking(self):
         self.engine.emit_event(
