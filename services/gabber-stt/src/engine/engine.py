@@ -40,7 +40,7 @@ class Engine:
         self._tasks = []
         self.settings = settings
         self.current_state: BaseEngineState = EngineState_NotTalking(
-            engine=self, state=State(engine=self)
+            state=State(engine=self)
         )
 
     def setup_resamplers(self):
@@ -80,6 +80,9 @@ class Engine:
     def transition_to(self, new_state: "BaseEngineState"):
         logger.info(f"Transitioning from {self.current_state.name} to {new_state.name}")
         self.current_state = new_state
+
+    def emit_event(self, payload: "ResponsePayload"):
+        print("NEIL emitting event", payload)
 
 
 @dataclass
@@ -164,9 +167,8 @@ class AudioWindow:
 
 
 class BaseEngineState:
-    def __init__(self, *, engine: "Engine", state: "State"):
+    def __init__(self, *, state: "State"):
         self.name = self.__class__.__name__.split("_")[-1]
-        self.engine = engine
         self.state = state
 
     async def tick(self): ...
@@ -179,15 +181,14 @@ class EngineState_NotTalking(BaseEngineState):
             # Move eot and stt cursors to the start of VAD
             self.state.eot_cursor = self.state.latest_voice
             self.state.stt_cursor = self.state.latest_voice
-            self.engine.transition_to(
-                EngineState_Talking(engine=self.engine, state=self.state)
-            )
+            self.state.emit_start_speaking()
+            self.state.engine.transition_to(EngineState_Talking(state=self.state))
 
 
 class EngineState_Talking(BaseEngineState):
     async def tick(self):
-        current_curs = self.engine.audio_window._end_cursors.get(
-            self.engine.eot_session.sample_rate, 0
+        current_curs = self.state.engine.audio_window._end_cursors.get(
+            self.state.engine.eot_session.sample_rate, 0
         )
 
         async def eot_check():
@@ -201,41 +202,33 @@ class EngineState_Talking(BaseEngineState):
 
         await asyncio.gather(eot_check(), vad_check(), stt_check())
 
+        if self.state.current_stt_result.transcription != self.state.last_interim:
+            self.state.emit_interim()
+
         time_since_last_voice = (
             current_curs - self.state.latest_voice
-        ) / self.engine.vad_session.sample_rate
+        ) / self.state.engine.vad_session.sample_rate
 
         if (
             self.state.eot
             and time_since_last_voice >= 0.5
-            or time_since_last_voice >= self.engine.settings.vad_cooldown_time_s
+            or time_since_last_voice >= self.state.engine.settings.vad_cooldown_time_s
         ):
-            self.engine.transition_to(
-                EngineState_TalkingCoolDown(engine=self.engine, state=self.state)
-            )
-
-
-class EngineState_TalkingCoolDown(BaseEngineState):
-    async def tick(self):
-        await self.state.update_vad()
-        if self.state.vad_cold:
-            self.engine.transition_to(
-                EngineState_Finalizing(engine=self.engine, state=self.state)
-            )
+            self.state.emit_final()
+            self.state.engine.transition_to(EngineState_Finalizing(state=self.state))
 
 
 class EngineState_Finalizing(BaseEngineState):
     async def tick(self):
         await self.state.update_stt()
         print("NEIL finalizing transcription", self.state.current_stt_result)
-        self.engine.transition_to(
-            EngineState_NotTalking(engine=self.engine, state=self.state)
-        )
+        self.state.engine.transition_to(EngineState_NotTalking(state=self.state))
 
 
 class State:
     def __init__(self, *, engine: Engine):
         self.engine = engine
+        self.trans_id = 1
         self.current_stt_result = stt.STTInferenceResult(
             transcription="", words=[], start_cursor=0, end_cursor=0
         )
@@ -250,6 +243,8 @@ class State:
             release_time=0.05,
             initial_value=0,
         )
+
+        self.last_interim: str = ""
 
     async def update_vad(self):
         current_curs = self.engine.audio_window._end_cursors.get(
@@ -298,7 +293,7 @@ class State:
 
             res = await self.engine.eot_session.inference(segment)
             self.eot_cursor = end_cursor
-            self.eot = res >= 0.7
+            self.eot = res >= 0.5
 
     async def update_stt(self):
         current_curs = self.engine.audio_window._end_cursors.get(
@@ -320,6 +315,14 @@ class State:
                 break
 
             res = await self.engine.stt_session.inference(segment)
+
+            # adjust cursors
+            res.start_cursor = res.start_cursor + i
+            res.end_cursor = res.end_cursor + i
+            for w in res.words:
+                w.start_cursor = w.start_cursor + i
+                w.end_cursor = w.end_cursor + i
+
             self.current_stt_result = res
 
     @property
@@ -364,3 +367,68 @@ class State:
             transcription="", words=[], start_cursor=0, end_cursor=0
         )
         self.vad_exp_avg.value = 0
+        self.last_interim = ""
+        self.trans_id += 1
+
+    def emit_start_speaking(self):
+        self.engine.emit_event(
+            ResponsePayload_SpeakingStarted(
+                trans_id=self.trans_id, start_sample=self.latest_voice
+            )
+        )
+
+    def emit_interim(self):
+        self.engine.emit_event(
+            ResponsePayload_InterimTranscription(
+                trans_id=self.trans_id,
+                start_sample=self.current_stt_result.start_cursor,
+                end_sample=self.current_stt_result.end_cursor,
+                transcription=self.current_stt_result.transcription,
+            )
+        )
+        self.last_interim = self.current_stt_result.transcription
+
+    def emit_final(self):
+        self.engine.emit_event(
+            ResponsePayload_FinalTranscription(
+                trans_id=self.trans_id,
+                start_sample=self.current_stt_result.start_cursor,
+                end_sample=self.current_stt_result.end_cursor,
+                transcription=self.current_stt_result.transcription,
+            )
+        )
+
+
+@dataclass
+class ResponsePayload_Error:
+    message: str
+
+
+@dataclass
+class ResponsePayload_InterimTranscription:
+    trans_id: int
+    start_sample: int
+    end_sample: int
+    transcription: str
+
+
+@dataclass
+class ResponsePayload_SpeakingStarted:
+    trans_id: int
+    start_sample: int
+
+
+@dataclass
+class ResponsePayload_FinalTranscription:
+    trans_id: int
+    transcription: str
+    start_sample: int
+    end_sample: int
+
+
+ResponsePayload = (
+    ResponsePayload_Error
+    | ResponsePayload_FinalTranscription
+    | ResponsePayload_InterimTranscription
+    | ResponsePayload_SpeakingStarted
+)

@@ -32,16 +32,33 @@ class ResponsePayload_Error(BaseModel):
     message: str
 
 
-class ResponsePayload_Transcription(BaseModel):
-    type: Literal["transcription"] = "transcription"
+class ResponsePayload_InterimTranscription(BaseModel):
+    type: Literal["interim_transcription"] = "interim_transcription"
+    trans_id: int
     start_sample: int
     end_sample: int
-    words: list
     transcription: str
 
 
+class ResponsePayload_SpeakingStarted(BaseModel):
+    type: Literal["speaking_started"] = "speaking_started"
+    trans_id: int
+    start_sample: int
+
+
+class ResponsePayload_FinalTranscription(BaseModel):
+    type: Literal["final_transcription"] = "final_transcription"
+    trans_id: int
+    transcription: str
+    start_sample: int
+    end_sample: int
+
+
 ResponsePayload = Annotated[
-    ResponsePayload_Error | ResponsePayload_Transcription,
+    ResponsePayload_Error
+    | ResponsePayload_InterimTranscription
+    | ResponsePayload_SpeakingStarted
+    | ResponsePayload_FinalTranscription,
     Field(discriminator="type"),
 ]
 

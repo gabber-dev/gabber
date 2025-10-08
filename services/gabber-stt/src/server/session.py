@@ -11,7 +11,6 @@ from .messages import (
     Response,
     ResponsePayload,
     ResponsePayload_Error,
-    ResponsePayload_Transcription,
 )
 from engine import Engine
 from typing import Callable
