@@ -40,9 +40,10 @@ class AudioInferenceEngine(Generic[RESULT]):
 class AudioInferenceSession(Generic[RESULT]):
     def __init__(self, *, batcher: "AudioInferenceBatcher"):
         self.batcher = batcher
-        self._audio = np.zeros(batcher._inference_impl.full_audio_size, dtype=np.int16)
+        self._audio = np.zeros(0, dtype=np.int16)
         self._state: Any = None
-        self._start_cursor = self._audio.shape[0] - 1
+        self._offset = 0
+        self._end_curs = 0
 
     @property
     def new_audio_size(self) -> int:
@@ -62,7 +63,17 @@ class AudioInferenceSession(Generic[RESULT]):
             )
 
         self._audio = np.concatenate((self._audio, audio))
-        self._start_cursor = max(0, self._start_cursor - audio.shape[0])
+        if self._audio.shape[0] > self.batcher._inference_impl.full_audio_size:
+            self._audio = self._audio[-self.batcher._inference_impl.full_audio_size :]
+        else:
+            self._audio = np.pad(
+                self._audio,
+                (0, self.batcher._inference_impl.full_audio_size - self._audio.shape[0]),
+                mode="constant",
+            )
+
+        self._audio[self._curs: self._curs + audio.shape[0]] = audio
+        self._curs += audio.shape[0]
 
         if self._audio.shape[0] > self.batcher._inference_impl.full_audio_size:
             self._audio = self._audio[-self.batcher._inference_impl.full_audio_size :]
