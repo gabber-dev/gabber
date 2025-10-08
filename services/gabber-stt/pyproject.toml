@@ -18,6 +18,7 @@ dependencies = [
     "transformers",
     "nemo-toolkit[asr]>=2.4.1",
     "cuda-python>=13.0.1",
+    "matplotlib>=3.10.6",
 ]
 [tool.uv]
 # Always install Werkzeug 2.3.0, regardless of whether transitive dependencies request
@@ -25,7 +26,8 @@ dependencies = [
 override-dependencies = ["numpy==2.3.3"]
 
 [dependency-groups]
-dev = ["ruff>=0.12.5", "watchfiles"]
+dev = ["ruff>=0.12.5", "watchfiles", "matplotlib"]
+
 
 [tool.ruff]
 # Set the target Python version (modern Python, aligns with projects like FastAPI and Pandas)

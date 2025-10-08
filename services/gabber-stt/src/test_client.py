@@ -24,11 +24,14 @@ class TestClient:
             frames_per_buffer=CHUNK,
         )
         self._loop = asyncio.get_event_loop()
-        self._input_queue = asyncio.Queue[bytes | None]()
+        self._input_queue = asyncio.Queue[bytes | None](maxsize=10)
+        self._connected = False
 
     def _stream_thread(self):
         while True:
             data = self._stream.read(CHUNK, exception_on_overflow=False)
+            if not self._connected:
+                continue
             self._loop.call_soon_threadsafe(self._input_queue.put_nowait, data)
 
     async def run(self):
@@ -60,6 +63,7 @@ class TestClient:
                 async with aiohttp.ClientSession() as session:
                     session_id = str(uuid.uuid4())
                     async with session.ws_connect("ws://127.0.0.1:8000") as ws:
+                        self._connected = True
                         logging.info("Connected to server")
                         send_t = asyncio.create_task(send_task(ws, session_id))
                         recv_t = asyncio.create_task(recv_task(ws))

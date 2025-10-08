@@ -29,11 +29,12 @@ class AudioInferenceEngine(Generic[RESULT]):
     def sample_rate(self) -> int:
         return self.inference_impl.sample_rate
 
-    def create_session(self) -> "AudioInferenceSession":
+    def create_session(self) -> "AudioInferenceSession[RESULT]":
         return AudioInferenceSession(batcher=self.batcher)
 
     async def initialize(self) -> None:
         await self.inference_impl.initialize()
+        self.batcher.start()
 
 
 class AudioInferenceSession(Generic[RESULT]):
@@ -41,7 +42,6 @@ class AudioInferenceSession(Generic[RESULT]):
         self.batcher = batcher
         self._audio = np.zeros(batcher._inference_impl.full_audio_size, dtype=np.int16)
         self._state: Any = None
-        self._last_inference_time = time.perf_counter()
 
     @property
     def new_audio_size(self) -> int:
@@ -98,7 +98,6 @@ class AudioInferenceBatcher(Generic[RESULT]):
         self._run_thread = threading.Thread(target=self._run)
         self._batch = queue.Queue[AudioInferenceBatcherPromise](maxsize=1024)
         self._loop = asyncio.get_event_loop()
-        self._run_thread.start()
 
     @property
     def sample_rate(self) -> int:
@@ -133,6 +132,9 @@ class AudioInferenceBatcher(Generic[RESULT]):
 
             for i, fut in enumerate(futs):
                 self._loop.call_soon_threadsafe(fut.set_result, results[i])
+
+    def start(self):
+        self._run_thread.start()
 
     async def inference(
         self, audio: np.typing.NDArray[np.int16], prev_state: Any | None

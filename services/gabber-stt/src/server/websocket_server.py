@@ -9,6 +9,8 @@ from .session import SessionManager
 from engine import Engine
 from typing import Callable
 
+logger = logging.getLogger(__name__)
+
 
 class WebSocketServer:
     def __init__(
@@ -76,5 +78,25 @@ class WebSocketServer:
 
         await ws.close()
 
-    def run(self, host="0.0.0.0", port=8000):
-        web.run_app(self.app, host=host, port=port)
+    async def run(self, host="0.0.0.0", port=8000):
+        runner = web.AppRunner(self.app)
+        await runner.setup()
+        site = web.TCPSite(runner, host, port)
+        print(f"Starting editor server on [::]:{port}")
+        await site.start()
+
+        # Keep the server running
+        try:
+            while True:
+                await asyncio.sleep(1)
+        except asyncio.CancelledError:
+            logger.info("Editor server has been cancelled.")
+        except Exception as e:
+            logger.error(f"Error in editor server: {e}", exc_info=True)
+
+        try:
+            await runner.cleanup()
+        except Exception as e:
+            logger.error(f"Error during editor server cleanup: {e}", exc_info=True)
+
+        logger.info("Editor server has been shut down.")

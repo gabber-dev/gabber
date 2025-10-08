@@ -1,4 +1,4 @@
-from .eot import EndOfTurn
+from .eot import EndOfTurnEngine
 from . import pipecat
 
-__all__ = ["EndOfTurn", "pipecat"]
+__all__ = ["EndOfTurnEngine", "pipecat"]

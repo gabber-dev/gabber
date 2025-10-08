@@ -84,8 +84,6 @@ from nemo.collections.asr.parts.utils.streaming_utils import (
 from nemo.collections.asr.parts.utils.timestamp_utils import process_timestamp_outputs
 from nemo.collections.asr.parts.utils.transcribe_utils import (
     compute_output_filename,
-    get_inference_device,
-    get_inference_dtype,
     setup_model,
     write_transcription,
 )
@@ -146,7 +144,7 @@ class TranscriptionConfig:
     # Decoding strategy for RNNT models
     decoding: RNNTDecodingConfig = field(default_factory=RNNTDecodingConfig)
 
-    timestamps: bool = False  # output timestamps
+    timestamps: bool = True  # output timestamps
 
     # Config for word / character error rate calculation
     calculate_wer: bool = True
@@ -188,14 +186,7 @@ def main(cfg: TranscriptionConfig) -> TranscriptionConfig:
         manifest = None  # ignore dataset_manifest if audio_dir and dataset_manifest both presents
 
     # setup device
-    map_location = get_inference_device(cuda=cfg.cuda, allow_mps=cfg.allow_mps)
-    compute_dtype = get_inference_dtype(cfg.compute_dtype, device=map_location)
-
-    logging.info(
-        f"Inference will be done on device : {map_location} with compute_dtype: {compute_dtype}"
-    )
-
-    asr_model, model_name = setup_model(cfg, map_location)
+    asr_model, model_name = setup_model(cfg, torch.device("cuda"))
 
     model_cfg = copy.deepcopy(asr_model._cfg)
     OmegaConf.set_struct(model_cfg.preprocessor, False)
@@ -224,7 +215,7 @@ def main(cfg: TranscriptionConfig) -> TranscriptionConfig:
 
     asr_model.freeze()
     asr_model = asr_model.to(asr_model.device)
-    asr_model.to(compute_dtype)
+    asr_model.to(torch.float32)
 
     # Change Decoding Config
     with open_dict(cfg.decoding):
@@ -346,9 +337,9 @@ def main(cfg: TranscriptionConfig) -> TranscriptionConfig:
         for audio_data in tqdm(audio_dataloader):
             # get audio
             # NB: preprocessor runs on torch.float32, no need to cast dtype here
-            audio_batch = audio_data.audio_signals.to(device=map_location)
+            audio_batch = audio_data.audio_signals.to(device=torch.device("cuda"))
             audio_batch_lengths = audio_data.audio_signal_lengths.to(
-                device=map_location
+                device=torch.device("cuda")
             )
             batch_size = audio_batch.shape[0]
             device = audio_batch.device
@@ -403,10 +394,19 @@ def main(cfg: TranscriptionConfig) -> TranscriptionConfig:
                     factor=encoder_frame2audio_samples
                 )
                 # remove left context
+                print(
+                    "NEIL --------",
+                    encoder_output.shape,
+                    encoder_output_len,
+                    buffer.context_size_batch.total(),
+                    encoder_context.left,
+                    encoder_context.chunk,
+                    encoder_context.right,
+                )
                 encoder_output = encoder_output[:, encoder_context.left :]
 
                 # decode only chunk frames
-                chunk_batched_hyps, _, state = decoding_computer(
+                chunk_batched_hyps, alignments, state = decoding_computer(
                     x=encoder_output,
                     out_len=encoder_context_batch.chunk,
                     prev_batched_state=state,
@@ -426,7 +426,7 @@ def main(cfg: TranscriptionConfig) -> TranscriptionConfig:
 
             all_hyps.extend(
                 batched_hyps_to_hypotheses(
-                    current_batched_hyps, None, batch_size=batch_size
+                    current_batched_hyps, alignments, batch_size=batch_size
                 )
             )
 

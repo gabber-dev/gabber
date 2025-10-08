@@ -42,7 +42,7 @@ class TranscriptionConfig:
     audio_type: str = "wav"
     overwrite_transcripts: bool = True
     decoding: RNNTDecodingConfig = field(default_factory=RNNTDecodingConfig)
-    timestamps: bool = False
+    timestamps: bool = True
     calculate_wer: bool = True
     clean_groundtruth_text: bool = False
     langid: str = "en"
@@ -89,7 +89,6 @@ def load_model():
         )
 
     if hasattr(model, "change_decoding_strategy"):
-        print("NEIL decoding strategy")
         if not isinstance(model, EncDecRNNTModel) and not isinstance(
             model, EncDecHybridRNNTCTCModel
         ):
@@ -114,29 +113,23 @@ def load_model():
     )
 
     feature_stride_sec = model_cfg.preprocessor["window_stride"]
-    features_per_sec = 1.0 / feature_stride_sec
-    encoder_subsampling_factor = model.encoder.subsampling_factor  # type: ignore
-
     features_frame2audio_samples = make_divisible_by(
         int(MODEL_SAMPLE_RATE * feature_stride_sec),
-        factor=encoder_subsampling_factor,  # type: ignore
+        factor=model.encoder.subsampling_factor,  # type: ignore
     )
-
-    encoder_frame2audio_samples: int = (
-        features_frame2audio_samples * encoder_subsampling_factor  # type: ignore
+    encoder_frame_2_audio_samples = int(
+        features_frame2audio_samples * model.encoder.subsampling_factor  # type: ignore
     )
 
     return CanaryModelInstance(
         encoder=model,
         decoder=decoder,
-        encoder_features_per_sec=features_per_sec / encoder_subsampling_factor,  # type: ignore
-        encoder_frame2audio_samples=encoder_frame2audio_samples,
+        encoder_frame_2_audio_samples=encoder_frame_2_audio_samples,
     )
 
 
 @dataclass
 class CanaryModelInstance:
-    encoder: ASRModel
+    encoder: ASRModel | EncDecRNNTModel
     decoder: GreedyBatchedLabelLoopingComputerBase
-    encoder_features_per_sec: int
-    encoder_frame2audio_samples: int
+    encoder_frame_2_audio_samples: int

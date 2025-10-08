@@ -295,6 +295,7 @@ dependencies = [
     { name = "cuda-python" },
     { name = "fastapi" },
     { name = "httpx" },
+    { name = "matplotlib" },
     { name = "nemo-toolkit", extra = ["asr"] },
     { name = "numpy" },
     { name = "onnxruntime" },
@@ -305,6 +306,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "matplotlib" },
     { name = "ruff" },
     { name = "watchfiles" },
 ]
@@ -316,6 +318,7 @@ requires-dist = [
     { name = "cuda-python", specifier = ">=13.0.1" },
     { name = "fastapi", specifier = ">=0.117.1" },
     { name = "httpx", specifier = ">=0.24.0" },
+    { name = "matplotlib", specifier = ">=3.10.6" },
     { name = "nemo-toolkit", extras = ["asr"], specifier = ">=2.4.1" },
     { name = "numpy" },
     { name = "onnxruntime", specifier = ">=1.17.1" },
@@ -326,6 +329,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "matplotlib" },
     { name = "ruff", specifier = ">=0.12.5" },
     { name = "watchfiles" },
 ]

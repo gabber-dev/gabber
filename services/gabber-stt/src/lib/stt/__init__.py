@@ -1,4 +1,11 @@
 from . import parakeet
-from .stt import STTInferenceEngine
+from . import mock
+from .stt import STTInferenceEngine, STTInferenceResult, STTInferenceResultWord
 
-__all__ = ["parakeet", "STTInferenceEngine"]
+__all__ = [
+    "parakeet",
+    "mock",
+    "STTInferenceEngine",
+    "STTInferenceResult",
+    "STTInferenceResultWord",
+]
