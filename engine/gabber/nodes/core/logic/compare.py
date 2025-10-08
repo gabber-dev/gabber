@@ -221,7 +221,7 @@ class Compare(Node):
         operator_pad: pad.PropertySinkPad,
     ):
         tcs = pad_a.get_type_constraints()
-        if tcs is not None and len(tcs) == 1:
+        if tcs is not None and len(tcs) >= 1:
             tc = tcs[0]
             if isinstance(tc, pad.types.String):
                 operator_pad.set_default_type_constraints(
@@ -319,11 +319,23 @@ class Compare(Node):
         b = pad_b.get_value()
         tcs_a = pad_a.get_type_constraints()
         tcs_b = pad_b.get_type_constraints()
-        if not tcs_a or len(tcs_a) != 1 or not tcs_b or len(tcs_b) != 1:
+        if not tcs_a or not tcs_b:
             return False
 
-        tc_a = tcs_a[0]
-        tc_b = tcs_b[0]
+        # Find matching type constraints (use first matching pair)
+        tc_a = None
+        tc_b = None
+        for type_a in tcs_a:
+            for type_b in tcs_b:
+                if type(type_a) == type(type_b):
+                    tc_a = type_a
+                    tc_b = type_b
+                    break
+            if tc_a:
+                break
+        
+        if not tc_a or not tc_b:
+            return False
 
         if isinstance(tc_a, pad.types.String) and isinstance(tc_b, pad.types.String):
             if not isinstance(a, str) or not isinstance(b, str):

@@ -219,28 +219,43 @@ export function SubGraphList() {
           )}
         </div>
         <div className="border-2 border-black border-b-4 border-r-4 rounded-xl p-4 bg-base-200">
-          <div className={`pr-2 ${containerClass}`}>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-              {displayedSubGraphs.map((app) => (
-                <SubGraphListItem
-                  key={app.id}
-                  app={app}
-                  isSelected={selectedSubGraphs.has(app.id)}
-                  onSelect={(selected) => {
-                    setSelectedSubGraphs((prev) => {
-                      const newSet = new Set(prev);
-                      if (selected) {
-                        newSet.add(app.id);
-                      } else {
-                        newSet.delete(app.id);
-                      }
-                      return newSet;
-                    });
-                  }}
-                />
-              ))}
+          {subGraphs.length === 0 ? (
+            <div className="flex items-center justify-center py-8 text-center">
+              <p className="text-base-content/60 font-vt323 text-lg">
+                No subgraphs yet.
+                <button
+                  onClick={() => setShowModal(true)}
+                  className="link link-primary mx-1 font-vt323"
+                >
+                  Create one
+                </button>
+                to condense common node configurations into single nodes.
+              </p>
             </div>
-          </div>
+          ) : (
+            <div className={`pr-2 ${containerClass}`}>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                {displayedSubGraphs.map((app) => (
+                  <SubGraphListItem
+                    key={app.id}
+                    app={app}
+                    isSelected={selectedSubGraphs.has(app.id)}
+                    onSelect={(selected) => {
+                      setSelectedSubGraphs((prev) => {
+                        const newSet = new Set(prev);
+                        if (selected) {
+                          newSet.add(app.id);
+                        } else {
+                          newSet.delete(app.id);
+                        }
+                        return newSet;
+                      });
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
           {hasMoreThanFourApps && (
             <div className="flex justify-center mt-3">
               <button
