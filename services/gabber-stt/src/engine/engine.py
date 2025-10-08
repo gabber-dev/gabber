@@ -3,6 +3,7 @@ import logging
 import time
 from dataclasses import dataclass
 from utils import ExponentialMovingAverage
+from typing import Callable
 
 import numpy as np
 from lib import eot, resampler, stt, vad
@@ -42,6 +43,10 @@ class Engine:
         self.current_state: BaseEngineState = EngineState_NotTalking(
             state=State(engine=self)
         )
+        self._on_event: Callable[[EngineEvent], None] = lambda _: None
+
+    def set_event_handler(self, h: "Callable[[EngineEvent], None]"):
+        self._on_event = h
 
     def setup_resamplers(self):
         sample_rates = {
@@ -81,8 +86,8 @@ class Engine:
         logger.info(f"Transitioning from {self.current_state.name} to {new_state.name}")
         self.current_state = new_state
 
-    def emit_event(self, payload: "ResponsePayload"):
-        print("NEIL emitting event", payload)
+    def emit_event(self, evt: "EngineEvent"):
+        self._on_event(evt)
 
 
 @dataclass
@@ -211,7 +216,7 @@ class EngineState_Talking(BaseEngineState):
 
         if (
             self.state.eot
-            and time_since_last_voice >= 0.5
+            and time_since_last_voice >= 0.25
             or time_since_last_voice >= self.state.engine.settings.vad_cooldown_time_s
         ):
             self.state.emit_final()
@@ -222,6 +227,7 @@ class EngineState_Finalizing(BaseEngineState):
     async def tick(self):
         await self.state.update_stt()
         print("NEIL finalizing transcription", self.state.current_stt_result)
+        self.state.reset()
         self.state.engine.transition_to(EngineState_NotTalking(state=self.state))
 
 
@@ -372,14 +378,14 @@ class State:
 
     def emit_start_speaking(self):
         self.engine.emit_event(
-            ResponsePayload_SpeakingStarted(
+            EngineEvent_SpeakingStarted(
                 trans_id=self.trans_id, start_sample=self.latest_voice
             )
         )
 
     def emit_interim(self):
         self.engine.emit_event(
-            ResponsePayload_InterimTranscription(
+            EngineEvent_InterimTranscription(
                 trans_id=self.trans_id,
                 start_sample=self.current_stt_result.start_cursor,
                 end_sample=self.current_stt_result.end_cursor,
@@ -390,7 +396,7 @@ class State:
 
     def emit_final(self):
         self.engine.emit_event(
-            ResponsePayload_FinalTranscription(
+            EngineEvent_FinalTranscription(
                 trans_id=self.trans_id,
                 start_sample=self.current_stt_result.start_cursor,
                 end_sample=self.current_stt_result.end_cursor,
@@ -400,12 +406,12 @@ class State:
 
 
 @dataclass
-class ResponsePayload_Error:
+class EngineEvent_Error:
     message: str
 
 
 @dataclass
-class ResponsePayload_InterimTranscription:
+class EngineEvent_InterimTranscription:
     trans_id: int
     start_sample: int
     end_sample: int
@@ -413,22 +419,22 @@ class ResponsePayload_InterimTranscription:
 
 
 @dataclass
-class ResponsePayload_SpeakingStarted:
+class EngineEvent_SpeakingStarted:
     trans_id: int
     start_sample: int
 
 
 @dataclass
-class ResponsePayload_FinalTranscription:
+class EngineEvent_FinalTranscription:
     trans_id: int
     transcription: str
     start_sample: int
     end_sample: int
 
 
-ResponsePayload = (
-    ResponsePayload_Error
-    | ResponsePayload_FinalTranscription
-    | ResponsePayload_InterimTranscription
-    | ResponsePayload_SpeakingStarted
+EngineEvent = (
+    EngineEvent_Error
+    | EngineEvent_FinalTranscription
+    | EngineEvent_InterimTranscription
+    | EngineEvent_SpeakingStarted
 )

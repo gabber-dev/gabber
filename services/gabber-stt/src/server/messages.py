@@ -1,5 +1,12 @@
 from pydantic import BaseModel, Field
 from typing import Literal, Annotated
+from engine import (
+    EngineEvent,
+    EngineEvent_Error,
+    EngineEvent_FinalTranscription,
+    EngineEvent_InterimTranscription,
+    EngineEvent_SpeakingStarted,
+)
 
 
 class RequestPayload_StartSession(BaseModel):
@@ -66,3 +73,31 @@ ResponsePayload = Annotated[
 class Response(BaseModel):
     payload: ResponsePayload
     session_id: str
+
+
+def engine_event_to_response_payload(
+    evt: EngineEvent,
+) -> ResponsePayload | Exception:
+    if isinstance(evt, EngineEvent_Error):
+        return ResponsePayload_Error(message=evt.message)
+    elif isinstance(evt, EngineEvent_FinalTranscription):
+        return ResponsePayload_FinalTranscription(
+            trans_id=evt.trans_id,
+            transcription=evt.transcription,
+            start_sample=evt.start_sample,
+            end_sample=evt.end_sample,
+        )
+    elif isinstance(evt, EngineEvent_InterimTranscription):
+        return ResponsePayload_InterimTranscription(
+            trans_id=evt.trans_id,
+            start_sample=evt.start_sample,
+            end_sample=evt.end_sample,
+            transcription=evt.transcription,
+        )
+    elif isinstance(evt, EngineEvent_SpeakingStarted):
+        return ResponsePayload_SpeakingStarted(
+            trans_id=evt.trans_id,
+            start_sample=evt.start_sample,
+        )
+
+    raise Exception("Unknown event type")

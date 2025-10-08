@@ -11,8 +11,9 @@ from .messages import (
     Response,
     ResponsePayload,
     ResponsePayload_Error,
+    engine_event_to_response_payload,
 )
-from engine import Engine
+from engine import Engine, EngineEvent
 from typing import Callable
 
 logger = logging.getLogger(__name__)
@@ -41,9 +42,10 @@ class SessionManager:
             output_queue: asyncio.Queue[ResponsePayload | Exception | None] = (
                 asyncio.Queue()
             )
+            eng = self._engine_factory(request.payload)
             session = Session(
                 id=sess_id,
-                engine=self._engine_factory(request.payload),
+                engine=eng,
                 output_queue=output_queue,
             )
             session_t = asyncio.create_task(session.run())
@@ -117,6 +119,7 @@ class Session:
         engine: Engine,
         output_queue: asyncio.Queue[ResponsePayload | Exception | None],
     ):
+        engine.set_event_handler(self.engine_event)
         self._engine = engine
         self._req_q: asyncio.Queue[RequestPayload | None] = asyncio.Queue(maxsize=1024)
         self.logger = logging.LoggerAdapter(logger, {"session_id": id})
@@ -136,6 +139,10 @@ class Session:
     def eos(self):
         self._closed = True
         self._req_q.put_nowait(None)
+
+    def engine_event(self, evt: EngineEvent):
+        payload = engine_event_to_response_payload(evt)
+        self._output_queue.put_nowait(payload)
 
     async def run(self):
         engine_t = asyncio.create_task(self._engine.run())

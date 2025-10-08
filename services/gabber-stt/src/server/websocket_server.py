@@ -34,7 +34,7 @@ class WebSocketServer:
 
         async def send_task():
             async for message in session_manager:
-                await ws.send_str(json.dumps(message))
+                await ws.send_str(message.model_dump_json())
 
         async def recv_task():
             try:
@@ -67,14 +67,14 @@ class WebSocketServer:
         except asyncio.CancelledError:
             pass
         except Exception as e:
-            logging.error(f"Send task error: {e}")
+            logging.error(f"Send task error: {e}", exc_info=True)
 
         try:
             await recv_t
         except asyncio.CancelledError:
             pass
         except Exception as e:
-            logging.error(f"Receive task error: {e}")
+            logging.error(f"Receive task error: {e}", exc_info=True)
 
         await ws.close()
 
