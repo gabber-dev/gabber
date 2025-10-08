@@ -42,6 +42,7 @@ class AudioInferenceSession(Generic[RESULT]):
         self.batcher = batcher
         self._audio = np.zeros(batcher._inference_impl.full_audio_size, dtype=np.int16)
         self._state: Any = None
+        self._start_cursor = self._audio.shape[0] - 1
 
     @property
     def new_audio_size(self) -> int:
@@ -61,11 +62,12 @@ class AudioInferenceSession(Generic[RESULT]):
             )
 
         self._audio = np.concatenate((self._audio, audio))
+        self._start_cursor = max(0, self._start_cursor - audio.shape[0])
 
         if self._audio.shape[0] > self.batcher._inference_impl.full_audio_size:
             self._audio = self._audio[-self.batcher._inference_impl.full_audio_size :]
 
-        res = await self.batcher.inference(self._audio, self._state)
+        res = await self.batcher.inference(self._audio, self._state, self._start_cursor)
         self._state = res.state
         return res.result
 
@@ -80,6 +82,7 @@ class AudioInferenceSession(Generic[RESULT]):
 class AudioInferenceBatcherPromise(Generic[RESULT]):
     audio: np.typing.NDArray[np.int16]
     prev_state: Any | None
+    start_cursor: int
     fut: "asyncio.Future[AudioInferenceInternalResult[RESULT]]"
 
 
@@ -110,10 +113,12 @@ class AudioInferenceBatcher(Generic[RESULT]):
                 dtype=np.int16,
             )
             prev_states: list[Any] = []
+            start_cursors: list[int] = []
             futs: list[asyncio.Future[AudioInferenceInternalResult[RESULT]]] = []
             while len(futs) < self._batch_size:
                 try:
                     prom = self._batch.get(timeout=self._batch_timeout)
+                    start_cursors.append(prom.start_cursor)
                     batch_arr[len(futs)] = prom.audio
                     prev_states.append(prom.prev_state)
                     futs.append(prom.fut)
@@ -126,7 +131,9 @@ class AudioInferenceBatcher(Generic[RESULT]):
                 continue
 
             req = AudioInferenceRequest(
-                audio_batch=batch_arr[: len(futs)], prev_states=prev_states
+                audio_batch=batch_arr[: len(futs)],
+                prev_states=prev_states,
+                start_cursors=start_cursors,
             )
             results = self._inference_impl.inference(req)
 
@@ -137,13 +144,19 @@ class AudioInferenceBatcher(Generic[RESULT]):
         self._run_thread.start()
 
     async def inference(
-        self, audio: np.typing.NDArray[np.int16], prev_state: Any | None
+        self,
+        audio: np.typing.NDArray[np.int16],
+        prev_state: Any | None,
+        start_cursor: int,
     ) -> "AudioInferenceInternalResult[RESULT]":
         try:
             fut = asyncio.Future[AudioInferenceInternalResult[RESULT]]()
             self._batch.put_nowait(
                 AudioInferenceBatcherPromise(
-                    audio=audio, prev_state=prev_state, fut=fut
+                    audio=audio,
+                    prev_state=prev_state,
+                    fut=fut,
+                    start_cursor=start_cursor,
                 )
             )
             res = await fut
@@ -175,6 +188,7 @@ class AudioInference(Protocol, Generic[RESULT]):
 class AudioInferenceRequest:
     audio_batch: np.typing.NDArray[np.int16]
     prev_states: list[Any]
+    start_cursors: list[int]
 
 
 @dataclass

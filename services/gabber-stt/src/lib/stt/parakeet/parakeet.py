@@ -88,13 +88,17 @@ class ParakeetSTTInference(STTInference):
         torch_audio_batch = (
             torch.from_numpy(input.audio_batch).to(torch.float32) / 32768.0
         ).to(self._model.encoder.device)
-        input_signal_length = torch.Tensor([torch_audio_batch.shape[1]]).to(
-            self._model.encoder.device
-        )
+        input_signal_lengths = torch.zeros(
+            [torch_audio_batch.shape[0]], dtype=torch.int64
+        ).to(self._model.encoder.device)
+        for i in range(torch_audio_batch.shape[0]):
+            input_signal_lengths[i] = (
+                torch_audio_batch.shape[1] - input.start_cursors[i]
+            )
 
         encoder_output, encoder_output_len = self._model.encoder(
             input_signal=torch_audio_batch,
-            input_signal_length=input_signal_length,
+            input_signal_length=input_signal_lengths,
         )
 
         encoder_output = encoder_output.transpose(1, 2)

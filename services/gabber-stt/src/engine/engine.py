@@ -1,21 +1,21 @@
 import asyncio
 import logging
 import time
+import wave
 from dataclasses import dataclass
-from utils import ExponentialMovingAverage
 from typing import Callable
 
 import numpy as np
 from lib import eot, resampler, stt, vad
+from utils import ExponentialMovingAverage
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class EngineSettings:
-    vad_threshold: float = 0.3
-    vad_warmup_time_s: float = 0.15
-    vad_cooldown_time_s: float = 2.0
+    vad_threshold: float = 0.4
+    vad_cooldown_time_s: float = 1.0
 
 
 class Engine:
@@ -182,10 +182,9 @@ class BaseEngineState:
 class EngineState_NotTalking(BaseEngineState):
     async def tick(self):
         await self.state.update_vad()
-        if self.state.recent_voice:
-            # Move eot and stt cursors to the start of VAD
-            self.state.eot_cursor = self.state.latest_voice
-            self.state.stt_cursor = self.state.latest_voice
+        if self.state.latest_voice > 0:
+            self.state.eot_cursor = self.state.first_voice
+            self.state.stt_cursor = self.state.first_voice
             self.state.emit_start_speaking()
             self.state.engine.transition_to(EngineState_Talking(state=self.state))
 
@@ -193,19 +192,12 @@ class EngineState_NotTalking(BaseEngineState):
 class EngineState_Talking(BaseEngineState):
     async def tick(self):
         current_curs = self.state.engine.audio_window._end_cursors.get(
-            self.state.engine.eot_session.sample_rate, 0
+            self.state.engine.vad_session.sample_rate, 0
         )
 
-        async def eot_check():
-            await self.state.update_eot()
-
-        async def vad_check():
-            await self.state.update_vad()
-
-        async def stt_check():
-            await self.state.update_stt()
-
-        await asyncio.gather(eot_check(), vad_check(), stt_check())
+        await asyncio.gather(
+            self.state.update_eot(), self.state.update_vad(), self.state.update_stt()
+        )
 
         if self.state.current_stt_result.transcription != self.state.last_interim:
             self.state.emit_interim()
@@ -219,13 +211,18 @@ class EngineState_Talking(BaseEngineState):
             and time_since_last_voice >= 0.25
             or time_since_last_voice >= self.state.engine.settings.vad_cooldown_time_s
         ):
-            self.state.emit_final()
             self.state.engine.transition_to(EngineState_Finalizing(state=self.state))
 
 
 class EngineState_Finalizing(BaseEngineState):
     async def tick(self):
-        await self.state.update_stt()
+        max_eot_vad = max(self.state.eot_cursor, self.state.vad_cursor)
+        next_stt = max_eot_vad + self.state.engine.stt_session.new_audio_size * 4
+        if self.state.stt_cursor < next_stt:
+            await self.state.update_stt()
+            return
+
+        self.state.emit_final()
         self.state.reset()
         self.state.engine.transition_to(EngineState_NotTalking(state=self.state))
 
@@ -242,7 +239,10 @@ class State:
         self.stt_cursor = 0
 
         self.latest_voice = -1
+        self.first_voice = -1
+
         self.eot = False
+        self.vad_results_history: list[float] = []
         self.vad_exp_avg = ExponentialMovingAverage(
             attack_time=0.05,
             release_time=0.05,
@@ -271,10 +271,26 @@ class State:
                 break
 
             res = await self.engine.vad_session.inference(segment)
+
             self.vad_cursor = end_cursor
             dt = (end_cursor - i) / self.engine.vad_session.sample_rate
             vad_value = self.vad_exp_avg.update(dt=dt, new_value=res)
+            self.vad_results_history.append(vad_value)
+            if len(self.vad_results_history) > 100:
+                self.vad_results_history.pop(0)
             if vad_value >= self.engine.settings.vad_threshold:
+                # Go back in time to find the first 3 vad results that are below threshold
+                first_vad_frame = 0
+                for j in range(len(self.vad_results_history) - 1, -1, -1):
+                    if self.vad_results_history[j] < 0.1:
+                        first_vad_frame = j
+                        break
+
+                num_vad_frames = len(self.vad_results_history) - first_vad_frame
+                self.first_voice = int(
+                    end_cursor
+                    - self.engine.vad_session.new_audio_size * (num_vad_frames)
+                ) - int(self.engine.vad_session.sample_rate * 0.25)
                 self.latest_voice = end_cursor
 
     async def update_eot(self):
@@ -320,38 +336,16 @@ class State:
                 break
 
             res = await self.engine.stt_session.inference(segment)
+            self.stt_cursor = end_cursor
 
             # adjust cursors
-            res.start_cursor = res.start_cursor + i
-            res.end_cursor = res.end_cursor + i
-            for w in res.words:
-                w.start_cursor = w.start_cursor + i
-                w.end_cursor = w.end_cursor + i
+            # res.start_cursor = res.start_cursor
+            # res.end_cursor = res.end_cursor
+            # for w in res.words:
+            #     w.start_cursor = w.start_cursor
+            #     w.end_cursor = w.end_cursor
 
             self.current_stt_result = res
-
-    @property
-    def recent_voice(self):
-        current_curs = self.engine.audio_window._end_cursors.get(
-            self.engine.vad_session.sample_rate, 0
-        )
-        if self.latest_voice < 0:
-            return False
-        delta = current_curs - self.latest_voice
-        return delta <= self.engine.vad_session.new_audio_size
-
-    @property
-    def vad_cold(self):
-        current_curs = self.engine.audio_window._end_cursors.get(
-            self.engine.vad_session.sample_rate, 0
-        )
-        if self.latest_voice < 0:
-            return True
-        delta = current_curs - self.latest_voice
-        return (
-            delta * self.engine.vad_session.sample_rate
-            > self.engine.settings.vad_cooldown_time_s
-        )
 
     def reset(self):
         current_curs_vad = self.engine.audio_window._end_cursors.get(
@@ -367,6 +361,7 @@ class State:
         self.eot_cursor = current_curs_eot
         self.stt_cursor = current_curs_stt
         self.latest_voice = -1
+        self.first_voice = -1
         self.eot = False
         self.current_stt_result = stt.STTInferenceResult(
             transcription="", words=[], start_cursor=0, end_cursor=0
@@ -381,7 +376,7 @@ class State:
     def emit_start_speaking(self):
         self.engine.emit_event(
             EngineEvent_SpeakingStarted(
-                trans_id=self.trans_id, start_sample=self.latest_voice
+                trans_id=self.trans_id, start_sample=self.first_voice
             )
         )
 
@@ -397,6 +392,17 @@ class State:
         self.last_interim = self.current_stt_result.transcription
 
     def emit_final(self):
+        # with wave.open(f"utterance_{self.trans_id}.wav", "wb") as wf:
+        #     wf.setnchannels(1)
+        #     wf.setsampwidth(2)
+        #     wf.setframerate(self.engine.stt_session.sample_rate)
+        #     audio_data = self.engine.audio_window.get_segment(
+        #         sample_rate=self.engine.stt_session.sample_rate,
+        #         start_cursor=self.first_voice,
+        #         end_cursor=self.stt_cursor,
+        #     )
+        #     wf.writeframes(audio_data.tobytes())
+
         self.engine.emit_event(
             EngineEvent_FinalTranscription(
                 trans_id=self.trans_id,
