@@ -10,10 +10,10 @@ async def main():
     eot_engine = eot.EndOfTurnEngine(inference_impl=eot.pipecat.PipeCatEOTInference())
     vad_engine = vad.VADInferenceEngine(inference_impl=vad.silero.SileroVADInference())
     stt_engine = stt.STTInferenceEngine(
-        inference_impl=stt.parakeet.ParakeetSTTInference(
-            window_secs=120.0,  # There is a bug I can't find with the continuation states so for now we will just use a long window.
-        )
-        # inference_impl=stt.mock.MockSTTInference(window_secs=20.0),
+        # inference_impl=stt.parakeet.ParakeetSTTInference(
+        #     window_secs=120.0,  # There is a bug I can't find with the continuation states so for now we will just use a long window.
+        # )
+        inference_impl=stt.mock.MockSTTInference(window_secs=20.0),
     )
 
     await stt_engine.initialize()

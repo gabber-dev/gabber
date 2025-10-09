@@ -8,16 +8,19 @@ from typing import Callable
 import numpy as np
 from core import AudioWindow
 from lib import eot, stt, vad
-from utils import ExponentialMovingAverage
 
 logger = logging.getLogger(__name__)
+
+VAD_SMOOTHING_HISTORY = 3
 
 
 @dataclass
 class EngineSettings:
     vad_threshold: float = 0.4
     speaking_started_warmup_time_s: float = 0.25
-    vad_cooldown_time_s: float = 1.0
+    vad_cooldown_time_s: float = 1.25
+    eot_timeout_s: float = 2.0
+    eot_warmup_time_s: float = 2.0
 
 
 class Engine:
@@ -84,7 +87,6 @@ class BaseEngineState:
 class EngineState_NotTalking(BaseEngineState):
     async def tick(self):
         await self.state.update_vad()
-        # print("NEIL last voice:", self.state.latest_voice)
 
         voice_time = (
             self.state.latest_voice - self.state.last_non_voice
@@ -96,6 +98,7 @@ class EngineState_NotTalking(BaseEngineState):
                 0.25 * self.state.engine.vad_session.sample_rate
             )
             self.state.emit_start_speaking()
+            self.state.start_talking = self.state.last_non_voice
             self.state.engine.transition_to(EngineState_Talking(state=self.state))
 
 
@@ -116,11 +119,26 @@ class EngineState_Talking(BaseEngineState):
             current_curs - self.state.latest_voice
         ) / self.state.engine.vad_session.sample_rate
 
-        if (
+        eot_warming_up = (
+            (self.state.eot_cursor - self.state.start_talking)
+            / self.state.engine.vad_session.sample_rate
+            < self.state.engine.settings.eot_warmup_time_s
+        )
+        if eot_warming_up:
+            return
+
+        print("NEIL time since last voice:", time_since_last_voice)
+
+        eot_timed_out = (
+            time_since_last_voice >= self.state.engine.settings.eot_timeout_s
+        )
+        actual_eot = (
             self.state.eot
-            and time_since_last_voice >= 3.0
-            or time_since_last_voice >= self.state.engine.settings.vad_cooldown_time_s
-        ):
+            and time_since_last_voice > self.state.engine.settings.vad_cooldown_time_s
+        )
+        print("NEIL EOT:", self.state.eot, eot_timed_out, actual_eot)
+
+        if eot_timed_out or actual_eot:
             self.state.engine.transition_to(EngineState_Finalizing(state=self.state))
 
 
@@ -150,11 +168,14 @@ class State:
 
         self.latest_voice = -1
         self.last_non_voice = 0
+        self.start_talking = -1
 
         self.eot = False
 
-        self.vad_history = np.zeros(10, dtype=np.float32)
-        self.bell_kernel = np.hanning(10).astype(np.float32) / np.sum(np.hanning(10))
+        self.vad_history = np.zeros(VAD_SMOOTHING_HISTORY, dtype=np.float32)
+        self.avg_kernel = (
+            np.ones(VAD_SMOOTHING_HISTORY, dtype=np.float32) / VAD_SMOOTHING_HISTORY
+        )
 
         self.last_interim: str = ""
 
@@ -182,7 +203,7 @@ class State:
             self.vad_history = np.roll(self.vad_history, -1)
             self.vad_history[-1] = res
             vad_value = float(
-                np.convolve(self.vad_history, self.bell_kernel, mode="valid")[0]
+                np.convolve(self.vad_history, self.avg_kernel, mode="valid")[0]
             )
 
             # print("NEIL VAD:", vad_value)
@@ -214,6 +235,7 @@ class State:
 
             res = await self.engine.eot_session.inference(segment)
             self.eot_cursor = end_cursor
+            print("NEIL EOT RAW:", res)
             self.eot = res >= 0.5
 
     async def update_stt(self):
@@ -262,13 +284,14 @@ class State:
         self.stt_cursor = current_curs_stt
         self.latest_voice = -1
         self.last_non_voice = 0
+        self.start_talking = -1
         self.eot = False
         self.current_stt_result = stt.STTInferenceResult(
             transcription="", words=[], start_cursor=0, end_cursor=0
         )
         self.last_interim = ""
         self.trans_id += 1
-        self.vad_history = np.zeros(10, dtype=np.float32)
+        self.vad_history = np.zeros(VAD_SMOOTHING_HISTORY, dtype=np.float32)
         self.engine.vad_session.reset()
         self.engine.eot_session.reset()
         self.engine.stt_session.reset()
@@ -300,16 +323,26 @@ class State:
         #     wf.setframerate(self.engine.stt_session.sample_rate)
         #     audio_data = self.engine.audio_window.get_segment(
         #         sample_rate=self.engine.stt_session.sample_rate,
-        #         start_cursor=self.first_voice,
-        #         end_cursor=self.stt_cursor,
+        #         start_curs=self.start_talking,
+        #         ends_curs=self.latest_voice,
         #     )
         #     wf.writeframes(audio_data.tobytes())
 
+        start_curs = self.engine.audio_window.convert_cursor(
+            from_rate=self.engine.vad_session.sample_rate,
+            to_rate=self.engine._input_sample_rate,
+            cursor=self.start_talking,
+        )
+        end_curs = self.engine.audio_window.convert_cursor(
+            from_rate=self.engine.vad_session.sample_rate,
+            to_rate=self.engine._input_sample_rate,
+            cursor=self.latest_voice,
+        )
         self.engine.emit_event(
             EngineEvent_FinalTranscription(
                 trans_id=self.trans_id,
-                start_sample=self.current_stt_result.start_cursor,
-                end_sample=self.current_stt_result.end_cursor,
+                start_sample=start_curs,
+                end_sample=end_curs,
                 transcription=self.current_stt_result.transcription,
             )
         )

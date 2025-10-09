@@ -90,3 +90,16 @@ class AudioWindow:
         self._data[self._input_sample_rate] = np.array([], dtype=np.int16)
         self._offsets[self._input_sample_rate] = 0
         self._end_cursors[self._input_sample_rate] = 0
+
+    def convert_cursor(self, *, from_rate: int, to_rate: int, cursor: int) -> int:
+        if from_rate == to_rate:
+            return cursor
+
+        if from_rate not in self._data:
+            raise ValueError(f"Sample rate {from_rate} not found in audio window")
+
+        if to_rate not in self._data:
+            raise ValueError(f"Sample rate {to_rate} not found in audio window")
+
+        time_s = cursor / from_rate
+        return int(time_s * to_rate)
