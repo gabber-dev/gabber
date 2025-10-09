@@ -17,8 +17,8 @@ VAD_SMOOTHING_HISTORY = 3
 @dataclass
 class EngineSettings:
     vad_threshold: float = 0.4
-    speaking_started_warmup_time_s: float = 0.25
-    vad_cooldown_time_s: float = 1.25
+    speaking_started_warmup_time_s: float = 0.15
+    vad_cooldown_time_s: float = 0.75
     eot_timeout_s: float = 2.0
     eot_warmup_time_s: float = 2.0
 
@@ -124,7 +124,10 @@ class EngineState_Talking(BaseEngineState):
             / self.state.engine.vad_session.sample_rate
             < self.state.engine.settings.eot_warmup_time_s
         )
-        if eot_warming_up:
+        if (
+            eot_warming_up
+            and time_since_last_voice < self.state.engine.settings.vad_cooldown_time_s
+        ):
             return
 
         eot_timed_out = (
@@ -142,7 +145,7 @@ class EngineState_Talking(BaseEngineState):
 class EngineState_Finalizing(BaseEngineState):
     async def tick(self):
         max_eot_vad = max(self.state.eot_cursor, self.state.vad_cursor)
-        next_stt = max_eot_vad + self.state.engine.stt_session.new_audio_size * 2
+        next_stt = max_eot_vad + self.state.engine.stt_session.new_audio_size
         if self.state.stt_cursor < next_stt:
             await self.state.update_stt()
             return
@@ -275,9 +278,9 @@ class State:
         current_curs_eot = self.engine.audio_window._end_cursors.get(
             self.engine.eot_session.sample_rate, 0
         )
-        self.vad_cursor = current_curs_vad
-        self.eot_cursor = current_curs_eot
-        self.stt_cursor = current_curs_stt
+        self.vad_cursor = self.latest_voice
+        self.eot_cursor = self.latest_voice
+        self.stt_cursor = self.latest_voice
         self.latest_voice = -1
         self.last_non_voice = 0
         self.start_talking = -1
