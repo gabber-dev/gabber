@@ -58,7 +58,7 @@ async def main():
     vad_session = vad_engine.create_session()
 
     stt_engine = stt.STTInferenceEngine(
-        inference_impl=stt.parakeet.ParakeetSTTInference(window_secs=40),
+        inference_impl=stt.parakeet.ParakeetSTTInference(window_secs=180),
         batch_size=32,
     )
     await stt_engine.initialize()

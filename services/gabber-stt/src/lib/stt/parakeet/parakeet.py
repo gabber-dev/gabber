@@ -91,7 +91,7 @@ class ParakeetSTTInference(STTInference):
         encode_res = batch.encode()
         prev_states = [p.prev_decoder_state for p in input.prev_states if p is not None]
         prev_hyps = [p.prev_hyp for p in input.prev_states if p is not None]
-        batch.decode(
+        decode_results = batch.decode(
             encode_result=encode_res,
             prev_states=prev_states,
             prev_hyps=prev_hyps,
@@ -100,8 +100,15 @@ class ParakeetSTTInference(STTInference):
         for i in range(len(input.audio_batch)):
             results.append(
                 STTInferenceResult(
-                    transcription="",
-                    words=[],
+                    transcription=decode_results[i].transcription,
+                    words=[
+                        STTInferenceResultWord(
+                            word=w.text,
+                            start_cursor=w.start_offset,
+                            end_cursor=w.end_offset,
+                        )
+                        for w in decode_results[i].words
+                    ],
                     start_cursor=0,
                     end_cursor=0,
                 )
@@ -110,96 +117,13 @@ class ParakeetSTTInference(STTInference):
         return [
             AudioInferenceInternalResult[STTInferenceResult](
                 result=results[i],
-                state=ParakeetSTTInferenceState(prev_hyp=None, prev_decoder_state=None),
+                state=ParakeetSTTInferenceState(
+                    prev_hyp=decode_results[i].hyp,
+                    prev_decoder_state=decode_results[i].decode_state,
+                ),
             )
             for i in range(len(input.audio_batch))
         ]
-
-    # def decode_batch(
-    #     self,
-    #     encoder_features: torch.Tensor,
-    #     batch_idxs: list[int],
-    # ) -> "list[DecodeResult]":
-    #     if len(batch_idxs) == 0:
-    #         return []
-
-    #     assert self._model is not None
-
-    #     decoder_state: BatchedLabelLoopingState | None = None
-
-    #     batch_features = torch.zeros(
-    #         len(batch_idxs),
-    #         *encoder_features.shape[1:],
-    #         device=encoder_features.device,
-    #         dtype=encoder_features.dtype,
-    #     )
-    #     for i, bidx in enumerate(batch_idxs):
-    #         batch_features[i, :] = encoder_features[bidx, :]
-
-    #     chunk_batched_hyps, batched_alignments, state = self._model.decoder(
-    #         x=batch_features.to(self._model.encoder.device),
-    #         out_len=torch.tensor(
-    #             [self.window_encoder_frames] * batch_features.shape[0]
-    #         ),
-    #         prev_batched_state=decoder_state,
-    #     )
-
-    #     split_hypotheses = batched_hyps_to_hypotheses(
-    #         chunk_batched_hyps,
-    #         batched_alignments,
-    #         batch_size=chunk_batched_hyps.batch_size,
-    #     )
-    #     split_states = self._model.decoder.split_batched_state(state)
-
-    #     result: list[DecodeResult] = []
-    #     for i, h in enumerate(split_hypotheses):
-    #         assert isinstance(h, Hypothesis)
-    #         token_repetitions = [
-    #             len(self._model.encoder.tokenizer.ids_to_text([id]))
-    #             for id in h.y_sequence.tolist()
-    #         ]
-    #         h.text = (h.y_sequence, h.alignments, token_repetitions)  # type: ignore
-    #         h = self._model.encoder.decoding.compute_rnnt_timestamps(h)  # type: ignore
-    #         ts_res = process_timestamp_outputs(
-    #             h,
-    #             subsampling_factor=self._model.encoder.encoder.subsampling_factor,
-    #             window_stride=self._model.encoder.cfg["preprocessor"]["window_stride"],
-    #         )
-    #         words = [
-    #             DecodeWord(
-    #                 text=w["word"],
-    #                 start_offset=w["start_offset"],
-    #                 end_offset=w["end_offset"],
-    #             )
-    #             for w in ts_res[0].timestamp["word"]
-    #         ]
-    #         segments = [
-    #             DecodeSegment(
-    #                 start_offset=s["start_offset"],
-    #                 end_offset=s["end_offset"],
-    #                 segment=s["segment"],
-    #             )
-    #             for s in ts_res[0].timestamp["segment"]
-    #         ]
-    #         characters = [
-    #             DecodeCharacter(
-    #                 text=c["char"],
-    #                 start_offset=c["start_offset"],
-    #                 end_offset=c["end_offset"],
-    #             )
-    #             for c in ts_res[0].timestamp["char"]
-    #         ]
-    #         result.append(
-    #             DecodeResult(
-    #                 transcription=h.text,
-    #                 words=words,
-    #                 characters=characters,
-    #                 segments=segments,
-    #                 decode_state=split_states[i],
-    #             )
-    #         )
-
-    #     return result
 
 
 class ParakeetInferenceBatch:
@@ -290,6 +214,7 @@ class ParakeetInferenceBatch:
         states_to_merge: list[LabelLoopingStateItem | None] = []
         for i, cnt in enumerate(encode_result.continuations):
             if cnt:
+                print("NEIL prev states", prev_states[i])
                 states_to_merge.append(prev_states[i])
             else:
                 states_to_merge.append(None)
@@ -309,10 +234,58 @@ class ParakeetInferenceBatch:
             batch_size=chunk_batched_hyps.batch_size,
         )
         split_states = self.model.decoder.split_batched_state(state)
+        result: list[DecodeResult] = []
         for i, h in enumerate(split_hypotheses):
             assert isinstance(h, Hypothesis)
             txt = self.model.encoder.tokenizer.ids_to_text(h.y_sequence.tolist())
             print("NEIL txt", txt)
+            token_repetitions = [
+                len(self.model.encoder.tokenizer.ids_to_text([id]))
+                for id in h.y_sequence.tolist()
+            ]
+            h.text = (h.y_sequence, h.alignments, token_repetitions)  # type: ignore
+            h = self.model.encoder.decoding.compute_rnnt_timestamps(h)  # type: ignore
+            ts_res = process_timestamp_outputs(
+                h,
+                subsampling_factor=self.model.encoder.encoder.subsampling_factor,
+                window_stride=self.model.encoder.cfg["preprocessor"]["window_stride"],
+            )
+            words = [
+                DecodeWord(
+                    text=w["word"],
+                    start_offset=w["start_offset"],
+                    end_offset=w["end_offset"],
+                )
+                for w in ts_res[0].timestamp["word"]
+            ]
+            segments = [
+                DecodeSegment(
+                    start_offset=s["start_offset"],
+                    end_offset=s["end_offset"],
+                    segment=s["segment"],
+                )
+                for s in ts_res[0].timestamp["segment"]
+            ]
+            characters = [
+                DecodeCharacter(
+                    text=c["char"],
+                    start_offset=c["start_offset"],
+                    end_offset=c["end_offset"],
+                )
+                for c in ts_res[0].timestamp["char"]
+            ]
+            result.append(
+                DecodeResult(
+                    transcription=h.text,
+                    words=words,
+                    characters=characters,
+                    segments=segments,
+                    decode_state=split_states[i],
+                    hyp=h,
+                )
+            )
+
+        return result
 
 
 @dataclass
@@ -350,6 +323,7 @@ class DecodeResult:
     characters: list[DecodeCharacter]
     segments: list[DecodeSegment]
     decode_state: LabelLoopingStateItem
+    hyp: Hypothesis
 
 
 @dataclass
