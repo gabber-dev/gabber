@@ -1,5 +1,6 @@
 import asyncio
 from itertools import batched
+import logging
 import threading
 import wave
 from dataclasses import dataclass
@@ -85,63 +86,40 @@ class ParakeetSTTInference(STTInference):
         if input.audio_batch.shape[1] != self.full_audio_size:
             raise ValueError(f"Invalid audio size: {input.audio_batch.shape[1]}")
 
-        torch_audio_batch = (
-            torch.from_numpy(input.audio_batch).to(torch.float32) / 32768.0
-        ).to(self._model.encoder.device)
-        input_signal_lengths = torch.zeros(
-            [torch_audio_batch.shape[0]], dtype=torch.int64
-        ).to(self._model.encoder.device)
-        for i in range(torch_audio_batch.shape[0]):
-            input_signal_lengths[i] = (
-                torch_audio_batch.shape[1] - input.start_cursors[i]
-            )
-
-        encoder_output, encoder_output_len = self._model.encoder(
-            input_signal=torch_audio_batch,
-            input_signal_length=input_signal_lengths,
+        batch = ParakeetInferenceBatch(
+            chunk_size=self.new_audio_size,
+            full_audio_size=self.full_audio_size,
+            input=input,
+            model=self._model,
         )
 
-        encoder_output = encoder_output.transpose(1, 2)
-
-        # encoder_context = encoder_output[:, self.left_context_encoder_frames :, :]
-        encoder_context = encoder_output
-
-        no_state_idxs: list[int] = []
-        with_state_idxs: list[int] = []
-        for i, inp in enumerate(input.prev_states):
-            if inp is None:
-                no_state_idxs.append(i)
-            else:
-                with_state_idxs.append(i)
-
-        decode_results = self.decode_batch(
-            encoder_features=encoder_context,
-            batch_idxs=no_state_idxs,
-        )
-
-        results: list[AudioInferenceInternalResult[STTInferenceResult]] = []
-        for i, dr in enumerate(decode_results):
-            converted_words = [
-                STTInferenceResultWord(
-                    word=w.text,
-                    start_cursor=w.start_offset,
-                    end_cursor=w.end_offset,
-                )
-                for w in dr.words
-            ]
+        encode_res = batch.encode()
+        batch.decode(encode_res)
+        results: list[STTInferenceResult] = []
+        for i in range(len(input.audio_batch)):
             results.append(
-                AudioInferenceInternalResult(
-                    result=STTInferenceResult(
-                        transcription=dr.transcription,
-                        start_cursor=0,
-                        end_cursor=0,
-                        words=converted_words,
-                    ),
-                    state=None,
+                STTInferenceResult(
+                    transcription="",
+                    words=[],
+                    start_cursor=0,
+                    end_cursor=0,
                 )
             )
 
-        return results
+        return [
+            AudioInferenceInternalResult[STTInferenceResult](
+                result=results[i],
+                state=ParakeetSTTInferenceState(
+                    abs_context_cursor=encode_res.absolute_context_curss[i],
+                    abs_window_start_cursor=encode_res.absolute_window_curss[i],
+                    abs_finalize_curs=encode_res.absolute_finalize_curss[i],
+                    full_window=encode_res.full_windows[i],
+                    latest_hyp=encode_res.finalized_hyps[i],
+                    latest_decoder_state=encode_res.finalized_decoder_states[i],
+                ),
+            )
+            for i in range(len(input.audio_batch))
+        ]
 
     def decode_batch(
         self,
@@ -177,9 +155,10 @@ class ParakeetSTTInference(STTInference):
             batched_alignments,
             batch_size=chunk_batched_hyps.batch_size,
         )
+        split_states = self._model.decoder.split_batched_state(state)
 
         result: list[DecodeResult] = []
-        for h in split_hypotheses:
+        for i, h in enumerate(split_hypotheses):
             assert isinstance(h, Hypothesis)
             token_repetitions = [
                 len(self._model.encoder.tokenizer.ids_to_text([id]))
@@ -222,10 +201,180 @@ class ParakeetSTTInference(STTInference):
                     words=words,
                     characters=characters,
                     segments=segments,
+                    decode_state=split_states[i],
                 )
             )
 
         return result
+
+
+class ParakeetInferenceBatch:
+    def __init__(
+        self,
+        *,
+        chunk_size: int,
+        full_audio_size: int,
+        input: AudioInferenceRequest,
+        model: CanaryModelInstance,
+    ):
+        self.chunk_size = chunk_size
+        self.full_audio_size = full_audio_size
+        self.model = model
+        self.input = input
+        self.audio = input.audio_batch
+        self.num_samples = input.num_samples
+
+    def encode(self):
+        prev_states: list[ParakeetSTTInferenceState | None] = []
+        for ps in self.input.prev_states:
+            prev_states.append(ps)
+
+        torch_audio_batch = (
+            torch.from_numpy(self.input.audio_batch).to(torch.float32) / 32768.0
+        ).to(self.model.encoder.device)
+        input_signal_lengths = torch.zeros(
+            [torch_audio_batch.shape[0]], dtype=torch.int64
+        ).to(self.model.encoder.device)
+
+        for i in range(torch_audio_batch.shape[0]):
+            input_signal_lengths[i] = self.input.num_samples[i]
+
+        encoder_output, encoder_output_len = self.model.encoder(
+            input_signal=torch_audio_batch,
+            input_signal_length=input_signal_lengths,
+        )
+        encoder_output = encoder_output.transpose(1, 2)
+
+        delta_frames = int(self.chunk_size // self.model.encoder_frame_2_audio_samples)
+
+        full_encoder_frames = int(
+            self.full_audio_size / self.model.encoder_frame_2_audio_samples
+        )
+
+        encoder_contexts = torch.zeros(
+            [
+                encoder_output.shape[0],
+                full_encoder_frames // 2,
+                encoder_output.shape[2],
+            ],
+            dtype=encoder_output.dtype,
+            device=encoder_output.device,
+        )
+        encoder_context_lens = torch.zeros(
+            [self.input.audio_batch.shape[0]], dtype=torch.int64
+        ).to(encoder_output.device)
+
+        full_windows: list[bool] = []
+        absolute_window_curss: list[int] = []
+        absolute_context_curss: list[int] = []
+        absolute_finalize_curss: list[int] = []
+        finalized_hyps: list[Hypothesis | None] = []
+        finalized_decoder_states: list[LabelLoopingStateItem | None] = []
+
+        for i, p in enumerate(prev_states):
+            abs_context_curs = 0 if p is None else p.abs_context_cursor
+            abs_window_start_curs = 0 if p is None else p.abs_window_start_cursor
+            abs_finalize_curs = 0 if p is None else p.abs_finalize_curs
+            full_window = False if p is None else p.full_window
+            finalized_hyp = None
+            finalized_decoder_state = None
+
+            # move the cursors
+            if abs_context_curs >= full_encoder_frames - 1:
+                full_window = True
+            if full_window:
+                abs_window_start_curs += delta_frames
+
+            abs_context_curs += delta_frames
+
+            absolute_context_curss.append(abs_context_curs)
+            absolute_window_curss.append(abs_window_start_curs)
+            full_windows.append(full_window)
+
+            delta_finalized = abs_context_curs - abs_finalize_curs
+            if delta_finalized >= full_encoder_frames // 2:
+                abs_finalize_curs = abs_context_curs
+                delta_finalized = 0
+                finalized_hyp = p.latest_hyp if p is not None else None
+                finalized_decoder_state = (
+                    p.latest_decoder_state if p is not None else None
+                )
+
+            finalized_hyps.append(finalized_hyp)
+            finalized_decoder_states.append(finalized_decoder_state)
+
+            absolute_finalize_curss.append(abs_finalize_curs)
+
+            abs_start_curs = abs_context_curs - delta_finalized
+
+            relative_start_curs = (
+                abs_start_curs - abs_window_start_curs
+            ) % full_encoder_frames
+            relative_context_curs = (
+                abs_context_curs - abs_window_start_curs
+            ) % full_encoder_frames
+
+            encoder_contexts[i, : (relative_context_curs - relative_start_curs), :] = (
+                encoder_output[i, relative_start_curs:relative_context_curs, :]
+            )
+            encoder_context_lens[i] = relative_context_curs - relative_start_curs
+
+            print(
+                "NEIL absolute_context_curs",
+                abs_context_curs,
+                abs_window_start_curs,
+                relative_start_curs,
+                relative_context_curs,
+                relative_context_curs - relative_start_curs,
+                full_encoder_frames,
+                encoder_output_len,
+            )
+
+        return InternalEncodeResult(
+            encoder_contexts=encoder_contexts,
+            encoder_context_lens=encoder_context_lens,
+            absolute_window_curss=absolute_window_curss,
+            absolute_context_curss=absolute_context_curss,
+            absolute_finalize_curss=absolute_finalize_curss,
+            finalized_decoder_states=finalized_decoder_states,
+            finalized_hyps=finalized_hyps,
+            full_windows=full_windows,
+        )
+
+    def decode(self, encode_result: "InternalEncodeResult"):
+        batched_state = None
+        if any(ds is not None for ds in encode_result.finalized_decoder_states):
+            batched_state = self.model.decoder.merge_to_batched_state(
+                [ds for ds in encode_result.finalized_decoder_states]
+            )
+
+        chunk_batched_hyps, batched_alignments, state = self.model.decoder(
+            x=encode_result.encoder_contexts,
+            out_len=encode_result.encoder_context_lens,
+            prev_batched_state=batched_state,
+        )
+        split_hypotheses = batched_hyps_to_hypotheses(
+            chunk_batched_hyps,
+            batched_alignments,
+            batch_size=chunk_batched_hyps.batch_size,
+        )
+        split_states = self.model.decoder.split_batched_state(state)
+        for i, h in enumerate(split_hypotheses):
+            assert isinstance(h, Hypothesis)
+            txt = self.model.encoder.tokenizer.ids_to_text(h.y_sequence.tolist())
+            print("NEIL txt", txt)
+
+
+@dataclass
+class InternalEncodeResult:
+    encoder_contexts: torch.Tensor
+    encoder_context_lens: torch.Tensor
+    absolute_window_curss: list[int]
+    absolute_context_curss: list[int]
+    absolute_finalize_curss: list[int]
+    finalized_hyps: list[Hypothesis | None]
+    finalized_decoder_states: list[LabelLoopingStateItem | None]
+    full_windows: list[bool]
 
 
 @dataclass
@@ -255,3 +404,14 @@ class DecodeResult:
     words: list[DecodeWord]
     characters: list[DecodeCharacter]
     segments: list[DecodeSegment]
+    decode_state: LabelLoopingStateItem
+
+
+@dataclass
+class ParakeetSTTInferenceState:
+    abs_context_cursor: int
+    abs_window_start_cursor: int
+    abs_finalize_curs: int
+    full_window: bool
+    latest_hyp: Hypothesis | None
+    latest_decoder_state: LabelLoopingStateItem | None

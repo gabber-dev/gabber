@@ -7,6 +7,8 @@ from .audio_inference import (
     AudioInferenceInternalResult,
     AudioInferenceRequest,
 )
+from .audio_window import AudioWindow
+from .resampler import Resampler
 
 __all__ = [
     "AudioInferenceEngine",
@@ -16,4 +18,6 @@ __all__ = [
     "AudioInferenceBatcherPromise",
     "AudioInferenceInternalResult",
     "AudioInferenceRequest",
+    "AudioWindow",
+    "Resampler",
 ]
