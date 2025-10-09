@@ -1,0 +1,76 @@
+[project]
+name = "canary-1b"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12.2"
+
+# Core dependencies needed by both modes
+dependencies = [
+    "fastapi>=0.117.1",
+    "httpx>=0.24.0",
+    "pydantic>=2.7.0",
+    "numpy",
+    "onnxruntime >= 1.17.1",
+    "av ~= 14.4.0",
+    "pyaudio==0.2.14",
+    "aiohttp>=3.12.15",
+    "transformers",
+    "nemo-toolkit[asr]>=2.4.1",
+    "cuda-python>=13.0.1",
+    "matplotlib>=3.10.6",
+]
+[tool.uv]
+# Always install Werkzeug 2.3.0, regardless of whether transitive dependencies request
+# a different version.
+override-dependencies = ["numpy==2.3.3"]
+
+[dependency-groups]
+dev = ["ruff>=0.12.5", "watchfiles", "matplotlib"]
+
+
+[tool.ruff]
+# Set the target Python version (modern Python, aligns with projects like FastAPI and Pandas)
+target-version = "py312"
+
+# Set line length to match Black's default (88 characters), common in many projects
+line-length = 88
+indent-width = 4
+
+# Include commonly ignored directories to avoid linting irrelevant files
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+]
+
+src = ["gabber"]
+
+# Enable a broad set of lint rules for comprehensive checks
+[tool.ruff.lint]
+fixable = ["ALL"]
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+# Use Google-style docstring conventions (common in projects like Pandas)
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.hatch.build.targets.wheel]
+packages = ["gabber"]
