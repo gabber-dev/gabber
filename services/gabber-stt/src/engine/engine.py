@@ -127,7 +127,7 @@ class EngineState_Talking(BaseEngineState):
 class EngineState_Finalizing(BaseEngineState):
     async def tick(self):
         max_eot_vad = max(self.state.eot_cursor, self.state.vad_cursor)
-        next_stt = max_eot_vad + self.state.engine.stt_session.new_audio_size * 4
+        next_stt = max_eot_vad + self.state.engine.stt_session.new_audio_size * 2
         if self.state.stt_cursor < next_stt:
             await self.state.update_stt()
             return
@@ -185,7 +185,7 @@ class State:
                 np.convolve(self.vad_history, self.bell_kernel, mode="valid")[0]
             )
 
-            print("NEIL VAD:", vad_value)
+            # print("NEIL VAD:", vad_value)
 
             if vad_value < self.engine.settings.vad_threshold / 3:
                 self.last_non_voice = end_cursor
