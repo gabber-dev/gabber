@@ -46,7 +46,7 @@ class AudioInferenceSession(Generic[RESULT]):
             max_length_s=(
                 self.batcher._inference_impl.full_audio_size / self.batcher.sample_rate
             )
-            * 2,
+            * 3,
             sample_rates=[self.batcher.sample_rate],
             input_sample_rate=self.batcher.sample_rate,
         )
@@ -72,12 +72,13 @@ class AudioInferenceSession(Generic[RESULT]):
 
         self.audio_window.push_audio(audio=audio)
         self._curs += audio.shape[0]
+
+        start_curs = max(0, self._curs - self.batcher._inference_impl.full_audio_size)
+        end_curs = self._curs
         inference_audio = self.audio_window.get_segment(
             sample_rate=self.batcher.sample_rate,
-            start_cursor=max(
-                0, self._curs - self.batcher._inference_impl.full_audio_size
-            ),
-            end_cursor=self._curs,
+            start_curs=start_curs,
+            ends_curs=end_curs,
         )
 
         num_samples = inference_audio.shape[0]
@@ -99,6 +100,7 @@ class AudioInferenceSession(Generic[RESULT]):
     def reset(self):
         self._state = None
         self._curs = 0
+        self.audio_window.clear()
 
 
 @dataclass

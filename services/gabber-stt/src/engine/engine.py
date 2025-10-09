@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class EngineSettings:
     vad_threshold: float = 0.4
+    speaking_started_warmup_time_s: float = 0.25
     vad_cooldown_time_s: float = 1.0
 
 
@@ -37,7 +38,7 @@ class Engine:
         self.eot_session = self._eot.create_session()
         self.stt_session = self._stt.create_session()
         self.audio_window = AudioWindow(
-            max_length_s=60.0,
+            max_length_s=10.0,
             sample_rates=[
                 self.vad_session.sample_rate,
                 self.eot_session.sample_rate,
@@ -83,9 +84,17 @@ class BaseEngineState:
 class EngineState_NotTalking(BaseEngineState):
     async def tick(self):
         await self.state.update_vad()
-        if self.state.latest_voice > 0:
-            self.state.eot_cursor = self.state.first_voice
-            self.state.stt_cursor = self.state.first_voice
+        # print("NEIL last voice:", self.state.latest_voice)
+
+        voice_time = (
+            self.state.latest_voice - self.state.last_non_voice
+        ) / self.state.engine.vad_session.sample_rate
+
+        if voice_time >= self.state.engine.settings.speaking_started_warmup_time_s:
+            self.state.eot_cursor = self.state.latest_voice
+            self.state.stt_cursor = self.state.last_non_voice - int(
+                0.25 * self.state.engine.vad_session.sample_rate
+            )
             self.state.emit_start_speaking()
             self.state.engine.transition_to(EngineState_Talking(state=self.state))
 
@@ -109,7 +118,7 @@ class EngineState_Talking(BaseEngineState):
 
         if (
             self.state.eot
-            and time_since_last_voice >= 0.25
+            and time_since_last_voice >= 3.0
             or time_since_last_voice >= self.state.engine.settings.vad_cooldown_time_s
         ):
             self.state.engine.transition_to(EngineState_Finalizing(state=self.state))
@@ -140,15 +149,12 @@ class State:
         self.stt_cursor = 0
 
         self.latest_voice = -1
-        self.first_voice = -1
+        self.last_non_voice = 0
 
         self.eot = False
-        self.vad_results_history: list[float] = []
-        self.vad_exp_avg = ExponentialMovingAverage(
-            attack_time=0.05,
-            release_time=0.05,
-            initial_value=0,
-        )
+
+        self.vad_history = np.zeros(10, dtype=np.float32)
+        self.bell_kernel = np.hanning(10).astype(np.float32) / np.sum(np.hanning(10))
 
         self.last_interim: str = ""
 
@@ -165,33 +171,26 @@ class State:
             end_cursor = min(i + self.engine.vad_session.new_audio_size, current_curs)
             segment = self.engine.audio_window.get_segment(
                 sample_rate=self.engine.vad_session.sample_rate,
-                start_cursor=i,
-                end_cursor=end_cursor,
+                start_curs=i,
+                ends_curs=end_cursor,
             )
             if segment.shape[0] < self.engine.vad_session.new_audio_size:
                 break
 
             res = await self.engine.vad_session.inference(segment)
-
             self.vad_cursor = end_cursor
-            dt = (end_cursor - i) / self.engine.vad_session.sample_rate
-            vad_value = self.vad_exp_avg.update(dt=dt, new_value=res)
-            self.vad_results_history.append(vad_value)
-            if len(self.vad_results_history) > 100:
-                self.vad_results_history.pop(0)
-            if vad_value >= self.engine.settings.vad_threshold:
-                # Go back in time to find the first 3 vad results that are below threshold
-                first_vad_frame = 0
-                for j in range(len(self.vad_results_history) - 1, -1, -1):
-                    if self.vad_results_history[j] < 0.1:
-                        first_vad_frame = j
-                        break
+            self.vad_history = np.roll(self.vad_history, -1)
+            self.vad_history[-1] = res
+            vad_value = float(
+                np.convolve(self.vad_history, self.bell_kernel, mode="valid")[0]
+            )
 
-                num_vad_frames = len(self.vad_results_history) - first_vad_frame
-                self.first_voice = int(
-                    end_cursor
-                    - self.engine.vad_session.new_audio_size * (num_vad_frames)
-                ) - int(self.engine.vad_session.sample_rate * 0.25)
+            print("NEIL VAD:", vad_value)
+
+            if vad_value < self.engine.settings.vad_threshold / 3:
+                self.last_non_voice = end_cursor
+
+            if vad_value > self.engine.settings.vad_threshold:
                 self.latest_voice = end_cursor
 
     async def update_eot(self):
@@ -207,8 +206,8 @@ class State:
             end_cursor = min(i + self.engine.eot_session.new_audio_size, current_curs)
             segment = self.engine.audio_window.get_segment(
                 sample_rate=self.engine.eot_session.sample_rate,
-                start_cursor=i,
-                end_cursor=end_cursor,
+                start_curs=i,
+                ends_curs=end_cursor,
             )
             if segment.shape[0] < self.engine.eot_session.new_audio_size:
                 break
@@ -230,8 +229,8 @@ class State:
             end_cursor = min(i + self.engine.stt_session.new_audio_size, current_curs)
             segment = self.engine.audio_window.get_segment(
                 sample_rate=self.engine.stt_session.sample_rate,
-                start_cursor=i,
-                end_cursor=end_cursor,
+                start_curs=i,
+                ends_curs=end_cursor,
             )
             if segment.shape[0] < self.engine.stt_session.new_audio_size:
                 break
@@ -262,14 +261,14 @@ class State:
         self.eot_cursor = current_curs_eot
         self.stt_cursor = current_curs_stt
         self.latest_voice = -1
-        self.first_voice = -1
+        self.last_non_voice = 0
         self.eot = False
         self.current_stt_result = stt.STTInferenceResult(
             transcription="", words=[], start_cursor=0, end_cursor=0
         )
-        self.vad_exp_avg.value = 0
         self.last_interim = ""
         self.trans_id += 1
+        self.vad_history = np.zeros(10, dtype=np.float32)
         self.engine.vad_session.reset()
         self.engine.eot_session.reset()
         self.engine.stt_session.reset()
@@ -277,7 +276,9 @@ class State:
     def emit_start_speaking(self):
         self.engine.emit_event(
             EngineEvent_SpeakingStarted(
-                trans_id=self.trans_id, start_sample=self.first_voice
+                trans_id=self.trans_id,
+                start_sample=self.last_non_voice
+                - int(0.25 * self.engine.vad_session.sample_rate),
             )
         )
 

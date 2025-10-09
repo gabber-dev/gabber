@@ -166,5 +166,5 @@ class Session:
         except asyncio.CancelledError:
             pass
         except Exception as e:
-            self.logger.error(f"Engine error: {e}")
+            self.logger.error(f"Engine error: {e}", exc_info=True)
             self._output_queue.put_nowait(e)

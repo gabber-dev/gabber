@@ -26,7 +26,7 @@ class PipeCatEOTInference(EOTInference):
 
         self._onnx_session = onnxruntime.InferenceSession(
             self._model_path,
-            providers=["CPUExecutionProvider"],
+            providers=["CUDAExecutionProvider"],
             sess_options=opts,
         )
 
@@ -68,7 +68,7 @@ class PipeCatEOTInference(EOTInference):
 
     @property
     def new_audio_size(self) -> int:
-        return int(16000 * 0.5)
+        return int(16000 * 0.1)
 
     @property
     def full_audio_size(self) -> int:
