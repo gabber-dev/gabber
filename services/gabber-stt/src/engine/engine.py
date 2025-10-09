@@ -269,20 +269,9 @@ class State:
             self.current_stt_result = res
 
     def reset(self):
-        current_curs_vad = self.engine.audio_window._end_cursors.get(
-            self.engine.vad_session.sample_rate, 0
-        )
-        current_curs_stt = self.engine.audio_window._end_cursors.get(
-            self.engine.stt_session.sample_rate, 0
-        )
-        current_curs_eot = self.engine.audio_window._end_cursors.get(
-            self.engine.eot_session.sample_rate, 0
-        )
         self.vad_cursor = self.latest_voice
         self.eot_cursor = self.latest_voice
         self.stt_cursor = self.latest_voice
-        self.latest_voice = -1
-        self.last_non_voice = 0
         self.start_talking = -1
         self.eot = False
         self.current_stt_result = stt.STTInferenceResult(
