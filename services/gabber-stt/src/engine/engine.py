@@ -41,7 +41,7 @@ class Engine:
         self.eot_session = self._eot.create_session()
         self.stt_session = self._stt.create_session()
         self.audio_window = AudioWindow(
-            max_length_s=10.0,
+            max_length_s=60.0,
             sample_rates=[
                 self.vad_session.sample_rate,
                 self.eot_session.sample_rate,
@@ -127,8 +127,6 @@ class EngineState_Talking(BaseEngineState):
         if eot_warming_up:
             return
 
-        print("NEIL time since last voice:", time_since_last_voice)
-
         eot_timed_out = (
             time_since_last_voice >= self.state.engine.settings.eot_timeout_s
         )
@@ -136,7 +134,6 @@ class EngineState_Talking(BaseEngineState):
             self.state.eot
             and time_since_last_voice > self.state.engine.settings.vad_cooldown_time_s
         )
-        print("NEIL EOT:", self.state.eot, eot_timed_out, actual_eot)
 
         if eot_timed_out or actual_eot:
             self.state.engine.transition_to(EngineState_Finalizing(state=self.state))
@@ -235,7 +232,6 @@ class State:
 
             res = await self.engine.eot_session.inference(segment)
             self.eot_cursor = end_cursor
-            print("NEIL EOT RAW:", res)
             self.eot = res >= 0.5
 
     async def update_stt(self):

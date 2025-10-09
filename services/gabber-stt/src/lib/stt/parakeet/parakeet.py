@@ -214,7 +214,6 @@ class ParakeetInferenceBatch:
         states_to_merge: list[LabelLoopingStateItem | None] = []
         for i, cnt in enumerate(encode_result.continuations):
             if cnt:
-                print("NEIL prev states", prev_states[i])
                 states_to_merge.append(prev_states[i])
             else:
                 states_to_merge.append(None)
@@ -238,7 +237,6 @@ class ParakeetInferenceBatch:
         for i, h in enumerate(split_hypotheses):
             assert isinstance(h, Hypothesis)
             txt = self.model.encoder.tokenizer.ids_to_text(h.y_sequence.tolist())
-            print("NEIL txt", txt)
             token_repetitions = [
                 len(self.model.encoder.tokenizer.ids_to_text([id]))
                 for id in h.y_sequence.tolist()
