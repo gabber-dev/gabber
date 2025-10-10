@@ -165,7 +165,7 @@ class Gabber(STT):
 
 
 class AudioWindow:
-    def __init__(self, *, max_dur_s: float = 180.0):
+    def __init__(self, *, max_dur_s: float = 60.0):
         self.frames: list[AudioFrame] = []
         self.frames_start_sample: int = 0
         self.max_dur_s = max_dur_s
