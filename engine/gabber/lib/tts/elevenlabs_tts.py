@@ -62,8 +62,10 @@ class ElevenLabsTTS(MultiplexWebSocketTTS):
             {"context_id": context_id, "close_context": True},
         ]
 
-    def get_context_id(self, msg: dict[str, Any]) -> str:
-        return msg["contextId"]
+    def get_context_id(self, msg: dict[str, Any]) -> str | None:
+        # ElevenLabs might return context_id in snake_case or camelCase
+        # Also, some messages (like errors or status) may not have a context_id
+        return msg.get("contextId") or msg.get("context_id")
 
     def get_pcm_bytes(self, msg: dict[str, Any]) -> bytes:
         b64 = msg["audio"]
