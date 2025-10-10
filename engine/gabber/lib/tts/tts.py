@@ -89,9 +89,26 @@ class MultiplexWebSocketTTS(ABC, TTS):
 
         async def receive_task(ws: aiohttp.ClientWebSocketResponse):
             while True:
-                receive_item = await ws.receive_json()
+                msg = await ws.receive()
+                
+                # Handle different WebSocket message types
+                if msg.type == aiohttp.WSMsgType.TEXT:
+                    receive_item = msg.json()
+                elif msg.type == aiohttp.WSMsgType.CLOSE:
+                    self.logger.warning(f"WebSocket closed by server - code: {msg.data}, reason: {msg.extra}")
+                    break
+                elif msg.type == aiohttp.WSMsgType.ERROR:
+                    self.logger.error(f"WebSocket error: {ws.exception()}")
+                    break
+                else:
+                    self.logger.warning(f"Unexpected WebSocket message type: {msg.type}")
+                    continue
 
                 context_id = self.get_context_id(receive_item)
+                if context_id is None:
+                    # Skip messages without a context_id (e.g., status messages)
+                    continue
+                    
                 sess = self._session_lookup.get(context_id)
                 if sess is None:
                     logging.warning(
@@ -178,7 +195,7 @@ class MultiplexWebSocketTTS(ABC, TTS):
     def eos_payloads(self, *, context_id: str, voice: str) -> list[dict[str, Any]]: ...
 
     @abstractmethod
-    def get_context_id(self, msg: dict[str, Any]) -> str: ...
+    def get_context_id(self, msg: dict[str, Any]) -> str | None: ...
 
     @abstractmethod
     def get_pcm_bytes(self, msg: dict[str, Any]) -> bytes: ...
