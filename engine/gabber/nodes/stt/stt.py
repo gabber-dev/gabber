@@ -31,7 +31,14 @@ class STT(node.Node):
                 group="service",
                 owner_node=self,
                 default_type_constraints=[
-                    pad.types.Enum(options=["assembly_ai", "local_kyutai", "deepgram"])
+                    pad.types.Enum(
+                        options=[
+                            "assembly_ai",
+                            "local_kyutai",
+                            "deepgram",
+                            "local_gabber",
+                        ]
+                    )
                 ],
                 value="assembly_ai",
             )
@@ -125,6 +132,8 @@ class STT(node.Node):
             stt_impl = stt.Assembly(api_key=api_key)
         elif service.get_value() == "local_kyutai":
             stt_impl = stt.Kyutai(port=8080)
+        elif service.get_value() == "local_gabber":
+            stt_impl = stt.Gabber(logger=self.logger)
         elif service.get_value() == "deepgram":
             api_key_pad = cast(pad.PropertySinkPad, self.get_pad_required("api_key"))
             api_key_name = api_key_pad.get_value()
