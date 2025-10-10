@@ -130,6 +130,11 @@ class Jinja2(Node):
             else "Hello, {{ property_0 }}!"
         )
 
+        # Do an initial render with current property values
+        # This ensures the output is computed even if nothing has been emitted yet
+        initial_rendered = self.render_jinja(property_pads, template)
+        rendered_output.set_value(initial_rendered)
+
         async def pad_task(value_pad: pad.PropertySinkPad):
             async for item in value_pad:
                 rendered = self.render_jinja(property_pads, template)
