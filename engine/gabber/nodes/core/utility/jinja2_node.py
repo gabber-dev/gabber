@@ -81,13 +81,7 @@ class Jinja2(Node):
                 )
             property_values.append(value_pad)
 
-        for p in self.pads:
-            if p.get_group() == "property_name" and p not in property_names:
-                self.pads.remove(p)
-
-            if p.get_group() == "property_value" and p not in property_values:
-                self.pads.remove(p)
-
+        # Rebuild the pads list with only the pads we need
         self.pads = cast(
             list[pad.Pad],
             [num_properties_pad, jinja_template_pad]
@@ -96,9 +90,8 @@ class Jinja2(Node):
             + [rendered_output],
         )
 
-        property_pads = list(zip(property_names, property_values))
-        rendered = self.render_jinja(property_pads, jinja_template_pad.get_value())
-        rendered_output.set_value(rendered)
+        # Don't render during resolve_pads - that should only happen during run()
+        # Rendering here causes stale/cached values to persist in the output
 
     def render_jinja(
         self,
@@ -136,6 +129,11 @@ class Jinja2(Node):
             if jinja_template_pad
             else "Hello, {{ property_0 }}!"
         )
+
+        # Do an initial render with current property values
+        # This ensures the output is computed even if nothing has been emitted yet
+        initial_rendered = self.render_jinja(property_pads, template)
+        rendered_output.set_value(initial_rendered)
 
         async def pad_task(value_pad: pad.PropertySinkPad):
             async for item in value_pad:
