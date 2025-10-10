@@ -14,6 +14,7 @@ from .messages import (
     ResponsePayload_FinalTranscription,
     ResponsePayload_InterimTranscription,
     ResponsePayload_SpeakingStarted,
+    Request,
 )
 
 import aiohttp
@@ -50,6 +51,7 @@ class Gabber(STT):
             await asyncio.sleep(1)
 
     async def _run_ws(self) -> None:
+        session_id = short_uuid()
         offset_samples: int = 0
         frames: list[AudioFrame] = []
         start_ms: float = -1
@@ -63,10 +65,10 @@ class Gabber(STT):
                     break
                 msg = await ws.receive()
                 if msg.type == aiohttp.WSMsgType.CLOSED:
-                    logging.info("WebSocket closed")
+                    self.logger.info("WebSocket closed")
                     break
                 elif msg.type == aiohttp.WSMsgType.ERROR:
-                    logging.error("WebSocket error: %s", msg.data)
+                    self.logger.error("WebSocket error: %s", msg.data)
                     break
                 elif msg.type == aiohttp.WSMsgType.BINARY:
                     pass
@@ -76,7 +78,8 @@ class Gabber(STT):
 
         async def send_task(ws: aiohttp.ClientWebSocketResponse) -> None:
             audio_bytes = b""
-            start_msg = RequestPayload_StartSession(sample_rate=16000)
+            start_payload = RequestPayload_StartSession(sample_rate=16000)
+            start_msg = Request(payload=start_payload, session_id=session_id)
             await ws.send_str(start_msg.model_dump_json())
             while True:
                 if ws.closed:
@@ -94,7 +97,8 @@ class Gabber(STT):
                     if len(chunk) != 3200:
                         break
                     b64_audio = base64.b64encode(chunk).decode("utf-8")
-                    msg = RequestPayload_AudioData(audio_data=b64_audio)
+                    payload = RequestPayload_AudioData(b64_data=b64_audio)
+                    msg = Request(payload=payload, session_id=session_id)
                     await ws.send_str(msg.model_dump_json())
 
         async def keepalive_task(ws: aiohttp.ClientWebSocketResponse) -> None:

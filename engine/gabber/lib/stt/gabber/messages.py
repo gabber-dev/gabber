@@ -61,3 +61,8 @@ ResponsePayload = Annotated[
     | ResponsePayload_FinalTranscription,
     Field(discriminator="type"),
 ]
+
+
+class Response(BaseModel):
+    payload: ResponsePayload
+    session_id: str
