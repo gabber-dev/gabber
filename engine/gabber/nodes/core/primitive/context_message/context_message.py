@@ -46,8 +46,6 @@ class ContextMessage(Node):
 
         message_source = cast(PropertySourcePad, self.get_pad("context_message"))
         if not message_source:
-            # Create with a minimal default value
-            # The actual value will be computed during run() based on connected inputs
             message_source = PropertySourcePad(
                 id="context_message",
                 group="context_message",
@@ -57,15 +55,24 @@ class ContextMessage(Node):
                     role=runtime_types.ContextMessageRole.SYSTEM,
                     content=[
                         runtime_types.ContextMessageContentItem_Text(
-                            content=""
+                            content=content_sink.get_value()
                         )
                     ],
                     tool_calls=[],
                 ),
             )
 
-        # Don't call set_value() during resolve_pads - that should only happen during run()
-        # The run() method will properly compute the output based on connected inputs
+        message_source.set_value(
+            runtime_types.ContextMessage(
+                role=runtime_types.ContextMessageRole.SYSTEM,
+                content=[
+                    runtime_types.ContextMessageContentItem_Text(
+                        content=content_sink.get_value()
+                    )
+                ],
+                tool_calls=[],
+            )
+        )
 
         self.pads = [
             role,
