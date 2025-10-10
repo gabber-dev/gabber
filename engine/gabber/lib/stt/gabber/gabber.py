@@ -4,7 +4,17 @@
 import asyncio
 import json
 import logging
+import base64
 from typing import Any
+from .messages import (
+    RequestPayload_StartSession,
+    RequestPayload_AudioData,
+    ResponsePayload,
+    ResponsePayload_Error,
+    ResponsePayload_FinalTranscription,
+    ResponsePayload_InterimTranscription,
+    ResponsePayload_SpeakingStarted,
+)
 
 import aiohttp
 
@@ -21,8 +31,8 @@ from ..stt import (
 
 
 class Gabber(STT):
-    def __init__(self, *, api_key: str):
-        self._api_key = api_key
+    def __init__(self, *, logger: logging.Logger | logging.LoggerAdapter):
+        self.logger = logger
         self._process_queue = asyncio.Queue[AudioFrame | None]()
         self._closed = False
         self._output_queue = asyncio.Queue[STTEvent | None]()
@@ -62,97 +72,12 @@ class Gabber(STT):
                     pass
 
                 data = json.loads(msg.data)
-                msg_type = data.get("type")
-                if msg_type == "Begin":
-                    logging.info("STT session started")
-                elif msg_type == "Turn":
-                    transcript = data.get("transcript", "")
-                    end_of_turn = data.get("end_of_turn", False)
-                    formatted = data.get("turn_is_formatted", False)
-                    words: list[dict[str, Any]] = data.get("words", [])
-                    first_word = words[0] if words else None
-                    last_word = words[-1] if words else None
-
-                    if last_word:
-                        end_ms = last_word["end"]
-
-                    if start_ms < 0 and first_word:
-                        start_ms = first_word["start"] - 600  # Adjust
-                        if start_ms < 0:
-                            start_ms = 0
-                        self._output_queue.put_nowait(
-                            STTEvent_SpeechStarted(id=trans_id)
-                        )
-
-                    new_word_cnt = len(words) - len(running_words)
-                    new_words: list[str] = []
-                    if new_word_cnt > 0:
-                        new_words = [w["text"] for w in words[:new_word_cnt]]
-                        running_words.extend(new_words)
-
-                    self._output_queue.put_nowait(
-                        STTEvent_Transcription(
-                            trans_id,
-                            delta_text=" ".join(new_words),
-                            running_text=transcript,
-                        )
-                    )
-
-                    if end_of_turn and formatted:
-                        offset_time_ms = offset_samples * 1000.0 / 24000.0
-                        if not frames:
-                            logging.warning(
-                                "No frames available for end of turn processing"
-                            )
-                            continue
-
-                        # Remove frames that are before the start of the turn
-                        while (
-                            frames
-                            and (
-                                offset_time_ms
-                                + frames[0].data_24000hz.duration * 1000.0
-                            )
-                            < start_ms
-                        ):
-                            f = frames.pop(0)
-                            offset_samples += f.data_24000hz.sample_count
-                            offset_time_ms = (offset_samples * 1000.0) / 24000.0
-
-                        # Only include frames that are within the turn
-                        clip_frames: list[AudioFrame] = []
-                        while (
-                            frames
-                            and (
-                                offset_time_ms
-                                + frames[0].data_24000hz.duration * 1000.0
-                            )
-                            < end_ms
-                        ):
-                            f = frames.pop(0)
-                            clip_frames.append(f)
-                            offset_samples += f.data_24000hz.sample_count
-                            offset_time_ms = offset_samples * 1000.0 / 24000.0
-
-                        clip = AudioClip(
-                            audio=clip_frames,
-                            transcription=transcript,
-                        )
-                        self._output_queue.put_nowait(
-                            STTEvent_EndOfTurn(id=trans_id, clip=clip)
-                        )
-                        trans_id = short_uuid()
-                        running_words = []
-                        start_ms = -1
-                        end_ms = -1
-
-                elif msg_type == "Termination":
-                    pass
+                self.logger.info(f"Received message: {data}")
 
         async def send_task(ws: aiohttp.ClientWebSocketResponse) -> None:
             audio_bytes = b""
-            running_frames: list[AudioFrame] = []
-            dur = 0
+            start_msg = RequestPayload_StartSession(sample_rate=16000)
+            await ws.send_str(start_msg.model_dump_json())
             while True:
                 if ws.closed:
                     break
@@ -160,17 +85,17 @@ class Gabber(STT):
                 if item is None:
                     return
 
-                audio_bytes += item.data_24000hz.data.tobytes()
-                running_frames.append(item)
-                dur += item.data_24000hz.duration
-                # Send in 100ms chunks
-                if dur > 0.1:
-                    for f in running_frames:
-                        frames.append(f)
-                    running_frames.clear()
-                    await ws.send_bytes(audio_bytes)
-                    audio_bytes = b""
-                    dur = 0
+                audio_bytes += item.data_16000hz.data.tobytes()
+                dur = len(audio_bytes) / (16000 * 2)
+                if dur < 0.1:
+                    continue
+                for i in range(0, len(audio_bytes), 3200):
+                    chunk = audio_bytes[i : i + 3200]
+                    if len(chunk) != 3200:
+                        break
+                    b64_audio = base64.b64encode(chunk).decode("utf-8")
+                    msg = RequestPayload_AudioData(audio_data=b64_audio)
+                    await ws.send_str(msg.model_dump_json())
 
         async def keepalive_task(ws: aiohttp.ClientWebSocketResponse) -> None:
             while not self._closed:
@@ -181,14 +106,7 @@ class Gabber(STT):
 
         async with aiohttp.ClientSession() as session:
             async with session.ws_connect(
-                "wss://streaming.assemblyai.com/v3/ws",
-                headers={"Authorization": self._api_key},
-                params={
-                    "sample_rate": 24000,
-                    "encoding": "pcm_s16le",
-                    "format_turns": "true",
-                    "min_end_of_turn_silence_when_confident": 600,
-                },
+                "ws://localhost:7004"
             ) as ws:  # Adjust port as needed
                 await asyncio.gather(
                     rec_task(ws),

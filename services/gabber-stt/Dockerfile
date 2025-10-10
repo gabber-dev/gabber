@@ -21,6 +21,7 @@ COPY README.md ./
 
 RUN uv sync --frozen
 
+EXPOSE 7004
 
 
 COPY . .
