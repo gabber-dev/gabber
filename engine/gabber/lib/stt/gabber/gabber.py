@@ -14,6 +14,7 @@ from .messages import (
     ResponsePayload_FinalTranscription,
     ResponsePayload_InterimTranscription,
     ResponsePayload_SpeakingStarted,
+    Response,
     Request,
 )
 
@@ -52,18 +53,17 @@ class Gabber(STT):
 
     async def _run_ws(self) -> None:
         session_id = short_uuid()
-        offset_samples: int = 0
-        frames: list[AudioFrame] = []
-        start_ms: float = -1
-        end_ms: float = -1
         running_words: list[str] = []
+        dur: float = 0
+        audio_window = AudioWindow(max_dur_s=180.0)
 
         async def rec_task(ws: aiohttp.ClientWebSocketResponse) -> None:
-            nonlocal start_ms, end_ms, running_words, frames, offset_samples
+            nonlocal running_words, audio_window
             while not self._closed:
                 if ws.closed:
                     break
                 msg = await ws.receive()
+                self.logger.info("NIEL got message...")
                 if msg.type == aiohttp.WSMsgType.CLOSED:
                     self.logger.info("WebSocket closed")
                     break
@@ -73,10 +73,39 @@ class Gabber(STT):
                 elif msg.type == aiohttp.WSMsgType.BINARY:
                     pass
 
-                data = json.loads(msg.data)
+                data = Response.model_validate_json(msg.data)
+                payload = data.payload
+                if payload.type == "speaking_started":
+                    self.logger.info("Speech started")
+                    self._output_queue.put_nowait(
+                        STTEvent_SpeechStarted(id=payload.trans_id)
+                    )
+                elif payload.type == "interim_transcription":
+                    self.logger.info(f"Interim transcription: {payload.transcription}")
+                    self._output_queue.put_nowait(
+                        STTEvent_Transcription(
+                            id=payload.trans_id,
+                            delta_text="",
+                            running_text=payload.transcription,
+                        )
+                    )
+                elif payload.type == "final_transcription":
+                    self.logger.info(f"Final transcription: {payload.transcription}")
+                    clip_frames: list[AudioFrame] = audio_window.get_frames(
+                        payload.start_sample, payload.end_sample
+                    )
+                    clip = AudioClip(
+                        audio=clip_frames,
+                        transcription=payload.transcription,
+                    )
+
+                    self._output_queue.put_nowait(
+                        STTEvent_EndOfTurn(clip=clip, id=payload.trans_id)
+                    )
                 self.logger.info(f"Received message: {data}")
 
         async def send_task(ws: aiohttp.ClientWebSocketResponse) -> None:
+            nonlocal dur
             audio_bytes = b""
             start_payload = RequestPayload_StartSession(sample_rate=16000)
             start_msg = Request(payload=start_payload, session_id=session_id)
@@ -89,7 +118,12 @@ class Gabber(STT):
                     return
 
                 audio_bytes += item.data_16000hz.data.tobytes()
-                dur = len(audio_bytes) / (16000 * 2)
+                audio_window.push_frame(item)
+                dur += item.data_16000hz.duration
+
+                if dur > 180:
+                    raise Exception("Audio chunk too long")
+
                 if dur < 0.1:
                     continue
                 for i in range(0, len(audio_bytes), 3200):
@@ -100,6 +134,8 @@ class Gabber(STT):
                     payload = RequestPayload_AudioData(b64_data=b64_audio)
                     msg = Request(payload=payload, session_id=session_id)
                     await ws.send_str(msg.model_dump_json())
+
+                audio_bytes = audio_bytes[(len(audio_bytes) // 3200) * 3200 :]
 
         async def keepalive_task(ws: aiohttp.ClientWebSocketResponse) -> None:
             while not self._closed:
@@ -126,3 +162,37 @@ class Gabber(STT):
         if event is None:
             raise StopAsyncIteration
         return event
+
+
+class AudioWindow:
+    def __init__(self, *, max_dur_s: float = 180.0):
+        self.frames: list[AudioFrame] = []
+        self.frames_start_sample: int = 0
+        self.max_dur_s = max_dur_s
+        self.cur_dur = 0.0
+
+    def get_frames(self, start_sample: int, end_sample: int) -> list[AudioFrame]:
+        result: list[AudioFrame] = []
+        cur_sample = self.frames_start_sample
+        for f in self.frames:
+            if cur_sample + f.data_16000hz.sample_count <= start_sample:
+                cur_sample += f.data_16000hz.sample_count
+                continue
+            if cur_sample >= end_sample:
+                break
+            result.append(f)
+            cur_sample += f.data_16000hz.sample_count
+        return result
+
+    def push_frame(self, frame: AudioFrame) -> None:
+        self.frames.append(frame)
+        self.cur_dur += frame.data_16000hz.duration
+        self.prune()
+
+    def prune(self):
+        while self.cur_dur > self.max_dur_s and self.frames:
+            f = self.frames.pop(0)
+            self.cur_dur -= f.data_16000hz.duration
+            self.frames_start_sample += f.data_16000hz.sample_count
+            if self.cur_dur < 0:
+                self.cur_dur = 0.0
