@@ -2,7 +2,7 @@
 
 download-weights:
 	curl -L -o weights/smart-turn-v3.0.onnx https://huggingface.co/pipecat-ai/smart-turn-v3/resolve/main/smart-turn-v3.0.onnx?download=true
-	curl -L 
+	cp ../../engine/gabber/lib/audio/vad/files/silero_vad.onnx weights/silero_vad.onnx
 
 install: 
 	uv sync && \

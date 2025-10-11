@@ -1,0 +1,68 @@
+from typing import Annotated, Literal
+from pydantic import BaseModel, Field
+
+
+class RequestPayload_StartSession(BaseModel):
+    type: Literal["start_session"] = "start_session"
+    sample_rate: int
+
+
+class RequestPayload_AudioData(BaseModel):
+    type: Literal["audio"] = "audio"
+    b64_data: str
+
+
+class RequestPayload_EndSession(BaseModel):
+    type: Literal["end_session"] = "end_session"
+
+
+RequestPayload = Annotated[
+    RequestPayload_StartSession | RequestPayload_AudioData | RequestPayload_EndSession,
+    Field(discriminator="type"),
+]
+
+
+class Request(BaseModel):
+    payload: RequestPayload
+    session_id: str
+
+
+class ResponsePayload_Error(BaseModel):
+    type: Literal["error"] = "error"
+    message: str
+
+
+class ResponsePayload_InterimTranscription(BaseModel):
+    type: Literal["interim_transcription"] = "interim_transcription"
+    trans_id: int
+    start_sample: int
+    end_sample: int
+    transcription: str
+
+
+class ResponsePayload_SpeakingStarted(BaseModel):
+    type: Literal["speaking_started"] = "speaking_started"
+    trans_id: int
+    start_sample: int
+
+
+class ResponsePayload_FinalTranscription(BaseModel):
+    type: Literal["final_transcription"] = "final_transcription"
+    trans_id: int
+    transcription: str
+    start_sample: int
+    end_sample: int
+
+
+ResponsePayload = Annotated[
+    ResponsePayload_Error
+    | ResponsePayload_InterimTranscription
+    | ResponsePayload_SpeakingStarted
+    | ResponsePayload_FinalTranscription,
+    Field(discriminator="type"),
+]
+
+
+class Response(BaseModel):
+    payload: ResponsePayload
+    session_id: str

@@ -78,7 +78,7 @@ class WebSocketServer:
 
         await ws.close()
 
-    async def run(self, host="0.0.0.0", port=8000):
+    async def run(self, host="0.0.0.0", port=7004):
         runner = web.AppRunner(self.app)
         await runner.setup()
         site = web.TCPSite(runner, host, port)

@@ -13,9 +13,7 @@ from core import AudioInferenceRequest, AudioInferenceInternalResult
 
 SUPPORTED_SAMPLE_RATE = 16000
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-DEFAULT_WEIGHTS_PATH = os.path.join(
-    "../../engine/gabber/lib/audio/vad/files", "silero_vad.onnx"
-)
+DEFAULT_WEIGHTS_PATH = os.path.join("weights", "silero_vad.onnx")
 
 CONTEXT_SIZE = 64
 VAD_CHUNK_SIZE = 512

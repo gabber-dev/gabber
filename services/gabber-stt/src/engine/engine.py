@@ -18,9 +18,9 @@ VAD_SMOOTHING_HISTORY = 3
 class EngineSettings:
     vad_threshold: float = 0.4
     speaking_started_warmup_time_s: float = 0.15
-    vad_cooldown_time_s: float = 0.75
+    vad_cooldown_time_s: float = 0.5
     eot_timeout_s: float = 2.0
-    eot_warmup_time_s: float = 2.0
+    eot_warmup_time_s: float = 1.0
 
 
 class Engine:
@@ -205,8 +205,6 @@ class State:
             vad_value = float(
                 np.convolve(self.vad_history, self.avg_kernel, mode="valid")[0]
             )
-
-            # print("NEIL VAD:", vad_value)
 
             if vad_value < self.engine.settings.vad_threshold / 3:
                 self.last_non_voice = end_cursor
