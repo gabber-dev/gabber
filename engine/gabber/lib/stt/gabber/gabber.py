@@ -33,11 +33,17 @@ from ..stt import (
 
 
 class Gabber(STT):
-    def __init__(self, *, logger: logging.Logger | logging.LoggerAdapter):
+    def __init__(
+        self,
+        *,
+        logger: logging.Logger | logging.LoggerAdapter,
+        url: str = "ws://localhost:7004",
+    ):
         self.logger = logger
         self._process_queue = asyncio.Queue[AudioFrame | None]()
         self._closed = False
         self._output_queue = asyncio.Queue[STTEvent | None]()
+        self._url = url
 
     def push_audio(self, audio: AudioFrame) -> None:
         self._process_queue.put_nowait(audio)
@@ -63,7 +69,6 @@ class Gabber(STT):
                 if ws.closed:
                     break
                 msg = await ws.receive()
-                self.logger.info("NIEL got message...")
                 if msg.type == aiohttp.WSMsgType.CLOSED:
                     self.logger.info("WebSocket closed")
                     break
@@ -145,9 +150,7 @@ class Gabber(STT):
                 await ws.ping()
 
         async with aiohttp.ClientSession() as session:
-            async with session.ws_connect(
-                "ws://localhost:7004"
-            ) as ws:  # Adjust port as needed
+            async with session.ws_connect(self._url) as ws:  # Adjust port as needed
                 await asyncio.gather(
                     rec_task(ws),
                     send_task(ws),
