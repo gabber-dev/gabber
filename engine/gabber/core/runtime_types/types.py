@@ -246,6 +246,16 @@ class VideoClip(BaseRuntimeType):
     def log_type(self) -> str:
         return "video_clip"
 
+    @property
+    def estimated_fps(self) -> int:
+        if len(self.video) < 2:
+            return 1
+        total_time = self.video[-1].timestamp - self.video[0].timestamp
+        if total_time <= 0:
+            return 1
+
+        return int((len(self.video) - 1) / total_time)
+
 
 @dataclass
 class AVClip(BaseRuntimeType):

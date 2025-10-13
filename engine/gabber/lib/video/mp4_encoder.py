@@ -28,6 +28,7 @@ class MP4_Encoder:
     def push_frames(self, frame: list[runtime_types.VideoFrame]):
         if not self.encode_thread.is_alive():
             self.encode_thread.start()
+
         for f in frame:
             self.input_queue.put(f)
 

@@ -104,8 +104,8 @@ class LLMRequest:
                         }
                         new_msg["content"].append(new_cnt)
                 elif isinstance(cnt, ContextMessageContentItem_Video):
-                    # Videos need more than one frame to be encoded
-                    if video_support and len(cnt.clip.video) > 1:
+                    # Less than 8 frames, send as images. Certain llm servers don't do well with small number of frames
+                    if video_support and len(cnt.clip.video) > 8:
                         if not cnt.clip.mp4_bytes:
                             encoder = MP4_Encoder()
                             encoder.push_frames(cnt.clip.video)
@@ -115,7 +115,13 @@ class LLMRequest:
 
                         video_cnt: dict[str, Any] = {
                             "type": "video_url",
-                            "video_url": {"url": f"data:video/mp4;base64,{b64_video}"},
+                            "video_url": {
+                                "url": f"data:video/mp4;base64,{b64_video}",
+                                "video_metadata": {
+                                    "fps": cnt.clip.estimated_fps,
+                                    "total_num_frames": len(cnt.clip.video),
+                                },
+                            },
                         }
                         new_msg["content"].append(cast(Any, video_cnt))
                     else:
