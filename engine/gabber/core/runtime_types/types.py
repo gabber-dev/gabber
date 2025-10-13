@@ -133,6 +133,62 @@ class VideoFrame(BaseRuntimeType):
     def log_type(self) -> str:
         return "video_frame"
 
+    def downsize(
+        self,
+        *,
+        max_dimension: int | None = None,
+        dimension_divisible_by: int | None = None,
+        max_pixels: int | None = None,
+    ) -> "VideoFrame":
+        width = self.width
+        height = self.height
+        if max_dimension is not None:
+            if width > max_dimension or height > max_dimension:
+                scale = min(max_dimension / width, max_dimension / height)
+                width = int(width * scale)
+                height = int(height * scale)
+
+        if max_pixels is not None and width * height > max_pixels:
+            scale = (max_pixels / (width * height)) ** 0.5
+            width = int(width * scale)
+            height = int(height * scale)
+
+        if dimension_divisible_by is not None:
+            width = (width // dimension_divisible_by) * dimension_divisible_by
+            height = (height // dimension_divisible_by) * dimension_divisible_by
+
+        resized_data = cv2.resize(
+            self.data, (width, height), interpolation=cv2.INTER_AREA
+        )
+        return VideoFrame(
+            data=resized_data,
+            width=width,
+            height=height,
+            timestamp=self.timestamp,
+            format=self.format,
+        )
+
+    def crop(self, *, normalized_bbox: BoundingBox) -> "VideoFrame":
+        x_min = int(normalized_bbox.x_min * self.width)
+        y_min = int(normalized_bbox.y_min * self.height)
+        x_max = int(normalized_bbox.x_max * self.width)
+        y_max = int(normalized_bbox.y_max * self.height)
+        x_min = max(0, min(self.width - 1, x_min))
+        y_min = max(0, min(self.height - 1, y_min))
+        x_max = max(0, min(self.width, x_max))
+        y_max = max(0, min(self.height, y_max))
+        if x_max <= x_min or y_max <= y_min:
+            raise ValueError("Invalid bounding box for cropping.")
+
+        cropped_data = self.data[y_min:y_max, x_min:x_max, :]
+        return VideoFrame(
+            data=cropped_data,
+            width=cropped_data.shape[1],
+            height=cropped_data.shape[0],
+            timestamp=self.timestamp,
+            format=self.format,
+        )
+
 
 @dataclass
 class AudioClip(BaseRuntimeType):
