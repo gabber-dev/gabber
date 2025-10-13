@@ -24,11 +24,14 @@ class MP4_Encoder:
         self.encode_thread: threading.Thread = threading.Thread(
             target=self._encode_thread, daemon=True
         )
+        self._frame_count = 0
 
     def push_frames(self, frame: list[runtime_types.VideoFrame]):
         if not self.encode_thread.is_alive():
             self.encode_thread.start()
+
         for f in frame:
+            self._frame_count += 1
             self.input_queue.put(f)
 
     def _encode_thread(self):

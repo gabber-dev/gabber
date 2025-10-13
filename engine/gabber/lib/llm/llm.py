@@ -115,7 +115,13 @@ class LLMRequest:
 
                         video_cnt: dict[str, Any] = {
                             "type": "video_url",
-                            "video_url": {"url": f"data:video/mp4;base64,{b64_video}"},
+                            "video_url": {
+                                "url": f"data:video/mp4;base64,{b64_video}",
+                                "video_metadata": {
+                                    "fps": cnt.clip.estimated_fps,
+                                    "total_num_frames": len(cnt.clip.video),
+                                },
+                            },
                         }
                         new_msg["content"].append(cast(Any, video_cnt))
                     else:
