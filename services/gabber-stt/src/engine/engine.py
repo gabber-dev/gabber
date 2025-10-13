@@ -18,8 +18,8 @@ VAD_SMOOTHING_HISTORY = 3
 class EngineSettings:
     vad_threshold: float = 0.5
     speaking_started_warmup_time_s: float = 0.2
-    vad_cooldown_time_s: float = 0.5
-    eot_timeout_s: float = 1.5
+    vad_cooldown_time_s: float = 0.4
+    eot_timeout_s: float = 1.25
     eot_warmup_time_s: float = 1.0
 
 
