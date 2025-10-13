@@ -62,7 +62,7 @@ class TestClient:
             try:
                 async with aiohttp.ClientSession() as session:
                     session_id = str(uuid.uuid4())
-                    async with session.ws_connect("ws://127.0.0.1:8000") as ws:
+                    async with session.ws_connect("ws://127.0.0.1:7004") as ws:
                         self._connected = True
                         logging.info("Connected to server")
                         send_t = asyncio.create_task(send_task(ws, session_id))

@@ -76,7 +76,7 @@ class Gabber(STT):
                     self.logger.error("WebSocket error: %s", msg.data)
                     break
                 elif msg.type == aiohttp.WSMsgType.BINARY:
-                    pass
+                    continue
 
                 data = Response.model_validate_json(msg.data)
                 payload = data.payload
