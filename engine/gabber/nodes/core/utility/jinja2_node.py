@@ -90,8 +90,11 @@ class Jinja2(Node):
             + [rendered_output],
         )
 
-        # Don't render during resolve_pads - that should only happen during run()
-        # Rendering here causes stale/cached values to persist in the output
+        # Do an initial render to set the output value
+        # This ensures connected nodes get the proper initial value
+        property_pads = list(zip(property_names, property_values))
+        rendered = self.render_jinja(property_pads, jinja_template_pad.get_value())
+        rendered_output.set_value(rendered)
 
     def render_jinja(
         self,
