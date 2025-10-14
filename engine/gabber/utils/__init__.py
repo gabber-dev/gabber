@@ -18,6 +18,7 @@ from gabber.core.runtime_types import (
     ToolCall,
 )
 from livekit import rtc
+from livekit.plugins import noise_cancellation
 
 
 async def noop_task():
@@ -138,7 +139,7 @@ async def audio_stream_provider(room: rtc.Room, track_name: str, participant: st
                 if track_pub.name != track_name:
                     continue
 
-                noise_canc = None
+                noise_canc = noise_cancellation.BVC()
 
                 # This track is not a audio track
                 stream = rtc.AudioStream.from_track(

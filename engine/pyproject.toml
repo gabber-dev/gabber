@@ -41,6 +41,7 @@ dependencies = [
     "jinja2~=3.1.6",
     "mcp>=1.13.1",
     "pyyaml>=6.0.2",
+    "livekit-plugins-noise-cancellation>=0.2.5",
 ]
 
 [dependency-groups]
