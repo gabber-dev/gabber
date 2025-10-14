@@ -39,6 +39,19 @@ class LocalLLM(BaseLLM):
     async def api_key(self) -> str:
         return ""
 
+    async def max_context_len(self) -> int:
+        context_len_pad = cast(
+            pad.PropertySinkPad, self.get_pad_required("max_context_len")
+        )
+        context_len_value = context_len_pad.get_value()
+        if isinstance(context_len_value, int) and context_len_value >= 4096:
+            return context_len_value
+
+        self.logger.warning(
+            "Invalid max_context_len value; defaulting to 32768. It must be an integer >= 4096."
+        )
+        return 32768
+
     def resolve_pads(self):
         sink, source = self.get_base_pads()
         port_pad = cast(pad.PropertySinkPad, self.get_pad("port"))
@@ -51,4 +64,14 @@ class LocalLLM(BaseLLM):
                 value=7002,
             )
 
-        self.pads = cast(list[pad.Pad], sink + [port_pad] + source)
+        context_len_sink = cast(pad.PropertySinkPad, self.get_pad("max_context_len"))
+        if not context_len_sink:
+            context_len_sink = pad.PropertySinkPad(
+                id="max_context_len",
+                group="max_context_len",
+                owner_node=self,
+                default_type_constraints=[pad.types.Integer(minimum=4096)],
+                value=32768,
+            )
+
+        self.pads = cast(list[pad.Pad], sink + [port_pad, context_len_sink] + source)

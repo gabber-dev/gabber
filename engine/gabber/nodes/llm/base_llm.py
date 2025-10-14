@@ -11,6 +11,7 @@ from gabber.lib.llm import AsyncLLMResponseHandle, LLMRequest, openai_compatible
 from gabber.utils import get_full_content_from_deltas, get_tool_calls_from_choice_deltas
 from gabber.nodes.core.tool import ToolGroup
 from mcp.types import TextContent
+from gabber.lib.llm.token_estimator import TokenEstimator
 
 
 class BaseLLM(node.Node, ABC):
@@ -25,6 +26,12 @@ class BaseLLM(node.Node, ABC):
 
     @abstractmethod
     async def api_key(self) -> str: ...
+
+    @abstractmethod
+    async def max_context_len(self) -> int: ...
+
+    @abstractmethod
+    def get_token_estimator(self) -> TokenEstimator: ...
 
     def get_base_pads(self):
         run_trigger = cast(pad.StatelessSinkPad, self.get_pad("run_trigger"))
@@ -258,6 +265,8 @@ class BaseLLM(node.Node, ABC):
             api_key=api_key,
             headers={},
             model=self.model(),
+            max_context_len=await self.max_context_len(),
+            token_estimator=self.get_token_estimator(),
         )
 
         # Retry loop in case the LLM is still starting up

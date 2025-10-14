@@ -12,6 +12,7 @@ from gabber.core.runtime_types import (
 )
 
 from ..llm import AsyncLLMResponseHandle, LLMRequest
+from ..token_estimator import TokenEstimator
 
 
 class OpenAICompatibleLLMError(Exception):
@@ -26,7 +27,14 @@ class OpenAICompatibleLLMError(Exception):
 
 class OpenAICompatibleLLM:
     def __init__(
-        self, *, headers: dict[str, str], api_key: str, base_url: str, model: str
+        self,
+        *,
+        headers: dict[str, str],
+        api_key: str,
+        base_url: str,
+        model: str,
+        max_context_len: int,
+        token_estimator: TokenEstimator,
     ):
         self._model = model
         self._client = openai.AsyncClient(
@@ -34,6 +42,8 @@ class OpenAICompatibleLLM:
             default_headers=headers,
             base_url=base_url,
         )
+        self._token_estimator = token_estimator
+        self._max_context_len = max_context_len
         self._tasks = set[asyncio.Task]()
 
     async def create_completion(
@@ -45,7 +55,8 @@ class OpenAICompatibleLLM:
         max_completion_tokens: int | None = None,
     ) -> AsyncLLMResponseHandle:
         messages = await request.to_openai_completion_input(
-            audio_support=audio_support, video_support=video_support
+            audio_support=audio_support,
+            video_support=video_support,
         )
         tools = request.to_openai_completion_tools_input()
 

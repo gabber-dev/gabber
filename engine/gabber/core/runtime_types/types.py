@@ -304,7 +304,7 @@ class ToolCall(BaseModel, BaseRuntimeType):
 class ToolDefinition(BaseModel, BaseRuntimeType):
     name: str
     description: str
-    parameters: "Schema | dict[str, Any] | None" = None
+    parameters: "Schema | None" = None
 
     def log_type(self) -> str:
         return "tool_definition"
