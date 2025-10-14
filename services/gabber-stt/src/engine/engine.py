@@ -11,16 +11,17 @@ from lib import eot, stt, vad
 
 logger = logging.getLogger(__name__)
 
-VAD_SMOOTHING_HISTORY = 3
+VAD_SMOOTHING_HISTORY = 2
 
 
 @dataclass
 class EngineSettings:
-    vad_threshold: float = 0.5
-    speaking_started_warmup_time_s: float = 0.2
+    initial_vad_threshold: float = 0.6
+    vad_sustained_threshold: float = 0.4
+    speaking_started_warmup_time_s: float = 0.250
     vad_cooldown_time_s: float = 0.4
-    eot_timeout_s: float = 1.25
-    eot_warmup_time_s: float = 1.0
+    eot_timeout_s: float = 1.0
+    eot_warmup_time_s: float = 0.75
 
 
 class Engine:
@@ -66,7 +67,7 @@ class Engine:
     async def run(self):
         while True:
             await self.current_state.tick()
-            await asyncio.sleep(0.01)
+            await asyncio.sleep(0.03)
 
     def transition_to(self, new_state: "BaseEngineState"):
         logger.info(f"Transitioning from {self.current_state.name} to {new_state.name}")
@@ -99,7 +100,29 @@ class EngineState_NotTalking(BaseEngineState):
             )
             self.state.emit_start_speaking()
             self.state.start_talking = self.state.last_non_voice
+            self.state.engine.transition_to(EngineState_TalkingWarmUp(state=self.state))
+
+
+class EngineState_TalkingWarmUp(BaseEngineState):
+    async def tick(self):
+        await self.state.update_vad()
+        await self.state.update_stt()
+
+        time_since_last_voice = (
+            self.state.latest_voice - self.state.last_non_voice
+        ) / self.state.engine.vad_session.sample_rate
+
+        if (
+            self.state.current_stt_result.transcription != ""
+            and time_since_last_voice
+            > self.state.engine.settings.speaking_started_warmup_time_s
+        ):
+            self.state.eot_cursor = self.state.latest_voice
             self.state.engine.transition_to(EngineState_Talking(state=self.state))
+            return
+
+        if time_since_last_voice >= self.state.engine.settings.vad_cooldown_time_s:
+            self.state.engine.transition_to(EngineState_NotTalking(state=self.state))
 
 
 class EngineState_Talking(BaseEngineState):
@@ -206,10 +229,18 @@ class State:
                 np.convolve(self.vad_history, self.avg_kernel, mode="valid")[0]
             )
 
-            if vad_value < self.engine.settings.vad_threshold / 3:
+            if vad_value < self.engine.settings.vad_sustained_threshold / 2:
                 self.last_non_voice = end_cursor
 
-            if vad_value > self.engine.settings.vad_threshold:
+            time_since_last_voice = (
+                end_cursor - self.latest_voice
+            ) / self.engine.vad_session.sample_rate
+
+            threshold = self.engine.settings.initial_vad_threshold
+            if time_since_last_voice < self.engine.settings.vad_cooldown_time_s:
+                threshold = self.engine.settings.vad_sustained_threshold
+
+            if vad_value > threshold:
                 self.latest_voice = end_cursor
 
     async def update_eot(self):
