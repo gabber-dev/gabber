@@ -123,7 +123,7 @@ function MessageItem({
 export function LLMContextNode({ data }: BaseBlockProps) {
   const [showMessages, setShowMessages] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const propertyPadResult = usePropertyPad<ContextMessage[]>(data.id, "source");
+  const propertyPadResult = usePropertyPad<PadValue_List>(data.id, "source");
   const { runtimeValue: contextMessages, editorValue } = propertyPadResult;
 
   // Debug: log what we're getting
