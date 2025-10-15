@@ -16,7 +16,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export { EngineProvider, useEngine } from './useEngine';
+export { EngineProvider, useEngine, useEngineInternal } from './useEngine';
 export { usePropertyPad } from './usePropertyPad';
 export { useSourcePad } from './useSourcePad';
 export { usePad } from './usePad';
