@@ -20,6 +20,7 @@ import { JsonNode } from "./JsonNode";
 import { NodeName } from "./components/NodeName";
 import { NodeId } from "./components/NodeId";
 import { Jinja2Node } from "./Jinja2Node";
+import { LLMContextNode } from "./LLMContextNode";
 
 export interface BaseBlockProps {
   data: NodeEditorRepresentation;
@@ -71,6 +72,10 @@ export function BaseBlock({ data }: BaseBlockProps) {
 
   if (data.type === "Jinja2") {
     return <Jinja2Node data={data} />;
+  }
+
+  if (data.type === "LLMContext") {
+    return <LLMContextNode data={data} />;
   }
 
   // Add ambient-float by default, but remove it if selected
