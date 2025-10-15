@@ -263,7 +263,11 @@ class LLMContext(node.Node):
         async def pad_task(p: pad.SinkPad):
             async for item in p:
                 assert isinstance(item.value, runtime_types.ContextMessage)
+                logging.info(
+                    f"LLMContext received message on {p.get_id()}: role={item.value.role}"
+                )
                 new_msgs = prune(source.get_value() + [item.value])
+                logging.info(f"LLMContext now has {len(new_msgs)} messages in context")
                 # types = {"image": 0, "video": 0, "audio": 0, "text": 0}
                 # for m in new_msgs:
                 #     for c in m.content:
@@ -297,6 +301,7 @@ class LLMContext(node.Node):
 
         for p in self.pads:
             if isinstance(p, pad.SinkPad):
+                logging.info(f"LLMContext monitoring sink pad: {p.get_id()}")
                 tasks.append(asyncio.create_task(pad_task(p)))
 
         tasks.append(asyncio.create_task(system_message_task()))

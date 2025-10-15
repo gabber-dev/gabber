@@ -47,6 +47,9 @@ class RuntimeApi:
             ev_value = PadValue_AudioClip(transcript=trans, duration=value.duration)
         elif isinstance(value, runtime_types.VideoClip):
             ev_value = PadValue_VideoClip(duration=value.duration)
+        elif isinstance(v, list):
+            # Handle lists (like list of ContextMessages)
+            ev_value = PadValue_List(value=v)
         else:
             ev_value = PadValue_Trigger()
 
@@ -294,6 +297,11 @@ class PadValue_VideoClip(BaseModel):
     duration: float
 
 
+class PadValue_List(BaseModel):
+    type: Literal["list"] = "list"
+    value: list[Any]
+
+
 PadValue = Annotated[
     PadValue_String
     | PadValue_Integer
@@ -301,7 +309,8 @@ PadValue = Annotated[
     | PadValue_Boolean
     | PadValue_Trigger
     | PadValue_AudioClip
-    | PadValue_VideoClip,
+    | PadValue_VideoClip
+    | PadValue_List,
     Field(discriminator="type", description="Type of the pad triggered value"),
 ]
 
