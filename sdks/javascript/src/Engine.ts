@@ -219,9 +219,7 @@ export class Engine  {
 
     const msg = JSON.parse(new TextDecoder().decode(data));
     if (msg.type === "ack") {
-        console.log("Received ACK for request:", msg.req_id);
     } else if (msg.type === "complete") {
-        console.log("Received COMPLETE for request:", msg.req_id);
         if(msg.error) {
             console.error("Error in request:", msg.error);
             const pendingRequest = this.pendingRequests.get(msg.req_id);
