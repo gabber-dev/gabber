@@ -67,6 +67,7 @@ class OpenAICompatibleLLM:
                 tools=tools,
                 stream=True,
                 max_completion_tokens=max_completion_tokens,
+                stream_options={"include_usage": True},
             )
         except openai.APIStatusError as e:
             raise OpenAICompatibleLLMError(code=e.status_code, msg=e.message) from e
@@ -75,6 +76,22 @@ class OpenAICompatibleLLM:
 
         async def res_task():
             async for chunk in res:
+                usage = chunk.usage
+                logging.debug(f"LLM chunk: {chunk}")
+                if usage:
+                    handle.put_not_thread_safe(
+                        ContextMessageContent_ChoiceDelta(
+                            content=None,
+                            role=None,
+                            refusal=None,
+                            tool_calls=None,
+                            usage={
+                                "prompt_tokens": usage.prompt_tokens,
+                                "completion_tokens": usage.completion_tokens,
+                                "total_tokens": usage.total_tokens,
+                            },
+                        )
+                    )
                 if len(chunk.choices) == 0:
                     continue
 
@@ -104,6 +121,7 @@ class OpenAICompatibleLLM:
                             role=role,
                             refusal=refusal,
                             tool_calls=tool_calls,
+                            usage=None,
                         )
                     )
 

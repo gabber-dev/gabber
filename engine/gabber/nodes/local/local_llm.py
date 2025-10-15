@@ -7,6 +7,7 @@ from gabber.core import pad
 import os
 from gabber.core.node import NodeMetadata
 from gabber.nodes.llm import BaseLLM
+from gabber.lib.llm.token_estimator import TokenEstimator, DEFAULT_TOKEN_ESTIMATOR
 
 
 class LocalLLM(BaseLLM):
@@ -38,6 +39,9 @@ class LocalLLM(BaseLLM):
 
     async def api_key(self) -> str:
         return ""
+
+    def get_token_estimator(self) -> TokenEstimator:
+        return DEFAULT_TOKEN_ESTIMATOR
 
     async def max_context_len(self) -> int:
         context_len_pad = cast(

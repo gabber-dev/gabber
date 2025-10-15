@@ -310,6 +310,7 @@ class BaseLLM(node.Node, ABC):
             ctx: pad.RequestContext,
             tg_tools: list[runtime_types.ToolDefinition],
             mcp_tools: dict[mcp.MCP, list[runtime_types.ToolDefinition]],
+            estimated_prompt_tokens: int,
         ):
             tool_task: asyncio.Task[list[runtime_types.ContextMessage]] | None = None
             all_deltas: list[runtime_types.ContextMessageContent_ChoiceDelta] = []
@@ -321,6 +322,12 @@ class BaseLLM(node.Node, ABC):
                 started_source.push_item(runtime_types.Trigger(), ctx)
                 thinking = False
                 async for item in handle:
+                    if item.usage is not None:
+                        self.logger.info(
+                            f"Actual prompt usage: {item.usage.get('prompt_tokens', 0)}, estimated: {estimated_prompt_tokens}"
+                        )
+                    if item.refusal is not None:
+                        continue
                     if item.content:
                         cnt = item.content
                         if thinking:
@@ -446,6 +453,9 @@ class BaseLLM(node.Node, ABC):
                 continue
 
             try:
+                estimated_prompt_tokens = request.estimate_tokens(
+                    token_estimator=self.get_token_estimator()
+                )
                 running_handle = await llm.create_completion(
                     request=request,
                     video_support=video_supported,
@@ -457,6 +467,7 @@ class BaseLLM(node.Node, ABC):
                         ctx,
                         tg_tool_definitions,
                         mcp_tool_definitions,
+                        estimated_prompt_tokens=estimated_prompt_tokens,
                     )
                 )
                 tasks.add(t)

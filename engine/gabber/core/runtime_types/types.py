@@ -501,6 +501,7 @@ class Trigger(BaseModel, BaseRuntimeType):
 class ContextMessageContent_ChoiceDelta:
     content: str | None
     refusal: str | None
+    usage: dict[str, int] | None
     role: ContextMessageRole | None
     tool_calls: list[ContextMessageContent_ToolCallDelta] | None
 
