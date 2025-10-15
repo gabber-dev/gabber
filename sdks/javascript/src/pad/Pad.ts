@@ -149,7 +149,7 @@ export class PropertyPad<DataType extends PadValue> extends BasePad<DataType> {
         return this._getValue();
     }
 
-    public async getListItems(this: PropertyPad<PadValue_List>): Promise<PadValue[]> {
+    public async getListItems(): Promise<PadValue[]> {
         return this._getListItems();
     }
 }

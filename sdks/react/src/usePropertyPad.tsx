@@ -16,7 +16,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { PadValue, PropertyPad } from "@gabber/client";
+import { PadValue, PadValue_List, PropertyPad } from "@gabber/client";
 import { useEngine, useEngineInternal } from "./useEngine";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePad } from "./usePad";
@@ -53,6 +53,18 @@ export function usePropertyPad<DataType extends PadValue>(nodeId: string, padId:
         }
     }, [padRef]);
 
+    const loadListItems = useCallback(async () => {
+        if (padLoadingRef.current) return; // Prevent multiple calls
+        padLoadingRef.current = true;
+        try {
+            await (padRef.current! as PropertyPad<PadValue_List>).getListItems();
+        } catch (error) {
+            console.error("Failed to load list items:", error);
+        } finally {
+            padLoadingRef.current = false;
+        }
+    }, [padRef]);
+
     useEffect(() => {
         if (connectionState === "connected" && prevConnectionState.current !== "connected") {
             loadPadValue();
@@ -71,5 +83,6 @@ export function usePropertyPad<DataType extends PadValue>(nodeId: string, padId:
 
     return {
         currentValue,
+        loadListItems: padRef.current?.loadListItems.bind(padRef.current),
     }
 }
