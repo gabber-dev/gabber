@@ -31,7 +31,7 @@ class RuntimeApi:
         self._publish_locks: dict[str, PublishLock] = {}
         self._dc_queue = asyncio.Queue[QueueItem | None]()
 
-    def _trigger_value_from_pad_value(self, value: Any):
+    def _trigger_value_from_pad_value(self, *, value: Any):
         v = serialize.serialize_pad_value(value)
         ev_value: PadValue
         if isinstance(v, bool):
@@ -48,12 +48,69 @@ class RuntimeApi:
         elif isinstance(value, runtime_types.VideoClip):
             ev_value = PadValue_VideoClip(duration=value.duration)
         elif isinstance(v, list):
-            # Handle lists (like list of ContextMessages)
-            ev_value = PadValue_List(value=v)
+            ev_value = PadValue_List(items=[], count=len(v))
+        elif isinstance(value, runtime_types.ContextMessage):
+            ev_value = self._context_message_trigger_value(value)
         else:
             ev_value = PadValue_Trigger()
 
         return ev_value
+
+    def _context_message_trigger_value(self, msg: runtime_types.ContextMessage):
+        content: list[PadValue_ContextMessageContentItem] = []
+        for item in msg.content:
+            if isinstance(item, runtime_types.ContextMessageContentItem_Text):
+                content.append(
+                    PadValue_ContextMessageContentItem(
+                        content_type="text", text=item.content
+                    )
+                )
+            elif isinstance(item, runtime_types.ContextMessageContentItem_Image):
+                content.append(
+                    PadValue_ContextMessageContentItem(
+                        content_type="image",
+                        image=PadValue_ContextMessageContentItem_Image(
+                            width=item.frame.width,
+                            height=item.frame.height,
+                            handle="",
+                        ),
+                    )
+                )
+            elif isinstance(item, runtime_types.ContextMessageContentItem_Audio):
+                dur = item.clip.duration if item.clip.duration else 0.0
+                content.append(
+                    PadValue_ContextMessageContentItem(
+                        content_type="audio",
+                        audio=PadValue_ContextMessageContentItem_Audio(
+                            duration=dur,
+                            transcription=item.clip.transcription,
+                            handle="",
+                        ),
+                    )
+                )
+            elif isinstance(item, runtime_types.ContextMessageContentItem_Video):
+                dur = item.clip.duration if item.clip.duration else 0.0
+                width = 0
+                height = 0
+                if item.clip.video and len(item.clip.video) > 0:
+                    width = item.clip.video[0].width
+                    height = item.clip.video[0].height
+                content.append(
+                    PadValue_ContextMessageContentItem(
+                        content_type="video",
+                        video=PadValue_ContextMessageContentItem_Video(
+                            duration=dur,
+                            width=width,
+                            height=height,
+                            handle="",
+                        ),
+                    )
+                )
+        res = PadValue_ContextMessage(
+            role=msg.role,
+            content=content,
+        )
+        return res
 
     def emit_logs(self, items: list["RuntimeEventPayload_LogItem"]):
         self._dc_queue.put_nowait(
@@ -72,7 +129,7 @@ class RuntimeApi:
         all_pads = list(node_pad_lookup.values())
 
         def on_pad(p: pad.Pad, value: Any):
-            ev_value = self._trigger_value_from_pad_value(value)
+            ev_value = self._trigger_value_from_pad_value(value=value)
             self._dc_queue.put_nowait(
                 QueueItem(
                     payload=RuntimeEvent(
@@ -217,7 +274,7 @@ class RuntimeApi:
                     return
 
                 value = pad_obj.get_value()
-                value_obj = self._trigger_value_from_pad_value(value)
+                value_obj = self._trigger_value_from_pad_value(value=value)
 
                 # Don't get node references
                 if isinstance(value, Node):
@@ -225,6 +282,43 @@ class RuntimeApi:
 
                 complete_resp.payload = RuntimeResponsePayload_GetValue(
                     type="get_value", value=value_obj
+                )
+                self._dc_queue.put_nowait(
+                    QueueItem(payload=complete_resp, participant=packet.participant)
+                )
+            elif request.payload.type == "get_list_items":
+                payload = request.payload
+                node_id = payload.node_id
+                pad_id = payload.pad_id
+                pad_obj = node_pad_lookup.get((node_id, pad_id))
+                if not isinstance(pad_obj, pad.PropertyPad):
+                    logging.error(
+                        f"Pad {pad_id} in node {node_id} is not a PropertyPad."
+                    )
+                    complete_resp.error = (
+                        f"Pad {pad_id} in node {node_id} is not a PropertyPad."
+                    )
+                    self._dc_queue.put_nowait(
+                        QueueItem(payload=complete_resp, participant=packet.participant)
+                    )
+                    return
+
+                value = pad_obj.get_value()
+                if not isinstance(value, list):
+                    logging.error(f"Pad {pad_id} in node {node_id} is not a list.")
+                    complete_resp.error = (
+                        f"Pad {pad_id} in node {node_id} is not a list."
+                    )
+                    self._dc_queue.put_nowait(
+                        QueueItem(payload=complete_resp, participant=packet.participant)
+                    )
+                    return
+
+                ev_values = [
+                    self._trigger_value_from_pad_value(value=item) for item in value
+                ]
+                complete_resp.payload = RuntimeResponsePayload_GetListItems(
+                    type="get_list_items", items=ev_values
                 )
                 self._dc_queue.put_nowait(
                     QueueItem(payload=complete_resp, participant=packet.participant)
@@ -297,9 +391,44 @@ class PadValue_VideoClip(BaseModel):
     duration: float
 
 
+class PadValue_ContextMessageContentItem_Image(BaseModel):
+    width: int
+    height: int
+    handle: str
+
+
+class PadValue_ContextMessageContentItem_Audio(BaseModel):
+    duration: float
+    transcription: str | None
+    handle: str
+
+
+class PadValue_ContextMessageContentItem_Video(BaseModel):
+    width: int
+    height: int
+    duration: float
+    handle: str
+
+
+class PadValue_ContextMessageContentItem(BaseModel):
+    type: Literal["context_message_content"] = "context_message_content"
+    content_type: Literal["text", "image", "audio", "video"]
+    text: str | None = None
+    image: PadValue_ContextMessageContentItem_Image | None = None
+    audio: PadValue_ContextMessageContentItem_Audio | None = None
+    video: PadValue_ContextMessageContentItem_Video | None = None
+
+
+class PadValue_ContextMessage(BaseModel):
+    type: Literal["context_message"] = "context_message"
+    role: str
+    content: list[PadValue_ContextMessageContentItem]
+
+
 class PadValue_List(BaseModel):
     type: Literal["list"] = "list"
-    value: list[Any]
+    count: int
+    items: list[Any]
 
 
 PadValue = Annotated[
@@ -310,7 +439,8 @@ PadValue = Annotated[
     | PadValue_Trigger
     | PadValue_AudioClip
     | PadValue_VideoClip
-    | PadValue_List,
+    | PadValue_List
+    | PadValue_ContextMessage,
     Field(discriminator="type", description="Type of the pad triggered value"),
 ]
 
@@ -360,6 +490,12 @@ class RuntimeRequestPayload_GetValue(BaseModel):
     pad_id: str
 
 
+class RuntimeRequestPayload_GetListItems(BaseModel):
+    type: Literal["get_list_items"] = "get_list_items"
+    node_id: str
+    pad_id: str
+
+
 class RuntimeRequestPayload_LockPublisher(BaseModel):
     type: Literal["lock_publisher"] = "lock_publisher"
     publish_node: str
@@ -368,6 +504,7 @@ class RuntimeRequestPayload_LockPublisher(BaseModel):
 RuntimeRequestPayload = Annotated[
     RuntimeRequestPayload_PushValue
     | RuntimeRequestPayload_GetValue
+    | RuntimeRequestPayload_GetListItems
     | RuntimeRequestPayload_LockPublisher,
     Field(discriminator="type", description="Request to push data to a pad"),
 ]
@@ -393,6 +530,11 @@ class RuntimeResponsePayload_GetValue(BaseModel):
     value: PadValue
 
 
+class RuntimeResponsePayload_GetListItems(BaseModel):
+    type: Literal["get_list_items"] = "get_list_items"
+    items: list[PadValue]
+
+
 class RuntimeResponsePayload_LockPublisher(BaseModel):
     type: Literal["lock_publisher"] = "lock_publisher"
     success: bool
@@ -401,6 +543,7 @@ class RuntimeResponsePayload_LockPublisher(BaseModel):
 RuntimeResponsePayload = Annotated[
     RuntimeResponsePayload_PushValue
     | RuntimeResponsePayload_GetValue
+    | RuntimeResponsePayload_GetListItems
     | RuntimeResponsePayload_LockPublisher,
     Field(discriminator="type", description="Payload for the runtime request complete"),
 ]

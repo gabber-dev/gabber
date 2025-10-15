@@ -57,6 +57,7 @@ function MessageItem({
   };
 
   // Process content items to show text and media indicators
+  console.log("Processing message content:", message.content);
   const contentItems = message.content.map((item, idx) => {
     if (typeof item === "string") {
       return { type: "text", content: item, key: idx };
