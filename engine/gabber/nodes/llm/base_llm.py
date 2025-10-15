@@ -11,6 +11,7 @@ from gabber.lib.llm import AsyncLLMResponseHandle, LLMRequest, openai_compatible
 from gabber.utils import get_full_content_from_deltas, get_tool_calls_from_choice_deltas
 from gabber.nodes.core.tool import ToolGroup
 from mcp.types import TextContent
+from gabber.lib.llm.token_estimator import TokenEstimator
 
 
 class BaseLLM(node.Node, ABC):
@@ -25,6 +26,12 @@ class BaseLLM(node.Node, ABC):
 
     @abstractmethod
     async def api_key(self) -> str: ...
+
+    @abstractmethod
+    async def max_context_len(self) -> int: ...
+
+    @abstractmethod
+    def get_token_estimator(self) -> TokenEstimator: ...
 
     def get_base_pads(self):
         run_trigger = cast(pad.StatelessSinkPad, self.get_pad("run_trigger"))
@@ -258,6 +265,8 @@ class BaseLLM(node.Node, ABC):
             api_key=api_key,
             headers={},
             model=self.model(),
+            max_context_len=await self.max_context_len(),
+            token_estimator=self.get_token_estimator(),
         )
 
         # Retry loop in case the LLM is still starting up
@@ -301,6 +310,7 @@ class BaseLLM(node.Node, ABC):
             ctx: pad.RequestContext,
             tg_tools: list[runtime_types.ToolDefinition],
             mcp_tools: dict[mcp.MCP, list[runtime_types.ToolDefinition]],
+            estimated_prompt_tokens: int,
         ):
             tool_task: asyncio.Task[list[runtime_types.ContextMessage]] | None = None
             all_deltas: list[runtime_types.ContextMessageContent_ChoiceDelta] = []
@@ -312,6 +322,12 @@ class BaseLLM(node.Node, ABC):
                 started_source.push_item(runtime_types.Trigger(), ctx)
                 thinking = False
                 async for item in handle:
+                    if item.usage is not None:
+                        self.logger.info(
+                            f"Actual prompt usage: {item.usage.get('prompt_tokens', 0)}, estimated: {estimated_prompt_tokens}"
+                        )
+                    if item.refusal is not None:
+                        continue
                     if item.content:
                         cnt = item.content
                         if thinking:
@@ -437,6 +453,9 @@ class BaseLLM(node.Node, ABC):
                 continue
 
             try:
+                estimated_prompt_tokens = request.estimate_tokens(
+                    token_estimator=self.get_token_estimator()
+                )
                 running_handle = await llm.create_completion(
                     request=request,
                     video_support=video_supported,
@@ -448,6 +467,7 @@ class BaseLLM(node.Node, ABC):
                         ctx,
                         tg_tool_definitions,
                         mcp_tool_definitions,
+                        estimated_prompt_tokens=estimated_prompt_tokens,
                     )
                 )
                 tasks.add(t)

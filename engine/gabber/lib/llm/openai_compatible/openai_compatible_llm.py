@@ -12,6 +12,7 @@ from gabber.core.runtime_types import (
 )
 
 from ..llm import AsyncLLMResponseHandle, LLMRequest
+from ..token_estimator import TokenEstimator
 
 
 class OpenAICompatibleLLMError(Exception):
@@ -26,7 +27,14 @@ class OpenAICompatibleLLMError(Exception):
 
 class OpenAICompatibleLLM:
     def __init__(
-        self, *, headers: dict[str, str], api_key: str, base_url: str, model: str
+        self,
+        *,
+        headers: dict[str, str],
+        api_key: str,
+        base_url: str,
+        model: str,
+        max_context_len: int,
+        token_estimator: TokenEstimator,
     ):
         self._model = model
         self._client = openai.AsyncClient(
@@ -34,6 +42,8 @@ class OpenAICompatibleLLM:
             default_headers=headers,
             base_url=base_url,
         )
+        self._token_estimator = token_estimator
+        self._max_context_len = max_context_len
         self._tasks = set[asyncio.Task]()
 
     async def create_completion(
@@ -45,7 +55,8 @@ class OpenAICompatibleLLM:
         max_completion_tokens: int | None = None,
     ) -> AsyncLLMResponseHandle:
         messages = await request.to_openai_completion_input(
-            audio_support=audio_support, video_support=video_support
+            audio_support=audio_support,
+            video_support=video_support,
         )
         tools = request.to_openai_completion_tools_input()
 
@@ -56,6 +67,7 @@ class OpenAICompatibleLLM:
                 tools=tools,
                 stream=True,
                 max_completion_tokens=max_completion_tokens,
+                stream_options={"include_usage": True},
             )
         except openai.APIStatusError as e:
             raise OpenAICompatibleLLMError(code=e.status_code, msg=e.message) from e
@@ -64,6 +76,22 @@ class OpenAICompatibleLLM:
 
         async def res_task():
             async for chunk in res:
+                usage = chunk.usage
+                logging.debug(f"LLM chunk: {chunk}")
+                if usage:
+                    handle.put_not_thread_safe(
+                        ContextMessageContent_ChoiceDelta(
+                            content=None,
+                            role=None,
+                            refusal=None,
+                            tool_calls=None,
+                            usage={
+                                "prompt_tokens": usage.prompt_tokens,
+                                "completion_tokens": usage.completion_tokens,
+                                "total_tokens": usage.total_tokens,
+                            },
+                        )
+                    )
                 if len(chunk.choices) == 0:
                     continue
 
@@ -93,6 +121,7 @@ class OpenAICompatibleLLM:
                             role=role,
                             refusal=refusal,
                             tool_calls=tool_calls,
+                            usage=None,
                         )
                     )
 

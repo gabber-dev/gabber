@@ -26,6 +26,7 @@ from gabber.core.runtime_types import (
     Schema,
 )
 from gabber.lib.video.mp4_encoder import MP4_Encoder
+from .token_estimator import TokenEstimator
 
 
 class BaseLLM(ABC):
@@ -39,8 +40,28 @@ class LLMRequest:
     context: list[ContextMessage]
     tool_definitions: list[ToolDefinition]
 
+    def estimate_tokens(self, token_estimator: TokenEstimator) -> int:
+        total = 0
+        for msg in self.context:
+            for cnt in msg.content:
+                total += token_estimator.estimate_tokens_for_content_item(cnt)
+
+        for tool in self.tool_definitions:
+            txt = tool.description
+            if tool.parameters is not None:
+                for k, v in tool.parameters.to_json_schema().items():
+                    txt += f"{k}: {v}\n"
+
+            total += token_estimator.estimate_tokens_for_content_item(
+                ContextMessageContentItem_Text(content=txt)
+            )
+        return total
+
     async def to_openai_completion_input(
-        self, *, audio_support: bool, video_support: bool
+        self,
+        *,
+        audio_support: bool,
+        video_support: bool,
     ) -> list[chat.ChatCompletionMessageParam]:
         res: list[chat.ChatCompletionMessageParam] = []
         for msg in self.context:

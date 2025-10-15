@@ -1,12 +1,16 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-from typing import cast
+from typing import Any, cast
 
 from gabber.core import pad
 from gabber.core.node import NodeMetadata
 
 from .base_llm import BaseLLM
+from gabber.lib.llm import (
+    OPENAI_TOKEN_ESTIMATOR,
+    DEFAULT_TOKEN_ESTIMATOR,
+)
 
 
 class OpenAICompatibleLLM(BaseLLM):
@@ -46,6 +50,25 @@ class OpenAICompatibleLLM(BaseLLM):
             raise RuntimeError("Secret provider is not set for OpenAICompatibleLLM.")
         return await self.secret_provider.resolve_secret(api_key_name)
 
+    def get_token_estimator(self) -> Any:
+        if "openai" in self.model():
+            return OPENAI_TOKEN_ESTIMATOR
+
+        return DEFAULT_TOKEN_ESTIMATOR
+
+    async def max_context_len(self) -> int:
+        context_len_pad = cast(
+            pad.PropertySinkPad, self.get_pad_required("max_context_len")
+        )
+        context_len_value = context_len_pad.get_value()
+        if isinstance(context_len_value, int) and context_len_value >= 4096:
+            return context_len_value
+
+        self.logger.warning(
+            "Invalid max_context_len value; defaulting to 32768. It must be an integer >= 4096."
+        )
+        return 32768
+
     def resolve_pads(self):
         base_sink_pads, base_source_pads = self.get_base_pads()
         base_url_sink = cast(pad.PropertySinkPad, self.get_pad("base_url"))
@@ -78,7 +101,19 @@ class OpenAICompatibleLLM(BaseLLM):
                 value="gpt-4.1-mini",
             )
 
-        base_sink_pads.extend([base_url_sink, api_key_sink, model_sink])
+        context_len_sink = cast(pad.PropertySinkPad, self.get_pad("max_context_len"))
+        if not context_len_sink:
+            context_len_sink = pad.PropertySinkPad(
+                id="max_context_len",
+                group="max_context_len",
+                owner_node=self,
+                default_type_constraints=[pad.types.Integer(minimum=4096)],
+                value=32768,
+            )
+
+        base_sink_pads.extend(
+            [base_url_sink, api_key_sink, model_sink, context_len_sink]
+        )
 
         cast(list[pad.types.Secret], api_key_sink.get_type_constraints())[
             0
