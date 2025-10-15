@@ -304,7 +304,7 @@ class ToolCall(BaseModel, BaseRuntimeType):
 class ToolDefinition(BaseModel, BaseRuntimeType):
     name: str
     description: str
-    parameters: "Schema | dict[str, Any] | None" = None
+    parameters: "Schema | None" = None
 
     def log_type(self) -> str:
         return "tool_definition"
@@ -501,6 +501,7 @@ class Trigger(BaseModel, BaseRuntimeType):
 class ContextMessageContent_ChoiceDelta:
     content: str | None
     refusal: str | None
+    usage: dict[str, int] | None
     role: ContextMessageRole | None
     tool_calls: list[ContextMessageContent_ToolCallDelta] | None
 

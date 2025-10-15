@@ -208,7 +208,7 @@ class TTS(node.Node):
 
                     # Don't go faster than real-time
                     while (played_time + clock_start_time) - time.time() > 0.25:
-                        await asyncio.sleep(0.1)
+                        await asyncio.sleep(0.05)
 
                 final_transcription_source.push_item(new_job.spoken_text, new_job.ctx)
                 new_job.ctx.complete()
