@@ -44,11 +44,9 @@ class TokenEstimator:
             if pixels == 0:
                 return 0
 
-            logging.info(f"NEIL Estimating tokens for image with {pixels} pixels")
             return max(0, int(pixels / self._video_frame_pixels_per_token))
         elif isinstance(item, (ContextMessageContentItem_Image)):
             pixels = item.frame.width * item.frame.height
-            logging.info(f"NEIL Estimating tokens for image with {pixels} pixels")
             return max(
                 1,
                 int(
@@ -68,8 +66,8 @@ OPENAI_TOKEN_ESTIMATOR = TokenEstimator(
 )
 
 QWEN_TOKEN_ESTIMATOR = TokenEstimator(
-    video_frame_pixels_per_token=16 * 16,
-    image_pixels_per_token=28 * 28,
+    video_frame_pixels_per_token=16 * 16 / 2,
+    image_pixels_per_token=32 * 32 / 2,
     audio_samples_per_token=16000,
     tokens_per_word=1.25,
 )
