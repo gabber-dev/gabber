@@ -24,6 +24,7 @@ import { ConnectionState } from "@gabber/client";
 
 type UsePropertyPadType<DataType extends PadValue> = {
     currentValue: DataType | "loading";
+    loadListItems: () => Promise<void>;
 }
 
 export function usePropertyPad<DataType extends PadValue>(nodeId: string, padId: string): UsePropertyPadType<DataType> {

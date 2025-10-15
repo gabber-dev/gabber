@@ -43,6 +43,11 @@ export type {
     PadValue_Float,
     PadValue_Integer,
     PadValue_String,
+    PadValue_List,
+    PadValue_ContextMessage,
+    PadValue_ContextMessageContentItem_Audio,
+    PadValue_ContextMessageContentItem_Video,
+    PadValue_ContextMessageContentItem_Image,
     PadValue,
     RuntimeEventPayload_LogItem,
 } from './generated/runtime';
