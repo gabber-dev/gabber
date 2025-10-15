@@ -1,6 +1,6 @@
 {
     "name": "@gabber/client-react",
-    "version": "0.0.25",
+    "version": "0.0.26",
     "main": "./dist/index.js",
     "module": "./dist/index.mjs",
     "types": "./dist/index.d.ts",
@@ -12,7 +12,7 @@
         "lint": "eslint -f unix \"src/**/*.{ts,tsx}\""
     },
     "dependencies": {
-        "@gabber/client": "0.0.21",
+        "@gabber/client": "0.0.22",
         "eslint-config-react-app": "^7.0.1"
     },
     "peerDependencies": {
