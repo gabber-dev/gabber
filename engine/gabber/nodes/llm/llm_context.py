@@ -297,6 +297,7 @@ class LLMContext(node.Node):
 
         for p in self.pads:
             if isinstance(p, pad.SinkPad):
+                logging.info(f"LLMContext monitoring sink pad: {p.get_id()}")
                 tasks.append(asyncio.create_task(pad_task(p)))
 
         tasks.append(asyncio.create_task(system_message_task()))
