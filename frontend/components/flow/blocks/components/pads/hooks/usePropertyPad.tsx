@@ -20,12 +20,13 @@ type Result<T> = {
   singleAllowedType: BasePadType | undefined;
   runtimeValue: T | undefined;
   runtimeChanged: boolean;
+  loadListItems?: () => Promise<void>;
   setEditorValue: (value: T) => void;
 };
 
 export function usePropertyPad<T>(nodeId: string, padId: string): Result<T> {
   const { editorRepresentation, updatePad } = useEditor();
-  const { currentValue } = useRuntimePropertyPad(nodeId, padId);
+  const { currentValue, loadListItems } = useRuntimePropertyPad(nodeId, padId);
   const { connectionState } = useRun();
 
   const node = editorRepresentation.nodes.find((n) => n.id === nodeId);
@@ -82,6 +83,9 @@ export function usePropertyPad<T>(nodeId: string, padId: string): Result<T> {
     }
     const cv = currentValue.value;
     if (cv !== editorValue) {
+      if (currentValue.type === "list") {
+        return currentValue as T;
+      }
       return cv as T;
     }
     return editorValue;

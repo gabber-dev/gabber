@@ -41,7 +41,13 @@ function PadDetailsViewInnerProperty({
     PadValue | unknown
   >(nodeId, padId);
   if (connectionState === "connected") {
-    console.log("PadDetailsViewInnerProperty runtimeValue:", runtimeValue);
+    console.log(
+      "PadDetailsViewInnerProperty runtimeValue:",
+      runtimeValue,
+      editorValue,
+      nodeId,
+      padId,
+    );
     const rv = runtimeValue as PadValue;
     if (rv?.type === "list") {
       return <ListPadView value={rv} singleAllowedType={singleAllowedType} />;
@@ -77,9 +83,7 @@ function ListPadView({
   }
   const items = Array.isArray(value) ? value : value.items || [];
   const count = Array.isArray(value) ? value.length : value.count || 0;
-  return (
-    <div className="w-full h-full">List Pad View - {items.length} items</div>
-  );
+  return <div className="w-full h-full">List Pad View - {count} items</div>;
 }
 
 function ContextMessage({ role, content }: ContextMessageProps) {

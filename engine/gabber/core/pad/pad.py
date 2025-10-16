@@ -62,6 +62,7 @@ class Pad(Protocol):
     def _notify_update(self, value: Any) -> None:
         for handler in self._update_handlers:
             try:
+                logging.info("NEIL calling handler %s", self.get_id())
                 handler(self, value)
             except Exception as e:
                 logging.error(f"Error in update handler {handler}: {e}")
@@ -265,8 +266,7 @@ NOTIFIABLE_TYPES = (
     int,
     float,
     bool,
-    list,  # Lists like LLMContext `source` (list[ContextMessage])
-    # Runtime eventful types
+    list,
     runtime_types.Trigger,
     runtime_types.ContextMessage,
     runtime_types.AudioClip,

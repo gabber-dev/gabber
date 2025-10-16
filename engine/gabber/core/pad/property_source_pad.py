@@ -1,6 +1,7 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
+import logging
 from typing import TYPE_CHECKING, Any, Literal
 
 from .pad import PropertyPad, SinkPad, SourcePad, NOTIFIABLE_TYPES
@@ -74,6 +75,11 @@ class PropertySourcePad(SourcePad, PropertyPad):
     def set_value(self, value: Any):
         self._value = value
         if isinstance(value, NOTIFIABLE_TYPES):
+            logging.info(
+                "NEIL DEBUG: Notifiable type set to pad, notifying type %s, %s",
+                self.get_id(),
+                type(value),
+            )
             self._notify_update(value)
         for np in self.get_next_pads():
             if isinstance(np, PropertyPad):

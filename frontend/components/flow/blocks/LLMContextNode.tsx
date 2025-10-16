@@ -14,6 +14,7 @@ import { SelfPad } from "./components/pads/SelfPad";
 import { useMemo } from "react";
 import { PadValue, PadValue_List } from "@gabber/client-react";
 import { useEditor } from "@/hooks/useEditor";
+import { useRun } from "@/hooks/useRun";
 
 export function LLMContextNode({ data }: BaseBlockProps) {
   const { detailedView, setDetailedView } = useEditor();
@@ -22,6 +23,7 @@ export function LLMContextNode({ data }: BaseBlockProps) {
     "source",
   );
   const { runtimeValue: contextMessages, editorValue } = propertyPadResult;
+  const { connectionState } = useRun();
 
   const sinkPads = useMemo(() => {
     return data.pads.filter(
@@ -51,7 +53,16 @@ export function LLMContextNode({ data }: BaseBlockProps) {
     return result;
   }, [contextMessages, editorValue]);
 
-  const messageCount = messages.length;
+  const messageCount = useMemo(() => {
+    if (connectionState === "connected") {
+      const l = contextMessages as PadValue_List;
+      if (l?.type === "list" && Array.isArray(l.items)) {
+        return l.count;
+      }
+      return 0;
+    }
+    return messages.length;
+  }, [connectionState, contextMessages, messages.length]);
 
   return (
     <div className="w-80 flex flex-col bg-base-200 border-2 border-black border-b-4 border-r-4 rounded-lg relative">
@@ -68,7 +79,7 @@ export function LLMContextNode({ data }: BaseBlockProps) {
       </div>
 
       {/* Context Messages Viewer */}
-      <div className="flex flex-col gap-1 p-1">
+      {/* <div className="flex flex-col gap-1 p-1">
         <button
           className="btn btn-sm btn-ghost gap-1"
           onClick={() =>
@@ -81,7 +92,7 @@ export function LLMContextNode({ data }: BaseBlockProps) {
         >
           Inspect ({messageCount}) Items
         </button>
-      </div>
+      </div> */}
 
       <div className="flex flex-1 flex-col gap-2 p-4 nodrag cursor-default">
         {sourcePads.map((pad) => {

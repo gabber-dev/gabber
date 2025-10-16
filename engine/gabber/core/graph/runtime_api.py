@@ -48,7 +48,7 @@ class RuntimeApi:
         elif isinstance(value, runtime_types.VideoClip):
             ev_value = PadValue_VideoClip(duration=value.duration)
         elif isinstance(v, list):
-            ev_value = PadValue_List(items=[], count=len(v))
+            ev_value = PadValue_List(count=len(v), items=[])
         elif isinstance(value, runtime_types.ContextMessage):
             ev_value = self._context_message_trigger_value(value)
         else:
@@ -130,6 +130,11 @@ class RuntimeApi:
 
         def on_pad(p: pad.Pad, value: Any):
             ev_value = self._trigger_value_from_pad_value(value=value)
+            logging.info(
+                "NEIL DEBUG: on_pad triggered, emitting event %s %s",
+                p.get_id(),
+                ev_value,
+            )
             self._dc_queue.put_nowait(
                 QueueItem(
                     payload=RuntimeEvent(
