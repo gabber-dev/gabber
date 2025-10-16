@@ -8,7 +8,7 @@ from typing import Any, Protocol
 
 import aiohttp
 import numpy as np
-from gabber.core.runtime_types import AudioFrame, AudioFrameData
+from gabber.core.types.runtime import AudioFrame, AudioFrameData
 from gabber.utils import short_uuid
 
 from gabber.lib.audio import Resampler

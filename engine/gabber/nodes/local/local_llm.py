@@ -64,7 +64,7 @@ class LocalLLM(BaseLLM):
                 id="port",
                 group="port",
                 owner_node=self,
-                default_type_constraints=[pad.types.Integer()],
+                default_type_constraints=[pad_constraints.Integer()],
                 value=7002,
             )
 
@@ -74,7 +74,7 @@ class LocalLLM(BaseLLM):
                 id="max_context_len",
                 group="max_context_len",
                 owner_node=self,
-                default_type_constraints=[pad.types.Integer(minimum=4096)],
+                default_type_constraints=[pad_constraints.Integer(minimum=4096)],
                 value=32768,
             )
 

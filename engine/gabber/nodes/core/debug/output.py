@@ -7,7 +7,7 @@ from typing import cast
 import numpy as np
 from gabber.core import pad
 from gabber.core.node import Node
-from gabber.core.runtime_types import AudioFrame, VideoFrame
+from gabber.core.types.runtime import AudioFrame, VideoFrame
 from livekit import rtc
 from gabber.core.node import NodeMetadata, NodeNote
 
@@ -29,7 +29,7 @@ class Output(Node):
             audio = pad.StatelessSinkPad(
                 id="audio",
                 owner_node=self,
-                default_type_constraints=[pad.types.Audio()],
+                default_type_constraints=[pad_constraints.Audio()],
                 group="audio",
             )
         video = cast(pad.StatelessSinkPad, self.get_pad("video"))
@@ -37,7 +37,7 @@ class Output(Node):
             video = pad.StatelessSinkPad(
                 id="video",
                 owner_node=self,
-                default_type_constraints=[pad.types.Video()],
+                default_type_constraints=[pad_constraints.Video()],
                 group="video",
             )
 

@@ -5,7 +5,8 @@ import asyncio
 import logging
 from typing import Any, cast
 
-from gabber.core import node, pad, runtime_types
+from gabber.core import node, pad
+from gabber.core.types import runtime
 from gabber.core.node import NodeMetadata
 
 from gabber.nodes.core.tool import Tool
@@ -50,7 +51,7 @@ class ToolGroup(node.Node):
                 group="self",
                 owner_node=self,
                 default_type_constraints=[
-                    pad.types.NodeReference(node_types=["ToolGroup"])
+                    pad_constraints.NodeReference(node_types=["ToolGroup"])
                 ],
                 value=self,
             )
@@ -60,7 +61,7 @@ class ToolGroup(node.Node):
             num_tools = pad.PropertySinkPad(
                 id="num_tools",
                 owner_node=self,
-                default_type_constraints=[pad.types.Integer()],
+                default_type_constraints=[pad_constraints.Integer()],
                 group="num_tools",
                 value=1,
             )
@@ -74,7 +75,7 @@ class ToolGroup(node.Node):
                     id=pad_id,
                     owner_node=self,
                     default_type_constraints=[
-                        pad.types.NodeReference(node_types=["Tool"])
+                        pad_constraints.NodeReference(node_types=["Tool"])
                     ],
                     group="tool",
                     value=None,
@@ -91,7 +92,7 @@ class ToolGroup(node.Node):
 
     async def call_tools(
         self,
-        tool_calls: list[runtime_types.ToolCall],
+        tool_calls: list[runtime.ToolCall],
         ctx: pad.RequestContext,
         timeout: float = 30.0,  # Added timeout parameter with default
     ) -> list[str]:
@@ -146,7 +147,7 @@ class ToolGroup(node.Node):
     async def _safe_tool_call(
         self,
         tool: Any,  # Replace with actual tool type
-        tc: runtime_types.ToolCall,
+        tc: runtime.ToolCall,
         ctx: pad.RequestContext,
     ) -> str:
         try:

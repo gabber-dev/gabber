@@ -1,5 +1,5 @@
 import logging
-from gabber.core.runtime_types.types import (
+from gabber.core.types.runtime.types import (
     ContextMessage,
     ContextMessageContentItem,
     ContextMessageContentItem_Audio,

@@ -5,14 +5,13 @@ import asyncio
 import logging
 from typing import cast
 
-from gabber.core import node, pad, runtime_types
+from gabber.core import node, pad
+from gabber.core.types import runtime
 
-DEFAULT_SYSTEM_MESSAGE = runtime_types.ContextMessage(
-    role=runtime_types.ContextMessageRole.SYSTEM,
+DEFAULT_SYSTEM_MESSAGE = runtime.ContextMessage(
+    role=runtime.ContextMessageRole.SYSTEM,
     content=[
-        runtime_types.ContextMessageContentItem_Text(
-            content="You are a helpful assistant."
-        )
+        runtime.ContextMessageContentItem_Text(content="You are a helpful assistant.")
     ],
     tool_calls=[],
 )
@@ -36,7 +35,7 @@ class LLMContext(node.Node):
                 id="num_inserts",
                 group="config",
                 owner_node=self,
-                default_type_constraints=[pad.types.Integer(minimum=1)],
+                default_type_constraints=[pad_constraints.Integer(minimum=1)],
                 value=1,
             )
 
@@ -48,7 +47,7 @@ class LLMContext(node.Node):
                 id="new_user_message",
                 group="new_user_message",
                 owner_node=self,
-                default_type_constraints=[pad.types.ContextMessage()],
+                default_type_constraints=[pad_constraints.ContextMessage()],
             )
         max_non_system_messages = cast(
             pad.PropertySinkPad, self.get_pad("max_non_system_messages")
@@ -58,7 +57,7 @@ class LLMContext(node.Node):
                 id="max_non_system_messages",
                 group="max_non_system_messages",
                 owner_node=self,
-                default_type_constraints=[pad.types.Integer(minimum=0)],
+                default_type_constraints=[pad_constraints.Integer(minimum=0)],
                 value=64,
             )
 
@@ -68,7 +67,7 @@ class LLMContext(node.Node):
                 id="max_videos",
                 group="max_videos",
                 owner_node=self,
-                default_type_constraints=[pad.types.Integer(minimum=0)],
+                default_type_constraints=[pad_constraints.Integer(minimum=0)],
                 value=2,
             )
 
@@ -78,7 +77,7 @@ class LLMContext(node.Node):
                 id="max_audios",
                 group="max_audios",
                 owner_node=self,
-                default_type_constraints=[pad.types.Integer(minimum=0)],
+                default_type_constraints=[pad_constraints.Integer(minimum=0)],
                 value=2,
             )
 
@@ -88,7 +87,7 @@ class LLMContext(node.Node):
                 id="max_images",
                 group="max_images",
                 owner_node=self,
-                default_type_constraints=[pad.types.Integer(minimum=0)],
+                default_type_constraints=[pad_constraints.Integer(minimum=0)],
                 value=2,
             )
 
@@ -98,7 +97,7 @@ class LLMContext(node.Node):
                 id="system_message",
                 group="system_message",
                 owner_node=self,
-                default_type_constraints=[pad.types.ContextMessage()],
+                default_type_constraints=[pad_constraints.ContextMessage()],
                 value=DEFAULT_SYSTEM_MESSAGE,
             )
 
@@ -109,7 +108,9 @@ class LLMContext(node.Node):
                 group="source",
                 owner_node=self,
                 default_type_constraints=[
-                    pad.types.List(item_type_constraints=[pad.types.ContextMessage()])
+                    pad_constraints.List(
+                        item_type_constraints=[pad_constraints.ContextMessage()]
+                    )
                 ],
                 value=[system_message.get_value()],
             )
@@ -125,7 +126,7 @@ class LLMContext(node.Node):
                     id=pad_id,
                     group="insert",
                     owner_node=self,
-                    default_type_constraints=[pad.types.ContextMessage()],
+                    default_type_constraints=[pad_constraints.ContextMessage()],
                 )
             insert_pads.append(insert_pad)
 
@@ -173,29 +174,24 @@ class LLMContext(node.Node):
         source = cast(pad.PropertySourcePad, self.get_pad_required("source"))
         tasks: list[asyncio.Task] = []
 
-        def prune(msgs: list[runtime_types.ContextMessage]):
-            new_values: list[runtime_types.ContextMessage] = [
-                system_message.get_value()
-            ]
-            non_system_messages: list[runtime_types.ContextMessage] = []
+        def prune(msgs: list[runtime.ContextMessage]):
+            new_values: list[runtime.ContextMessage] = [system_message.get_value()]
+            non_system_messages: list[runtime.ContextMessage] = []
             for item in msgs:
-                if item.role != runtime_types.ContextMessageRole.SYSTEM:
+                if item.role != runtime.ContextMessageRole.SYSTEM:
                     non_system_messages.append(item)
 
             pruned = non_system_messages[-max_non_system_messages.get_value() :]
 
             tool_call_ids = set()
             for msg in pruned:
-                if (
-                    msg.role == runtime_types.ContextMessageRole.ASSISTANT
-                    and msg.tool_calls
-                ):
+                if msg.role == runtime.ContextMessageRole.ASSISTANT and msg.tool_calls:
                     for tool_call in msg.tool_calls:
                         tool_call_ids.add(tool_call.call_id)
 
-            final_pruned: list[runtime_types.ContextMessage] = []
+            final_pruned: list[runtime.ContextMessage] = []
             for msg in pruned:
-                if msg.role == runtime_types.ContextMessageRole.TOOL:
+                if msg.role == runtime.ContextMessageRole.TOOL:
                     if msg.tool_call_id in tool_call_ids:
                         final_pruned.append(msg)
                 else:
@@ -206,46 +202,38 @@ class LLMContext(node.Node):
             image_count = 0
             for msg in final_pruned[::-1]:
                 for content in msg.content:
-                    if isinstance(
-                        content, runtime_types.ContextMessageContentItem_Audio
-                    ):
+                    if isinstance(content, runtime.ContextMessageContentItem_Audio):
                         audio_count += 1
-                    elif isinstance(
-                        content, runtime_types.ContextMessageContentItem_Video
-                    ):
+                    elif isinstance(content, runtime.ContextMessageContentItem_Video):
                         video_count += 1
-                    elif isinstance(
-                        content, runtime_types.ContextMessageContentItem_Image
-                    ):
+                    elif isinstance(content, runtime.ContextMessageContentItem_Image):
                         image_count += 1
 
                 if audio_count > max_audios:
-                    text_converted: list[runtime_types.ContextMessageContentItem] = [
-                        runtime_types.ContextMessageContentItem_Text(
+                    text_converted: list[runtime.ContextMessageContentItem] = [
+                        runtime.ContextMessageContentItem_Text(
                             content=cast(
                                 str,
                                 cast(
-                                    runtime_types.ContextMessageContentItem_Audio, c
+                                    runtime.ContextMessageContentItem_Audio, c
                                 ).clip.transcription,
                             )
                         )
                         for c in msg.content
-                        if isinstance(c, runtime_types.ContextMessageContentItem_Audio)
+                        if isinstance(c, runtime.ContextMessageContentItem_Audio)
                         and c.clip.transcription is not None
                     ]
                     msg.content = text_converted + [
                         c
                         for c in msg.content
-                        if not isinstance(
-                            c, runtime_types.ContextMessageContentItem_Audio
-                        )
+                        if not isinstance(c, runtime.ContextMessageContentItem_Audio)
                     ]
                 if video_count > max_videos:
                     msg.content = [
                         content
                         for content in msg.content
                         if not isinstance(
-                            content, runtime_types.ContextMessageContentItem_Video
+                            content, runtime.ContextMessageContentItem_Video
                         )
                     ]
                 if image_count > max_images:
@@ -253,7 +241,7 @@ class LLMContext(node.Node):
                         content
                         for content in msg.content
                         if not isinstance(
-                            content, runtime_types.ContextMessageContentItem_Image
+                            content, runtime.ContextMessageContentItem_Image
                         )
                     ]
 
@@ -262,27 +250,27 @@ class LLMContext(node.Node):
 
         async def pad_task(p: pad.SinkPad):
             async for item in p:
-                assert isinstance(item.value, runtime_types.ContextMessage)
+                assert isinstance(item.value, runtime.ContextMessage)
                 new_msgs = prune(source.get_value() + [item.value])
                 # types = {"image": 0, "video": 0, "audio": 0, "text": 0}
                 # for m in new_msgs:
                 #     for c in m.content:
-                #         if isinstance(c, runtime_types.ContextMessageContentItem_Image):
+                #         if isinstance(c, runtime.ContextMessageContentItem_Image):
                 #             types["image"] += 1
                 #         elif isinstance(
-                #             c, runtime_types.ContextMessageContentItem_Video
+                #             c, runtime.ContextMessageContentItem_Video
                 #         ):
                 #             types["video"] += 1
                 #         elif isinstance(
-                #             c, runtime_types.ContextMessageContentItem_Audio
+                #             c, runtime.ContextMessageContentItem_Audio
                 #         ):
                 #             types["audio"] += 1
                 #         elif isinstance(
-                #             c, runtime_types.ContextMessageContentItem_Text
+                #             c, runtime.ContextMessageContentItem_Text
                 #         ):
                 #             types["text"] += 1
                 # logging.info(f"NEIL Context now has {types}")
-                if item.value.role == runtime_types.ContextMessageRole.USER:
+                if item.value.role == runtime.ContextMessageRole.USER:
                     new_user_message.push_item(item.value, item.ctx)
 
                 source.set_value(new_msgs)
@@ -290,7 +278,7 @@ class LLMContext(node.Node):
 
         async def system_message_task():
             async for item in system_message:
-                if isinstance(item.value, runtime_types.ContextMessage):
+                if isinstance(item.value, runtime.ContextMessage):
                     source.get_value()[0] = item.value
                     source.set_value(source.get_value())
                 item.ctx.complete()

@@ -6,7 +6,8 @@ from typing import Any, cast
 
 from pydantic import BaseModel
 
-from .. import node, pad, runtime_types
+from .. import node, pad
+from ..types import runtime
 
 from .models import NodeEditorRepresentation, PadEditorRepresentation, PadReference
 
@@ -27,28 +28,28 @@ def serialize_pad_value(v: Any | None):
 
 
 def deserialize_pad_value(
-    tc: pad.types.BasePadType,
+    tc: pad.pad_constraints.BasePadType,
     v: Any | None,
 ):
-    if isinstance(tc, pad.types.Trigger):
-        return runtime_types.Trigger()
+    if isinstance(tc, pad_constraints.Trigger):
+        return runtime.Trigger()
     if isinstance(v, str | float | int):
         return v
     elif isinstance(v, BaseModel):
         return v
     elif isinstance(v, dict):
-        if isinstance(tc, pad.types.ContextMessage):
-            return runtime_types.ContextMessage.model_validate(v)
-        elif isinstance(tc, pad.types.Object):
+        if isinstance(tc, pad_constraints.ContextMessage):
+            return runtime.ContextMessage.model_validate(v)
+        elif isinstance(tc, pad_constraints.Object):
             return v
-        elif isinstance(tc, pad.types.Schema):
-            return runtime_types.Schema.model_validate(v)
-        elif isinstance(tc, pad.types.BoundingBox):
-            return runtime_types.BoundingBox.model_validate(v)
-        elif isinstance(tc, pad.types.Point):
-            return runtime_types.Point.model_validate(v)
+        elif isinstance(tc, pad_constraints.Schema):
+            return runtime.Schema.model_validate(v)
+        elif isinstance(tc, pad_constraints.BoundingBox):
+            return runtime.BoundingBox.model_validate(v)
+        elif isinstance(tc, pad_constraints.Point):
+            return runtime.Point.model_validate(v)
     elif isinstance(v, list):
-        if not isinstance(tc, pad.types.List):
+        if not isinstance(tc, pad_constraints.List):
             logging.error(
                 f"Expected List type constraint for list deserialization, got {type(tc)}"
             )
@@ -85,11 +86,11 @@ def pad_editor_rep(p: pad.Pad):
 
     # TODO: remove this cast. BasePadType is used for covariance elsewhere
     # but pydantic needs the Annotated PadType for serialization
-    allowed_types: list[pad.types.PadType] | None = cast(
-        list[pad.types.PadType], p.get_type_constraints()
+    allowed_types: list[pad_constraints.PadType] | None = cast(
+        list[pad_constraints.PadType], p.get_type_constraints()
     )
-    default_allowed_types: list[pad.types.PadType] | None = cast(
-        list[pad.types.PadType], p.get_default_type_constraints()
+    default_allowed_types: list[pad_constraints.PadType] | None = cast(
+        list[pad_constraints.PadType], p.get_default_type_constraints()
     )
     return PadEditorRepresentation(
         id=p.get_id(),

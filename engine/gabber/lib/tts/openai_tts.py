@@ -7,7 +7,7 @@ import logging
 import numpy as np
 from openai import AsyncOpenAI
 
-from gabber.core.runtime_types import AudioFrame, AudioFrameData
+from gabber.core.types.runtime import AudioFrame, AudioFrameData
 from gabber.lib.audio import Resampler
 
 from .tts import TTS, TTSSession

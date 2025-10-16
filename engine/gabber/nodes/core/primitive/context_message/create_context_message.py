@@ -1,10 +1,10 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-import logging
 from typing import cast
 
-from gabber.core import pad, runtime_types
+from gabber.core import pad
+from gabber.core.types import runtime
 from gabber.core.node import Node, NodeMetadata
 from gabber.core.pad import PropertySinkPad, StatelessSinkPad, StatelessSourcePad, types
 
@@ -19,7 +19,7 @@ class CreateContextMessage(Node):
         return NodeMetadata(primary="ai", secondary="llm", tags=["context", "message"])
 
     def resolve_pads(self):
-        sink_default: list[pad.types.BasePadType] | None = [
+        sink_default: list[pad.pad_constraints.BasePadType] | None = [
             types.AudioClip(),
             types.VideoClip(),
             types.AVClip(),
@@ -34,7 +34,7 @@ class CreateContextMessage(Node):
                 group="role",
                 owner_node=self,
                 default_type_constraints=[types.ContextMessageRole()],
-                value=runtime_types.ContextMessageRole.USER,
+                value=runtime.ContextMessageRole.USER,
             )
             self.pads.append(role)
 
@@ -66,40 +66,34 @@ class CreateContextMessage(Node):
         )
         async for item in content_sink:
             role = role_pad.get_value()
-            content: list[runtime_types.ContextMessageContentItem] = []
-            if isinstance(item.value, runtime_types.AudioClip):
+            content: list[runtime.ContextMessageContentItem] = []
+            if isinstance(item.value, runtime.AudioClip):
+                content.append(runtime.ContextMessageContentItem_Audio(clip=item.value))
+            elif isinstance(item.value, runtime.VideoClip):
+                content.append(runtime.ContextMessageContentItem_Video(clip=item.value))
+            elif isinstance(item.value, runtime.AVClip):
                 content.append(
-                    runtime_types.ContextMessageContentItem_Audio(clip=item.value)
-                )
-            elif isinstance(item.value, runtime_types.VideoClip):
-                content.append(
-                    runtime_types.ContextMessageContentItem_Video(clip=item.value)
-                )
-            elif isinstance(item.value, runtime_types.AVClip):
-                content.append(
-                    runtime_types.ContextMessageContentItem_Audio(clip=item.value.audio)
+                    runtime.ContextMessageContentItem_Audio(clip=item.value.audio)
                 )
                 content.append(
-                    runtime_types.ContextMessageContentItem_Video(clip=item.value.video)
+                    runtime.ContextMessageContentItem_Video(clip=item.value.video)
                 )
-            elif isinstance(item.value, runtime_types.VideoFrame):
+            elif isinstance(item.value, runtime.VideoFrame):
                 content.append(
-                    runtime_types.ContextMessageContentItem_Image(frame=item.value)
+                    runtime.ContextMessageContentItem_Image(frame=item.value)
                 )
             elif isinstance(item.value, str):
                 content.append(
-                    runtime_types.ContextMessageContentItem_Text(content=item.value)
+                    runtime.ContextMessageContentItem_Text(content=item.value)
                 )
-            elif isinstance(item.value, runtime_types.TextStream):
+            elif isinstance(item.value, runtime.TextStream):
                 acc = ""
                 async for chunk in item.value:
                     acc += chunk
-                content.append(
-                    runtime_types.ContextMessageContentItem_Text(content=acc)
-                )
+                content.append(runtime.ContextMessageContentItem_Text(content=acc))
 
             if len(content) > 0:
-                message = runtime_types.ContextMessage(
+                message = runtime.ContextMessage(
                     role=role, content=content, tool_calls=[]
                 )
                 message_source.push_item(message, item.ctx)

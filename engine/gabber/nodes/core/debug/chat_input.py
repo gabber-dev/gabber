@@ -25,7 +25,7 @@ class ChatInput(node.Node):
                 id="output",
                 owner_node=self,
                 group="text",
-                default_type_constraints=[pad.types.String()],
+                default_type_constraints=[pad_constraints.String()],
             )
 
         self.pads = [output]

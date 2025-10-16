@@ -7,7 +7,7 @@ import time
 import numpy as np
 from gabber.core import node, pad
 from gabber.core.node import NodeMetadata
-from gabber.core.runtime_types import AudioFrame, AudioFrameData, VideoFrame
+from gabber.core.types.runtime import AudioFrame, AudioFrameData, VideoFrame
 from gabber.lib.audio import Resampler
 
 
@@ -29,7 +29,7 @@ class BouncingBall(node.Node):
                 id="audio",
                 owner_node=self,
                 group="audio",
-                default_type_constraints=[pad.types.Audio()],
+                default_type_constraints=[pad_constraints.Audio()],
             )
 
         video_source = cast(pad.StatelessSourcePad, self.get_pad("video"))
@@ -38,7 +38,7 @@ class BouncingBall(node.Node):
                 id="video",
                 owner_node=self,
                 group="video",
-                default_type_constraints=[pad.types.Video()],
+                default_type_constraints=[pad_constraints.Video()],
             )
 
         self.pads = [audio_source, video_source]

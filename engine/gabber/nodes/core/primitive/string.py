@@ -27,7 +27,7 @@ class String(node.Node):
                 id="set",
                 owner_node=self,
                 group="set",
-                default_type_constraints=[pad.types.String()],
+                default_type_constraints=[pad_constraints.String()],
             )
 
         emit = cast(pad.StatelessSinkPad | None, self.get_pad("emit"))
@@ -36,7 +36,7 @@ class String(node.Node):
                 id="emit",
                 owner_node=self,
                 group="emit",
-                default_type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad_constraints.Trigger()],
             )
 
         value = cast(pad.PropertySourcePad | None, self.get_pad("value"))
@@ -45,7 +45,7 @@ class String(node.Node):
                 id="value",
                 group="value",
                 owner_node=self,
-                default_type_constraints=[pad.types.String()],
+                default_type_constraints=[pad_constraints.String()],
                 value="",
             )
 
@@ -55,7 +55,7 @@ class String(node.Node):
                 id="changed",
                 group="changed",
                 owner_node=self,
-                default_type_constraints=[pad.types.String()],
+                default_type_constraints=[pad_constraints.String()],
             )
 
         self.pads = [set_pad, emit, value, changed]

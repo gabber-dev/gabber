@@ -40,7 +40,7 @@ class ProxyPropertySource(node.Node):
                     id="pad_id",
                     owner_node=self,
                     group="pad_id",
-                    default_type_constraints=[pad.types.String()],
+                    default_type_constraints=[pad_constraints.String()],
                     value=f"proxy_{short_uuid()}",
                 )
             )
@@ -48,7 +48,7 @@ class ProxyPropertySource(node.Node):
         tsc = None
         prev_pad = proxy_pad.get_previous_pad()
         if prev_pad:
-            tsc = pad.types.INTERSECTION(tsc, prev_pad.get_type_constraints())
+            tsc = pad_constraints.INTERSECTION(tsc, prev_pad.get_type_constraints())
         proxy_pad.set_type_constraints(tsc)
 
     def get_pad_id(self) -> str:

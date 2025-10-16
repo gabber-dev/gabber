@@ -8,7 +8,7 @@ from typing import cast
 from gabber.core import pad
 from gabber.core.node import Node, NodeMetadata
 from gabber.core.pad import PropertySinkPad, StatelessSinkPad, StatelessSourcePad, types
-from gabber.core.runtime_types import VideoFrame
+from gabber.core.types.runtime import VideoFrame
 
 
 class FPS(Node):

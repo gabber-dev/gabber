@@ -33,7 +33,7 @@ class Merge(Node):
             num_sink_pads = pad.PropertySinkPad(
                 id="num_sinks",
                 owner_node=self,
-                default_type_constraints=[pad.types.Integer()],
+                default_type_constraints=[pad_constraints.Integer()],
                 group="num_sinks",
                 value=1,
             )

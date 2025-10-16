@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
-from gabber.core import runtime_types
+from gabber.core.types import runtime
 import av
 import numpy as np  # Assuming f.data is a numpy array; import if needed
 import fractions
@@ -20,12 +20,12 @@ class MP4_Encoder:
         self.encoder.options = {"preset": "ultrafast", "crf": "0"}
         self.encoder.pix_fmt = "yuv444p"  # For minimal loss, preserving full chroma
         self.encoder.time_base = fractions.Fraction(1, 1000000)  # 1 microsecond units
-        self.input_queue: Queue[runtime_types.VideoFrame | None] = Queue()
+        self.input_queue: Queue[runtime.VideoFrame | None] = Queue()
         self.encode_thread: threading.Thread = threading.Thread(
             target=self._encode_thread, daemon=True
         )
 
-    def push_frames(self, frame: list[runtime_types.VideoFrame]):
+    def push_frames(self, frame: list[runtime.VideoFrame]):
         if not self.encode_thread.is_alive():
             self.encode_thread.start()
 

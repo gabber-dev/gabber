@@ -5,9 +5,10 @@ import asyncio
 import logging
 from typing import Any, cast
 
-from gabber.core import node, pad, runtime_types
+from gabber.core import node, pad
+from gabber.core.types import runtime
 from gabber.core.node import NodeMetadata
-from gabber.core.runtime_types import ToolCall
+from gabber.core.types.runtime import ToolCall
 
 
 class Tool(node.Node):
@@ -28,7 +29,9 @@ class Tool(node.Node):
                 id="self",
                 group="self",
                 owner_node=self,
-                default_type_constraints=[pad.types.NodeReference(node_types=["Tool"])],
+                default_type_constraints=[
+                    pad_constraints.NodeReference(node_types=["Tool"])
+                ],
                 value=self,
             )
 
@@ -38,7 +41,7 @@ class Tool(node.Node):
                 id="name",
                 owner_node=self,
                 group="name",
-                default_type_constraints=[pad.types.String(max_length=100)],
+                default_type_constraints=[pad_constraints.String(max_length=100)],
                 value="get_weather",
             )
 
@@ -48,7 +51,7 @@ class Tool(node.Node):
                 id="description",
                 group="description",
                 owner_node=self,
-                default_type_constraints=[pad.types.String(max_length=500)],
+                default_type_constraints=[pad_constraints.String(max_length=500)],
                 value="Get the current weather for a specified location.",
             )
 
@@ -58,13 +61,13 @@ class Tool(node.Node):
                 id="schema",
                 group="schema",
                 owner_node=self,
-                default_type_constraints=[pad.types.Schema()],
-                value=runtime_types.Schema(properties={"location": pad.types.String()}),
+                default_type_constraints=[pad_constraints.Schema()],
+                value=runtime.Schema(properties={"location": pad_constraints.String()}),
             )
 
-        schema = cast(runtime_types.Schema, schema_pad.get_value())
+        schema = cast(runtime.Schema, schema_pad.get_value())
         if not schema:
-            schema = runtime_types.Schema(properties={})
+            schema = runtime.Schema(properties={})
         source = cast(pad.StatelessSourcePad, self.get_pad("source"))
         if not source:
             source = pad.StatelessSourcePad(
@@ -72,20 +75,20 @@ class Tool(node.Node):
                 group="source",
                 owner_node=self,
                 default_type_constraints=[
-                    pad.types.Object(object_schema=schema.to_json_schema())
+                    pad_constraints.Object(object_schema=schema.to_json_schema())
                 ],
             )
 
         source.set_default_type_constraints(
-            [pad.types.Object(object_schema=schema.to_json_schema())]
+            [pad_constraints.Object(object_schema=schema.to_json_schema())]
         )
         self.pads = [self_pad, name, description, schema_pad, source]
 
-    def get_tool_definition(self) -> runtime_types.ToolDefinition:
+    def get_tool_definition(self) -> runtime.ToolDefinition:
         name = cast(pad.PropertySinkPad, self.get_pad_required("name"))
         description = cast(pad.PropertySinkPad, self.get_pad_required("description"))
         schema = cast(pad.PropertySinkPad, self.get_pad_required("schema"))
-        td = runtime_types.ToolDefinition(
+        td = runtime.ToolDefinition(
             name=name.get_value(),
             description=description.get_value(),
             parameters=schema.get_value() or None,

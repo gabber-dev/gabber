@@ -6,7 +6,8 @@ import logging
 import json
 from typing import cast
 
-from gabber.core import pad, runtime_types
+from gabber.core import pad
+from gabber.core.types import runtime
 from gabber.core.node import Node, NodeMetadata
 
 
@@ -51,17 +52,17 @@ class AutoConvert(Node):
             if not sink_type or not source_type:
                 continue
 
-            sink_type = cast(pad.types.PadType, sink_type)
-            source_type = cast(pad.types.PadType, source_type)
-            if isinstance(source_type, pad.types.Trigger):
-                source.push_item(runtime_types.Trigger(), item.ctx)
-            elif isinstance(source_type, pad.types.Audio):
-                if isinstance(item.value, runtime_types.AudioFrame):
+            sink_type = cast(pad_constraints.PadType, sink_type)
+            source_type = cast(pad_constraints.PadType, source_type)
+            if isinstance(source_type, pad_constraints.Trigger):
+                source.push_item(runtime.Trigger(), item.ctx)
+            elif isinstance(source_type, pad_constraints.Audio):
+                if isinstance(item.value, runtime.AudioFrame):
                     source.push_item(item.value, item.ctx)
-                elif isinstance(item.value, runtime_types.AudioClip):
+                elif isinstance(item.value, runtime.AudioClip):
                     for af in item.value.audio:
                         source.push_item(af, item.ctx)
-            elif isinstance(source_type, pad.types.String):
+            elif isinstance(source_type, pad_constraints.String):
                 if isinstance(item.value, str):
                     source.push_item(item.value, item.ctx)
                 elif isinstance(item.value, float):
@@ -69,17 +70,13 @@ class AutoConvert(Node):
                 elif isinstance(item.value, int):
                     logging.debug(f"Converting int {item.value} to string")
                     source.push_item(str(item.value), item.ctx)
-                elif isinstance(item.value, runtime_types.ContextMessage):
+                elif isinstance(item.value, runtime.ContextMessage):
                     txt: str | None = None
                     for cnt in item.value.content:
-                        if isinstance(
-                            cnt, runtime_types.ContextMessageContentItem_Text
-                        ):
+                        if isinstance(cnt, runtime.ContextMessageContentItem_Text):
                             txt = cnt.content
                             break
-                        elif isinstance(
-                            cnt, runtime_types.ContextMessageContentItem_Audio
-                        ):
+                        elif isinstance(cnt, runtime.ContextMessageContentItem_Audio):
                             if cnt.clip.transcription:
                                 txt = cnt.clip.transcription
                             break
@@ -95,15 +92,15 @@ class AutoConvert(Node):
                         source.push_item(
                             f"Cannot convert {item.value} to string", item.ctx
                         )
-                elif isinstance(item.value, runtime_types.TextStream):
+                elif isinstance(item.value, runtime.TextStream):
                     acc = ""
                     async for chunk in item.value:
                         acc += chunk
                     source.push_item(acc, item.ctx)
-            elif isinstance(source_type, pad.types.Video):
-                if isinstance(item.value, runtime_types.VideoFrame):
+            elif isinstance(source_type, pad_constraints.Video):
+                if isinstance(item.value, runtime.VideoFrame):
                     source.push_item(item.value, item.ctx)
-                elif isinstance(item.value, runtime_types.VideoClip):
+                elif isinstance(item.value, runtime.VideoClip):
                     prev_timestamp: float | None = None
                     for vf in item.value.video:
                         if prev_timestamp is None:
@@ -115,13 +112,13 @@ class AutoConvert(Node):
                                 await asyncio.sleep(delta)
                             source.push_item(vf, item.ctx)
                             prev_timestamp = vf.timestamp
-            elif isinstance(source_type, pad.types.TextStream):
+            elif isinstance(source_type, pad_constraints.TextStream):
                 if isinstance(item.value, str):
-                    ts = runtime_types.TextStream()
+                    ts = runtime.TextStream()
                     source.push_item(ts, item.ctx)
                     ts.push_text(item.value)
                     ts.eos()
-                elif isinstance(item.value, runtime_types.TextStream):
+                elif isinstance(item.value, runtime.TextStream):
                     source.push_item(item.value, item.ctx)
 
             item.ctx.complete()

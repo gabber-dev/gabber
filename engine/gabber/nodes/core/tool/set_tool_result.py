@@ -22,7 +22,7 @@ class SetToolResult(node.Node):
             sink = pad.StatelessSinkPad(
                 id="result",
                 owner_node=self,
-                default_type_constraints=[pad.types.String(max_length=1024)],
+                default_type_constraints=[pad_constraints.String(max_length=1024)],
                 group="result",
             )
             self.pads.append(sink)

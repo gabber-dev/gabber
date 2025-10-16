@@ -14,7 +14,7 @@ from typing import Any, Callable, cast
 
 from openai.types import chat
 
-from gabber.core.runtime_types import (
+from gabber.core.types.runtime import (
     ContextMessage,
     ContextMessageContent_ChoiceDelta,
     ContextMessageContentItem_Audio,

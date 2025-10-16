@@ -6,11 +6,12 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, Field
 from livekit import rtc
 from dataclasses import dataclass
-from .. import node, pad, runtime_types
+from .. import node, pad
 import logging
 from ..editor import serialize
 from ..node import Node
 from gabber.nodes.core.media.publish import Publish
+from ..types import runtime
 
 PING_BYTES = "ping".encode("utf-8")
 
@@ -42,30 +43,30 @@ class RuntimeApi:
             ev_value = PadValue_Float(value=v)
         elif isinstance(v, str):
             ev_value = PadValue_String(value=v)
-        elif isinstance(value, runtime_types.AudioClip):
+        elif isinstance(value, runtime.AudioClip):
             trans = value.transcription if value.transcription else ""
             ev_value = PadValue_AudioClip(transcript=trans, duration=value.duration)
-        elif isinstance(value, runtime_types.VideoClip):
+        elif isinstance(value, runtime.VideoClip):
             ev_value = PadValue_VideoClip(duration=value.duration)
         elif isinstance(v, list):
             ev_value = PadValue_List(count=len(v), items=[])
-        elif isinstance(value, runtime_types.ContextMessage):
+        elif isinstance(value, runtime.ContextMessage):
             ev_value = self._context_message_trigger_value(value)
         else:
             ev_value = PadValue_Trigger()
 
         return ev_value
 
-    def _context_message_trigger_value(self, msg: runtime_types.ContextMessage):
+    def _context_message_trigger_value(self, msg: runtime.ContextMessage):
         content: list[PadValue_ContextMessageContentItem] = []
         for item in msg.content:
-            if isinstance(item, runtime_types.ContextMessageContentItem_Text):
+            if isinstance(item, runtime.ContextMessageContentItem_Text):
                 content.append(
                     PadValue_ContextMessageContentItem(
                         content_type="text", text=item.content
                     )
                 )
-            elif isinstance(item, runtime_types.ContextMessageContentItem_Image):
+            elif isinstance(item, runtime.ContextMessageContentItem_Image):
                 content.append(
                     PadValue_ContextMessageContentItem(
                         content_type="image",
@@ -76,7 +77,7 @@ class RuntimeApi:
                         ),
                     )
                 )
-            elif isinstance(item, runtime_types.ContextMessageContentItem_Audio):
+            elif isinstance(item, runtime.ContextMessageContentItem_Audio):
                 dur = item.clip.duration if item.clip.duration else 0.0
                 content.append(
                     PadValue_ContextMessageContentItem(
@@ -88,7 +89,7 @@ class RuntimeApi:
                         ),
                     )
                 )
-            elif isinstance(item, runtime_types.ContextMessageContentItem_Video):
+            elif isinstance(item, runtime.ContextMessageContentItem_Video):
                 dur = item.clip.duration if item.clip.duration else 0.0
                 width = 0
                 height = 0

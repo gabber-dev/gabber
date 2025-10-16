@@ -4,7 +4,7 @@
 import asyncio
 from typing import cast
 
-from gabber.core import runtime_types
+from gabber.core.types import runtime
 from gabber.core.node import Node, NodeMetadata
 from gabber.core.pad import PropertySinkPad, StatelessSinkPad, StatelessSourcePad, types
 
@@ -128,8 +128,8 @@ class SlidingWindow(Node):
         flush = cast(StatelessSinkPad, self.get_pad_required("flush"))
         reset = cast(StatelessSinkPad, self.get_pad_required("reset"))
         window = cast(PropertySinkPad, self.get_pad_required("window_size_s"))
-        audio_frames: list[runtime_types.AudioFrame] = []
-        video_frames: list[runtime_types.VideoFrame] = []
+        audio_frames: list[runtime.AudioFrame] = []
+        video_frames: list[runtime.VideoFrame] = []
 
         def slide_audio():
             window_size = cast(float, window.get_value())
@@ -170,15 +170,15 @@ class SlidingWindow(Node):
                     continue
 
                 if tcs[0] == types.VideoClip():
-                    vc = runtime_types.VideoClip(video_frames[:])
+                    vc = runtime.VideoClip(video_frames[:])
                     clip_pad.push_item(vc, item.ctx)
                 elif tcs[0] == types.AudioClip():
-                    ac = runtime_types.AudioClip(audio_frames[:])
+                    ac = runtime.AudioClip(audio_frames[:])
                     clip_pad.push_item(ac, item.ctx)
                 elif tcs[0] == types.AVClip():
-                    vc = runtime_types.VideoClip(video_frames[:])
-                    ac = runtime_types.AudioClip(audio_frames[:])
-                    clip = runtime_types.AVClip(video=vc, audio=ac)
+                    vc = runtime.VideoClip(video_frames[:])
+                    ac = runtime.AudioClip(audio_frames[:])
+                    clip = runtime.AVClip(video=vc, audio=ac)
                     clip_pad.push_item(clip, item.ctx)
 
                 item.ctx.complete()

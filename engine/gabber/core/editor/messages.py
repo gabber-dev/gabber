@@ -3,7 +3,7 @@
 
 from enum import Enum
 from typing import Annotated, Literal
-from ..pad.types import PadType
+from ..pad_constraints import PadType
 
 from pydantic import BaseModel, Field
 

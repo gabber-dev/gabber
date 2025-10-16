@@ -20,7 +20,7 @@ from .messages import (
 
 import aiohttp
 
-from gabber.core.runtime_types import AudioClip, AudioFrame
+from gabber.core.types.runtime import AudioClip, AudioFrame
 from gabber.utils import short_uuid
 
 from ..stt import (

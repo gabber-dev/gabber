@@ -8,7 +8,8 @@ import logging
 import time
 from typing import cast
 
-from gabber.core import node, pad, runtime_types
+from gabber.core import node, pad
+from gabber.core.types import runtime
 from gabber.lib.audio import Resampler
 import numpy as np
 
@@ -50,7 +51,7 @@ class KittenTTS(node.Node):
                 id="voice_id",
                 group="voice_id",
                 owner_node=self,
-                default_type_constraints=[pad.types.Enum(options=VOICES)],
+                default_type_constraints=[pad_constraints.Enum(options=VOICES)],
                 value="expr-voice-2-m",
             )
             self.pads.append(voice_id)
@@ -61,17 +62,22 @@ class KittenTTS(node.Node):
                 id="text",
                 group="text",
                 owner_node=self,
-                default_type_constraints=[pad.types.TextStream(), pad.types.String()],
+                default_type_constraints=[
+                    pad_constraints.TextStream(),
+                    pad_constraints.String(),
+                ],
             )
             self.pads.append(text_sink)
 
         prev_pad = text_sink.get_previous_pad()
         if prev_pad:
             tcs = prev_pad.get_type_constraints()
-            tcs = pad.types.INTERSECTION(tcs, text_sink.get_type_constraints())
+            tcs = pad_constraints.INTERSECTION(tcs, text_sink.get_type_constraints())
             text_sink.set_type_constraints(tcs)
         else:
-            text_sink.set_type_constraints([pad.types.TextStream(), pad.types.String()])
+            text_sink.set_type_constraints(
+                [pad_constraints.TextStream(), pad_constraints.String()]
+            )
 
         audio_source = cast(pad.StatelessSourcePad, self.get_pad("audio"))
         if audio_source is None:
@@ -79,7 +85,7 @@ class KittenTTS(node.Node):
                 id="audio",
                 group="audio",
                 owner_node=self,
-                default_type_constraints=[pad.types.Audio()],
+                default_type_constraints=[pad_constraints.Audio()],
             )
             self.pads.append(audio_source)
 
@@ -89,7 +95,7 @@ class KittenTTS(node.Node):
                 id="cancel_trigger",
                 group="cancel_trigger",
                 owner_node=self,
-                default_type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad_constraints.Trigger()],
             )
             self.pads.append(cancel_trigger)
 
@@ -101,7 +107,7 @@ class KittenTTS(node.Node):
                 id="complete_transcription",
                 group="complete_transcription",
                 owner_node=self,
-                default_type_constraints=[pad.types.String()],
+                default_type_constraints=[pad_constraints.String()],
             )
             self.pads.append(final_transcription_source)
 
@@ -167,7 +173,7 @@ class KittenTTS(node.Node):
                     job_queue.put_nowait(job)
                     job.push_text(item.value)
                     job.eos()
-                elif isinstance(item.value, runtime_types.TextStream):
+                elif isinstance(item.value, runtime.TextStream):
                     job = TTSJob(
                         ctx=item.ctx,
                         voice=voice_id.get_value(),
@@ -222,7 +228,7 @@ class TTSJob:
         self._running_text = ""
         self._buffer = ""
         self._pending_short = ""
-        self._output_queue = asyncio.Queue[runtime_types.AudioFrame | None]()
+        self._output_queue = asyncio.Queue[runtime.AudioFrame | None]()
         self._inference_queue = asyncio.Queue[str | None]()
         self._run_task = asyncio.create_task(self.run())
 
@@ -333,7 +339,7 @@ class TTSJob:
                     break
                 data = np.frombuffer(chunk, dtype=np.int16).reshape(1, -1)
                 num_samples = data.shape[1]
-                frame_data_24000 = runtime_types.AudioFrameData(
+                frame_data_24000 = runtime.AudioFrameData(
                     data=data,
                     sample_rate=24000,
                     num_channels=1,
@@ -341,7 +347,7 @@ class TTSJob:
                 frame_data_16000 = self._resampler_16000hz.push_audio(frame_data_24000)
                 frame_data_44100 = self._resampler_44100hz.push_audio(frame_data_24000)
                 frame_data_48000 = self._resampler_48000hz.push_audio(frame_data_24000)
-                frame = runtime_types.AudioFrame(
+                frame = runtime.AudioFrame(
                     original_data=frame_data_24000,
                     data_16000hz=frame_data_16000,
                     data_24000hz=frame_data_24000,

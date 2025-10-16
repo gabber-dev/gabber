@@ -44,7 +44,7 @@ class Delay(node.Node):
                 id="delay_ms",
                 group="delay_ms",
                 owner_node=self,
-                default_type_constraints=[pad.types.Integer(minimum=0)],
+                default_type_constraints=[pad_constraints.Integer(minimum=0)],
                 value=1000,
             )
 

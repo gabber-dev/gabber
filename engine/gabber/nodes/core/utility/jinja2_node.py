@@ -25,7 +25,7 @@ class Jinja2(Node):
                 id="num_properties",
                 owner_node=self,
                 group="num_properties",
-                default_type_constraints=[pad.types.Integer()],
+                default_type_constraints=[pad_constraints.Integer()],
                 value=1,
             )
 
@@ -35,7 +35,7 @@ class Jinja2(Node):
                 id="jinja_template",
                 owner_node=self,
                 group="jinja_template",
-                default_type_constraints=[pad.types.String()],
+                default_type_constraints=[pad_constraints.String()],
                 value="Hello, {{ property_0 }}!",
             )
 
@@ -45,7 +45,7 @@ class Jinja2(Node):
                 id="rendered_output",
                 owner_node=self,
                 group="rendered_output",
-                default_type_constraints=[pad.types.String()],
+                default_type_constraints=[pad_constraints.String()],
                 value="",
             )
 
@@ -59,7 +59,7 @@ class Jinja2(Node):
                     id=f"property_name_{i}",
                     owner_node=self,
                     group="property_name",
-                    default_type_constraints=[pad.types.String()],
+                    default_type_constraints=[pad_constraints.String()],
                     value=f"property_{i}",
                 )
             property_names.append(name_pad)
@@ -71,11 +71,11 @@ class Jinja2(Node):
                     owner_node=self,
                     group="property_value",
                     default_type_constraints=[
-                        pad.types.String(),
-                        pad.types.Integer(),
-                        pad.types.Float(),
-                        pad.types.Boolean(),
-                        pad.types.Enum(),
+                        pad_constraints.String(),
+                        pad_constraints.Integer(),
+                        pad_constraints.Float(),
+                        pad_constraints.Boolean(),
+                        pad_constraints.Enum(),
                     ],
                     value="",
                 )

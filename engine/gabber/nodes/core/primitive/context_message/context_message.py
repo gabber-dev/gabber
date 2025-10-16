@@ -5,7 +5,7 @@ import logging
 import asyncio
 from typing import cast
 
-from gabber.core import runtime_types
+from gabber.core.types import runtime
 from gabber.core.node import Node, NodeMetadata
 from gabber.core.pad import (
     PropertySinkPad,
@@ -31,7 +31,7 @@ class ContextMessage(Node):
                 group="role",
                 owner_node=self,
                 default_type_constraints=[types.ContextMessageRole()],
-                value=runtime_types.ContextMessageRole.SYSTEM,
+                value=runtime.ContextMessageRole.SYSTEM,
             )
 
         content_sink = cast(PropertySinkPad, self.get_pad("content"))
@@ -51,10 +51,10 @@ class ContextMessage(Node):
                 group="context_message",
                 owner_node=self,
                 default_type_constraints=[types.ContextMessage()],
-                value=runtime_types.ContextMessage(
-                    role=runtime_types.ContextMessageRole.SYSTEM,
+                value=runtime.ContextMessage(
+                    role=runtime.ContextMessageRole.SYSTEM,
                     content=[
-                        runtime_types.ContextMessageContentItem_Text(
+                        runtime.ContextMessageContentItem_Text(
                             content=content_sink.get_value()
                         )
                     ],
@@ -63,10 +63,10 @@ class ContextMessage(Node):
             )
 
         message_source.set_value(
-            runtime_types.ContextMessage(
-                role=runtime_types.ContextMessageRole.SYSTEM,
+            runtime.ContextMessage(
+                role=runtime.ContextMessageRole.SYSTEM,
                 content=[
-                    runtime_types.ContextMessageContentItem_Text(
+                    runtime.ContextMessageContentItem_Text(
                         content=content_sink.get_value()
                     )
                 ],
@@ -91,20 +91,18 @@ class ContextMessage(Node):
             """Task to handle content from the content sink."""
             async for item in content_sink:
                 role = role_pad.get_value()
-                content: list[runtime_types.ContextMessageContentItem] = [
-                    runtime_types.ContextMessageContentItem_Text(content=item.value)
+                content: list[runtime.ContextMessageContentItem] = [
+                    runtime.ContextMessageContentItem_Text(content=item.value)
                 ]
                 message_source.push_item(
-                    runtime_types.ContextMessage(
-                        role=role, content=content, tool_calls=[]
-                    ),
+                    runtime.ContextMessage(role=role, content=content, tool_calls=[]),
                     item.ctx,
                 )
 
         async def role_sink_task():
             """Task to handle role changes."""
             async for item in role_pad:
-                if isinstance(item, runtime_types.ContextMessageRole):
+                if isinstance(item, runtime.ContextMessageRole):
                     # Update the role in the last message
                     last_message = message_source.get_value()[-1]
                     last_message.role = item.value

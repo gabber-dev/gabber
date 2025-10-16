@@ -306,7 +306,7 @@ class Graph:
 
         tcs = p.get_type_constraints()
         if tcs and len(tcs) == 1 and isinstance(p, pad.PropertyPad):
-            if isinstance(tcs[0], pad.types.NodeReference):
+            if isinstance(tcs[0], pad_constraints.NodeReference):
                 pass
             else:
                 v = serialize.deserialize_pad_value(tcs[0], edit.value)
@@ -537,7 +537,7 @@ class Graph:
             for p in n.pads:
                 tcs = p.get_type_constraints()
                 if tcs and len(tcs) == 1:
-                    if isinstance(tcs[0], pad.types.NodeReference) and isinstance(
+                    if isinstance(tcs[0], pad_constraints.NodeReference) and isinstance(
                         p, pad.PropertyPad
                     ):
                         self._resolve_node_reference_property(
@@ -554,14 +554,14 @@ class Graph:
                 tcs = p.get_type_constraints()
                 d_tcs = p.get_default_type_constraints()
                 if tcs and len(tcs) == 1:
-                    if isinstance(tcs[0], pad.types.Secret):
+                    if isinstance(tcs[0], pad_constraints.Secret):
                         tcs[0].options = secret_options
                         if isinstance(p, pad.PropertyPad) and p.get_value() not in [
                             s.id for s in secret_options
                         ]:
                             p.set_value(None)
                 if d_tcs and len(d_tcs) == 1:
-                    if isinstance(d_tcs[0], pad.types.Secret):
+                    if isinstance(d_tcs[0], pad_constraints.Secret):
                         d_tcs[0].options = secret_options
 
         if snapshot.portals:
@@ -631,9 +631,9 @@ def create_pad_from_editor(
 ) -> pad.Pad:
     p: pad.Pad
     default_allowed_types = cast(
-        list[pad.types.BasePadType] | None, e.default_allowed_types
+        list[pad.pad_constraints.BasePadType] | None, e.default_allowed_types
     )
-    allowed_types = cast(list[pad.types.BasePadType] | None, e.allowed_types)
+    allowed_types = cast(list[pad.pad_constraints.BasePadType] | None, e.allowed_types)
     if e.type == "PropertySourcePad":
         v: Any = None
         if allowed_types and len(allowed_types) == 1:

@@ -6,7 +6,8 @@ import logging
 import time
 from typing import cast
 
-from gabber.core import node, pad, runtime_types
+from gabber.core import node, pad
+from gabber.core.types import runtime
 from gabber.lib.tts import TTS as BaseTTS
 from gabber.lib.tts import CartesiaTTS, ElevenLabsTTS, GabberTTS, OpenAITTS
 
@@ -34,7 +35,7 @@ class TTS(node.Node):
                 group="service",
                 owner_node=self,
                 default_type_constraints=[
-                    pad.types.Enum(
+                    pad_constraints.Enum(
                         options=["gabber", "cartesia", "elevenlabs", "openai"]
                     )
                 ],
@@ -46,7 +47,7 @@ class TTS(node.Node):
                 id="api_key",
                 group="api_key",
                 owner_node=self,
-                default_type_constraints=[pad.types.Secret(options=self.secrets)],
+                default_type_constraints=[pad_constraints.Secret(options=self.secrets)],
             )
 
         voice_id = cast(pad.PropertySinkPad, self.get_pad("voice_id"))
@@ -55,7 +56,7 @@ class TTS(node.Node):
                 id="voice_id",
                 group="voice_id",
                 owner_node=self,
-                default_type_constraints=[pad.types.String()],
+                default_type_constraints=[pad_constraints.String()],
             )
 
         text_sink = cast(pad.StatelessSinkPad, self.get_pad("text"))
@@ -64,7 +65,7 @@ class TTS(node.Node):
                 id="text",
                 group="text",
                 owner_node=self,
-                default_type_constraints=[pad.types.TextStream()],
+                default_type_constraints=[pad_constraints.TextStream()],
             )
 
         audio_source = cast(pad.StatelessSourcePad, self.get_pad("audio"))
@@ -73,7 +74,7 @@ class TTS(node.Node):
                 id="audio",
                 group="audio",
                 owner_node=self,
-                default_type_constraints=[pad.types.Audio()],
+                default_type_constraints=[pad_constraints.Audio()],
             )
 
         cancel_trigger = cast(pad.StatelessSinkPad, self.get_pad("cancel_trigger"))
@@ -82,7 +83,7 @@ class TTS(node.Node):
                 id="cancel_trigger",
                 group="cancel_trigger",
                 owner_node=self,
-                default_type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad_constraints.Trigger()],
             )
 
         final_transcription_source = cast(
@@ -93,7 +94,7 @@ class TTS(node.Node):
                 id="complete_transcription",
                 group="complete_transcription",
                 owner_node=self,
-                default_type_constraints=[pad.types.String()],
+                default_type_constraints=[pad_constraints.String()],
             )
 
         self.pads = [
@@ -175,7 +176,7 @@ class TTS(node.Node):
 
         async def text_task():
             async for item in text_sink:
-                if isinstance(item.value, runtime_types.TextStream):
+                if isinstance(item.value, runtime.TextStream):
                     job = TTSJob(tts, item.ctx, voice=voice_id.get_value())
                     job_queue.put_nowait(job)
                     async for text in item.value:

@@ -5,7 +5,7 @@ import logging
 from typing import TYPE_CHECKING, Any, Literal
 
 from .pad import PropertyPad, SinkPad, SourcePad, NOTIFIABLE_TYPES
-from .types import BasePadType
+from ..types import pad_constraints
 
 if TYPE_CHECKING:
     from ..node import Node
@@ -18,7 +18,7 @@ class PropertySourcePad(SourcePad, PropertyPad):
         id: str,
         group: str,
         owner_node: "Node",
-        default_type_constraints: list[BasePadType] | None,
+        default_type_constraints: list[pad_constraints.BasePadType] | None,
         value: Any,
     ):
         super().__init__()
@@ -45,11 +45,13 @@ class PropertySourcePad(SourcePad, PropertyPad):
     def get_type_constraints(self):
         return self._type_constraints
 
-    def set_type_constraints(self, constraints: list[BasePadType] | None) -> None:
+    def set_type_constraints(
+        self, constraints: list[pad_constraints.BasePadType] | None
+    ) -> None:
         self._type_constraints = constraints
 
     def set_default_type_constraints(
-        self, constraints: list[BasePadType] | None
+        self, constraints: list[pad_constraints.BasePadType] | None
     ) -> None:
         self._default_type_constraints = constraints
         self._resolve_type_constraints()

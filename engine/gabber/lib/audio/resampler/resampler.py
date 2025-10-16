@@ -3,7 +3,7 @@
 
 import av
 import numpy as np
-from gabber.core import runtime_types
+from gabber.core.types import runtime
 
 
 class Resampler:
@@ -15,9 +15,7 @@ class Resampler:
             rate=output_rate,
         )
 
-    def push_audio(
-        self, frame_data: runtime_types.AudioFrameData
-    ) -> runtime_types.AudioFrameData:
+    def push_audio(self, frame_data: runtime.AudioFrameData) -> runtime.AudioFrameData:
         if frame_data.sample_rate == self._output_rate:
             return frame_data
         f = av.AudioFrame.from_ndarray(
@@ -30,18 +28,18 @@ class Resampler:
         concatted_frames = np.concatenate(
             [np.frombuffer(frame.to_ndarray(), dtype=np.int16) for frame in frames]
         )
-        return runtime_types.AudioFrameData(
+        return runtime.AudioFrameData(
             data=concatted_frames.reshape(1, -1),
             sample_rate=self._output_rate,
             num_channels=1,
         )
 
-    def eos(self) -> runtime_types.AudioFrameData:
+    def eos(self) -> runtime.AudioFrameData:
         frames = self._resampler.resample(None)
         concatted_frames = np.concatenate(
             [np.frombuffer(frame.to_ndarray(), dtype=np.int16) for frame in frames]
         )
-        return runtime_types.AudioFrameData(
+        return runtime.AudioFrameData(
             data=concatted_frames.reshape(1, -1),
             sample_rate=self._output_rate,
             num_channels=1,
