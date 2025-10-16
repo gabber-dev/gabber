@@ -3,6 +3,7 @@
 
 from gabber.core import node, pad
 from gabber.core.node import NodeMetadata
+from gabber.core.types import pad_constraints
 
 
 class Comment(node.Node):
@@ -25,7 +26,7 @@ class Comment(node.Node):
                 id="text",
                 owner_node=self,
                 group="text",
-                default_type_constraints=[pad.types.String()],
+                default_type_constraints=[pad_constraints.String()],
                 value="",
             )
             self.pads.append(text)
@@ -37,7 +38,9 @@ class Comment(node.Node):
                 id="width",
                 owner_node=self,
                 group="layout",
-                default_type_constraints=[pad.types.Integer(minimum=160, maximum=1600)],
+                default_type_constraints=[
+                    pad_constraints.Integer(minimum=160, maximum=1600)
+                ],
                 value=480,
             )
             self.pads.append(width)

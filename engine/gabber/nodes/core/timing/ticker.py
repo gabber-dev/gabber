@@ -8,6 +8,7 @@ import time
 
 from gabber.core import node, pad
 from gabber.core.node import NodeMetadata
+from gabber.core.types import pad_constraints
 
 
 class Ticker(node.Node):
@@ -26,7 +27,7 @@ class Ticker(node.Node):
                 id="tick",
                 group="tick",
                 owner_node=self,
-                default_type_constraints=[pad.types.Integer(minimum=0)],
+                default_type_constraints=[pad_constraints.Integer(minimum=0)],
                 value=0,
             )
 
@@ -36,7 +37,7 @@ class Ticker(node.Node):
                 id="interval_ms",
                 group="interval_ms",
                 owner_node=self,
-                default_type_constraints=[pad.types.Integer(minimum=0)],
+                default_type_constraints=[pad_constraints.Integer(minimum=0)],
                 value=1000,
             )
 
@@ -46,7 +47,7 @@ class Ticker(node.Node):
                 id="reset",
                 group="reset",
                 owner_node=self,
-                default_type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad_constraints.Trigger()],
             )
 
         active = cast(pad.PropertySinkPad, self.get_pad("active"))
@@ -55,7 +56,7 @@ class Ticker(node.Node):
                 id="active",
                 group="active",
                 owner_node=self,
-                default_type_constraints=[pad.types.Boolean()],
+                default_type_constraints=[pad_constraints.Boolean()],
                 value=True,
             )
 

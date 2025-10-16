@@ -4,9 +4,9 @@
 import asyncio
 from typing import cast
 
-from gabber.core import runtime_types
+from gabber.core.types import runtime, pad_constraints
 from gabber.core.node import Node, NodeMetadata
-from gabber.core.pad import PropertySinkPad, StatelessSinkPad, StatelessSourcePad, types
+from gabber.core.pad import PropertySinkPad, StatelessSinkPad, StatelessSourcePad
 
 
 class SlidingWindow(Node):
@@ -26,7 +26,7 @@ class SlidingWindow(Node):
             video_sink = StatelessSinkPad(
                 id="video",
                 owner_node=self,
-                default_type_constraints=[types.Video()],
+                default_type_constraints=[pad_constraints.Video()],
                 group="video",
             )
 
@@ -35,7 +35,7 @@ class SlidingWindow(Node):
             audio_sink = StatelessSinkPad(
                 id="audio",
                 owner_node=self,
-                default_type_constraints=[types.Audio()],
+                default_type_constraints=[pad_constraints.Audio()],
                 group="audio",
             )
 
@@ -44,7 +44,7 @@ class SlidingWindow(Node):
             flush_trigger = StatelessSinkPad(
                 id="flush",
                 owner_node=self,
-                default_type_constraints=[types.Trigger()],
+                default_type_constraints=[pad_constraints.Trigger()],
                 group="flush",
             )
 
@@ -53,7 +53,7 @@ class SlidingWindow(Node):
             reset = StatelessSinkPad(
                 id="reset",
                 owner_node=self,
-                default_type_constraints=[types.Trigger()],
+                default_type_constraints=[pad_constraints.Trigger()],
                 group="reset",
             )
 
@@ -63,9 +63,9 @@ class SlidingWindow(Node):
                 id="clip",
                 owner_node=self,
                 default_type_constraints=[
-                    types.VideoClip(),
-                    types.AudioClip(),
-                    types.AVClip(),
+                    pad_constraints.VideoClip(),
+                    pad_constraints.AudioClip(),
+                    pad_constraints.AVClip(),
                 ],
                 group="clip",
             )
@@ -75,7 +75,7 @@ class SlidingWindow(Node):
             window_size_sink = PropertySinkPad(
                 id="window_size_s",
                 owner_node=self,
-                default_type_constraints=[types.Float()],
+                default_type_constraints=[pad_constraints.Float()],
                 group="window_size_s",
                 value=5.0,
             )
@@ -100,25 +100,29 @@ class SlidingWindow(Node):
             video_sink.get_previous_pad() is not None
             and audio_sink.get_previous_pad() is not None
         ):
-            clip_source.set_default_type_constraints([types.AVClip()])
+            clip_source.set_default_type_constraints([pad_constraints.AVClip()])
             return
 
         if (
             video_sink.get_previous_pad() is not None
             and audio_sink.get_previous_pad() is None
         ):
-            clip_source.set_default_type_constraints([types.VideoClip()])
+            clip_source.set_default_type_constraints([pad_constraints.VideoClip()])
             return
 
         if (
             audio_sink.get_previous_pad() is not None
             and video_sink.get_previous_pad() is None
         ):
-            clip_source.set_default_type_constraints([types.AudioClip()])
+            clip_source.set_default_type_constraints([pad_constraints.AudioClip()])
             return
 
         clip_source.set_default_type_constraints(
-            [types.VideoClip(), types.AudioClip(), types.AVClip()]
+            [
+                pad_constraints.VideoClip(),
+                pad_constraints.AudioClip(),
+                pad_constraints.AVClip(),
+            ]
         )
 
     async def run(self):
@@ -128,8 +132,8 @@ class SlidingWindow(Node):
         flush = cast(StatelessSinkPad, self.get_pad_required("flush"))
         reset = cast(StatelessSinkPad, self.get_pad_required("reset"))
         window = cast(PropertySinkPad, self.get_pad_required("window_size_s"))
-        audio_frames: list[runtime_types.AudioFrame] = []
-        video_frames: list[runtime_types.VideoFrame] = []
+        audio_frames: list[runtime.AudioFrame] = []
+        video_frames: list[runtime.VideoFrame] = []
 
         def slide_audio():
             window_size = cast(float, window.get_value())
@@ -169,16 +173,16 @@ class SlidingWindow(Node):
                 if not tcs or len(tcs) != 1:
                     continue
 
-                if tcs[0] == types.VideoClip():
-                    vc = runtime_types.VideoClip(video_frames[:])
+                if tcs[0] == pad_constraints.VideoClip():
+                    vc = runtime.VideoClip(video_frames[:])
                     clip_pad.push_item(vc, item.ctx)
-                elif tcs[0] == types.AudioClip():
-                    ac = runtime_types.AudioClip(audio_frames[:])
+                elif tcs[0] == pad_constraints.AudioClip():
+                    ac = runtime.AudioClip(audio_frames[:])
                     clip_pad.push_item(ac, item.ctx)
-                elif tcs[0] == types.AVClip():
-                    vc = runtime_types.VideoClip(video_frames[:])
-                    ac = runtime_types.AudioClip(audio_frames[:])
-                    clip = runtime_types.AVClip(video=vc, audio=ac)
+                elif tcs[0] == pad_constraints.AVClip():
+                    vc = runtime.VideoClip(video_frames[:])
+                    ac = runtime.AudioClip(audio_frames[:])
+                    clip = runtime.AVClip(video=vc, audio=ac)
                     clip_pad.push_item(clip, item.ctx)
 
                 item.ctx.complete()

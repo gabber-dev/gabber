@@ -3,7 +3,6 @@
 
 import asyncio
 import base64
-import time
 import io
 import json
 import logging
@@ -14,7 +13,7 @@ from typing import Any, Callable, cast
 
 from openai.types import chat
 
-from gabber.core.runtime_types import (
+from gabber.core.types.runtime import (
     ContextMessage,
     ContextMessageContent_ChoiceDelta,
     ContextMessageContentItem_Audio,

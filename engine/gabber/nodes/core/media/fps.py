@@ -7,8 +7,9 @@ from typing import cast
 
 from gabber.core import pad
 from gabber.core.node import Node, NodeMetadata
-from gabber.core.pad import PropertySinkPad, StatelessSinkPad, StatelessSourcePad, types
-from gabber.core.runtime_types import VideoFrame
+from gabber.core.pad import PropertySinkPad, StatelessSinkPad, StatelessSourcePad
+from gabber.core.types.runtime import VideoFrame
+from gabber.core.types import pad_constraints
 
 
 class FPS(Node):
@@ -26,7 +27,7 @@ class FPS(Node):
             sink = StatelessSinkPad(
                 id="video_in",
                 owner_node=self,
-                default_type_constraints=[types.Video()],
+                default_type_constraints=[pad_constraints.Video()],
                 group="video_in",
             )
 
@@ -35,7 +36,7 @@ class FPS(Node):
             source = StatelessSourcePad(
                 id="video_out",
                 owner_node=self,
-                default_type_constraints=[types.Video()],
+                default_type_constraints=[pad_constraints.Video()],
                 group="video_out",
             )
 
@@ -44,7 +45,9 @@ class FPS(Node):
             fps_sink = PropertySinkPad(
                 id="fps",
                 owner_node=self,
-                default_type_constraints=[types.Float(minimum=0.0, maximum=30.0)],
+                default_type_constraints=[
+                    pad_constraints.Float(minimum=0.0, maximum=30.0)
+                ],
                 group="fps",
                 value=0.5,
             )

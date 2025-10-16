@@ -5,6 +5,7 @@ from typing import Any, cast
 
 from gabber.core import pad
 from gabber.core.node import Node, NodeMetadata
+from gabber.core.types import pad_constraints
 
 
 class TypeConstraint(Node):
@@ -20,7 +21,7 @@ class TypeConstraint(Node):
                 group="type_selector",
                 owner_node=self,
                 default_type_constraints=[
-                    pad.types.Enum(
+                    pad_constraints.Enum(
                         options=["string", "integer", "float", "boolean", "trigger"]
                     )
                 ],
@@ -47,24 +48,24 @@ class TypeConstraint(Node):
         selected_type = type_selector.get_value()
         default_value: Any | None = None
         if selected_type == "string":
-            sink.set_default_type_constraints([pad.types.String()])
-            source.set_default_type_constraints([pad.types.String()])
+            sink.set_default_type_constraints([pad_constraints.String()])
+            source.set_default_type_constraints([pad_constraints.String()])
             default_value = ""
         elif selected_type == "integer":
-            sink.set_default_type_constraints([pad.types.Integer()])
-            source.set_default_type_constraints([pad.types.Integer()])
+            sink.set_default_type_constraints([pad_constraints.Integer()])
+            source.set_default_type_constraints([pad_constraints.Integer()])
             default_value = 0
         elif selected_type == "float":
-            sink.set_default_type_constraints([pad.types.Float()])
-            source.set_default_type_constraints([pad.types.Float()])
+            sink.set_default_type_constraints([pad_constraints.Float()])
+            source.set_default_type_constraints([pad_constraints.Float()])
             default_value = 0.0
         elif selected_type == "boolean":
-            sink.set_default_type_constraints([pad.types.Boolean()])
-            source.set_default_type_constraints([pad.types.Boolean()])
+            sink.set_default_type_constraints([pad_constraints.Boolean()])
+            source.set_default_type_constraints([pad_constraints.Boolean()])
             default_value = False
         elif selected_type == "trigger":
-            sink.set_default_type_constraints([pad.types.Trigger()])
-            source.set_default_type_constraints([pad.types.Trigger()])
+            sink.set_default_type_constraints([pad_constraints.Trigger()])
+            source.set_default_type_constraints([pad_constraints.Trigger()])
             default_value = None
 
         self.pads = [sink, source, type_selector]
@@ -74,7 +75,7 @@ class TypeConstraint(Node):
         if prev_pad:
             prev_tcs = prev_pad.get_type_constraints()
             sink_tcs = sink.get_type_constraints()
-            intersection = pad.types.INTERSECTION(prev_tcs, sink_tcs)
+            intersection = pad_constraints.INTERSECTION(prev_tcs, sink_tcs)
             if intersection is not None and len(intersection) == 0:
                 sink.disconnect()
 
@@ -125,7 +126,7 @@ class TypeConstraint(Node):
         for np in next_pads:
             np_tcs = np.get_type_constraints()
             source_tcs = source.get_type_constraints()
-            intersection = pad.types.INTERSECTION(np_tcs, source_tcs)
+            intersection = pad_constraints.INTERSECTION(np_tcs, source_tcs)
             if intersection is not None and len(intersection) == 0:
                 source.disconnect(np)
 

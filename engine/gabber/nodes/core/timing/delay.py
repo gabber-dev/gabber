@@ -2,12 +2,12 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
-import logging
 from typing import Any, cast
 import time
 
 from gabber.core import node, pad
 from gabber.core.node import NodeMetadata
+from gabber.core.types import pad_constraints
 
 
 class Delay(node.Node):
@@ -44,7 +44,7 @@ class Delay(node.Node):
                 id="delay_ms",
                 group="delay_ms",
                 owner_node=self,
-                default_type_constraints=[pad.types.Integer(minimum=0)],
+                default_type_constraints=[pad_constraints.Integer(minimum=0)],
                 value=1000,
             )
 

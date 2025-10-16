@@ -4,8 +4,10 @@
 import asyncio
 from typing import cast
 
-from gabber.core import pad, runtime_types
+from gabber.core import pad
+from gabber.core.types import runtime
 from gabber.core.node import Node, NodeMetadata
+from gabber.core.types import pad_constraints
 
 
 class Entry(Node):
@@ -16,7 +18,7 @@ class Entry(Node):
                 id="trigger",
                 group="trigger",
                 owner_node=self,
-                default_type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad_constraints.Trigger()],
             )
             self.pads.append(trigger)
 
@@ -31,4 +33,4 @@ class Entry(Node):
 
         # Wait a bit to make sure the clients are ready
         await asyncio.sleep(0.5)
-        trigger.push_item(runtime_types.Trigger(), pad.RequestContext(parent=None))
+        trigger.push_item(runtime.Trigger(), pad.RequestContext(parent=None))

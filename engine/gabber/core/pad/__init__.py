@@ -1,7 +1,6 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-from . import types
 from .pad import (
     Item,
     Pad,
@@ -36,5 +35,4 @@ __all__ = [
     "SinkPad",
     "SourcePad",
     "PropertyPad",
-    "types",
 ]

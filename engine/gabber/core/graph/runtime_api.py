@@ -6,11 +6,12 @@ from typing import Annotated, Any, Literal
 from pydantic import BaseModel, Field
 from livekit import rtc
 from dataclasses import dataclass
-from .. import node, pad, runtime_types
+from .. import node, pad
 import logging
 from ..editor import serialize
 from ..node import Node
 from gabber.nodes.core.media.publish import Publish
+from ..types import runtime, client
 
 PING_BYTES = "ping".encode("utf-8")
 
@@ -33,62 +34,62 @@ class RuntimeApi:
 
     def _trigger_value_from_pad_value(self, *, value: Any):
         v = serialize.serialize_pad_value(value)
-        ev_value: PadValue
+        ev_value: client.PadValue
         if isinstance(v, bool):
-            ev_value = PadValue_Boolean(value=v)
+            ev_value = client.Boolean(value=v)
         elif isinstance(v, int):
-            ev_value = PadValue_Integer(value=v)
+            ev_value = client.Integer(value=v)
         elif isinstance(v, float):
-            ev_value = PadValue_Float(value=v)
+            ev_value = client.Float(value=v)
         elif isinstance(v, str):
-            ev_value = PadValue_String(value=v)
-        elif isinstance(value, runtime_types.AudioClip):
+            ev_value = client.String(value=v)
+        elif isinstance(value, runtime.AudioClip):
             trans = value.transcription if value.transcription else ""
-            ev_value = PadValue_AudioClip(transcript=trans, duration=value.duration)
-        elif isinstance(value, runtime_types.VideoClip):
-            ev_value = PadValue_VideoClip(duration=value.duration)
+            ev_value = client.AudioClip(transcript=trans, duration=value.duration)
+        elif isinstance(value, runtime.VideoClip):
+            ev_value = client.VideoClip(duration=value.duration)
         elif isinstance(v, list):
-            ev_value = PadValue_List(count=len(v), items=[])
-        elif isinstance(value, runtime_types.ContextMessage):
+            ev_value = client.List(count=len(v), items=[])
+        elif isinstance(value, runtime.ContextMessage):
             ev_value = self._context_message_trigger_value(value)
         else:
-            ev_value = PadValue_Trigger()
+            ev_value = client.Trigger()
 
         return ev_value
 
-    def _context_message_trigger_value(self, msg: runtime_types.ContextMessage):
-        content: list[PadValue_ContextMessageContentItem] = []
+    def _context_message_trigger_value(self, msg: runtime.ContextMessage):
+        content: list[client.ContextMessageContentItem] = []
         for item in msg.content:
-            if isinstance(item, runtime_types.ContextMessageContentItem_Text):
+            if isinstance(item, runtime.ContextMessageContentItem_Text):
                 content.append(
-                    PadValue_ContextMessageContentItem(
+                    client.ContextMessageContentItem(
                         content_type="text", text=item.content
                     )
                 )
-            elif isinstance(item, runtime_types.ContextMessageContentItem_Image):
+            elif isinstance(item, runtime.ContextMessageContentItem_Image):
                 content.append(
-                    PadValue_ContextMessageContentItem(
+                    client.ContextMessageContentItem(
                         content_type="image",
-                        image=PadValue_ContextMessageContentItem_Image(
+                        image=client.ContextMessageContentItem_Image(
                             width=item.frame.width,
                             height=item.frame.height,
                             handle="",
                         ),
                     )
                 )
-            elif isinstance(item, runtime_types.ContextMessageContentItem_Audio):
+            elif isinstance(item, runtime.ContextMessageContentItem_Audio):
                 dur = item.clip.duration if item.clip.duration else 0.0
                 content.append(
-                    PadValue_ContextMessageContentItem(
+                    client.ContextMessageContentItem(
                         content_type="audio",
-                        audio=PadValue_ContextMessageContentItem_Audio(
+                        audio=client.ContextMessageContentItem_Audio(
                             duration=dur,
                             transcription=item.clip.transcription,
                             handle="",
                         ),
                     )
                 )
-            elif isinstance(item, runtime_types.ContextMessageContentItem_Video):
+            elif isinstance(item, runtime.ContextMessageContentItem_Video):
                 dur = item.clip.duration if item.clip.duration else 0.0
                 width = 0
                 height = 0
@@ -96,9 +97,9 @@ class RuntimeApi:
                     width = item.clip.video[0].width
                     height = item.clip.video[0].height
                 content.append(
-                    PadValue_ContextMessageContentItem(
+                    client.ContextMessageContentItem(
                         content_type="video",
-                        video=PadValue_ContextMessageContentItem_Video(
+                        video=client.ContextMessageContentItem_Video(
                             duration=dur,
                             width=width,
                             height=height,
@@ -106,7 +107,7 @@ class RuntimeApi:
                         ),
                     )
                 )
-        res = PadValue_ContextMessage(
+        res = client.ContextMessage(
             role=msg.role,
             content=content,
         )
@@ -130,11 +131,6 @@ class RuntimeApi:
 
         def on_pad(p: pad.Pad, value: Any):
             ev_value = self._trigger_value_from_pad_value(value=value)
-            logging.info(
-                "NEIL DEBUG: on_pad triggered, emitting event %s %s",
-                p.get_id(),
-                ev_value,
-            )
             self._dc_queue.put_nowait(
                 QueueItem(
                     payload=RuntimeEvent(
@@ -361,98 +357,9 @@ class RuntimeApi:
         self.room.off("data_received", on_data)
 
 
-class PadValue_String(BaseModel):
-    type: Literal["string"] = "string"
-    value: str
-
-
-class PadValue_Boolean(BaseModel):
-    type: Literal["boolean"] = "boolean"
-    value: bool
-
-
-class PadValue_Integer(BaseModel):
-    type: Literal["integer"] = "integer"
-    value: int
-
-
-class PadValue_Float(BaseModel):
-    type: Literal["float"] = "float"
-    value: float
-
-
-class PadValue_Trigger(BaseModel):
-    type: Literal["trigger"] = "trigger"
-
-
-class PadValue_AudioClip(BaseModel):
-    type: Literal["audio_clip"] = "audio_clip"
-    transcript: str
-    duration: float
-
-
-class PadValue_VideoClip(BaseModel):
-    type: Literal["video_clip"] = "video_clip"
-    duration: float
-
-
-class PadValue_ContextMessageContentItem_Image(BaseModel):
-    width: int
-    height: int
-    handle: str
-
-
-class PadValue_ContextMessageContentItem_Audio(BaseModel):
-    duration: float
-    transcription: str | None
-    handle: str
-
-
-class PadValue_ContextMessageContentItem_Video(BaseModel):
-    width: int
-    height: int
-    duration: float
-    handle: str
-
-
-class PadValue_ContextMessageContentItem(BaseModel):
-    type: Literal["context_message_content"] = "context_message_content"
-    content_type: Literal["text", "image", "audio", "video"]
-    text: str | None = None
-    image: PadValue_ContextMessageContentItem_Image | None = None
-    audio: PadValue_ContextMessageContentItem_Audio | None = None
-    video: PadValue_ContextMessageContentItem_Video | None = None
-
-
-class PadValue_ContextMessage(BaseModel):
-    type: Literal["context_message"] = "context_message"
-    role: str
-    content: list[PadValue_ContextMessageContentItem]
-
-
-class PadValue_List(BaseModel):
-    type: Literal["list"] = "list"
-    count: int
-    items: list[Any]
-
-
-PadValue = Annotated[
-    PadValue_String
-    | PadValue_Integer
-    | PadValue_Float
-    | PadValue_Boolean
-    | PadValue_Trigger
-    | PadValue_AudioClip
-    | PadValue_VideoClip
-    | PadValue_List
-    | PadValue_ContextMessage,
-    Field(discriminator="type", description="Type of the pad triggered value"),
-]
-
-
 class RuntimeEventPayload_Value(BaseModel):
     type: Literal["value"] = "value"
-    value: PadValue
+    value: client.PadValue
     node_id: str
     pad_id: str
 
@@ -532,12 +439,12 @@ class RuntimeResponsePayload_PushValue(BaseModel):
 
 class RuntimeResponsePayload_GetValue(BaseModel):
     type: Literal["get_value"] = "get_value"
-    value: PadValue
+    value: client.PadValue
 
 
 class RuntimeResponsePayload_GetListItems(BaseModel):
     type: Literal["get_list_items"] = "get_list_items"
-    items: list[PadValue]
+    items: list[client.PadValue]
 
 
 class RuntimeResponsePayload_LockPublisher(BaseModel):
@@ -624,5 +531,5 @@ class DummyType(BaseModel):
     runtime_response_payload: RuntimeResponsePayload
     ev: RuntimeEvent
     runtime_event_payload: RuntimeEventPayload
-    pad_value: PadValue
+    pad_value: client.PadValue
     log_item: RuntimeEventPayload_LogItem

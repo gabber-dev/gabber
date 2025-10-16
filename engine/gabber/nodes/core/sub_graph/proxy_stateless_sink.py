@@ -7,6 +7,7 @@ from typing import cast
 from gabber.core import node, pad
 from gabber.core.node import NodeMetadata
 from gabber.utils import short_uuid
+from gabber.core.types import pad_constraints
 
 
 class ProxyStatelessSink(node.Node):
@@ -40,7 +41,7 @@ class ProxyStatelessSink(node.Node):
                     id="pad_id",
                     owner_node=self,
                     group="pad_id",
-                    default_type_constraints=[pad.types.String()],
+                    default_type_constraints=[pad_constraints.String()],
                     value=f"proxy_{short_uuid()}",
                 )
             )
@@ -55,7 +56,7 @@ class ProxyStatelessSink(node.Node):
             )
         for np in nps:
             np = cast(pad.StatelessSinkPad, np)
-            tsc = pad.types.INTERSECTION(tsc, np.get_type_constraints())
+            tsc = pad_constraints.INTERSECTION(tsc, np.get_type_constraints())
 
         proxy_pad.set_type_constraints(tsc)
 

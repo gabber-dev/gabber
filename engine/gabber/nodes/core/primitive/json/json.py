@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
-import logging
 from typing import cast
 
 from gabber.core import node, pad
 from gabber.core.node import NodeMetadata
+from gabber.core.types import pad_constraints
 
 
 class Json(node.Node):
@@ -25,7 +25,7 @@ class Json(node.Node):
                 id="emit",
                 owner_node=self,
                 group="emit",
-                default_type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad_constraints.Trigger()],
             )
 
         value = cast(pad.PropertySourcePad | None, self.get_pad("value"))
@@ -34,7 +34,7 @@ class Json(node.Node):
                 id="value",
                 group="value",
                 owner_node=self,
-                default_type_constraints=[pad.types.Object()],
+                default_type_constraints=[pad_constraints.Object()],
                 value="",
             )
 

@@ -5,9 +5,10 @@ import logging
 import asyncio
 from typing import cast
 
-from gabber.core import pad, runtime_types
+from gabber.core import pad
+from gabber.core.types import runtime, pad_constraints
 from gabber.core.node import Node, NodeMetadata
-from gabber.core.pad import PropertySinkPad, StatelessSinkPad, StatelessSourcePad, types
+from gabber.core.pad import PropertySinkPad, StatelessSinkPad, StatelessSourcePad
 
 
 class ContextMessageZip(Node):
@@ -26,8 +27,8 @@ class ContextMessageZip(Node):
                 id="role",
                 group="role",
                 owner_node=self,
-                default_type_constraints=[types.ContextMessageRole()],
-                value=runtime_types.ContextMessageRole.SYSTEM,
+                default_type_constraints=[pad_constraints.ContextMessageRole()],
+                value=runtime.ContextMessageRole.SYSTEM,
             )
 
         message_source = cast(StatelessSourcePad, self.get_pad("context_message"))
@@ -36,7 +37,7 @@ class ContextMessageZip(Node):
                 id="context_message",
                 group="context_message",
                 owner_node=self,
-                default_type_constraints=[types.ContextMessage()],
+                default_type_constraints=[pad_constraints.ContextMessage()],
             )
 
         num_content_pads = self.get_pad("num_contents")
@@ -45,7 +46,7 @@ class ContextMessageZip(Node):
                 id="num_contents",
                 group="config",
                 owner_node=self,
-                default_type_constraints=[types.Integer()],
+                default_type_constraints=[pad_constraints.Integer()],
                 value=1,
             )
 
@@ -60,13 +61,13 @@ class ContextMessageZip(Node):
         self.pads = [role, message_source, num_content_pads] + content_pads
 
     def _resolve_content_pads(self):
-        sink_default: list[pad.types.BasePadType] | None = [
-            types.AudioClip(),
-            types.VideoClip(),
-            types.AVClip(),
-            types.String(),
-            types.Video(),
-            types.TextStream(),
+        sink_default: list[pad_constraints.BasePadType] | None = [
+            pad_constraints.AudioClip(),
+            pad_constraints.VideoClip(),
+            pad_constraints.AVClip(),
+            pad_constraints.String(),
+            pad_constraints.Video(),
+            pad_constraints.TextStream(),
         ]
         num_content_pads = (
             cast(PropertySinkPad, self.get_pad_required("num_contents")).get_value()
@@ -107,52 +108,44 @@ class ContextMessageZip(Node):
                     *[anext(p) for p in connected_content_pads]
                 )
                 role = role_pad.get_value()
-                content: list[runtime_types.ContextMessageContentItem] = []
+                content: list[runtime.ContextMessageContentItem] = []
                 for item in items:
-                    if isinstance(item.value, runtime_types.AudioClip):
+                    if isinstance(item.value, runtime.AudioClip):
                         content.append(
-                            runtime_types.ContextMessageContentItem_Audio(
-                                clip=item.value
-                            )
+                            runtime.ContextMessageContentItem_Audio(clip=item.value)
                         )
-                    elif isinstance(item.value, runtime_types.VideoClip):
+                    elif isinstance(item.value, runtime.VideoClip):
                         content.append(
-                            runtime_types.ContextMessageContentItem_Video(
-                                clip=item.value
-                            )
+                            runtime.ContextMessageContentItem_Video(clip=item.value)
                         )
-                    elif isinstance(item.value, runtime_types.AVClip):
+                    elif isinstance(item.value, runtime.AVClip):
                         content.append(
-                            runtime_types.ContextMessageContentItem_Audio(
+                            runtime.ContextMessageContentItem_Audio(
                                 clip=item.value.audio
                             )
                         )
                         content.append(
-                            runtime_types.ContextMessageContentItem_Video(
+                            runtime.ContextMessageContentItem_Video(
                                 clip=item.value.video
                             )
                         )
-                    elif isinstance(item.value, runtime_types.VideoFrame):
+                    elif isinstance(item.value, runtime.VideoFrame):
                         content.append(
-                            runtime_types.ContextMessageContentItem_Image(
-                                frame=item.value
-                            )
+                            runtime.ContextMessageContentItem_Image(frame=item.value)
                         )
                     elif isinstance(item.value, str):
                         content.append(
-                            runtime_types.ContextMessageContentItem_Text(
-                                content=item.value
-                            )
+                            runtime.ContextMessageContentItem_Text(content=item.value)
                         )
-                    elif isinstance(item.value, runtime_types.TextStream):
+                    elif isinstance(item.value, runtime.TextStream):
                         acc = ""
                         async for chunk in item.value:
                             acc += chunk
                         content.append(
-                            runtime_types.ContextMessageContentItem_Text(content=acc)
+                            runtime.ContextMessageContentItem_Text(content=acc)
                         )
 
-                message = runtime_types.ContextMessage(
+                message = runtime.ContextMessage(
                     role=role, content=content, tool_calls=[]
                 )
 

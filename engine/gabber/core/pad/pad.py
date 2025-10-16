@@ -4,11 +4,10 @@
 import asyncio
 import logging
 from dataclasses import dataclass
-from .. import runtime_types
+from ..types import runtime, pad_constraints
 from typing import TYPE_CHECKING, Any, Callable, Protocol, runtime_checkable
 
 from .request_context import RequestContext
-from .types import INTERSECTION, BasePadType, NodeReference
 
 if TYPE_CHECKING:
     from ..node import Node
@@ -28,11 +27,15 @@ class Pad(Protocol):
     def set_id(self, id: str) -> None: ...
     def get_group(self) -> str: ...
     def get_editor_type(self) -> str: ...
-    def set_type_constraints(self, constraints: list[BasePadType] | None) -> None: ...
-    def get_type_constraints(self) -> list[BasePadType] | None: ...
-    def get_default_type_constraints(self) -> list[BasePadType] | None: ...
+    def set_type_constraints(
+        self, constraints: list[pad_constraints.BasePadType] | None
+    ) -> None: ...
+    def get_type_constraints(self) -> list[pad_constraints.BasePadType] | None: ...
+    def get_default_type_constraints(
+        self,
+    ) -> list[pad_constraints.BasePadType] | None: ...
     def set_default_type_constraints(
-        self, constraints: list[BasePadType] | None
+        self, constraints: list[pad_constraints.BasePadType] | None
     ) -> None: ...
     def get_owner_node(self) -> "Node": ...
     def link_types_to_pad(self, other: "Pad") -> None:
@@ -62,7 +65,6 @@ class Pad(Protocol):
     def _notify_update(self, value: Any) -> None:
         for handler in self._update_handlers:
             try:
-                logging.info("NEIL calling handler %s", self.get_id())
                 handler(self, value)
             except Exception as e:
                 logging.error(f"Error in update handler {handler}: {e}")
@@ -70,7 +72,9 @@ class Pad(Protocol):
     def _resolve_type_constraints(self) -> None:
         intersection = self.get_default_type_constraints()
         for p in self._pad_links:
-            intersection = INTERSECTION(intersection, p.get_default_type_constraints())
+            intersection = pad_constraints.INTERSECTION(
+                intersection, p.get_default_type_constraints()
+            )
 
         all_pads: list[Pad] = []
         q: list[Pad] = [self]
@@ -97,7 +101,9 @@ class Pad(Protocol):
 
         intersection = self.get_default_type_constraints()
         for p in all_pads:
-            intersection = INTERSECTION(intersection, p.get_default_type_constraints())
+            intersection = pad_constraints.INTERSECTION(
+                intersection, p.get_default_type_constraints()
+            )
 
         for p in all_pads:
             p.set_type_constraints(intersection)
@@ -147,7 +153,7 @@ class SourcePad(Pad, Protocol):
         notify_type = False
         if isinstance(value, NOTIFIABLE_TYPES):
             notify_type = True
-            if isinstance(value, runtime_types.BaseRuntimeType):
+            if isinstance(value, runtime.BaseRuntimeType):
                 self.logger.info(
                     f"Source Pad Push: {value.log_type()}", extra=value.to_log_values()
                 )
@@ -223,7 +229,7 @@ class SourcePad(Pad, Protocol):
         if isinstance(sink_pad, PropertyPad):
             tc = sink_pad.get_type_constraints()
             if tc is not None and len(tc) == 1:
-                if isinstance(tc[0], NodeReference):
+                if isinstance(tc[0], pad_constraints.NodeReference):
                     sink_pad.set_value(None)
 
     def disconnect_all(self) -> None:
@@ -238,7 +244,7 @@ class SourcePad(Pad, Protocol):
         if other.get_previous_pad() is not None:
             return False
 
-        intersection = INTERSECTION(
+        intersection = pad_constraints.INTERSECTION(
             self.get_type_constraints(), other.get_type_constraints()
         )
 
@@ -267,8 +273,8 @@ NOTIFIABLE_TYPES = (
     float,
     bool,
     list,
-    runtime_types.Trigger,
-    runtime_types.ContextMessage,
-    runtime_types.AudioClip,
-    runtime_types.VideoClip,
+    runtime.Trigger,
+    runtime.ContextMessage,
+    runtime.AudioClip,
+    runtime.VideoClip,
 )

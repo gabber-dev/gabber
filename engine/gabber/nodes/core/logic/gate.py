@@ -5,6 +5,7 @@ from typing import cast
 
 from gabber.core import pad
 from gabber.core.node import Node, NodeMetadata
+from gabber.core.types import pad_constraints
 
 
 class Gate(Node):
@@ -28,7 +29,7 @@ class Gate(Node):
                 id="open",
                 group="open",
                 owner_node=self,
-                default_type_constraints=[pad.types.Boolean()],
+                default_type_constraints=[pad_constraints.Boolean()],
             )
 
         source = cast(pad.StatelessSourcePad, self.get_pad("source"))

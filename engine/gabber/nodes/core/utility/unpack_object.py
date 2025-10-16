@@ -6,6 +6,7 @@ from typing import Any, cast
 
 from gabber.core import pad
 from gabber.core.node import Node, NodeMetadata
+from gabber.core.types import pad_constraints
 
 
 class UnpackObject(Node):
@@ -22,7 +23,7 @@ class UnpackObject(Node):
                 id="sink",
                 group="sink",
                 owner_node=self,
-                default_type_constraints=[pad.types.Object()],
+                default_type_constraints=[pad_constraints.Object()],
             )
         input_tcs = sink.get_type_constraints()
         if not input_tcs or len(input_tcs) != 1:
@@ -38,7 +39,7 @@ class UnpackObject(Node):
             raise ValueError("Previous pad must have exactly one type constraint.")
 
         prev_tc = prev_tcs[0]
-        if not isinstance(prev_tc, pad.types.Object):
+        if not isinstance(prev_tc, pad_constraints.Object):
             raise ValueError("Previous pad type constraint must be an Object.")
 
         prev_schema = prev_tc.object_schema
@@ -49,7 +50,7 @@ class UnpackObject(Node):
         self.pads = [sink] + output_pads
 
     def resolve_output_pads(self, schema: dict[str, Any]):
-        pad_types = pad.types.json_schema_to_types(schema)
+        pad_types = pad_constraints.json_schema_to_types(schema)
         output_pads = [p for p in self.pads if p.get_group() == "output"]
         key_set = set(pad_types.keys())
         for key, pad_type in pad_types.items():

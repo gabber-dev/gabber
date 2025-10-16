@@ -6,10 +6,12 @@ import logging
 from typing import cast
 import contextlib
 
-from gabber.core import node, pad, mcp, runtime_types
+from gabber.core import node, pad, mcp
+from gabber.core.types import runtime
 from gabber.core.node import NodeMetadata
 from mcp.types import ContentBlock
 from mcp import ClientSession
+from gabber.core.types import pad_constraints
 
 
 class MCP(node.Node):
@@ -28,7 +30,9 @@ class MCP(node.Node):
                 id="self",
                 group="self",
                 owner_node=self,
-                default_type_constraints=[pad.types.NodeReference(node_types=["MCP"])],
+                default_type_constraints=[
+                    pad_constraints.NodeReference(node_types=["MCP"])
+                ],
                 value=self,
             )
 
@@ -39,7 +43,7 @@ class MCP(node.Node):
                 group="config",
                 owner_node=self,
                 default_type_constraints=[
-                    pad.types.String(),
+                    pad_constraints.String(),
                 ],
                 value=None,
             )
@@ -93,15 +97,15 @@ class MCP(node.Node):
             self.logger.info("MCP Client ping loop cancelled")
             raise
 
-    async def to_tool_definitions(self) -> list[runtime_types.ToolDefinition]:
+    async def to_tool_definitions(self) -> list[runtime.ToolDefinition]:
         async with self.init_lock:
             if not self.session:
                 raise ValueError("MCP session not initialized")
             mcp_tools_res = await self.session.list_tools()
             mcp_tools = mcp_tools_res.tools
-            tool_defs: list[runtime_types.ToolDefinition] = []
+            tool_defs: list[runtime.ToolDefinition] = []
             for t in mcp_tools:
-                tool_def = runtime_types.ToolDefinition(
+                tool_def = runtime.ToolDefinition(
                     name=t.name,
                     description=t.description or "",
                     parameters=t.inputSchema,
@@ -110,7 +114,7 @@ class MCP(node.Node):
 
             return tool_defs
 
-    async def call_tool(self, tool_call: runtime_types.ToolCall):
+    async def call_tool(self, tool_call: runtime.ToolCall):
         self.logger.info(f"MCP Client calling tool '{tool_call.name}'")
         sess: ClientSession
         async with self.init_lock:

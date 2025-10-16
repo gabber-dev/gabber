@@ -6,13 +6,14 @@ from typing import cast
 
 from gabber.core import pad
 from gabber.core.node import Node, NodeMetadata
+from gabber.core.types import pad_constraints
 
 ALLOWED_VALUE_TYPES = [
-    pad.types.String(),
-    pad.types.Integer(),
-    pad.types.Boolean(),
-    pad.types.Float(),
-    pad.types.ContextMessage(),
+    pad_constraints.String(),
+    pad_constraints.Integer(),
+    pad_constraints.Boolean(),
+    pad_constraints.Float(),
+    pad_constraints.ContextMessage(),
 ]
 
 
@@ -30,12 +31,16 @@ class EnumSwitchProperty(Node):
                 id="sink",
                 group="sink",
                 owner_node=self,
-                default_type_constraints=[pad.types.Enum(options=None)],
+                default_type_constraints=[pad_constraints.Enum(options=None)],
             )
 
         options: list[str] = []
         sink_tc = sink.get_type_constraints()
-        if sink_tc and isinstance(sink_tc[0], pad.types.Enum) and sink_tc[0].options:
+        if (
+            sink_tc
+            and isinstance(sink_tc[0], pad_constraints.Enum)
+            and sink_tc[0].options
+        ):
             options = sink_tc[0].options
 
         value_pads: list[pad.PropertySinkPad] = []

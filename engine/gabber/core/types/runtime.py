@@ -13,7 +13,7 @@ import numpy as np
 from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
-from .. import pad
+from . import pad_constraints
 
 
 class BaseRuntimeType(ABC):
@@ -416,12 +416,12 @@ class ContextMessageContent_ToolCallDelta(BaseModel):
 class Schema(BaseModel, BaseRuntimeType):
     properties: dict[
         str,
-        pad.types.String
-        | pad.types.Integer
-        | pad.types.Float
-        | pad.types.Boolean
-        | pad.types.Object
-        | pad.types.List,
+        pad_constraints.String
+        | pad_constraints.Integer
+        | pad_constraints.Float
+        | pad_constraints.Boolean
+        | pad_constraints.Object
+        | pad_constraints.List,
     ]
     required: list[str] | None = None
     defaults: dict[str, Any] | None = None
@@ -443,27 +443,27 @@ class Schema(BaseModel, BaseRuntimeType):
     def from_json_schema(cls, schema: dict[str, Any]) -> "Schema":
         properties: dict[
             str,
-            pad.types.String
-            | pad.types.Integer
-            | pad.types.Float
-            | pad.types.Boolean
-            | pad.types.Object
-            | pad.types.List,
+            pad_constraints.String
+            | pad_constraints.Integer
+            | pad_constraints.Float
+            | pad_constraints.Boolean
+            | pad_constraints.Object
+            | pad_constraints.List,
         ] = {}
         for key, value in schema.get("properties", {}).items():
             type_ = value.get("type")
             if type_ == "string":
-                properties[key] = pad.types.String()
+                properties[key] = pad_constraints.String()
             elif type_ == "integer":
-                properties[key] = pad.types.Integer()
+                properties[key] = pad_constraints.Integer()
             elif type_ == "number":
-                properties[key] = pad.types.Float()
+                properties[key] = pad_constraints.Float()
             elif type_ == "boolean":
-                properties[key] = pad.types.Boolean()
+                properties[key] = pad_constraints.Boolean()
             elif type_ == "object":
-                properties[key] = pad.types.Object()
+                properties[key] = pad_constraints.Object()
             elif type_ == "array":
-                properties[key] = pad.types.List(item_type_constraints=None)
+                properties[key] = pad_constraints.List(item_type_constraints=None)
             else:
                 raise ValueError(f"Unsupported property type: {type_}")
         return cls(
@@ -481,12 +481,12 @@ class Schema(BaseModel, BaseRuntimeType):
             return None
         properties: dict[
             str,
-            pad.types.String
-            | pad.types.Integer
-            | pad.types.Float
-            | pad.types.Boolean
-            | pad.types.Object
-            | pad.types.List,
+            pad_constraints.String
+            | pad_constraints.Integer
+            | pad_constraints.Float
+            | pad_constraints.Boolean
+            | pad_constraints.Object
+            | pad_constraints.List,
         ] = {}
         defaults: dict[str, Any] = {}
         for d in self.defaults or {}:
@@ -495,14 +495,14 @@ class Schema(BaseModel, BaseRuntimeType):
             defaults[d] = self.defaults[d]
         for key, value in self.properties.items():
             if key in other.properties:
-                intersection = cast(pad.types.BasePadType, value).intersect(
-                    cast(pad.types.BasePadType, other.properties[key])
+                intersection = cast(pad_constraints.BasePadType, value).intersect(
+                    cast(pad_constraints.BasePadType, other.properties[key])
                 )
                 intersection = cast(
-                    pad.types.String
-                    | pad.types.Integer
-                    | pad.types.Float
-                    | pad.types.Boolean
+                    pad_constraints.String
+                    | pad_constraints.Integer
+                    | pad_constraints.Float
+                    | pad_constraints.Boolean
                     | None,
                     intersection,
                 )

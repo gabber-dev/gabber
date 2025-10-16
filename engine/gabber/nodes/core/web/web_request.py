@@ -7,6 +7,7 @@ from typing import Any, cast
 import aiohttp
 from gabber.core import pad
 from gabber.core.node import Node
+from gabber.core.types import pad_constraints
 
 
 class WebRequest(Node):
@@ -17,7 +18,7 @@ class WebRequest(Node):
                 id="url",
                 group="url",
                 owner_node=self,
-                default_type_constraints=[pad.types.String()],
+                default_type_constraints=[pad_constraints.String()],
                 value="https://example-url.test",
             )
 
@@ -28,7 +29,9 @@ class WebRequest(Node):
                 group="method",
                 owner_node=self,
                 default_type_constraints=[
-                    pad.types.Enum(options=["GET", "POST", "PUT", "PATCH", "DELETE"])
+                    pad_constraints.Enum(
+                        options=["GET", "POST", "PUT", "PATCH", "DELETE"]
+                    )
                 ],
                 value="GET",
             )
@@ -39,7 +42,7 @@ class WebRequest(Node):
                 id="max_retries",
                 group="max_retries",
                 owner_node=self,
-                default_type_constraints=[pad.types.Integer()],
+                default_type_constraints=[pad_constraints.Integer()],
                 value=3,
             )
 
@@ -52,7 +55,7 @@ class WebRequest(Node):
                 group="authorization_type",
                 owner_node=self,
                 default_type_constraints=[
-                    pad.types.Enum(options=["None", "Bearer Token", "API Key"])
+                    pad_constraints.Enum(options=["None", "Bearer Token", "API Key"])
                 ],
                 value="None",
             )
@@ -64,7 +67,7 @@ class WebRequest(Node):
                 group="response_type",
                 owner_node=self,
                 default_type_constraints=[
-                    pad.types.Enum(
+                    pad_constraints.Enum(
                         options=[
                             "application/json",
                             "text/plain",
@@ -80,7 +83,7 @@ class WebRequest(Node):
                 id="bearer_token",
                 group="bearer_token",
                 owner_node=self,
-                default_type_constraints=[pad.types.Secret(options=self.secrets)],
+                default_type_constraints=[pad_constraints.Secret(options=self.secrets)],
                 value="",
             )
 
@@ -90,7 +93,7 @@ class WebRequest(Node):
                 id="api_header_key",
                 group="api_header_key",
                 owner_node=self,
-                default_type_constraints=[pad.types.String()],
+                default_type_constraints=[pad_constraints.String()],
                 value="",
             )
 
@@ -100,7 +103,7 @@ class WebRequest(Node):
                 id="api_value",
                 group="api_value",
                 owner_node=self,
-                default_type_constraints=[pad.types.Secret(options=self.secrets)],
+                default_type_constraints=[pad_constraints.Secret(options=self.secrets)],
                 value="",
             )
 
@@ -119,7 +122,7 @@ class WebRequest(Node):
                 id="error_response",
                 group="error_response",
                 owner_node=self,
-                default_type_constraints=[pad.types.String()],
+                default_type_constraints=[pad_constraints.String()],
             )
 
         request_body = cast(pad.StatelessSinkPad, self.get_pad("request_body"))
@@ -128,7 +131,7 @@ class WebRequest(Node):
                 id="request_body",
                 group="request_body",
                 owner_node=self,
-                default_type_constraints=[pad.types.Object()],
+                default_type_constraints=[pad_constraints.Object()],
             )
 
         query_params = cast(pad.StatelessSinkPad, self.get_pad("query_params"))
@@ -137,7 +140,7 @@ class WebRequest(Node):
                 id="query_params",
                 group="query_params",
                 owner_node=self,
-                default_type_constraints=[pad.types.Object()],
+                default_type_constraints=[pad_constraints.Object()],
             )
 
         fixed_pads: list[pad.Pad] = [
@@ -152,13 +155,13 @@ class WebRequest(Node):
             query_params,
         ]
 
-        output_tc: list[pad.types.BasePadType] = []
+        output_tc: list[pad_constraints.BasePadType] = []
         if response_type.get_value() == "application/json":
-            output_tc = [pad.types.Object()]
+            output_tc = [pad_constraints.Object()]
         elif response_type.get_value() == "text/plain":
-            output_tc = [pad.types.String()]
+            output_tc = [pad_constraints.String()]
         else:
-            output_tc = [pad.types.Object()]
+            output_tc = [pad_constraints.Object()]
 
         response.set_default_type_constraints(output_tc)
 

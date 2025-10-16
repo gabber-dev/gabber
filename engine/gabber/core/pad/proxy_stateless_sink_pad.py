@@ -4,7 +4,8 @@
 import asyncio
 from typing import TYPE_CHECKING
 
-from ..pad import Item, Pad, ProxyPad, SinkPad, SourcePad, types
+from ..pad import Item, Pad, ProxyPad, SinkPad, SourcePad
+from ..types import pad_constraints
 
 if TYPE_CHECKING:
     from ..node import Node
@@ -44,14 +45,16 @@ class ProxyStatelessSinkPad(SinkPad, ProxyPad):
     def get_type_constraints(self):
         return self._other.get_type_constraints()
 
-    def set_type_constraints(self, constraints: list[types.BasePadType] | None) -> None:
+    def set_type_constraints(
+        self, constraints: list[pad_constraints.BasePadType] | None
+    ) -> None:
         self._other.set_type_constraints(constraints)
 
     def get_default_type_constraints(self):
         return self._other.get_default_type_constraints()
 
     def set_default_type_constraints(
-        self, constraints: list[types.BasePadType] | None
+        self, constraints: list[pad_constraints.BasePadType] | None
     ) -> None:
         self._other.set_default_type_constraints(constraints)
 

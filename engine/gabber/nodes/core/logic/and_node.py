@@ -4,6 +4,7 @@
 import asyncio
 from gabber.core import node, pad
 from typing import cast
+from gabber.core.types import pad_constraints
 
 
 class And(node.Node):
@@ -18,7 +19,7 @@ class And(node.Node):
                 id="num_inputs",
                 group="num_inputs",
                 owner_node=self,
-                default_type_constraints=[pad.types.Integer()],
+                default_type_constraints=[pad_constraints.Integer()],
                 value=2,
             )
 
@@ -35,7 +36,7 @@ class And(node.Node):
                     id=f"input_{i + 1}",
                     group="input",
                     owner_node=self,
-                    default_type_constraints=[pad.types.Boolean()],
+                    default_type_constraints=[pad_constraints.Boolean()],
                     value=False,
                 )
             input_pads.append(input_pad)
@@ -55,7 +56,7 @@ class And(node.Node):
                 id="source",
                 group="source",
                 owner_node=self,
-                default_type_constraints=[pad.types.Boolean()],
+                default_type_constraints=[pad_constraints.Boolean()],
                 value=False,
             )
 

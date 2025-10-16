@@ -5,6 +5,7 @@ from typing import cast
 
 from gabber.core import node, pad
 from gabber.core.node import NodeMetadata, NodeNote
+from gabber.core.types import pad_constraints
 
 
 class ChatInput(node.Node):
@@ -25,7 +26,7 @@ class ChatInput(node.Node):
                 id="output",
                 owner_node=self,
                 group="text",
-                default_type_constraints=[pad.types.String()],
+                default_type_constraints=[pad_constraints.String()],
             )
 
         self.pads = [output]

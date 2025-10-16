@@ -1,12 +1,12 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-import logging
 import asyncio
 from typing import cast
 
 from gabber.core import pad
 from gabber.core.node import Node, NodeMetadata
+from gabber.core.types import pad_constraints
 
 
 class Merge(Node):
@@ -33,7 +33,7 @@ class Merge(Node):
             num_sink_pads = pad.PropertySinkPad(
                 id="num_sinks",
                 owner_node=self,
-                default_type_constraints=[pad.types.Integer()],
+                default_type_constraints=[pad_constraints.Integer()],
                 group="num_sinks",
                 value=1,
             )

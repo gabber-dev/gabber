@@ -8,10 +8,11 @@ import time
 import numpy as np
 from gabber.core import node, pad
 from gabber.core.node import NodeMetadata
-from gabber.core.runtime_types import AudioFrame, AudioFrameData, VideoFrame
+from gabber.core.types.runtime import AudioFrame, AudioFrameData, VideoFrame
 from gabber.lib.audio import Resampler
 from livekit import rtc
 from gabber.utils import audio_stream_provider, video_stream_provider
+from gabber.core.types import pad_constraints
 
 
 class Publish(node.Node):
@@ -30,7 +31,7 @@ class Publish(node.Node):
                 id="audio",
                 owner_node=self,
                 group="audio",
-                default_type_constraints=[pad.types.Audio()],
+                default_type_constraints=[pad_constraints.Audio()],
             )
 
         audio_enabled = cast(pad.PropertySourcePad, self.get_pad("audio_enabled"))
@@ -39,7 +40,7 @@ class Publish(node.Node):
                 id="audio_enabled",
                 owner_node=self,
                 group="audio_enabled",
-                default_type_constraints=[pad.types.Boolean()],
+                default_type_constraints=[pad_constraints.Boolean()],
                 value=False,
             )
 
@@ -49,7 +50,7 @@ class Publish(node.Node):
                 id="video",
                 owner_node=self,
                 group="video",
-                default_type_constraints=[pad.types.Video()],
+                default_type_constraints=[pad_constraints.Video()],
             )
 
         video_enabled = cast(pad.PropertySourcePad, self.get_pad("video_enabled"))
@@ -58,7 +59,7 @@ class Publish(node.Node):
                 id="video_enabled",
                 owner_node=self,
                 group="video_enabled",
-                default_type_constraints=[pad.types.Boolean()],
+                default_type_constraints=[pad_constraints.Boolean()],
                 value=False,
             )
 

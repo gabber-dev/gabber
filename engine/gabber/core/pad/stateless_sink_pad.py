@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from ..pad.pad import Item, SourcePad
 
 from .pad import SinkPad
-from . import types
+from ..types import pad_constraints
 
 if TYPE_CHECKING:
     from ..node import Node
@@ -20,7 +20,7 @@ class StatelessSinkPad(SinkPad):
         id: str,
         group: str,
         owner_node: "Node",
-        default_type_constraints: list[types.BasePadType] | None = None,
+        default_type_constraints: list[pad_constraints.BasePadType] | None = None,
     ):
         super().__init__()
         self._id = id
@@ -50,12 +50,14 @@ class StatelessSinkPad(SinkPad):
         return self._default_type_constraints
 
     def set_default_type_constraints(
-        self, constraints: list[types.BasePadType] | None
+        self, constraints: list[pad_constraints.BasePadType] | None
     ) -> None:
         self._default_type_constraints = constraints
         self._resolve_type_constraints()
 
-    def set_type_constraints(self, constraints: list[types.BasePadType] | None) -> None:
+    def set_type_constraints(
+        self, constraints: list[pad_constraints.BasePadType] | None
+    ) -> None:
         self._type_constraints = constraints
 
     def get_previous_pad(self) -> SourcePad | None:

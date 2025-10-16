@@ -6,6 +6,7 @@ from typing import cast
 
 from gabber.core import node, pad
 from gabber.core.node import NodeMetadata
+from gabber.core.types import pad_constraints
 
 
 class Integer(node.Node):
@@ -26,7 +27,7 @@ class Integer(node.Node):
                 id="set",
                 owner_node=self,
                 group="set",
-                default_type_constraints=[pad.types.Integer()],
+                default_type_constraints=[pad_constraints.Integer()],
             )
 
         emit = cast(pad.StatelessSinkPad | None, self.get_pad("emit"))
@@ -35,7 +36,7 @@ class Integer(node.Node):
                 id="emit",
                 owner_node=self,
                 group="emit",
-                default_type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad_constraints.Trigger()],
             )
 
         value = cast(pad.PropertySourcePad | None, self.get_pad("value"))
@@ -44,7 +45,7 @@ class Integer(node.Node):
                 id="value",
                 group="value",
                 owner_node=self,
-                default_type_constraints=[pad.types.Integer()],
+                default_type_constraints=[pad_constraints.Integer()],
                 value=0,
             )
 
@@ -54,7 +55,7 @@ class Integer(node.Node):
                 id="changed",
                 group="changed",
                 owner_node=self,
-                default_type_constraints=[pad.types.Integer()],
+                default_type_constraints=[pad_constraints.Integer()],
             )
 
         increment = cast(pad.StatelessSinkPad | None, self.get_pad("increment"))
@@ -63,7 +64,7 @@ class Integer(node.Node):
                 id="increment",
                 group="increment",
                 owner_node=self,
-                default_type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad_constraints.Trigger()],
             )
 
         decrement = cast(pad.StatelessSinkPad | None, self.get_pad("decrement"))
@@ -72,7 +73,7 @@ class Integer(node.Node):
                 id="decrement",
                 group="decrement",
                 owner_node=self,
-                default_type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad_constraints.Trigger()],
             )
 
         self.pads = [set_pad, emit, value, changed, increment, decrement]

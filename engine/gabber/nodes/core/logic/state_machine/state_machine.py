@@ -7,14 +7,15 @@ from typing import Any, Literal, cast
 
 from pydantic import BaseModel
 
-from gabber.core import node, pad, runtime_types
+from gabber.core import node, pad
+from gabber.core.types import runtime, pad_constraints
 
-ALL_PARAMETER_TYPES: list[pad.types.BasePadType] = [
-    pad.types.Float(),
-    pad.types.Integer(),
-    pad.types.Boolean(),
-    pad.types.Trigger(),
-    pad.types.String(),
+ALL_PARAMETER_TYPES: list[pad_constraints.BasePadType] = [
+    pad_constraints.Float(),
+    pad_constraints.Integer(),
+    pad_constraints.Boolean(),
+    pad_constraints.Trigger(),
+    pad_constraints.String(),
 ]
 
 
@@ -84,7 +85,7 @@ class StateMachine(node.Node):
             configuration = pad.PropertySinkPad(
                 id="configuration",
                 owner_node=self,
-                default_type_constraints=[pad.types.Object()],
+                default_type_constraints=[pad_constraints.Object()],
                 group="configuration",
                 value={"states": [], "transitions": []},
             )
@@ -95,7 +96,7 @@ class StateMachine(node.Node):
             num_parameters = pad.PropertySinkPad(
                 id="num_parameters",
                 owner_node=self,
-                default_type_constraints=[pad.types.Integer()],
+                default_type_constraints=[pad_constraints.Integer()],
                 group="num_parameters",
                 value=1,
             )
@@ -109,7 +110,7 @@ class StateMachine(node.Node):
             current_state = pad.PropertySourcePad(
                 id="current_state",
                 owner_node=self,
-                default_type_constraints=[pad.types.Enum(options=[])],
+                default_type_constraints=[pad_constraints.Enum(options=[])],
                 group="current_state",
                 value="",
             )
@@ -120,7 +121,7 @@ class StateMachine(node.Node):
             previous_state = pad.PropertySourcePad(
                 id="previous_state",
                 owner_node=self,
-                default_type_constraints=[pad.types.Enum(options=[])],
+                default_type_constraints=[pad_constraints.Enum(options=[])],
                 group="previous_state",
                 value="",
             )
@@ -242,10 +243,10 @@ class StateMachine(node.Node):
         try:
             enum_options = [s.name for s in config.states]
             previous_state.set_default_type_constraints(
-                [pad.types.Enum(options=enum_options)]
+                [pad_constraints.Enum(options=enum_options)]
             )
             current_state.set_default_type_constraints(
-                [pad.types.Enum(options=enum_options)]
+                [pad_constraints.Enum(options=enum_options)]
             )
 
             # Set current state value to entry state's name if present, else blank
@@ -421,7 +422,7 @@ class StateMachine(node.Node):
             name_pad, value_pad = self._get_pads(idx)
             async for item in value_pad:
                 name = cast(str, name_pad.get_value())
-                if isinstance(item.value, runtime_types.Trigger):
+                if isinstance(item.value, runtime.Trigger):
                     if item.ctx.original_request != original_trigger_ctx:
                         triggers.clear()
                         original_trigger_ctx = item.ctx.original_request
@@ -456,7 +457,7 @@ class StateMachine(node.Node):
                 name_pad = pad.PropertySinkPad(
                     id=f"parameter_name_{i}",
                     owner_node=self,
-                    default_type_constraints=[pad.types.String()],
+                    default_type_constraints=[pad_constraints.String()],
                     group="parameters",
                     value=None,
                 )
@@ -493,7 +494,7 @@ class StateMachine(node.Node):
             pad.PropertySinkPad(
                 id=f"parameter_name_{idx}",
                 owner_node=self,
-                default_type_constraints=[pad.types.String()],
+                default_type_constraints=[pad_constraints.String()],
                 group="parameters",
                 value=None,
             ),
@@ -536,7 +537,7 @@ class StateMachine(node.Node):
                     if (
                         tcs
                         and len(tcs) == 1
-                        and isinstance(tcs[0], pad.types.Trigger)
+                        and isinstance(tcs[0], pad_constraints.Trigger)
                         and prev_pad
                     ):
                         new_pad = pad.StatelessSinkPad(
@@ -555,7 +556,7 @@ class StateMachine(node.Node):
                         (
                             tcs
                             and len(tcs) == 1
-                            and not isinstance(tcs[0], pad.types.Trigger)
+                            and not isinstance(tcs[0], pad_constraints.Trigger)
                         )
                         or (not tcs)
                         or (len(tcs) > 1)
@@ -581,10 +582,10 @@ class StateMachine(node.Node):
             return
 
         allowed_operators = {
-            pad.types.Float: ["<", "<=", "==", "!=", ">=", ">"],
-            pad.types.Integer: ["<", "<=", "==", "!=", ">=", ">"],
-            pad.types.Boolean: ["TRUE", "FALSE"],
-            pad.types.String: [
+            pad_constraints.Float: ["<", "<=", "==", "!=", ">=", ">"],
+            pad_constraints.Integer: ["<", "<=", "==", "!=", ">=", ">"],
+            pad_constraints.Boolean: ["TRUE", "FALSE"],
+            pad_constraints.String: [
                 "==",
                 "!=",
                 "NON_EMPTY",
@@ -593,7 +594,7 @@ class StateMachine(node.Node):
                 "ENDS_WITH",
                 "CONTAINS",
             ],
-            pad.types.Trigger: [],
+            pad_constraints.Trigger: [],
         }
 
         for trans in config_dict["transitions"]:
@@ -643,7 +644,7 @@ class StateMachine(node.Node):
                         cond["operator"] = None
 
                     if cond.get("operator") is None:
-                        if isinstance(tcs[0], pad.types.Boolean):
+                        if isinstance(tcs[0], pad_constraints.Boolean):
                             cond["operator"] = "TRUE"
                         else:
                             cond["operator"] = "=="

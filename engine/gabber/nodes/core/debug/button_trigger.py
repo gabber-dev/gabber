@@ -3,6 +3,7 @@
 
 from gabber.core import node, pad
 from gabber.core.node import NodeMetadata
+from gabber.core.types import pad_constraints
 from typing import cast
 
 
@@ -24,7 +25,7 @@ class ButtonTrigger(node.Node):
                 id="trigger",
                 owner_node=self,
                 group="trigger",
-                default_type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad_constraints.Trigger()],
             )
 
         self.pads = [trigger]

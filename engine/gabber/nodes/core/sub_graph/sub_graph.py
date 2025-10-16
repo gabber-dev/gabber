@@ -12,6 +12,7 @@ from .proxy_property_sink import ProxyPropertySink
 from .proxy_property_source import ProxyPropertySource
 from .proxy_stateless_sink import ProxyStatelessSink
 from .proxy_stateless_source import ProxyStatelessSource
+from gabber.core.types import pad_constraints
 
 if TYPE_CHECKING:
     from gabber.core.graph import Graph
@@ -53,7 +54,7 @@ class SubGraph(node.Node):
                 id="__subgraph_id__",
                 group="subgraph",
                 owner_node=self,
-                default_type_constraints=[pad.types.String()],
+                default_type_constraints=[pad_constraints.String()],
                 value=subgraph_id,
             )
             self.pads.append(subgraph_id_pad)
@@ -67,7 +68,7 @@ class SubGraph(node.Node):
                 id="__subgraph_id__",
                 group="subgraph",
                 owner_node=self,
-                default_type_constraints=[pad.types.String()],
+                default_type_constraints=[pad_constraints.String()],
                 value="",
             )
             self.pads.append(subgraph_id_pad)

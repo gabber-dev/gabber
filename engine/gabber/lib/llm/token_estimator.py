@@ -1,12 +1,9 @@
-import logging
-from gabber.core.runtime_types.types import (
-    ContextMessage,
+from gabber.core.types.runtime import (
     ContextMessageContentItem,
     ContextMessageContentItem_Audio,
     ContextMessageContentItem_Video,
     ContextMessageContentItem_Text,
     ContextMessageContentItem_Image,
-    ContextMessageRole,
 )
 
 

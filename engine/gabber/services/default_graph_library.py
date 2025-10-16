@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import os
-import logging
 from pathlib import Path
 
 import aiofiles
@@ -28,7 +27,7 @@ class DefaultGraphLibrary(graph.GraphLibrary):
 
         try:
             user_sub_graphs = await self._get_user_sub_graphs()
-        except Exception as e:
+        except Exception:
             user_sub_graphs = []
         default_sub_graphs = await self._get_default_sub_graphs()
 

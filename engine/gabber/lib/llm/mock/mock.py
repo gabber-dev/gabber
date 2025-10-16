@@ -4,7 +4,7 @@
 import asyncio
 import logging
 
-from gabber.core import runtime_types
+from gabber.core.types import runtime
 
 from ..llm import AsyncLLMResponseHandle, BaseLLM, LLMRequest
 
@@ -36,11 +36,11 @@ class MockLLM(BaseLLM):
                 for i in range(len(split)):
                     await asyncio.sleep(0.1)
                     handle.put_thread_safe(
-                        runtime_types.ContextMessageContent_ChoiceDelta(
+                        runtime.ContextMessageContent_ChoiceDelta(
                             content=split[i] + " ",
                             tool_calls=[],
                             refusal=None,
-                            role=runtime_types.ContextMessageRole.ASSISTANT,
+                            role=runtime.ContextMessageRole.ASSISTANT,
                         )
                     )
             except Exception:

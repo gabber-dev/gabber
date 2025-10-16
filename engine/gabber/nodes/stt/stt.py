@@ -5,9 +5,11 @@ import asyncio
 import logging
 from typing import cast
 
-from gabber.core import node, pad, runtime_types
+from gabber.core import node, pad
+from gabber.core.types import runtime
 from gabber.core.node import NodeMetadata
 from gabber.lib import stt
+from gabber.core.types import pad_constraints
 
 
 class STT(node.Node):
@@ -31,7 +33,7 @@ class STT(node.Node):
                 group="service",
                 owner_node=self,
                 default_type_constraints=[
-                    pad.types.Enum(
+                    pad_constraints.Enum(
                         options=[
                             "assembly_ai",
                             "local_kyutai",
@@ -50,7 +52,7 @@ class STT(node.Node):
                 id="audio",
                 group="audio",
                 owner_node=self,
-                default_type_constraints=[pad.types.Audio()],
+                default_type_constraints=[pad_constraints.Audio()],
             )
             self.pads.append(audio_sink)
 
@@ -60,7 +62,7 @@ class STT(node.Node):
                 id="speech_clip",
                 group="speech_clip",
                 owner_node=self,
-                default_type_constraints=[pad.types.AudioClip()],
+                default_type_constraints=[pad_constraints.AudioClip()],
             )
             self.pads.append(speech_clip_source)
 
@@ -72,7 +74,7 @@ class STT(node.Node):
                 id="speech_started",
                 group="speech_started",
                 owner_node=self,
-                default_type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad_constraints.Trigger()],
             )
             self.pads.append(speech_started_source)
 
@@ -82,7 +84,7 @@ class STT(node.Node):
                 id="speech_ended",
                 group="speech_ended",
                 owner_node=self,
-                default_type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad_constraints.Trigger()],
             )
             self.pads.append(speech_ended_source)
 
@@ -94,7 +96,7 @@ class STT(node.Node):
                 id="final_transcription",
                 group="final_transcription",
                 owner_node=self,
-                default_type_constraints=[pad.types.String()],
+                default_type_constraints=[pad_constraints.String()],
             )
             self.pads.append(final_transcription_source)
 
@@ -104,7 +106,7 @@ class STT(node.Node):
                 id="api_key",
                 group="api_key",
                 owner_node=self,
-                default_type_constraints=[pad.types.Secret(options=self.secrets)],
+                default_type_constraints=[pad_constraints.Secret(options=self.secrets)],
             )
             self.pads.append(api_key)
 
@@ -157,7 +159,7 @@ class STT(node.Node):
             async for event in stt_impl:
                 if isinstance(event, stt.STTEvent_SpeechStarted):
                     ctx = pad.RequestContext(parent=None)
-                    speech_started_source.push_item(runtime_types.Trigger(), ctx)
+                    speech_started_source.push_item(runtime.Trigger(), ctx)
                 elif isinstance(event, stt.STTEvent_Transcription):
                     # TODO
                     pass
@@ -173,7 +175,7 @@ class STT(node.Node):
                         continue
                     final_transcription_source.push_item(txt, ctx)
                     speech_clip_source.push_item(event.clip, ctx)
-                    speech_ended_source.push_item(runtime_types.Trigger(), ctx)
+                    speech_ended_source.push_item(runtime.Trigger(), ctx)
                     ctx.complete()
 
         audio_sink_t = asyncio.create_task(audio_sink_task())

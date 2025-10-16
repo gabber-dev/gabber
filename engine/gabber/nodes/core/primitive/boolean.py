@@ -6,6 +6,7 @@ from typing import cast
 
 from gabber.core import node, pad
 from gabber.core.node import NodeMetadata
+from gabber.core.types import pad_constraints
 
 
 class Boolean(node.Node):
@@ -26,7 +27,7 @@ class Boolean(node.Node):
                 id="set",
                 owner_node=self,
                 group="set",
-                default_type_constraints=[pad.types.Boolean()],
+                default_type_constraints=[pad_constraints.Boolean()],
             )
 
         emit = cast(pad.StatelessSinkPad | None, self.get_pad("emit"))
@@ -35,7 +36,7 @@ class Boolean(node.Node):
                 id="emit",
                 owner_node=self,
                 group="emit",
-                default_type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad_constraints.Trigger()],
             )
 
         toggle = cast(pad.StatelessSinkPad | None, self.get_pad("toggle"))
@@ -44,7 +45,7 @@ class Boolean(node.Node):
                 id="toggle",
                 owner_node=self,
                 group="toggle",
-                default_type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad_constraints.Trigger()],
             )
 
         value = cast(pad.PropertySourcePad | None, self.get_pad("value"))
@@ -53,7 +54,7 @@ class Boolean(node.Node):
                 id="value",
                 group="value",
                 owner_node=self,
-                default_type_constraints=[pad.types.Boolean()],
+                default_type_constraints=[pad_constraints.Boolean()],
                 value=True,
             )
 
@@ -63,7 +64,7 @@ class Boolean(node.Node):
                 id="changed",
                 group="changed",
                 owner_node=self,
-                default_type_constraints=[pad.types.Boolean()],
+                default_type_constraints=[pad_constraints.Boolean()],
             )
 
         self.pads = [emit, set_pad, toggle, value, changed]

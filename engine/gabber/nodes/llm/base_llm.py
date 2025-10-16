@@ -5,13 +5,15 @@ import asyncio
 from abc import ABC, abstractmethod
 from typing import cast
 
-from gabber.core import node, pad, runtime_types, editor
+from gabber.core import node, pad, editor
+from gabber.core.types import runtime
 from gabber.nodes.core.tool import mcp
 from gabber.lib.llm import AsyncLLMResponseHandle, LLMRequest, openai_compatible
 from gabber.utils import get_full_content_from_deltas, get_tool_calls_from_choice_deltas
 from gabber.nodes.core.tool import ToolGroup
 from mcp.types import TextContent
 from gabber.lib.llm.token_estimator import TokenEstimator
+from gabber.core.types import pad_constraints
 
 
 class BaseLLM(node.Node, ABC):
@@ -40,7 +42,7 @@ class BaseLLM(node.Node, ABC):
                 id="run_trigger",
                 group="run_trigger",
                 owner_node=self,
-                default_type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad_constraints.Trigger()],
             )
 
         started_source = cast(pad.StatelessSourcePad, self.get_pad("started"))
@@ -49,7 +51,7 @@ class BaseLLM(node.Node, ABC):
                 id="started",
                 group="started",
                 owner_node=self,
-                default_type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad_constraints.Trigger()],
             )
 
         tool_calls_started_source = cast(
@@ -60,7 +62,7 @@ class BaseLLM(node.Node, ABC):
                 id="tool_calls_started",
                 group="tool_calls_started",
                 owner_node=self,
-                default_type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad_constraints.Trigger()],
             )
 
         tool_calls_finished_source = cast(
@@ -71,7 +73,7 @@ class BaseLLM(node.Node, ABC):
                 id="tool_calls_finished",
                 group="tool_calls_finished",
                 owner_node=self,
-                default_type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad_constraints.Trigger()],
             )
 
         first_token_source = cast(pad.StatelessSourcePad, self.get_pad("first_token"))
@@ -80,7 +82,7 @@ class BaseLLM(node.Node, ABC):
                 id="first_token",
                 group="first_token",
                 owner_node=self,
-                default_type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad_constraints.Trigger()],
             )
 
         text_stream_source = cast(pad.StatelessSourcePad, self.get_pad("text_stream"))
@@ -89,7 +91,7 @@ class BaseLLM(node.Node, ABC):
                 id="text_stream",
                 group="text_stream",
                 owner_node=self,
-                default_type_constraints=[pad.types.TextStream()],
+                default_type_constraints=[pad_constraints.TextStream()],
             )
 
         thinking_stream_source = cast(
@@ -100,7 +102,7 @@ class BaseLLM(node.Node, ABC):
                 id="thinking_stream",
                 group="thinking_stream",
                 owner_node=self,
-                default_type_constraints=[pad.types.TextStream()],
+                default_type_constraints=[pad_constraints.TextStream()],
             )
 
         context_message_source = cast(
@@ -111,7 +113,7 @@ class BaseLLM(node.Node, ABC):
                 id="context_message",
                 group="context_message",
                 owner_node=self,
-                default_type_constraints=[pad.types.ContextMessage()],
+                default_type_constraints=[pad_constraints.ContextMessage()],
             )
 
         finished_source = cast(pad.StatelessSourcePad, self.get_pad("finished"))
@@ -120,7 +122,7 @@ class BaseLLM(node.Node, ABC):
                 id="finished",
                 group="finished",
                 owner_node=self,
-                default_type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad_constraints.Trigger()],
             )
 
         cancel_trigger = cast(pad.StatelessSinkPad, self.get_pad("cancel_trigger"))
@@ -129,7 +131,7 @@ class BaseLLM(node.Node, ABC):
                 id="cancel_trigger",
                 group="cancel_trigger",
                 owner_node=self,
-                default_type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad_constraints.Trigger()],
             )
 
         context_sink = cast(pad.PropertySinkPad, self.get_pad("context"))
@@ -139,13 +141,15 @@ class BaseLLM(node.Node, ABC):
                 group="context",
                 owner_node=self,
                 default_type_constraints=[
-                    pad.types.List(item_type_constraints=[pad.types.ContextMessage()])
+                    pad_constraints.List(
+                        item_type_constraints=[pad_constraints.ContextMessage()]
+                    )
                 ],
                 value=[
-                    runtime_types.ContextMessage(
-                        role=runtime_types.ContextMessageRole.SYSTEM,
+                    runtime.ContextMessage(
+                        role=runtime.ContextMessageRole.SYSTEM,
                         content=[
-                            runtime_types.ContextMessageContentItem_Text(
+                            runtime.ContextMessageContentItem_Text(
                                 content="You are a helpful assistant."
                             )
                         ],
@@ -163,7 +167,7 @@ class BaseLLM(node.Node, ABC):
                     group="tool_group",
                     owner_node=self,
                     default_type_constraints=[
-                        pad.types.NodeReference(node_types=["ToolGroup"])
+                        pad_constraints.NodeReference(node_types=["ToolGroup"])
                     ],
                     value=None,
                 )
@@ -216,7 +220,7 @@ class BaseLLM(node.Node, ABC):
             group="mcp_server",
             owner_node=self,
             default_type_constraints=[
-                pad.types.NodeReference(node_types=["MCP"]),
+                pad_constraints.NodeReference(node_types=["MCP"]),
             ],
             value="None",
         )
@@ -308,18 +312,18 @@ class BaseLLM(node.Node, ABC):
         async def generation_task(
             handle: AsyncLLMResponseHandle,
             ctx: pad.RequestContext,
-            tg_tools: list[runtime_types.ToolDefinition],
-            mcp_tools: dict[mcp.MCP, list[runtime_types.ToolDefinition]],
+            tg_tools: list[runtime.ToolDefinition],
+            mcp_tools: dict[mcp.MCP, list[runtime.ToolDefinition]],
             estimated_prompt_tokens: int,
         ):
-            tool_task: asyncio.Task[list[runtime_types.ContextMessage]] | None = None
-            all_deltas: list[runtime_types.ContextMessageContent_ChoiceDelta] = []
-            text_stream = runtime_types.TextStream()
-            thinking_stream = runtime_types.TextStream()
+            tool_task: asyncio.Task[list[runtime.ContextMessage]] | None = None
+            all_deltas: list[runtime.ContextMessageContent_ChoiceDelta] = []
+            text_stream = runtime.TextStream()
+            thinking_stream = runtime.TextStream()
             thinking_stream_source.push_item(thinking_stream, ctx)
             text_stream_source.push_item(text_stream, ctx)
             try:
-                started_source.push_item(runtime_types.Trigger(), ctx)
+                started_source.push_item(runtime.Trigger(), ctx)
                 thinking = False
                 async for item in handle:
                     if item.usage is not None:
@@ -356,14 +360,12 @@ class BaseLLM(node.Node, ABC):
                 thinking_stream.eos()
                 text_stream.eos()
 
-                all_tool_calls: list[runtime_types.ToolCall] = []
+                all_tool_calls: list[runtime.ToolCall] = []
                 if tool_group_sink is not None:
                     all_tool_calls = get_tool_calls_from_choice_deltas(all_deltas)
                     if all_tool_calls:
                         if tool_calls_started_source:
-                            tool_calls_started_source.push_item(
-                                runtime_types.Trigger(), ctx
-                            )
+                            tool_calls_started_source.push_item(runtime.Trigger(), ctx)
                         tool_task = asyncio.create_task(
                             self.call_tools(
                                 all_tool_calls=all_tool_calls,
@@ -375,12 +377,10 @@ class BaseLLM(node.Node, ABC):
 
                 full_content = get_full_content_from_deltas(all_deltas)
                 context_message_source.push_item(
-                    runtime_types.ContextMessage(
-                        role=runtime_types.ContextMessageRole.ASSISTANT,
+                    runtime.ContextMessage(
+                        role=runtime.ContextMessageRole.ASSISTANT,
                         content=[
-                            runtime_types.ContextMessageContentItem_Text(
-                                content=full_content
-                            )
+                            runtime.ContextMessageContentItem_Text(content=full_content)
                         ],
                         tool_calls=all_tool_calls,
                     ),
@@ -392,15 +392,13 @@ class BaseLLM(node.Node, ABC):
                     for msg in tool_msgs:
                         context_message_source.push_item(msg, ctx)
                     if tool_calls_finished_source:
-                        tool_calls_finished_source.push_item(
-                            runtime_types.Trigger(), ctx
-                        )
+                        tool_calls_finished_source.push_item(runtime.Trigger(), ctx)
             except asyncio.CancelledError:
                 pass
             except Exception as e:
                 self.logger.error(f"Error during LLM generation: {e}", exc_info=e)
             finally:
-                finished_source.push_item(runtime_types.Trigger(), ctx)
+                finished_source.push_item(runtime.Trigger(), ctx)
                 ctx.complete()
 
         def done_callback(task: asyncio.Task):
@@ -415,8 +413,8 @@ class BaseLLM(node.Node, ABC):
         async for item in run_trigger:
             ctx = item.ctx
             messages = context_sink.get_value()
-            all_tool_definitions: list[runtime_types.ToolDefinition] = []
-            tg_tool_definitions: list[runtime_types.ToolDefinition] = []
+            all_tool_definitions: list[runtime.ToolDefinition] = []
+            tg_tool_definitions: list[runtime.ToolDefinition] = []
 
             if tool_group_sink is not None and tool_group_sink.get_value() is not None:
                 tool_nodes = cast(ToolGroup, tool_group_sink.get_value()).tool_nodes
@@ -425,7 +423,7 @@ class BaseLLM(node.Node, ABC):
                     tg_tool_definitions.append(td)
                     all_tool_definitions.append(td)
 
-            mcp_tool_definitions: dict[mcp.MCP, list[runtime_types.ToolDefinition]] = {}
+            mcp_tool_definitions: dict[mcp.MCP, list[runtime.ToolDefinition]] = {}
             mcp_sinks = self.mcp_server_pads()
             for mcp_sink in mcp_sinks:
                 mcp_node = cast(mcp.MCP, mcp_sink.get_value())
@@ -474,43 +472,43 @@ class BaseLLM(node.Node, ABC):
                 t.add_done_callback(done_callback)
             except Exception as e:
                 self.logger.error(f"Failed to start LLM generation: {e}", exc_info=e)
-                finished_source.push_item(runtime_types.Trigger(), ctx)
+                finished_source.push_item(runtime.Trigger(), ctx)
         await cancel_task_t
 
     async def call_tools(
         self,
         *,
-        tg_tool_defns: list[runtime_types.ToolDefinition],
-        mcp_tool_defns: dict[mcp.MCP, list[runtime_types.ToolDefinition]],
-        all_tool_calls: list[runtime_types.ToolCall],
+        tg_tool_defns: list[runtime.ToolDefinition],
+        mcp_tool_defns: dict[mcp.MCP, list[runtime.ToolDefinition]],
+        all_tool_calls: list[runtime.ToolCall],
         ctx: pad.RequestContext,
-    ) -> list[runtime_types.ContextMessage]:
+    ) -> list[runtime.ContextMessage]:
         tg_tool_calls = [
             t for t in all_tool_calls if t.name in [td.name for td in tg_tool_defns]
         ]
 
-        results: list[runtime_types.ContextMessage] = []
+        results: list[runtime.ContextMessage] = []
 
         all_tasks: list[asyncio.Task] = []
 
         async def run_tg_task():
             tg_res = await self.call_tg_calls(tg_tool_calls=tg_tool_calls, ctx=ctx)
             for i, res in enumerate(tg_res):
-                msg = runtime_types.ContextMessage(
-                    role=runtime_types.ContextMessageRole.TOOL,
-                    content=[runtime_types.ContextMessageContentItem_Text(content=res)],
+                msg = runtime.ContextMessage(
+                    role=runtime.ContextMessageRole.TOOL,
+                    content=[runtime.ContextMessageContentItem_Text(content=res)],
                     tool_call_id=tg_tool_calls[i].call_id,
                     tool_calls=[],
                 )
                 results.append(msg)
 
-        async def run_mcp_task(node: mcp.MCP, tc: runtime_types.ToolCall):
+        async def run_mcp_task(node: mcp.MCP, tc: runtime.ToolCall):
             res = await node.call_tool(tc)
             if isinstance(res, Exception):
-                msg = runtime_types.ContextMessage(
-                    role=runtime_types.ContextMessageRole.TOOL,
+                msg = runtime.ContextMessage(
+                    role=runtime.ContextMessageRole.TOOL,
                     content=[
-                        runtime_types.ContextMessageContentItem_Text(
+                        runtime.ContextMessageContentItem_Text(
                             content=f"Error calling tool '{tc.name}': {res}"
                         )
                     ],
@@ -518,15 +516,15 @@ class BaseLLM(node.Node, ABC):
                     tool_calls=[],
                 )
             else:
-                contents: list[runtime_types.ContextMessageContentItem] = []
+                contents: list[runtime.ContextMessageContentItem] = []
                 for block in res:
                     if isinstance(block, TextContent):
-                        content = runtime_types.ContextMessageContentItem_Text(
+                        content = runtime.ContextMessageContentItem_Text(
                             content=block.text
                         )
                         contents.append(content)
-                msg = runtime_types.ContextMessage(
-                    role=runtime_types.ContextMessageRole.TOOL,
+                msg = runtime.ContextMessage(
+                    role=runtime.ContextMessageRole.TOOL,
                     content=contents,
                     tool_call_id=tc.call_id,
                     tool_calls=[],
@@ -551,7 +549,7 @@ class BaseLLM(node.Node, ABC):
         await asyncio.gather(*all_tasks)
         return results
 
-    async def call_tg_calls(self, tg_tool_calls: list[runtime_types.ToolCall], ctx):
+    async def call_tg_calls(self, tg_tool_calls: list[runtime.ToolCall], ctx):
         tool_group_sink = cast(pad.PropertySinkPad, self.get_pad_required("tool_group"))
         if tool_group_sink is None or tool_group_sink.get_value() is None:
             raise ValueError("Tool group is not configured for tool calls.")
@@ -598,15 +596,13 @@ class BaseLLM(node.Node, ABC):
     async def _supports_video(self, llm: openai_compatible.OpenAICompatibleLLM) -> bool:
         dummy_request = LLMRequest(
             context=[
-                runtime_types.ContextMessage(
-                    role=runtime_types.ContextMessageRole.SYSTEM,
+                runtime.ContextMessage(
+                    role=runtime.ContextMessageRole.SYSTEM,
                     content=[
-                        runtime_types.ContextMessageContentItem_Text(content="."),
-                        runtime_types.ContextMessageContentItem_Video(
-                            clip=runtime_types.VideoClip(
-                                video=[
-                                    runtime_types.VideoFrame.black_frame(16, 16, 0.0)
-                                ]
+                        runtime.ContextMessageContentItem_Text(content="."),
+                        runtime.ContextMessageContentItem_Video(
+                            clip=runtime.VideoClip(
+                                video=[runtime.VideoFrame.black_frame(16, 16, 0.0)]
                             )
                         ),
                     ],
@@ -637,13 +633,13 @@ class BaseLLM(node.Node, ABC):
     async def _supports_audio(self, llm: openai_compatible.OpenAICompatibleLLM) -> bool:
         dummy_request = LLMRequest(
             context=[
-                runtime_types.ContextMessage(
-                    role=runtime_types.ContextMessageRole.SYSTEM,
+                runtime.ContextMessage(
+                    role=runtime.ContextMessageRole.SYSTEM,
                     content=[
-                        runtime_types.ContextMessageContentItem_Text(content="."),
-                        runtime_types.ContextMessageContentItem_Audio(
-                            clip=runtime_types.AudioClip(
-                                audio=[runtime_types.AudioFrame.silence(0.1)]
+                        runtime.ContextMessageContentItem_Text(content="."),
+                        runtime.ContextMessageContentItem_Audio(
+                            clip=runtime.AudioClip(
+                                audio=[runtime.AudioFrame.silence(0.1)]
                             )
                         ),
                     ],

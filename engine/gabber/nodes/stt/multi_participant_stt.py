@@ -5,10 +5,12 @@ import asyncio
 import logging
 from typing import cast, Callable
 
-from gabber.core import node, pad, runtime_types
+from gabber.core import node, pad
+from gabber.core.types import runtime
 from gabber.core.node import NodeMetadata
 from gabber.lib import stt
 from enum import Enum
+from gabber.core.types import pad_constraints
 
 
 class MultiParticipantSTT(node.Node):
@@ -32,7 +34,9 @@ class MultiParticipantSTT(node.Node):
                 group="service",
                 owner_node=self,
                 default_type_constraints=[
-                    pad.types.Enum(options=["assembly_ai", "local_kyutai", "deepgram"])
+                    pad_constraints.Enum(
+                        options=["assembly_ai", "local_kyutai", "deepgram"]
+                    )
                 ],
                 value="assembly_ai",
             )
@@ -43,7 +47,7 @@ class MultiParticipantSTT(node.Node):
                 id="api_key",
                 group="api_key",
                 owner_node=self,
-                default_type_constraints=[pad.types.Secret(options=self.secrets)],
+                default_type_constraints=[pad_constraints.Secret(options=self.secrets)],
             )
 
         num_participants = cast(pad.PropertySinkPad, self.get_pad("num_participants"))
@@ -52,7 +56,7 @@ class MultiParticipantSTT(node.Node):
                 id="num_participants",
                 group="num_participants",
                 owner_node=self,
-                default_type_constraints=[pad.types.Integer()],
+                default_type_constraints=[pad_constraints.Integer()],
                 value=2,
             )
 
@@ -62,7 +66,7 @@ class MultiParticipantSTT(node.Node):
                 id="cooldown_time_ms",
                 group="cooldown_time_ms",
                 owner_node=self,
-                default_type_constraints=[pad.types.Integer()],
+                default_type_constraints=[pad_constraints.Integer()],
                 value=4000,
             )
 
@@ -72,7 +76,7 @@ class MultiParticipantSTT(node.Node):
                 id="force_ai_talk",
                 group="force_ai_talk",
                 owner_node=self,
-                default_type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad_constraints.Trigger()],
             )
 
         current_state = cast(pad.PropertySourcePad, self.get_pad("current_state"))
@@ -82,7 +86,7 @@ class MultiParticipantSTT(node.Node):
                 group="current_state",
                 owner_node=self,
                 default_type_constraints=[
-                    pad.types.Enum(options=[e.name for e in State])
+                    pad_constraints.Enum(options=[e.name for e in State])
                 ],
                 value=State.WAITING_FOR_HUMAN.name,
             )
@@ -94,7 +98,7 @@ class MultiParticipantSTT(node.Node):
                 group="previous_state",
                 owner_node=self,
                 default_type_constraints=[
-                    pad.types.Enum(options=[e.name for e in State])
+                    pad_constraints.Enum(options=[e.name for e in State])
                 ],
                 value=State.WAITING_FOR_HUMAN.name,
             )
@@ -107,7 +111,7 @@ class MultiParticipantSTT(node.Node):
                     id=f"audio_{i}",
                     group="audio",
                     owner_node=self,
-                    default_type_constraints=[pad.types.Audio()],
+                    default_type_constraints=[pad_constraints.Audio()],
                 )
             audio_sinks.append(audio_sink)
 
@@ -121,7 +125,7 @@ class MultiParticipantSTT(node.Node):
                     id=f"transcription_{i}",
                     group="transcription",
                     owner_node=self,
-                    default_type_constraints=[pad.types.String()],
+                    default_type_constraints=[pad_constraints.String()],
                 )
             transcription_sources.append(transcription_source)
 
@@ -140,7 +144,7 @@ class MultiParticipantSTT(node.Node):
                 id="speech_started",
                 group="speech_started",
                 owner_node=self,
-                default_type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad_constraints.Trigger()],
             )
 
         speech_ended_source = cast(pad.StatelessSourcePad, self.get_pad("speech_ended"))
@@ -149,7 +153,7 @@ class MultiParticipantSTT(node.Node):
                 id="speech_ended",
                 group="speech_ended",
                 owner_node=self,
-                default_type_constraints=[pad.types.Trigger()],
+                default_type_constraints=[pad_constraints.Trigger()],
             )
 
         self.pads = cast(
@@ -258,7 +262,7 @@ class MultiParticipantSTT(node.Node):
                 if isinstance(event, stt.STTEvent_SpeechStarted):
                     talking_state.set_talking(idx, True)
                     ctx = pad.RequestContext(parent=None)
-                    speech_started_source.push_item(runtime_types.Trigger(), ctx)
+                    speech_started_source.push_item(runtime.Trigger(), ctx)
                 elif isinstance(event, stt.STTEvent_Transcription):
                     # TODO
                     pass
@@ -275,7 +279,7 @@ class MultiParticipantSTT(node.Node):
                         continue
 
                     transcription_source.push_item(txt, ctx)
-                    speech_ended_source.push_item(runtime_types.Trigger(), ctx)
+                    speech_ended_source.push_item(runtime.Trigger(), ctx)
                     ctx.complete()
 
             stt_impl.close()

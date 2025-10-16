@@ -17,7 +17,6 @@ from livekit import api
 from gabber.utils import short_uuid
 
 from gabber.core.editor.models import GraphEditorRepresentation
-from gabber.core.secret import SecretProvider
 from gabber.services.default_secret_provider import DefaultSecretProvider
 
 from . import messages, models

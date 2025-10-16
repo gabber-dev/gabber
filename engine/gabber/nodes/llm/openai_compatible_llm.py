@@ -5,6 +5,7 @@ from typing import Any, cast
 
 from gabber.core import pad
 from gabber.core.node import NodeMetadata
+from gabber.core.types import pad_constraints
 
 from .base_llm import BaseLLM
 from gabber.lib.llm import (
@@ -77,7 +78,7 @@ class OpenAICompatibleLLM(BaseLLM):
                 id="base_url",
                 group="base_url",
                 owner_node=self,
-                default_type_constraints=[pad.types.String()],
+                default_type_constraints=[pad_constraints.String()],
                 value="https://api.openai.com/v1",
             )
 
@@ -87,7 +88,7 @@ class OpenAICompatibleLLM(BaseLLM):
                 id="api_key",
                 group="api_key",
                 owner_node=self,
-                default_type_constraints=[pad.types.Secret(options=[])],
+                default_type_constraints=[pad_constraints.Secret(options=[])],
                 value="",
             )
 
@@ -97,7 +98,7 @@ class OpenAICompatibleLLM(BaseLLM):
                 id="model",
                 group="model",
                 owner_node=self,
-                default_type_constraints=[pad.types.String()],
+                default_type_constraints=[pad_constraints.String()],
                 value="gpt-4.1-mini",
             )
 
@@ -107,7 +108,7 @@ class OpenAICompatibleLLM(BaseLLM):
                 id="max_context_len",
                 group="max_context_len",
                 owner_node=self,
-                default_type_constraints=[pad.types.Integer(minimum=4096)],
+                default_type_constraints=[pad_constraints.Integer(minimum=4096)],
                 value=32768,
             )
 
@@ -115,7 +116,7 @@ class OpenAICompatibleLLM(BaseLLM):
             [base_url_sink, api_key_sink, model_sink, context_len_sink]
         )
 
-        cast(list[pad.types.Secret], api_key_sink.get_type_constraints())[
+        cast(list[pad_constraints.Secret], api_key_sink.get_type_constraints())[
             0
         ].options = self.secrets
 

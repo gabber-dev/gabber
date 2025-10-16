@@ -5,8 +5,10 @@ import asyncio
 import logging
 from typing import cast
 
-from gabber.core import pad, runtime_types
+from gabber.core import pad
+from gabber.core.types import runtime
 from gabber.core.node import Node, NodeMetadata
+from gabber.core.types import pad_constraints
 
 
 class AVClipZip(Node):
@@ -26,7 +28,7 @@ class AVClipZip(Node):
             video_clip = pad.StatelessSinkPad(
                 id="video_clip",
                 owner_node=self,
-                default_type_constraints=[pad.types.VideoClip()],
+                default_type_constraints=[pad_constraints.VideoClip()],
                 group="video_clip",
             )
 
@@ -35,7 +37,7 @@ class AVClipZip(Node):
             audio_clip = pad.StatelessSinkPad(
                 id="audio_clip",
                 owner_node=self,
-                default_type_constraints=[pad.types.AudioClip()],
+                default_type_constraints=[pad_constraints.AudioClip()],
                 group="audio_clip",
             )
 
@@ -44,7 +46,7 @@ class AVClipZip(Node):
             av_clip = pad.StatelessSourcePad(
                 id="av_clip",
                 owner_node=self,
-                default_type_constraints=[pad.types.AVClip()],
+                default_type_constraints=[pad_constraints.AVClip()],
                 group="av_clip",
             )
 
@@ -65,21 +67,21 @@ class AVClipZip(Node):
             try:
                 items = await asyncio.gather(*[anext(p) for p in connected_pads])
 
-                video_clip: runtime_types.VideoClip | None = None
-                audio_clip: runtime_types.AudioClip | None = None
+                video_clip: runtime.VideoClip | None = None
+                audio_clip: runtime.AudioClip | None = None
 
                 for item in items:
-                    if isinstance(item.value, runtime_types.VideoClip):
+                    if isinstance(item.value, runtime.VideoClip):
                         video_clip = item.value
-                    elif isinstance(item.value, runtime_types.AudioClip):
+                    elif isinstance(item.value, runtime.AudioClip):
                         audio_clip = item.value
 
                 if not video_clip:
-                    video_clip = runtime_types.VideoClip(video=[])
+                    video_clip = runtime.VideoClip(video=[])
                 if not audio_clip:
-                    audio_clip = runtime_types.AudioClip(audio=[])
+                    audio_clip = runtime.AudioClip(audio=[])
 
-                res = runtime_types.AVClip(
+                res = runtime.AVClip(
                     video=video_clip,
                     audio=audio_clip,
                 )
