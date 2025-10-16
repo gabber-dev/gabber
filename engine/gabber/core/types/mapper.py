@@ -38,6 +38,8 @@ class Mapper:
             return client_value.value
         elif client_value.type == "enum":
             return client_value.value
+        elif client_value.type == "context_message_role":
+            return client_value.value
         elif client_value.type == "context_message":
             return Mapper.client_context_message_to_runtime(client_value)
         elif client_value.type == "object":
@@ -88,6 +90,10 @@ class Mapper:
                 parameters=Mapper.runtime_schema_to_client(runtime_value.parameters)
                 if runtime_value.parameters
                 else None,
+            )
+        elif isinstance(runtime_value, runtime.ContextMessageRole):
+            return client.ContextMessageRole(
+                value=client.ContextMessageRoleEnum(runtime_value.value)
             )
 
         raise ValueError(
