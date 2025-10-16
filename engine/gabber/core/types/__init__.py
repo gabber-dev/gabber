@@ -1,3 +1,3 @@
-from . import runtime, pad_constraints
+from . import runtime, pad_constraints, client
 
-__all__ = ["runtime", "pad_constraints"]
+__all__ = ["runtime", "pad_constraints", "client"]
