@@ -5,7 +5,7 @@ from enum import Enum
 from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field
-from ..types import pad_constraints
+from ..types import pad_constraints, client
 
 
 class NodeMetadata(BaseModel):
