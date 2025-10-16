@@ -7,19 +7,25 @@ from abc import abstractmethod
 from livekit import rtc
 
 from ..secret import PublicSecret, SecretProvider
+from typing import TYPE_CHECKING
 
 from ..pad import Pad, SinkPad, SourcePad
 from ..editor.models import NodeMetadata, NodeNote
+
+if TYPE_CHECKING:
+    from ..graph import Graph
 
 
 class Node:
     def __init__(
         self,
         *,
+        graph: "Graph",
         secret_provider: SecretProvider,
         secrets: list[PublicSecret],
         logger: logging.Logger | logging.LoggerAdapter,
     ):
+        self.graph: "Graph" = graph
         self.room: rtc.Room
         self.id: str = "ERORR"
         self.pads: list[Pad] = []

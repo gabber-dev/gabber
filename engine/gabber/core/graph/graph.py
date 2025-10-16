@@ -60,6 +60,7 @@ class Graph:
                 self._node_cls_lookup[item.name] = item.node_type
                 node_cls: Type[Node] = self._node_cls_lookup[item.name]
                 n = node_cls(
+                    graph=self,
                     secret_provider=self.secret_provider,
                     secrets=self.secrets,
                     logger=logging.getLogger(f"virtual_node.{item.name}"),
@@ -171,6 +172,7 @@ class Graph:
     async def _handle_insert_node(self, edit: InsertNodeEdit):
         node_cls: Type[Node] = self._node_cls_lookup[edit.node_type]
         node = node_cls(
+            graph=self,
             secret_provider=self.secret_provider,
             secrets=self.secrets,
             logger=self.logger,
@@ -419,6 +421,7 @@ class Graph:
                     self.logger, extra={"node": node_data.id}
                 )
                 node = node_cls(
+                    graph=self,
                     secret_provider=self.secret_provider,
                     secrets=self.secrets,
                     logger=node_logger,
@@ -460,7 +463,8 @@ class Graph:
                 node = SubGraph(
                     secret_provider=self.secret_provider,
                     secrets=self.secrets,
-                    graph=subgraph,
+                    graph=self,
+                    sub_graph=subgraph,
                     logger=self.logger,
                 )
             else:
