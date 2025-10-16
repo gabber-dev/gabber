@@ -34,7 +34,7 @@ class RuntimeApi:
 
     def _trigger_value_from_pad_value(self, *, value: Any):
         v = serialize.serialize_pad_value(value)
-        ev_value: client.PadValue
+        ev_value: client.ClientPadValue
         if isinstance(v, bool):
             ev_value = client.Boolean(value=v)
         elif isinstance(v, int):
@@ -359,7 +359,7 @@ class RuntimeApi:
 
 class RuntimeEventPayload_Value(BaseModel):
     type: Literal["value"] = "value"
-    value: client.PadValue
+    value: client.ClientPadValue
     node_id: str
     pad_id: str
 
@@ -439,12 +439,12 @@ class RuntimeResponsePayload_PushValue(BaseModel):
 
 class RuntimeResponsePayload_GetValue(BaseModel):
     type: Literal["get_value"] = "get_value"
-    value: client.PadValue
+    value: client.ClientPadValue
 
 
 class RuntimeResponsePayload_GetListItems(BaseModel):
     type: Literal["get_list_items"] = "get_list_items"
-    items: list[client.PadValue]
+    items: list[client.ClientPadValue]
 
 
 class RuntimeResponsePayload_LockPublisher(BaseModel):
@@ -531,5 +531,5 @@ class DummyType(BaseModel):
     runtime_response_payload: RuntimeResponsePayload
     ev: RuntimeEvent
     runtime_event_payload: RuntimeEventPayload
-    pad_value: client.PadValue
+    pad_value: client.ClientPadValue
     log_item: RuntimeEventPayload_LogItem

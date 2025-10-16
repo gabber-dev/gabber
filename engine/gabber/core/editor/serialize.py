@@ -1,74 +1,18 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-import logging
 from typing import Any, cast
 
-from pydantic import BaseModel
-
 from .. import node, pad
-from ..types import runtime, pad_constraints
+from ..types import pad_constraints, mapper
 
 from .models import NodeEditorRepresentation, PadEditorRepresentation, PadReference
-
-
-def serialize_pad_value(v: Any | None):
-    if v is None:
-        return None
-    elif isinstance(v, (int, float, str, bool)):
-        return v
-    elif isinstance(v, dict):
-        return v
-    elif isinstance(v, list):
-        return [serialize_pad_value(item) for item in v]
-    elif isinstance(v, BaseModel):
-        return v.model_dump(serialize_as_any=True)
-    elif isinstance(v, node.Node):
-        return v.id
-
-
-def deserialize_pad_value(
-    tc: pad_constraints.BasePadType,
-    v: Any | None,
-):
-    if isinstance(tc, pad_constraints.Trigger):
-        return runtime.Trigger()
-    if isinstance(v, str | float | int):
-        return v
-    elif isinstance(v, BaseModel):
-        return v
-    elif isinstance(v, dict):
-        if isinstance(tc, pad_constraints.ContextMessage):
-            return runtime.ContextMessage.model_validate(v)
-        elif isinstance(tc, pad_constraints.Object):
-            return v
-        elif isinstance(tc, pad_constraints.Schema):
-            return runtime.Schema.model_validate(v)
-        elif isinstance(tc, pad_constraints.BoundingBox):
-            return runtime.BoundingBox.model_validate(v)
-        elif isinstance(tc, pad_constraints.Point):
-            return runtime.Point.model_validate(v)
-    elif isinstance(v, list):
-        if not isinstance(tc, pad_constraints.List):
-            logging.error(
-                f"Expected List type constraint for list deserialization, got {type(tc)}"
-            )
-            return None
-        list_types = tc.item_type_constraints
-        if not list_types or len(list_types) != 1:
-            logging.error(
-                f"List type constraints: {list_types}, value: {v}, type_constraints: {tc}"
-            )
-            return None
-
-        items = [deserialize_pad_value(list_types[0], item) for item in v]
-        return items
 
 
 def pad_editor_rep(p: pad.Pad):
     value: Any | None = None
     if isinstance(p, pad.PropertyPad):
-        value = serialize_pad_value(p.get_value())
+        value = mapper.Mapper.runtime_to_client(p.get_value())
     next_pads: list[PadReference] = []
     if isinstance(p, pad.SourcePad):
         next_pads = [

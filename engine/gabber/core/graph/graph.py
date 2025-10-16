@@ -27,7 +27,7 @@ from ..secret import PublicSecret, SecretProvider
 from gabber.nodes.core.sub_graph import SubGraph
 from gabber.utils import short_uuid
 from .runtime_api import RuntimeApi
-from ..types import pad_constraints
+from ..types import pad_constraints, mapper
 
 T = TypeVar("T", bound=Node)
 
@@ -310,7 +310,7 @@ class Graph:
             if isinstance(tcs[0], pad_constraints.NodeReference):
                 pass
             else:
-                v = serialize.deserialize_pad_value(tcs[0], edit.value)
+                v = mapper.Mapper.client_to_runtime(edit.value)
                 p.set_value(v)
 
         for node in self.nodes:
@@ -638,7 +638,7 @@ def create_pad_from_editor(
     if e.type == "PropertySourcePad":
         v: Any = None
         if allowed_types and len(allowed_types) == 1:
-            v = serialize.deserialize_pad_value(allowed_types[0], e.value)
+            v = mapper.Mapper.client_to_runtime(e.value)
         p = pad.PropertySourcePad(
             id=e.id,
             group=e.group,
@@ -649,7 +649,7 @@ def create_pad_from_editor(
     elif e.type == "PropertySinkPad":
         v: Any = None
         if allowed_types and len(allowed_types) == 1:
-            v = serialize.deserialize_pad_value(allowed_types[0], e.value)
+            v = mapper.Mapper.client_to_runtime(e.value)
         p = pad.PropertySinkPad(
             id=e.id,
             group=e.group,

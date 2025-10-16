@@ -310,34 +310,6 @@ class ToolDefinition(BaseModel, BaseRuntimeType):
         return "tool_definition"
 
 
-class String(BaseModel, BaseRuntimeType):
-    value: str
-
-    def log_type(self) -> str:
-        return "string"
-
-
-class Integer(BaseModel, BaseRuntimeType):
-    value: int
-
-    def log_type(self) -> str:
-        return "integer"
-
-
-class Float(BaseModel, BaseRuntimeType):
-    value: float
-
-    def log_type(self) -> str:
-        return "float"
-
-
-class Boolean(BaseModel, BaseRuntimeType):
-    value: bool
-
-    def log_type(self) -> str:
-        return "boolean"
-
-
 class ContextMessageContentItem_Audio(BaseModel):
     type: Literal["audio"] = "audio"
     clip: AudioClip = Field(exclude=True)
@@ -525,6 +497,11 @@ class Trigger(BaseModel, BaseRuntimeType):
         return "trigger"
 
 
+class NodeReference(BaseModel):
+    node_id: str
+    node_type: str
+
+
 @dataclass
 class ContextMessageContent_ChoiceDelta:
     content: str | None
@@ -554,3 +531,20 @@ class ContextMessageDeltaStream:
             raise StopAsyncIteration
 
         return item
+
+
+RuntimePadValuePrimitive = str | int | float | bool
+
+RuntimePadValue = (
+    RuntimePadValuePrimitive
+    | Trigger
+    | AudioClip
+    | VideoClip
+    | AVClip
+    | ContextMessage
+    | ToolCall
+    | ToolDefinition
+    | Schema
+    | NodeReference
+    | list["RuntimePadValue"]
+)

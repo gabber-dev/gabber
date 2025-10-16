@@ -1,7 +1,6 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-import logging
 from typing import TYPE_CHECKING, Any, Literal
 
 from .pad import PropertyPad, SinkPad, SourcePad, NOTIFIABLE_TYPES

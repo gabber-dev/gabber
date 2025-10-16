@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field
-from typing import Any, Annotated, Literal
+from pydantic import BaseModel
+from typing import Any, Literal
 
 
 class String(BaseModel):
@@ -57,7 +57,6 @@ class ContextMessageContentItem_Video(BaseModel):
 
 
 class ContextMessageContentItem(BaseModel):
-    type: Literal["context_message_content"] = "context_message_content"
     content_type: Literal["text", "image", "audio", "video"]
     text: str | None = None
     image: ContextMessageContentItem_Image | None = None
@@ -77,7 +76,7 @@ class List(BaseModel):
     items: list[Any]
 
 
-PadValue = Annotated[
+ClientPadValue = (
     String
     | Integer
     | Float
@@ -86,6 +85,5 @@ PadValue = Annotated[
     | AudioClip
     | VideoClip
     | List
-    | ContextMessage,
-    Field(discriminator="type", description="Type of the pad triggered value"),
-]
+    | ContextMessage
+)
