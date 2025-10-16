@@ -51,6 +51,11 @@ export type {
     VideoClip,
     PadValue,
     Trigger,
+    Schema,
+    Enum,
+    ToolDefinition,
+    Secret,
+    NodeReference,
     RuntimeEventPayload_LogItem,
     PadConstraint,
 } from './generated/runtime';
