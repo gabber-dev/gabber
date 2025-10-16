@@ -53,7 +53,9 @@ class Jinja2(Node):
         property_names: list[pad.PropertySinkPad] = []
         property_values: list[pad.PropertySinkPad] = []
 
-        for i in range(num_properties_pad.get_value()):
+        num_properties = num_properties_pad.get_value()
+        assert isinstance(num_properties, int)
+        for i in range(num_properties):
             name_pad = cast(pad.PropertySinkPad, self.get_pad(f"property_name_{i}"))
             if not name_pad:
                 name_pad = pad.PropertySinkPad(
@@ -94,7 +96,9 @@ class Jinja2(Node):
         # Do an initial render to set the output value
         # This ensures connected nodes get the proper initial value
         property_pads = list(zip(property_names, property_values))
-        rendered = self.render_jinja(property_pads, jinja_template_pad.get_value())
+        jinja_template = jinja_template_pad.get_value()
+        assert isinstance(jinja_template, str)
+        rendered = self.render_jinja(property_pads, jinja_template)
         rendered_output.set_value(rendered)
 
     def render_jinja(
@@ -104,8 +108,10 @@ class Jinja2(Node):
     ) -> str:
         context: dict[str, object] = {}
         for name_pad, value_pad in property_pads:
-            if name_pad.get_value() and value_pad.get_value():
-                context[name_pad.get_value()] = value_pad.get_value()
+            name = name_pad.get_value()
+            assert isinstance(name, str)
+            if name and value_pad.get_value():
+                context[name] = value_pad.get_value()
         jinja_template = Template(template)
         return jinja_template.render(**context)
 
@@ -120,6 +126,7 @@ class Jinja2(Node):
             pad.PropertySourcePad, self.get_pad_required("rendered_output")
         )
         num_properties = num_properties_pad.get_value() if num_properties_pad else 1
+        num_properties = num_properties if isinstance(num_properties, int) else 1
 
         property_pads = []
         for i in range(num_properties):
@@ -133,6 +140,7 @@ class Jinja2(Node):
             if jinja_template_pad
             else "Hello, {{ property_0 }}!"
         )
+        assert isinstance(template, str)
 
         # Do an initial render with current property values
         # This ensures the output is computed even if nothing has been emitted yet
