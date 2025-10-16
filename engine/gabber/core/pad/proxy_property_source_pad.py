@@ -1,7 +1,7 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from ..pad import (
     Pad,
@@ -11,7 +11,7 @@ from ..pad import (
     SourcePad,
 )
 from .pad import NOTIFIABLE_TYPES
-from ..types import pad_constraints
+from ..types import pad_constraints, runtime
 
 if TYPE_CHECKING:
     from ..node import Node
@@ -78,10 +78,10 @@ class ProxyPropertySourcePad(SourcePad, PropertyPad, ProxyPad):
     def get_editor_type(self) -> str:
         return "PropertySourcePad"
 
-    def get_value(self) -> Any:
+    def get_value(self) -> runtime.RuntimePadValue:
         return self._other.get_value()
 
-    def set_value(self, value: Any):
+    def set_value(self, value: runtime.RuntimePadValue):
         if isinstance(value, NOTIFIABLE_TYPES):
             self._notify_update(value)
         self._other.set_value(value)

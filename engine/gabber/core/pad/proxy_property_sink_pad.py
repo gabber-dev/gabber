@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from ..pad import (
     Item,
@@ -13,7 +13,7 @@ from ..pad import (
 )
 from ..pad.pad import Pad
 from .pad import NOTIFIABLE_TYPES
-from ..types import pad_constraints
+from ..types import pad_constraints, runtime
 
 if TYPE_CHECKING:
     from ..node import Node
@@ -77,13 +77,13 @@ class ProxyPropertySinkPad(SinkPad, PropertyPad, ProxyPad):
     def get_editor_type(self) -> str:
         return "PropertySinkPad"
 
-    def get_value(self) -> Any:
+    def get_value(self) -> runtime.RuntimePadValue:
         return self._other.get_value()
 
     def _get_queue(self) -> asyncio.Queue[Item | None]:
         return self._other._get_queue()
 
-    def set_value(self, value: Any):
+    def set_value(self, value: runtime.RuntimePadValue):
         self._other.set_value(value)
         if isinstance(value, NOTIFIABLE_TYPES):
             self._notify_update(value)

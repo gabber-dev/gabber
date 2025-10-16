@@ -203,7 +203,8 @@ class Graph:
         node = SubGraph(
             secrets=self.secrets,
             secret_provider=self.secret_provider,
-            graph=graph,
+            graph=self,
+            sub_graph=graph,
             logger=self.logger,
         )
         node.set_subgraph_id(subgraph_item.id)
@@ -539,18 +540,6 @@ class Graph:
                 logging.error(f"Node {node_data.id} not found in node lookup.")
                 continue
 
-        # resolve node references
-        for n in self.nodes:
-            for p in n.pads:
-                tcs = p.get_type_constraints()
-                if tcs and len(tcs) == 1:
-                    if isinstance(tcs[0], pad_constraints.NodeReference) and isinstance(
-                        p, pad.PropertyPad
-                    ):
-                        self._resolve_node_reference_property(
-                            p, p.get_value(), node_lookup
-                        )
-
         for n in self.nodes:
             n.resolve_pads()
 
@@ -573,18 +562,6 @@ class Graph:
 
         if snapshot.portals:
             self.portals = snapshot.portals
-
-    def _resolve_node_reference_property(
-        self, p: pad.PropertyPad, v: str, nodes: dict[str, Node]
-    ):
-        if not isinstance(p, pad.SourcePad):
-            return
-
-        # Proxy pads would already be handled by the subgraph
-        if not isinstance(p, pad.ProxyPad):
-            node = next((n for n in nodes.values() if n.id == v), None)
-            p.set_value(node)
-            return
 
     async def run(self, room: rtc.Room, runtime_api: RuntimeApi | None = None):
         for node in self.nodes:

@@ -33,7 +33,7 @@ class Tool(node.Node):
                 default_type_constraints=[
                     pad_constraints.NodeReference(node_types=["Tool"])
                 ],
-                value=self,
+                value=runtime.NodeReference(node_id=self.id),
             )
 
         name = cast(pad.PropertySinkPad, self.get_pad("name"))

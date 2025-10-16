@@ -1,10 +1,10 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Literal
 
 from .pad import PropertyPad, SinkPad, SourcePad, NOTIFIABLE_TYPES
-from ..types import pad_constraints
+from ..types import pad_constraints, runtime
 
 if TYPE_CHECKING:
     from ..node import Node
@@ -18,7 +18,7 @@ class PropertySourcePad(SourcePad, PropertyPad):
         group: str,
         owner_node: "Node",
         default_type_constraints: list[pad_constraints.BasePadType] | None,
-        value: Any,
+        value: runtime.RuntimePadValue = None,
     ):
         super().__init__()
         self._id = id
@@ -70,10 +70,10 @@ class PropertySourcePad(SourcePad, PropertyPad):
     def get_direction(self) -> Literal["source"] | Literal["sink"]:
         return "source"
 
-    def get_value(self) -> Any:
+    def get_value(self) -> runtime.RuntimePadValue:
         return self._value
 
-    def set_value(self, value: Any):
+    def set_value(self, value: runtime.RuntimePadValue):
         self._value = value
         if isinstance(value, NOTIFIABLE_TYPES):
             self._notify_update(value)

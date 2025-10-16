@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
 
 class Pad(Protocol):
-    _update_handlers: set[Callable[["Pad", Any], None]]
+    _update_handlers: set[Callable[["Pad", runtime.RuntimePadValue], None]]
     _pad_links: set["Pad"]
     _logger: logging.LoggerAdapter | None
 
@@ -149,7 +149,7 @@ class SourcePad(Pad, Protocol):
     def get_next_pads(self) -> list["SinkPad"]: ...
     def set_next_pads(self, pads: list["SinkPad"]) -> None: ...
 
-    def push_item(self, value: Any, ctx: RequestContext) -> None:
+    def push_item(self, value: runtime.RuntimePadValue, ctx: RequestContext) -> None:
         notify_type = False
         if isinstance(value, NOTIFIABLE_TYPES):
             notify_type = True
@@ -256,13 +256,13 @@ class SourcePad(Pad, Protocol):
 
 @runtime_checkable
 class PropertyPad(Pad, Protocol):
-    def get_value(self) -> Any: ...
-    def set_value(self, value: Any): ...
+    def get_value(self) -> runtime.RuntimePadValue: ...
+    def set_value(self, value: runtime.RuntimePadValue): ...
 
 
 @dataclass
 class Item:
-    value: Any
+    value: runtime.RuntimePadValue
     ctx: "RequestContext"
 
 

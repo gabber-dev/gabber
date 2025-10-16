@@ -105,6 +105,16 @@ class Mapper:
             return client_cm
         elif isinstance(runtime_value, runtime.Schema):
             return Mapper.runtime_schema_to_client(runtime_value)
+        elif isinstance(runtime_value, runtime.NodeReference):
+            return client.NodeReference(value=runtime_value.node_id)
+        elif isinstance(runtime_value, runtime.ToolDefinition):
+            return client.ToolDefinition(
+                name=runtime_value.name,
+                description=runtime_value.description,
+                parameters=Mapper.runtime_schema_to_client(runtime_value.parameters)
+                if runtime_value.parameters
+                else None,
+            )
 
         raise ValueError(
             f"Unknown runtime pad value: {runtime_value} ({type(runtime_value)})"

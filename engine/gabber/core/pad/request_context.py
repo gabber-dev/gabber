@@ -4,7 +4,8 @@
 import asyncio
 import logging
 import time
-from typing import Any, Callable
+from typing import Callable
+from ..types import runtime
 
 from gabber.utils import short_uuid
 
@@ -18,7 +19,7 @@ class RequestContext:
         originator: str | None = None,
     ) -> None:
         self.originator = originator
-        self.results: list[Any] = []
+        self.results: list[runtime.RuntimePadValue] = []
         self.id = short_uuid()
         if parent is None:
             self.start_time = time.time()
@@ -32,7 +33,7 @@ class RequestContext:
         parent.dependencies.append(self) if parent else None
         self._self_completed = False
         self._finished = False
-        self._done_callbacks: list[Callable[[list[Any]], None]] = []
+        self._done_callbacks: list[Callable[[list[runtime.RuntimePadValue]], None]] = []
         o_req = self
 
         self.distance_to_root = 0
@@ -48,7 +49,7 @@ class RequestContext:
 
         RequestContextRegistry().register(self)
 
-    def append_result(self, item: Any) -> None:
+    def append_result(self, item: runtime.RuntimePadValue) -> None:
         self.results.append(item)
 
     def complete(self):
@@ -91,7 +92,9 @@ class RequestContext:
         if self.parent:
             self.parent._resolve_finished()
 
-    def add_done_callback(self, callback: Callable[[list[Any]], None]) -> None:
+    def add_done_callback(
+        self, callback: Callable[[list[runtime.RuntimePadValue]], None]
+    ) -> None:
         self._done_callbacks.append(callback)
 
     @property

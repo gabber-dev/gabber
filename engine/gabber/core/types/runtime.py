@@ -501,7 +501,6 @@ class Trigger(BaseModel, BaseRuntimeType):
 
 class NodeReference(BaseModel):
     node_id: str
-    node_type: str
 
 
 @dataclass
