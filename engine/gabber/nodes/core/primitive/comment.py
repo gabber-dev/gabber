@@ -3,6 +3,7 @@
 
 from gabber.core import node, pad
 from gabber.core.node import NodeMetadata
+from gabber.core.types import pad_constraints
 
 
 class Comment(node.Node):

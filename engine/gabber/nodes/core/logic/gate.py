@@ -5,6 +5,7 @@ from typing import cast
 
 from gabber.core import pad
 from gabber.core.node import Node, NodeMetadata
+from gabber.core.types import pad_constraints
 
 
 class Gate(Node):

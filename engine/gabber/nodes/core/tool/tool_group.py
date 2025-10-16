@@ -10,6 +10,7 @@ from gabber.core.types import runtime
 from gabber.core.node import NodeMetadata
 
 from gabber.nodes.core.tool import Tool
+from gabber.core.types import pad_constraints
 
 
 class ToolGroup(node.Node):

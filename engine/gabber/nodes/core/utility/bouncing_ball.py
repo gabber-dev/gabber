@@ -9,6 +9,7 @@ from gabber.core import node, pad
 from gabber.core.node import NodeMetadata
 from gabber.core.types.runtime import AudioFrame, AudioFrameData, VideoFrame
 from gabber.lib.audio import Resampler
+from gabber.core.types import pad_constraints
 
 
 class BouncingBall(node.Node):

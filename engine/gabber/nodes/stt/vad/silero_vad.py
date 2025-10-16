@@ -12,6 +12,7 @@ from gabber.core.types import runtime
 from gabber.core.node import NodeMetadata
 from gabber.core.types.runtime import AudioClip, AudioFrame
 from gabber.lib.audio import vad
+from gabber.core.types import pad_constraints
 from numpy.typing import NDArray
 
 logger = logging.getLogger(__name__)

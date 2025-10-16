@@ -27,6 +27,7 @@ from ..secret import PublicSecret, SecretProvider
 from gabber.nodes.core.sub_graph import SubGraph
 from gabber.utils import short_uuid
 from .runtime_api import RuntimeApi
+from ..types import pad_constraints
 
 T = TypeVar("T", bound=Node)
 
@@ -631,9 +632,9 @@ def create_pad_from_editor(
 ) -> pad.Pad:
     p: pad.Pad
     default_allowed_types = cast(
-        list[pad.pad_constraints.BasePadType] | None, e.default_allowed_types
+        list[pad_constraints.BasePadType] | None, e.default_allowed_types
     )
-    allowed_types = cast(list[pad.pad_constraints.BasePadType] | None, e.allowed_types)
+    allowed_types = cast(list[pad_constraints.BasePadType] | None, e.allowed_types)
     if e.type == "PropertySourcePad":
         v: Any = None
         if allowed_types and len(allowed_types) == 1:

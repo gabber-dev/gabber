@@ -5,6 +5,7 @@ from typing import cast
 
 from gabber.core import node, pad
 from gabber.core.node import NodeMetadata, NodeNote
+from gabber.core.types import pad_constraints
 
 
 class ChatInput(node.Node):

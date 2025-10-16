@@ -11,6 +11,7 @@ from gabber.core.types import runtime
 from gabber.core.node import NodeMetadata
 from mcp.types import ContentBlock
 from mcp import ClientSession
+from gabber.core.types import pad_constraints
 
 
 class MCP(node.Node):

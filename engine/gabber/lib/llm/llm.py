@@ -3,7 +3,6 @@
 
 import asyncio
 import base64
-import time
 import io
 import json
 import logging

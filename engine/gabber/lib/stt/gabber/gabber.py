@@ -2,18 +2,11 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
-import json
 import logging
 import base64
-from typing import Any
 from .messages import (
     RequestPayload_StartSession,
     RequestPayload_AudioData,
-    ResponsePayload,
-    ResponsePayload_Error,
-    ResponsePayload_FinalTranscription,
-    ResponsePayload_InterimTranscription,
-    ResponsePayload_SpeakingStarted,
     Response,
     Request,
 )

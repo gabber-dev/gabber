@@ -2,11 +2,10 @@
 # SPDX-License-Identifier: SUL-1.0
 
 from enum import Enum
-from typing import Annotated, Any, Literal, Type
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field
-
-from ..pad import types
+from ..types import pad_constraints
 
 
 class NodeMetadata(BaseModel):
@@ -205,8 +204,8 @@ class PadEditorRepresentation(BaseModel):
     id: str
     group: str
     type: str
-    default_allowed_types: list[types.PadType] | None = None
-    allowed_types: list[types.PadType] | None = None
+    default_allowed_types: list[pad_constraints.PadType] | None = None
+    allowed_types: list[pad_constraints.PadType] | None = None
     value: Any | None = None
     next_pads: list[PadReference]
     previous_pad: PadReference | None = None

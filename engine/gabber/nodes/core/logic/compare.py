@@ -7,6 +7,7 @@ from typing import cast
 
 from gabber.core import pad
 from gabber.core.node import Node, NodeMetadata
+from gabber.core.types import pad_constraints
 
 STRING_COMPARISON_OPERATORS = [
     "==",
@@ -45,7 +46,7 @@ BOOL_COMPARISON_OPERATORS = [
     "!=",
 ]
 
-ALL_ALLOWED_TYPES: list[pad.pad_constraints.BasePadType] = [
+ALL_ALLOWED_TYPES: list[pad_constraints.BasePadType] = [
     pad_constraints.String(),
     pad_constraints.Integer(),
     pad_constraints.Float(),

@@ -3,10 +3,9 @@
 
 from typing import cast
 
-from gabber.core import pad
-from gabber.core.types import runtime
+from gabber.core.types import runtime, pad_constraints
 from gabber.core.node import Node, NodeMetadata
-from gabber.core.pad import PropertySinkPad, StatelessSinkPad, StatelessSourcePad, types
+from gabber.core.pad import PropertySinkPad, StatelessSinkPad, StatelessSourcePad
 
 
 class CreateContextMessage(Node):
@@ -19,13 +18,13 @@ class CreateContextMessage(Node):
         return NodeMetadata(primary="ai", secondary="llm", tags=["context", "message"])
 
     def resolve_pads(self):
-        sink_default: list[pad.pad_constraints.BasePadType] | None = [
-            types.AudioClip(),
-            types.VideoClip(),
-            types.AVClip(),
-            types.String(),
-            types.Video(),
-            types.TextStream(),
+        sink_default: list[pad_constraints.BasePadType] | None = [
+            pad_constraints.AudioClip(),
+            pad_constraints.VideoClip(),
+            pad_constraints.AVClip(),
+            pad_constraints.String(),
+            pad_constraints.Video(),
+            pad_constraints.TextStream(),
         ]
         role = cast(PropertySinkPad, self.get_pad("role"))
         if not role:
@@ -33,7 +32,7 @@ class CreateContextMessage(Node):
                 id="role",
                 group="role",
                 owner_node=self,
-                default_type_constraints=[types.ContextMessageRole()],
+                default_type_constraints=[pad_constraints.ContextMessageRole()],
                 value=runtime.ContextMessageRole.USER,
             )
             self.pads.append(role)
@@ -54,7 +53,7 @@ class CreateContextMessage(Node):
                 id="context_message",
                 group="context_message",
                 owner_node=self,
-                default_type_constraints=[types.ContextMessage()],
+                default_type_constraints=[pad_constraints.ContextMessage()],
             )
             self.pads.append(message_source)
 

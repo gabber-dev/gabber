@@ -13,7 +13,7 @@ import numpy as np
 from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
-from .. import pad
+from . import pad_constraints
 
 
 class BaseRuntimeType(ABC):
@@ -495,8 +495,8 @@ class Schema(BaseModel, BaseRuntimeType):
             defaults[d] = self.defaults[d]
         for key, value in self.properties.items():
             if key in other.properties:
-                intersection = cast(pad.pad_constraints.BasePadType, value).intersect(
-                    cast(pad.pad_constraints.BasePadType, other.properties[key])
+                intersection = cast(pad_constraints.BasePadType, value).intersect(
+                    cast(pad_constraints.BasePadType, other.properties[key])
                 )
                 intersection = cast(
                     pad_constraints.String

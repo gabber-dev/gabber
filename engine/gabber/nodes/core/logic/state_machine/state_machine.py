@@ -8,9 +8,9 @@ from typing import Any, Literal, cast
 from pydantic import BaseModel
 
 from gabber.core import node, pad
-from gabber.core.types import runtime
+from gabber.core.types import runtime, pad_constraints
 
-ALL_PARAMETER_TYPES: list[pad.pad_constraints.BasePadType] = [
+ALL_PARAMETER_TYPES: list[pad_constraints.BasePadType] = [
     pad_constraints.Float(),
     pad_constraints.Integer(),
     pad_constraints.Boolean(),

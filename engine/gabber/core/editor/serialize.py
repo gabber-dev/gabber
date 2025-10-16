@@ -7,7 +7,7 @@ from typing import Any, cast
 from pydantic import BaseModel
 
 from .. import node, pad
-from ..types import runtime
+from ..types import runtime, pad_constraints
 
 from .models import NodeEditorRepresentation, PadEditorRepresentation, PadReference
 
@@ -28,7 +28,7 @@ def serialize_pad_value(v: Any | None):
 
 
 def deserialize_pad_value(
-    tc: pad.pad_constraints.BasePadType,
+    tc: pad_constraints.BasePadType,
     v: Any | None,
 ):
     if isinstance(tc, pad_constraints.Trigger):
@@ -101,7 +101,7 @@ def pad_editor_rep(p: pad.Pad):
         previous_pad=previous_pad,
         allowed_types=allowed_types,
         default_allowed_types=default_allowed_types,
-        pad_links=[l.get_id() for l in p._pad_links],
+        pad_links=[pl.get_id() for pl in p._pad_links],
     )
 
 

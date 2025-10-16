@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
-import os
 import logging
 import re
 import time

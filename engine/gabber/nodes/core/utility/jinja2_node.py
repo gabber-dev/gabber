@@ -7,6 +7,7 @@ from typing import cast
 from gabber.core import pad
 from gabber.core.node import Node, NodeMetadata
 from jinja2 import Template
+from gabber.core.types import pad_constraints
 
 
 class Jinja2(Node):

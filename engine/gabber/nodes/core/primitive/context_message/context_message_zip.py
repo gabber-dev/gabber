@@ -6,9 +6,9 @@ import asyncio
 from typing import cast
 
 from gabber.core import pad
-from gabber.core.types import runtime
+from gabber.core.types import runtime, pad_constraints
 from gabber.core.node import Node, NodeMetadata
-from gabber.core.pad import PropertySinkPad, StatelessSinkPad, StatelessSourcePad, types
+from gabber.core.pad import PropertySinkPad, StatelessSinkPad, StatelessSourcePad
 
 
 class ContextMessageZip(Node):
@@ -27,7 +27,7 @@ class ContextMessageZip(Node):
                 id="role",
                 group="role",
                 owner_node=self,
-                default_type_constraints=[types.ContextMessageRole()],
+                default_type_constraints=[pad_constraints.ContextMessageRole()],
                 value=runtime.ContextMessageRole.SYSTEM,
             )
 
@@ -37,7 +37,7 @@ class ContextMessageZip(Node):
                 id="context_message",
                 group="context_message",
                 owner_node=self,
-                default_type_constraints=[types.ContextMessage()],
+                default_type_constraints=[pad_constraints.ContextMessage()],
             )
 
         num_content_pads = self.get_pad("num_contents")
@@ -46,7 +46,7 @@ class ContextMessageZip(Node):
                 id="num_contents",
                 group="config",
                 owner_node=self,
-                default_type_constraints=[types.Integer()],
+                default_type_constraints=[pad_constraints.Integer()],
                 value=1,
             )
 
@@ -61,13 +61,13 @@ class ContextMessageZip(Node):
         self.pads = [role, message_source, num_content_pads] + content_pads
 
     def _resolve_content_pads(self):
-        sink_default: list[pad.pad_constraints.BasePadType] | None = [
-            types.AudioClip(),
-            types.VideoClip(),
-            types.AVClip(),
-            types.String(),
-            types.Video(),
-            types.TextStream(),
+        sink_default: list[pad_constraints.BasePadType] | None = [
+            pad_constraints.AudioClip(),
+            pad_constraints.VideoClip(),
+            pad_constraints.AVClip(),
+            pad_constraints.String(),
+            pad_constraints.Video(),
+            pad_constraints.TextStream(),
         ]
         num_content_pads = (
             cast(PropertySinkPad, self.get_pad_required("num_contents")).get_value()

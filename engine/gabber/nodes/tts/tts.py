@@ -7,7 +7,7 @@ import time
 from typing import cast
 
 from gabber.core import node, pad
-from gabber.core.types import runtime
+from gabber.core.types import runtime, pad_constraints
 from gabber.lib.tts import TTS as BaseTTS
 from gabber.lib.tts import CartesiaTTS, ElevenLabsTTS, GabberTTS, OpenAITTS
 

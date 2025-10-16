@@ -12,6 +12,7 @@ from .proxy_property_sink import ProxyPropertySink
 from .proxy_property_source import ProxyPropertySource
 from .proxy_stateless_sink import ProxyStatelessSink
 from .proxy_stateless_source import ProxyStatelessSource
+from gabber.core.types import pad_constraints
 
 if TYPE_CHECKING:
     from gabber.core.graph import Graph

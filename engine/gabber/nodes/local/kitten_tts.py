@@ -12,6 +12,7 @@ from gabber.core import node, pad
 from gabber.core.types import runtime
 from gabber.lib.audio import Resampler
 import numpy as np
+from gabber.core.types import pad_constraints
 
 VOICES = [
     "expr-voice-2-m",

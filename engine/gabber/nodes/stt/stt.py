@@ -9,6 +9,7 @@ from gabber.core import node, pad
 from gabber.core.types import runtime
 from gabber.core.node import NodeMetadata
 from gabber.lib import stt
+from gabber.core.types import pad_constraints
 
 
 class STT(node.Node):

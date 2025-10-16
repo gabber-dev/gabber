@@ -4,6 +4,7 @@
 import asyncio
 from gabber.core import node, pad
 from typing import cast
+from gabber.core.types import pad_constraints
 
 
 class Or(node.Node):

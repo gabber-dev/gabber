@@ -7,6 +7,7 @@ from typing import Any, cast
 import aiohttp
 from gabber.core import pad
 from gabber.core.node import Node
+from gabber.core.types import pad_constraints
 
 
 class WebRequest(Node):
@@ -154,7 +155,7 @@ class WebRequest(Node):
             query_params,
         ]
 
-        output_tc: list[pad.pad_constraints.BasePadType] = []
+        output_tc: list[pad_constraints.BasePadType] = []
         if response_type.get_value() == "application/json":
             output_tc = [pad_constraints.Object()]
         elif response_type.get_value() == "text/plain":

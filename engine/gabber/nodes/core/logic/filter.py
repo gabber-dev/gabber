@@ -7,6 +7,7 @@ from typing import cast, Any
 
 from gabber.core import pad
 from gabber.core.node import Node, NodeMetadata
+from gabber.core.types import pad_constraints
 
 STRING_COMPARISON_OPERATORS = [
     "==",
@@ -184,9 +185,9 @@ class Filter(Node):
     def compare_values(
         self,
         a: Any,
-        tc_a: pad.pad_constraints.BasePadType,
+        tc_a: pad_constraints.BasePadType,
         b: Any,
-        tc_b: pad.pad_constraints.BasePadType,
+        tc_b: pad_constraints.BasePadType,
         op: str,
     ) -> bool:
         if not isinstance(tc_a, type(tc_b)):

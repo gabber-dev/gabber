@@ -1,17 +1,12 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-import logging
 import asyncio
 from typing import cast
 
-from gabber.core.types import runtime
+from gabber.core.types import runtime, pad_constraints
 from gabber.core.node import Node, NodeMetadata
-from gabber.core.pad import (
-    PropertySinkPad,
-    PropertySourcePad,
-    types,
-)
+from gabber.core.pad import PropertySinkPad, PropertySourcePad
 
 
 class ContextMessage(Node):
@@ -30,7 +25,7 @@ class ContextMessage(Node):
                 id="role",
                 group="role",
                 owner_node=self,
-                default_type_constraints=[types.ContextMessageRole()],
+                default_type_constraints=[pad_constraints.ContextMessageRole()],
                 value=runtime.ContextMessageRole.SYSTEM,
             )
 
@@ -40,7 +35,7 @@ class ContextMessage(Node):
                 id="content",
                 group="content",
                 owner_node=self,
-                default_type_constraints=[types.String()],
+                default_type_constraints=[pad_constraints.String()],
                 value="You are a helpful assistant.",
             )
 
@@ -50,7 +45,7 @@ class ContextMessage(Node):
                 id="context_message",
                 group="context_message",
                 owner_node=self,
-                default_type_constraints=[types.ContextMessage()],
+                default_type_constraints=[pad_constraints.ContextMessage()],
                 value=runtime.ContextMessage(
                     role=runtime.ContextMessageRole.SYSTEM,
                     content=[
