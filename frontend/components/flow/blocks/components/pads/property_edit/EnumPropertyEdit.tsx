@@ -16,7 +16,7 @@ export function EnumPropertyEdit({ nodeId, padId }: PropertyEditProps) {
   } = usePropertyPad<Enum>(nodeId, padId);
 
   const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setValue(event.target.value);
+    setValue({ type: "enum", value: event.target.value });
   };
 
   const options: string[] = useMemo(() => {
@@ -28,7 +28,7 @@ export function EnumPropertyEdit({ nodeId, padId }: PropertyEditProps) {
 
   return (
     <select
-      value={runtimeValue || ""}
+      value={runtimeValue?.value || ""}
       onChange={handleChange}
       className="select select-bordered select-xs p-0 w-full bg-base-300 border-2 border-black border-b-4 border-r-4 rounded-lg text-base-content placeholder-base-content/40 focus:border-primary focus:ring-2 focus:ring-primary font-vt323 hover:bg-base-100 transition-colors duration-150"
     >
