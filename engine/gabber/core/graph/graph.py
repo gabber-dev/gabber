@@ -27,7 +27,7 @@ from ..secret import PublicSecret, SecretProvider
 from gabber.nodes.core.sub_graph import SubGraph
 from gabber.utils import short_uuid
 from .runtime_api import RuntimeApi
-from ..types import pad_constraints, mapper
+from ..types import pad_constraints, mapper, client
 
 T = TypeVar("T", bound=Node)
 
@@ -432,12 +432,14 @@ class Graph:
                     continue
 
                 subgraph_id = subgraph_id_pad.value
+                assert (
+                    isinstance(subgraph_id, client.ClientPadValue)
+                    and subgraph_id is not None
+                    and subgraph_id.type == "string"
+                )
                 subgraph_li: GraphLibraryItem_SubGraph | None = None
                 for item in self.library_items:
-                    if (
-                        isinstance(item, GraphLibraryItem_SubGraph)
-                        and item.id == subgraph_id
-                    ):
+                    if item.type == "subgraph" and subgraph_id.value == item.id:
                         subgraph_li = item
                         break
 
@@ -636,6 +638,7 @@ def create_pad_from_editor(
     )
     allowed_types = cast(list[pad_constraints.BasePadType] | None, e.allowed_types)
     if e.type == "PropertySourcePad":
+        logging.debug(f"Creating PropertySourcePad {e.id} with value {e.value}")
         v: Any = None
         if allowed_types and len(allowed_types) == 1:
             v = mapper.Mapper.client_to_runtime(e.value)

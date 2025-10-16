@@ -176,6 +176,7 @@ class TTS(node.Node):
 
         async def text_task():
             async for item in text_sink:
+                self.logger.info("NEIL TTS node received text input %s", item.value)
                 if isinstance(item.value, runtime.TextStream):
                     job = TTSJob(tts, item.ctx, voice=voice_id.get_value())
                     job_queue.put_nowait(job)

@@ -57,6 +57,10 @@ class Mapper:
                     if r_item is not None:
                         rvs.append(r_item)
                 return rvs
+            elif client_value.type == "secret":
+                return client_value.value
+            elif client_value.type == "enum":
+                return client_value.value
             else:
                 raise ValueError(
                     f"Unsupported client pad value type: {client_value.type}"

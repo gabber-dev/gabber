@@ -7,7 +7,7 @@ import asyncio
 import base64
 from abc import abstractmethod, ABC
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum as PyEnum
 from typing import Annotated, Any, Literal, cast
 
 import cv2
@@ -105,7 +105,7 @@ class AudioFrame(BaseRuntimeType):
         return "audio_frame"
 
 
-class VideoFormat(Enum):
+class VideoFormat(PyEnum):
     RGBA = "RGBA"
 
 
@@ -347,7 +347,7 @@ ContextMessageContentItem = Annotated[
 ]
 
 
-class ContextMessageRole(str, Enum):
+class ContextMessageRole(str, PyEnum):
     USER = "user"
     ASSISTANT = "assistant"
     SYSTEM = "system"
@@ -540,7 +540,6 @@ RuntimePadValuePrimitive = str | int | float | bool
 
 RuntimePadValue = (
     RuntimePadValuePrimitive
-    | Enum
     | Trigger
     | AudioClip
     | VideoClip

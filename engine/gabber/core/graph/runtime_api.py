@@ -3,7 +3,7 @@
 
 import asyncio
 from typing import Annotated, Any, Literal
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, TypeAdapter
 from livekit import rtc
 from dataclasses import dataclass
 from .. import node, pad
@@ -11,6 +11,8 @@ import logging
 from ..node import Node
 from gabber.nodes.core.media.publish import Publish
 from ..types import client, mapper, pad_constraints
+
+client_value_adapter = TypeAdapter(client.ClientPadValue)
 
 PING_BYTES = "ping".encode("utf-8")
 
@@ -162,7 +164,10 @@ class RuntimeApi:
                         QueueItem(payload=complete_resp, participant=packet.participant)
                     )
                     return
-                value = mapper.Mapper.client_to_runtime(payload.value)
+                parsed: client.ClientPadValue = None
+                if payload.value is not None:
+                    parsed = client_value_adapter.validate_python(payload.value)
+                value = mapper.Mapper.client_to_runtime(parsed)
                 ctx = pad.RequestContext(parent=None)
                 complete_resp.payload = RuntimeResponsePayload_PushValue(
                     type="push_value"
