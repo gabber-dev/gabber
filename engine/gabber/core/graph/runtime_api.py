@@ -10,7 +10,7 @@ from .. import node, pad
 import logging
 from ..node import Node
 from gabber.nodes.core.media.publish import Publish
-from ..types import client, mapper
+from ..types import client, mapper, pad_constraints
 
 PING_BYTES = "ping".encode("utf-8")
 
@@ -447,4 +447,5 @@ class DummyType(BaseModel):
     ev: RuntimeEvent
     runtime_event_payload: RuntimeEventPayload
     pad_value: client.ClientPadValue
+    pad_constraint: pad_constraints.PadConstraint
     log_item: RuntimeEventPayload_LogItem

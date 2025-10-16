@@ -155,6 +155,66 @@ export type PadValue =
   | List
   | ContextMessage
   | null;
+export type PadConstraint =
+  | String1
+  | Integer1
+  | Float1
+  | Boolean1
+  | Enum
+  | Secret
+  | BoundingBox
+  | Point
+  | Audio
+  | Video
+  | Trigger
+  | AudioClip1
+  | VideoClip1
+  | AVClip
+  | TextStream
+  | ContextMessage1
+  | ContextMessageRole
+  | List1
+  | Schema
+  | Object
+  | NodeReference;
+export type Type22 = "string";
+export type MaxLength = number | null;
+export type MinLength = number | null;
+export type Type23 = "integer";
+export type Maximum = number | null;
+export type Minimum = number | null;
+export type Type24 = "float";
+export type Maximum1 = number | null;
+export type Minimum1 = number | null;
+export type Type25 = "boolean";
+export type Type26 = "enum";
+export type Options = string[] | null;
+export type Type27 = "secret";
+export type UpdatedAt = string;
+export type CreatedAt = string;
+export type Id = string;
+export type Name = string;
+export type Options1 = PublicSecret[];
+export type Type28 = "bounding_box";
+export type Type29 = "point";
+export type Type30 = "audio";
+export type Type31 = "video";
+export type Type32 = "audio_clip";
+export type Type33 = "video_clip";
+export type Type34 = "av_clip";
+export type Type35 = "text_stream";
+export type Type36 = "context_message";
+export type Type37 = "context_message_role";
+export type Type38 = "list";
+export type MaxLength1 = number | null;
+export type ItemTypeConstraints = BasePadType[] | null;
+export type Type39 = "schema";
+export type Type40 = "object";
+export type ObjectSchema = {
+  [k: string]: unknown;
+} | null;
+export type Type41 = "node_reference";
+export type NodeTypes = string[];
 
 export interface DummyType {
   req: RuntimeRequest;
@@ -164,6 +224,7 @@ export interface DummyType {
   ev: RuntimeEvent;
   runtime_event_payload: RuntimeEventPayload;
   pad_value: PadValue;
+  pad_constraint: PadConstraint;
   log_item: RuntimeEventPayload_LogItem;
   [k: string]: unknown;
 }
@@ -324,5 +385,107 @@ export interface RuntimeEventPayload_LogItem {
   node?: Node;
   subgraph?: Subgraph;
   pad?: Pad;
+  [k: string]: unknown;
+}
+export interface String1 {
+  type?: Type22;
+  max_length?: MaxLength;
+  min_length?: MinLength;
+  [k: string]: unknown;
+}
+export interface Integer1 {
+  type?: Type23;
+  maximum?: Maximum;
+  minimum?: Minimum;
+  [k: string]: unknown;
+}
+export interface Float1 {
+  type?: Type24;
+  maximum?: Maximum1;
+  minimum?: Minimum1;
+  [k: string]: unknown;
+}
+export interface Boolean1 {
+  type?: Type25;
+  [k: string]: unknown;
+}
+export interface Enum {
+  type?: Type26;
+  options?: Options;
+  [k: string]: unknown;
+}
+export interface Secret {
+  type?: Type27;
+  options?: Options1;
+  [k: string]: unknown;
+}
+export interface PublicSecret {
+  updated_at: UpdatedAt;
+  created_at: CreatedAt;
+  id: Id;
+  name: Name;
+  [k: string]: unknown;
+}
+export interface BoundingBox {
+  type?: Type28;
+  [k: string]: unknown;
+}
+export interface Point {
+  type?: Type29;
+  [k: string]: unknown;
+}
+export interface Audio {
+  type?: Type30;
+  [k: string]: unknown;
+}
+export interface Video {
+  type?: Type31;
+  [k: string]: unknown;
+}
+export interface AudioClip1 {
+  type?: Type32;
+  [k: string]: unknown;
+}
+export interface VideoClip1 {
+  type?: Type33;
+  [k: string]: unknown;
+}
+export interface AVClip {
+  type?: Type34;
+  [k: string]: unknown;
+}
+export interface TextStream {
+  type?: Type35;
+  [k: string]: unknown;
+}
+export interface ContextMessage1 {
+  type?: Type36;
+  [k: string]: unknown;
+}
+export interface ContextMessageRole {
+  type?: Type37;
+  [k: string]: unknown;
+}
+export interface List1 {
+  type?: Type38;
+  max_length?: MaxLength1;
+  item_type_constraints: ItemTypeConstraints;
+  [k: string]: unknown;
+}
+export interface BasePadType {
+  [k: string]: unknown;
+}
+export interface Schema {
+  type?: Type39;
+  [k: string]: unknown;
+}
+export interface Object {
+  type?: Type40;
+  object_schema?: ObjectSchema;
+  [k: string]: unknown;
+}
+export interface NodeReference {
+  type?: Type41;
+  node_types: NodeTypes;
   [k: string]: unknown;
 }

@@ -46,6 +46,10 @@ export type {
     ContextMessageContentItem_Audio,
     ContextMessageContentItem_Video,
     ContextMessageContentItem_Image,
+    AudioClip,
+    VideoClip,
     PadValue,
+    Trigger,
     RuntimeEventPayload_LogItem,
+    PadConstraint,
 } from './generated/runtime';
