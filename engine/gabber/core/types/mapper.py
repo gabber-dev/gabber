@@ -16,6 +16,7 @@ class Mapper:
             c_v = is_client_pad_value(client_value)
             if c_v is not None:
                 client_value = c_v
+                return Mapper.client_to_runtime(client_value)
             else:
                 old_cm = is_old_context_message(client_value)
                 if old_cm is not None:
@@ -61,6 +62,8 @@ class Mapper:
                 return client_value.value
             elif client_value.type == "enum":
                 return client_value.value
+            elif client_value.type == "context_message":
+                return Mapper.client_context_message_to_runtime(client_value)
             else:
                 raise ValueError(
                     f"Unsupported client pad value type: {client_value.type}"
@@ -96,6 +99,8 @@ class Mapper:
         elif isinstance(runtime_value, runtime.ContextMessage):
             client_cm = Mapper.runtime_context_message_to_client(runtime_value)
             return client_cm
+        elif isinstance(runtime_value, runtime.Schema):
+            return Mapper.runtime_schema_to_client(runtime_value)
 
         raise ValueError(
             f"Unknown runtime pad value: {runtime_value} ({type(runtime_value)})"
@@ -156,6 +161,41 @@ class Mapper:
         return client.ContextMessage(
             role=client.ContextMessageRole(
                 value=client.ContextMessageRoleEnum(runtime_value.role.value)
+            ),
+            content=cnts,
+        )
+
+    @staticmethod
+    def runtime_schema_to_client(runtime_value: runtime.Schema) -> client.Schema:
+        return client.Schema(
+            properties=runtime_value.properties,
+            required=runtime_value.required,
+            defaults=runtime_value.defaults,
+        )
+
+    @staticmethod
+    def client_context_message_to_runtime(
+        client_value: client.ContextMessage,
+    ) -> runtime.ContextMessage:
+        cnts: list[runtime.ContextMessageContentItem] = []
+        for cnt in client_value.content:
+            if cnt.content_type == "audio" and cnt.audio is not None:
+                logging.warning("Audio content in context messages is not supported")
+                continue
+            elif cnt.content_type == "image" and cnt.image is not None:
+                logging.warning("Image content in context messages is not supported")
+            elif cnt.content_type == "video" and cnt.video is not None:
+                logging.warning("Video content in context messages is not supported")
+            elif cnt.content_type == "text" and cnt.text is not None:
+                cnts.append(
+                    runtime.ContextMessageContentItem_Text(
+                        type="text", content=cnt.text
+                    )
+                )
+        return runtime.ContextMessage(
+            tool_calls=[],
+            role=runtime.ContextMessageRole(
+                value=runtime.ContextMessageRole(client_value.role.value)
             ),
             content=cnts,
         )
