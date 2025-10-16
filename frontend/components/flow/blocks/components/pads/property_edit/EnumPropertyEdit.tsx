@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
+import { Enum } from "@gabber/client-react";
 import { usePropertyPad } from "../hooks/usePropertyPad";
 import { PropertyEditProps } from "./PropertyEdit";
 import { useMemo } from "react";
@@ -12,7 +13,7 @@ export function EnumPropertyEdit({ nodeId, padId }: PropertyEditProps) {
     runtimeValue,
     setEditorValue: setValue,
     singleAllowedType,
-  } = usePropertyPad<string>(nodeId, padId);
+  } = usePropertyPad<Enum>(nodeId, padId);
 
   const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setValue(event.target.value);
