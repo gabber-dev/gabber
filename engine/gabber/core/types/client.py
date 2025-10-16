@@ -132,6 +132,11 @@ class List(BaseModel):
     items: list["ClientPadValue"]
 
 
+class Object(BaseModel):
+    type: Literal["object"] = "object"
+    value: dict[str, Any]
+
+
 ClientPadValue = (
     String
     | Integer
@@ -148,6 +153,7 @@ ClientPadValue = (
     | NodeReference
     | ToolDefinition
     | Schema
+    | Object
     | None
 )
 

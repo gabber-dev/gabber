@@ -64,6 +64,8 @@ class Mapper:
                 return client_value.value
             elif client_value.type == "context_message":
                 return Mapper.client_context_message_to_runtime(client_value)
+            elif client_value.type == "object":
+                return client_value.value
             else:
                 raise ValueError(
                     f"Unsupported client pad value type: {client_value.type}"
@@ -94,6 +96,8 @@ class Mapper:
                 if c_item is not None:
                     items.append(c_item)
             return client.List(count=len(items), items=items)
+        elif isinstance(runtime_value, dict):
+            return client.Object(value=runtime_value)
         elif isinstance(runtime_value, runtime.Trigger):
             return client.Trigger()
         elif isinstance(runtime_value, runtime.ContextMessage):

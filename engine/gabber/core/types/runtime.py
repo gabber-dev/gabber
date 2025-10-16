@@ -535,7 +535,7 @@ class ContextMessageDeltaStream:
         return item
 
 
-RuntimePadValuePrimitive = str | int | float | bool
+RuntimePadValuePrimitive = str | int | float | bool | dict
 
 
 RuntimePadValue = (
