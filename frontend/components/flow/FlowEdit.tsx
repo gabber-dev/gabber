@@ -39,6 +39,7 @@ import {
 } from "@/generated/editor";
 import { RunId } from "../RunId";
 import { useRepository } from "@/hooks/useRepository";
+import { PadDetailsView } from "./PadDetailsView";
 
 const edgeTypes = {
   hybrid: HybridEdge,
@@ -67,6 +68,9 @@ function FlowEditInner({ editable }: Props) {
     onReactFlowEdgesChange,
     onReactFlowNodesChange,
     onReactFlowConnect,
+    detailedView,
+    setDetailedView,
+    setLogsShowing,
   } = useEditor();
   const { screenToFlowPosition } = useReactFlow();
   const [quickAdd, setQuickAdd] = useState<QuickAddProps | undefined>(
@@ -141,6 +145,17 @@ function FlowEditInner({ editable }: Props) {
         />
       </div>
 
+      {/* Detailed View Panel */}
+      <div
+        className={`
+          fixed top-[70px] right-0 w-[400px] h-[calc(100vh-70px-64px)] bg-base-300 border-l-2 border-primary overflow-hidden z-20
+          transform transition-transform duration-300 ease-in-out
+          ${detailedView ? "translate-x-0" : "translate-x-full"}
+        `}
+      >
+        <PadDetailsView />
+      </div>
+
       {connectionStatus && (
         <div className="absolute top-[3.25rem] right-2 z-0 text-xs text-success pointer-events-none">
           {connectionStatus}
@@ -196,6 +211,10 @@ function FlowEditInner({ editable }: Props) {
             nodesConnectable={true}
             selectNodesOnDrag={false}
             minZoom={0.1}
+            onClickCapture={() => {
+              setDetailedView(undefined);
+              setLogsShowing(false);
+            }}
           >
             <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
           </ReactFlow>

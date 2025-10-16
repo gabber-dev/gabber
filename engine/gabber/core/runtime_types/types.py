@@ -45,7 +45,7 @@ class BoundingBox(BaseModel, BaseRuntimeType):
 
 @dataclass
 class AudioFrameData:
-    data: NDArray[np.int16]  # (1,N) array of int16 PCM audio data
+    data: NDArray[np.int16]
     sample_rate: int
     num_channels: int
 
@@ -308,6 +308,34 @@ class ToolDefinition(BaseModel, BaseRuntimeType):
 
     def log_type(self) -> str:
         return "tool_definition"
+
+
+class String(BaseModel, BaseRuntimeType):
+    value: str
+
+    def log_type(self) -> str:
+        return "string"
+
+
+class Integer(BaseModel, BaseRuntimeType):
+    value: int
+
+    def log_type(self) -> str:
+        return "integer"
+
+
+class Float(BaseModel, BaseRuntimeType):
+    value: float
+
+    def log_type(self) -> str:
+        return "float"
+
+
+class Boolean(BaseModel, BaseRuntimeType):
+    value: bool
+
+    def log_type(self) -> str:
+        return "boolean"
 
 
 class ContextMessageContentItem_Audio(BaseModel):

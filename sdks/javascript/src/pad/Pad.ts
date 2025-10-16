@@ -17,7 +17,7 @@
  */
 
 import { Room } from "livekit-client";
-import { PadValue, RuntimeRequestPayload_PushValue } from "../generated/runtime"
+import { PadValue, PadValue_List, RuntimeRequestPayload_PushValue } from "../generated/runtime"
 import { Engine } from "../Engine";
 
 type PadParams = {
@@ -96,6 +96,22 @@ export class BasePad<DataType extends PadValue> {
         }
         return resp.value;
     }
+
+    protected async _getListItems(): Promise<PadValue[]> {
+        const resp = await this.engine.runtimeRequest({
+            payload: {
+                type: "get_list_items",
+                node_id: this.nodeId,
+                pad_id: this.padId,
+            }
+        });
+
+        if(resp?.type !== "get_list_items") {
+            throw new Error(`Unexpected response type: ${resp?.type}`);
+        }
+        
+        return resp.items;
+    }
 }
 
 export class SourcePad<DataType extends PadValue> extends BasePad<DataType> {
@@ -131,5 +147,9 @@ export class PropertyPad<DataType extends PadValue> extends BasePad<DataType> {
 
     public async getValue(): Promise<PadValue> {
         return this._getValue();
+    }
+
+    public async getListItems(): Promise<PadValue[]> {
+        return this._getListItems();
     }
 }

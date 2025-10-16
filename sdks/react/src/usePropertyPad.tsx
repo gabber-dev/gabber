@@ -24,6 +24,7 @@ import { ConnectionState } from "@gabber/client";
 
 type UsePropertyPadType<DataType extends PadValue> = {
     currentValue: DataType | "loading";
+    loadListItems: () => Promise<void>;
 }
 
 export function usePropertyPad<DataType extends PadValue>(nodeId: string, padId: string): UsePropertyPadType<DataType> {
@@ -52,6 +53,27 @@ export function usePropertyPad<DataType extends PadValue>(nodeId: string, padId:
         }
     }, [padRef]);
 
+    const loadListItems = useCallback(async () => {
+        if (currentValue === "loading") return; // Prevent multiple calls
+        if (padLoadingRef.current) return; // Prevent multiple calls
+        padLoadingRef.current = true;
+        try {
+            const items = await padRef.current?.getListItems() || [];
+            setCurrentValue(prev => {
+                if (prev === "loading" || prev.type !== "list") {
+                    console.error("Current value is not a list, cannot load list items");
+                    return prev
+                };
+
+                return {...prev, items};
+            });
+        } catch (error) {
+            console.error("Failed to load list items:", error);
+        } finally {
+            padLoadingRef.current = false;
+        }
+    }, [padRef]);
+
     useEffect(() => {
         if (connectionState === "connected" && prevConnectionState.current !== "connected") {
             loadPadValue();
@@ -70,5 +92,6 @@ export function usePropertyPad<DataType extends PadValue>(nodeId: string, padId:
 
     return {
         currentValue,
+        loadListItems,
     }
 }
