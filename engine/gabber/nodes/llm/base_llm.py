@@ -245,11 +245,6 @@ class BaseLLM(node.Node, ABC):
         context_message_source = cast(
             pad.StatelessSourcePad, self.get_pad_required("context_message")
         )
-        tool_group_sink: pad.PropertySinkPad | None = None
-        if self.supports_tool_calls():
-            tool_group_sink = cast(
-                pad.PropertySinkPad, self.get_pad_required("tool_group")
-            )
         run_trigger = cast(pad.StatelessSinkPad, self.get_pad_required("run_trigger"))
 
         # Get tool call source pads if tool calling is supported
@@ -360,20 +355,18 @@ class BaseLLM(node.Node, ABC):
                 thinking_stream.eos()
                 text_stream.eos()
 
-                all_tool_calls: list[runtime.ToolCall] = []
-                if tool_group_sink is not None:
-                    all_tool_calls = get_tool_calls_from_choice_deltas(all_deltas)
-                    if all_tool_calls:
-                        if tool_calls_started_source:
-                            tool_calls_started_source.push_item(runtime.Trigger(), ctx)
-                        tool_task = asyncio.create_task(
-                            self.call_tools(
-                                all_tool_calls=all_tool_calls,
-                                tg_tool_defns=tg_tools,
-                                mcp_tool_defns=mcp_tools,
-                                ctx=ctx,
-                            )
+                all_tool_calls = get_tool_calls_from_choice_deltas(all_deltas)
+                if all_tool_calls:
+                    if tool_calls_started_source:
+                        tool_calls_started_source.push_item(runtime.Trigger(), ctx)
+                    tool_task = asyncio.create_task(
+                        self.call_tools(
+                            all_tool_calls=all_tool_calls,
+                            tg_tool_defns=tg_tools,
+                            mcp_tool_defns=mcp_tools,
+                            ctx=ctx,
                         )
+                    )
 
                 full_content = get_full_content_from_deltas(all_deltas)
                 context_message_source.push_item(
@@ -413,11 +406,14 @@ class BaseLLM(node.Node, ABC):
         async for item in run_trigger:
             ctx = item.ctx
             messages = context_sink.get_value()
+            assert isinstance(messages, list)
+            messages = cast(list[runtime.ContextMessage], messages)
             all_tool_definitions: list[runtime.ToolDefinition] = []
             tg_tool_definitions: list[runtime.ToolDefinition] = []
 
-            if tool_group_sink is not None and tool_group_sink.get_value() is not None:
-                tool_nodes = cast(ToolGroup, tool_group_sink.get_value()).tool_nodes
+            tool_group_node = self.get_tool_group_node()
+            if tool_group_node is not None:
+                tool_nodes = cast(ToolGroup, tool_group_node).tool_nodes
                 for tn in tool_nodes:
                     td = tn.get_tool_definition()
                     tg_tool_definitions.append(td)
@@ -474,6 +470,19 @@ class BaseLLM(node.Node, ABC):
                 self.logger.error(f"Failed to start LLM generation: {e}", exc_info=e)
                 finished_source.push_item(runtime.Trigger(), ctx)
         await cancel_task_t
+
+    def get_tool_group_node(self) -> ToolGroup | None:
+        if not self.supports_tool_calls():
+            return None
+        tool_group_sink = cast(pad.PropertySinkPad, self.get_pad_required("tool_group"))
+        tool_group_sink_value = tool_group_sink.get_value()
+        if tool_group_sink_value is None:
+            return None
+        assert isinstance(tool_group_sink_value, runtime.NodeReference)
+        tg_node = self.graph.get_node(tool_group_sink_value.node_id)
+        if not isinstance(tg_node, ToolGroup):
+            return None
+        return tg_node
 
     async def call_tools(
         self,
@@ -550,11 +559,10 @@ class BaseLLM(node.Node, ABC):
         return results
 
     async def call_tg_calls(self, tg_tool_calls: list[runtime.ToolCall], ctx):
-        tool_group_sink = cast(pad.PropertySinkPad, self.get_pad_required("tool_group"))
-        if tool_group_sink is None or tool_group_sink.get_value() is None:
-            raise ValueError("Tool group is not configured for tool calls.")
-        tg = cast(ToolGroup, tool_group_sink.get_value())
-        return await tg.call_tools(tg_tool_calls, ctx)
+        tool_group_node = self.get_tool_group_node()
+        if not tool_group_node:
+            raise RuntimeError("Tool group node not found")
+        return await tool_group_node.call_tools(tg_tool_calls, ctx)
 
     def get_notes(self) -> list[node.NodeNote]:
         notes: list[node.NodeNote] = []

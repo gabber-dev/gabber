@@ -66,6 +66,10 @@ class Mapper:
                 return Mapper.client_context_message_to_runtime(client_value)
             elif client_value.type == "object":
                 return client_value.value
+            elif client_value.type == "node_reference":
+                return runtime.NodeReference(node_id=client_value.node_id)
+            elif client_value.type == "schema":
+                return Mapper.client_schema_to_runtime(client_value)
             else:
                 raise ValueError(
                     f"Unsupported client pad value type: {client_value.type}"
@@ -106,7 +110,7 @@ class Mapper:
         elif isinstance(runtime_value, runtime.Schema):
             return Mapper.runtime_schema_to_client(runtime_value)
         elif isinstance(runtime_value, runtime.NodeReference):
-            return client.NodeReference(value=runtime_value.node_id)
+            return client.NodeReference(node_id=runtime_value.node_id)
         elif isinstance(runtime_value, runtime.ToolDefinition):
             return client.ToolDefinition(
                 name=runtime_value.name,
@@ -212,6 +216,14 @@ class Mapper:
                 value=runtime.ContextMessageRole(client_value.role.value)
             ),
             content=cnts,
+        )
+
+    @staticmethod
+    def client_schema_to_runtime(client_value: client.Schema) -> runtime.Schema:
+        return runtime.Schema(
+            properties=client_value.properties,
+            required=client_value.required,
+            defaults=client_value.defaults,
         )
 
 
