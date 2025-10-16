@@ -56,7 +56,13 @@ export type Value1 =
   | AudioClip
   | VideoClip
   | List
+  | ContextMessageRole
   | ContextMessage
+  | Enum
+  | Secret
+  | NodeReference
+  | ToolDefinition
+  | Schema
   | null;
 export type Type8 = "string";
 export type Value2 = string;
@@ -75,8 +81,9 @@ export type Duration1 = number;
 export type Type15 = "list";
 export type Count = number;
 export type Items = unknown[];
-export type Type16 = "context_message";
-export type Role = string;
+export type Type16 = "context_message_role";
+export type ContextMessageRoleEnum = "user" | "assistant" | "system" | "tool";
+export type Type17 = "context_message";
 export type ContentType = "text" | "image" | "audio" | "video";
 export type Text = string | null;
 export type Width = number;
@@ -90,7 +97,40 @@ export type Height1 = number;
 export type Duration3 = number;
 export type Handle2 = string;
 export type Content = ContextMessageContentItem[];
-export type Type17 = "get_list_items";
+export type Type18 = "enum";
+export type Value6 = string;
+export type Options = string[];
+export type Type19 = "secret";
+export type Value7 = string;
+export type Options1 = string[];
+export type Type20 = "node_reference";
+export type NodeId3 = string;
+export type Type21 = "tool_definition";
+export type Name = string;
+export type Description = string;
+export type Type22 = "schema";
+export type Type23 = "string";
+export type MaxLength = number | null;
+export type MinLength = number | null;
+export type Type24 = "integer";
+export type Maximum = number | null;
+export type Minimum = number | null;
+export type Type25 = "float";
+export type Maximum1 = number | null;
+export type Minimum1 = number | null;
+export type Type26 = "boolean";
+export type Type27 = "object";
+export type ObjectSchema = {
+  [k: string]: unknown;
+} | null;
+export type Type28 = "list";
+export type MaxLength1 = number | null;
+export type ItemTypeConstraints = BasePadType[] | null;
+export type Required = string[] | null;
+export type Defaults = {
+  [k: string]: unknown;
+} | null;
+export type Type29 = "get_list_items";
 export type Items1 = (
   | String
   | Integer
@@ -100,10 +140,16 @@ export type Items1 = (
   | AudioClip
   | VideoClip
   | List
+  | ContextMessageRole
   | ContextMessage
+  | Enum
+  | Secret
+  | NodeReference
+  | ToolDefinition
+  | Schema
   | null
 )[];
-export type Type18 = "lock_publisher";
+export type Type30 = "lock_publisher";
 export type Success = boolean;
 /**
  * Payload for the runtime request complete
@@ -113,13 +159,13 @@ export type RuntimeResponsePayload =
   | RuntimeResponsePayload_GetValue
   | RuntimeResponsePayload_GetListItems
   | RuntimeResponsePayload_LockPublisher;
-export type Type19 = "event";
+export type Type31 = "event";
 /**
  * Payload for the runtime event
  */
 export type Payload2 = RuntimeEventPayload_Value | RuntimeEventPayload_Logs;
-export type Type20 = "value";
-export type Value6 =
+export type Type32 = "value";
+export type Value8 =
   | String
   | Integer
   | Float
@@ -128,11 +174,17 @@ export type Value6 =
   | AudioClip
   | VideoClip
   | List
+  | ContextMessageRole
   | ContextMessage
+  | Enum
+  | Secret
+  | NodeReference
+  | ToolDefinition
+  | Schema
   | null;
-export type NodeId3 = string;
+export type NodeId4 = string;
 export type PadId3 = string;
-export type Type21 = "logs";
+export type Type33 = "logs";
 export type Message = string;
 export type Level = string;
 export type Timestamp = string;
@@ -153,15 +205,21 @@ export type PadValue =
   | AudioClip
   | VideoClip
   | List
+  | ContextMessageRole
   | ContextMessage
+  | Enum
+  | Secret
+  | NodeReference
+  | ToolDefinition
+  | Schema
   | null;
 export type PadConstraint =
   | String1
   | Integer1
   | Float1
   | Boolean1
-  | Enum
-  | Secret
+  | Enum1
+  | Secret1
   | BoundingBox
   | Point
   | Audio
@@ -172,48 +230,31 @@ export type PadConstraint =
   | AVClip
   | TextStream
   | ContextMessage1
-  | ContextMessageRole
+  | ContextMessageRole1
   | List1
-  | Schema
+  | Schema1
   | Object
-  | NodeReference;
-export type Type22 = "string";
-export type MaxLength = number | null;
-export type MinLength = number | null;
-export type Type23 = "integer";
-export type Maximum = number | null;
-export type Minimum = number | null;
-export type Type24 = "float";
-export type Maximum1 = number | null;
-export type Minimum1 = number | null;
-export type Type25 = "boolean";
-export type Type26 = "enum";
-export type Options = string[] | null;
-export type Type27 = "secret";
+  | NodeReference1;
+export type Type34 = "enum";
+export type Options2 = string[] | null;
+export type Type35 = "secret";
 export type UpdatedAt = string;
 export type CreatedAt = string;
 export type Id = string;
-export type Name = string;
-export type Options1 = PublicSecret[];
-export type Type28 = "bounding_box";
-export type Type29 = "point";
-export type Type30 = "audio";
-export type Type31 = "video";
-export type Type32 = "audio_clip";
-export type Type33 = "video_clip";
-export type Type34 = "av_clip";
-export type Type35 = "text_stream";
-export type Type36 = "context_message";
-export type Type37 = "context_message_role";
-export type Type38 = "list";
-export type MaxLength1 = number | null;
-export type ItemTypeConstraints = BasePadType[] | null;
-export type Type39 = "schema";
-export type Type40 = "object";
-export type ObjectSchema = {
-  [k: string]: unknown;
-} | null;
-export type Type41 = "node_reference";
+export type Name1 = string;
+export type Options3 = PublicSecret[];
+export type Type36 = "bounding_box";
+export type Type37 = "point";
+export type Type38 = "audio";
+export type Type39 = "video";
+export type Type40 = "audio_clip";
+export type Type41 = "video_clip";
+export type Type42 = "av_clip";
+export type Type43 = "text_stream";
+export type Type44 = "context_message";
+export type Type45 = "context_message_role";
+export type Type46 = "schema";
+export type Type47 = "node_reference";
 export type NodeTypes = string[];
 
 export interface DummyType {
@@ -318,9 +359,14 @@ export interface List {
   items: Items;
   [k: string]: unknown;
 }
-export interface ContextMessage {
+export interface ContextMessageRole {
   type?: Type16;
-  role: Role;
+  value: ContextMessageRoleEnum;
+  [k: string]: unknown;
+}
+export interface ContextMessage {
+  type?: Type17;
+  role: ContextMessageRole;
   content: Content;
   [k: string]: unknown;
 }
@@ -351,30 +397,100 @@ export interface ContextMessageContentItem_Video {
   handle: Handle2;
   [k: string]: unknown;
 }
+export interface Enum {
+  type?: Type18;
+  value: Value6;
+  options: Options;
+  [k: string]: unknown;
+}
+export interface Secret {
+  type?: Type19;
+  value: Value7;
+  options: Options1;
+  [k: string]: unknown;
+}
+export interface NodeReference {
+  type?: Type20;
+  node_id: NodeId3;
+  [k: string]: unknown;
+}
+export interface ToolDefinition {
+  type?: Type21;
+  name: Name;
+  description: Description;
+  parameters?: Schema | null;
+  [k: string]: unknown;
+}
+export interface Schema {
+  type?: Type22;
+  properties: Properties;
+  required?: Required;
+  defaults?: Defaults;
+  [k: string]: unknown;
+}
+export interface Properties {
+  [k: string]: String1 | Integer1 | Float1 | Boolean1 | Object | List1;
+}
+export interface String1 {
+  type?: Type23;
+  max_length?: MaxLength;
+  min_length?: MinLength;
+  [k: string]: unknown;
+}
+export interface Integer1 {
+  type?: Type24;
+  maximum?: Maximum;
+  minimum?: Minimum;
+  [k: string]: unknown;
+}
+export interface Float1 {
+  type?: Type25;
+  maximum?: Maximum1;
+  minimum?: Minimum1;
+  [k: string]: unknown;
+}
+export interface Boolean1 {
+  type?: Type26;
+  [k: string]: unknown;
+}
+export interface Object {
+  type?: Type27;
+  object_schema?: ObjectSchema;
+  [k: string]: unknown;
+}
+export interface List1 {
+  type?: Type28;
+  max_length?: MaxLength1;
+  item_type_constraints: ItemTypeConstraints;
+  [k: string]: unknown;
+}
+export interface BasePadType {
+  [k: string]: unknown;
+}
 export interface RuntimeResponsePayload_GetListItems {
-  type?: Type17;
+  type?: Type29;
   items: Items1;
   [k: string]: unknown;
 }
 export interface RuntimeResponsePayload_LockPublisher {
-  type?: Type18;
+  type?: Type30;
   success: Success;
   [k: string]: unknown;
 }
 export interface RuntimeEvent {
-  type?: Type19;
+  type?: Type31;
   payload: Payload2;
   [k: string]: unknown;
 }
 export interface RuntimeEventPayload_Value {
-  type?: Type20;
-  value: Value6;
-  node_id: NodeId3;
+  type?: Type32;
+  value: Value8;
+  node_id: NodeId4;
   pad_id: PadId3;
   [k: string]: unknown;
 }
 export interface RuntimeEventPayload_Logs {
-  type?: Type21;
+  type?: Type33;
   items: Items2;
   [k: string]: unknown;
 }
@@ -387,105 +503,69 @@ export interface RuntimeEventPayload_LogItem {
   pad?: Pad;
   [k: string]: unknown;
 }
-export interface String1 {
-  type?: Type22;
-  max_length?: MaxLength;
-  min_length?: MinLength;
+export interface Enum1 {
+  type?: Type34;
+  options?: Options2;
   [k: string]: unknown;
 }
-export interface Integer1 {
-  type?: Type23;
-  maximum?: Maximum;
-  minimum?: Minimum;
-  [k: string]: unknown;
-}
-export interface Float1 {
-  type?: Type24;
-  maximum?: Maximum1;
-  minimum?: Minimum1;
-  [k: string]: unknown;
-}
-export interface Boolean1 {
-  type?: Type25;
-  [k: string]: unknown;
-}
-export interface Enum {
-  type?: Type26;
-  options?: Options;
-  [k: string]: unknown;
-}
-export interface Secret {
-  type?: Type27;
-  options?: Options1;
+export interface Secret1 {
+  type?: Type35;
+  options?: Options3;
   [k: string]: unknown;
 }
 export interface PublicSecret {
   updated_at: UpdatedAt;
   created_at: CreatedAt;
   id: Id;
-  name: Name;
+  name: Name1;
   [k: string]: unknown;
 }
 export interface BoundingBox {
-  type?: Type28;
-  [k: string]: unknown;
-}
-export interface Point {
-  type?: Type29;
-  [k: string]: unknown;
-}
-export interface Audio {
-  type?: Type30;
-  [k: string]: unknown;
-}
-export interface Video {
-  type?: Type31;
-  [k: string]: unknown;
-}
-export interface AudioClip1 {
-  type?: Type32;
-  [k: string]: unknown;
-}
-export interface VideoClip1 {
-  type?: Type33;
-  [k: string]: unknown;
-}
-export interface AVClip {
-  type?: Type34;
-  [k: string]: unknown;
-}
-export interface TextStream {
-  type?: Type35;
-  [k: string]: unknown;
-}
-export interface ContextMessage1 {
   type?: Type36;
   [k: string]: unknown;
 }
-export interface ContextMessageRole {
+export interface Point {
   type?: Type37;
   [k: string]: unknown;
 }
-export interface List1 {
+export interface Audio {
   type?: Type38;
-  max_length?: MaxLength1;
-  item_type_constraints: ItemTypeConstraints;
   [k: string]: unknown;
 }
-export interface BasePadType {
-  [k: string]: unknown;
-}
-export interface Schema {
+export interface Video {
   type?: Type39;
   [k: string]: unknown;
 }
-export interface Object {
+export interface AudioClip1 {
   type?: Type40;
-  object_schema?: ObjectSchema;
   [k: string]: unknown;
 }
-export interface NodeReference {
+export interface VideoClip1 {
   type?: Type41;
+  [k: string]: unknown;
+}
+export interface AVClip {
+  type?: Type42;
+  [k: string]: unknown;
+}
+export interface TextStream {
+  type?: Type43;
+  [k: string]: unknown;
+}
+export interface ContextMessage1 {
+  type?: Type44;
+  [k: string]: unknown;
+}
+export interface ContextMessageRole1 {
+  type?: Type45;
+  [k: string]: unknown;
+}
+export interface Schema1 {
+  type?: Type46;
+  [k: string]: unknown;
+}
+export interface NodeReference1 {
+  type?: Type47;
   node_types: NodeTypes;
   [k: string]: unknown;
 }

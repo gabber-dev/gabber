@@ -6,17 +6,20 @@
 import { useState, useEffect } from "react";
 import { usePropertyPad } from "../hooks/usePropertyPad";
 import { PropertyEditProps } from "./PropertyEdit";
+import { Float } from "@gabber/client-react";
 
 export function FloatPropertyEdit({ nodeId, padId }: PropertyEditProps) {
-  const { runtimeValue, setEditorValue: setValue } = usePropertyPad<number>(
+  const { runtimeValue, setEditorValue: setValue } = usePropertyPad<Float>(
     nodeId,
     padId,
   );
 
-  const [localValue, setLocalValue] = useState(runtimeValue?.toString() || "0");
+  const [localValue, setLocalValue] = useState(
+    runtimeValue?.value?.toString() || "0",
+  );
 
   useEffect(() => {
-    setLocalValue(runtimeValue?.toString() || "0");
+    setLocalValue(runtimeValue?.value?.toString() || "0");
   }, [runtimeValue]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -25,7 +28,7 @@ export function FloatPropertyEdit({ nodeId, padId }: PropertyEditProps) {
 
   const handleBlur = () => {
     const numValue = parseFloat(localValue);
-    setValue(isNaN(numValue) ? 0 : numValue);
+    setValue({ type: "float", value: numValue });
   };
 
   return (

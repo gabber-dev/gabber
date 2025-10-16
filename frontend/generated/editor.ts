@@ -102,7 +102,23 @@ export type Pad2 = string;
 /**
  * New value for the pad
  */
-export type Value = String | Integer | Float | Boolean | Trigger | AudioClip | VideoClip | List | ContextMessage | null;
+export type Value =
+  | String
+  | Integer
+  | Float
+  | Boolean
+  | Trigger
+  | AudioClip
+  | VideoClip
+  | List
+  | ContextMessageRole
+  | ContextMessage
+  | Enum
+  | Secret
+  | NodeReference
+  | ToolDefinition
+  | Schema
+  | null;
 export type Type9 = "string";
 export type Value1 = string;
 export type Type10 = "integer";
@@ -120,8 +136,9 @@ export type Duration1 = number;
 export type Type16 = "list";
 export type Count = number;
 export type Items = unknown[];
-export type Type17 = "context_message";
-export type Role = string;
+export type Type17 = "context_message_role";
+export type ContextMessageRoleEnum = "user" | "assistant" | "system" | "tool";
+export type Type18 = "context_message";
 export type ContentType = "text" | "image" | "audio" | "video";
 export type Text = string | null;
 export type Width = number;
@@ -135,7 +152,40 @@ export type Height1 = number;
 export type Duration3 = number;
 export type Handle2 = string;
 export type Content = ContextMessageContentItem[];
-export type Type18 = "create_portal";
+export type Type19 = "enum";
+export type Value5 = string;
+export type Options = string[];
+export type Type20 = "secret";
+export type Value6 = string;
+export type Options1 = string[];
+export type Type21 = "node_reference";
+export type NodeId1 = string;
+export type Type22 = "tool_definition";
+export type Name = string;
+export type Description = string;
+export type Type23 = "schema";
+export type Type24 = "string";
+export type MaxLength = number | null;
+export type MinLength = number | null;
+export type Type25 = "integer";
+export type Maximum = number | null;
+export type Minimum = number | null;
+export type Type26 = "float";
+export type Maximum1 = number | null;
+export type Minimum1 = number | null;
+export type Type27 = "boolean";
+export type Type28 = "object";
+export type ObjectSchema = {
+  [k: string]: unknown;
+} | null;
+export type Type29 = "list";
+export type MaxLength1 = number | null;
+export type ItemTypeConstraints = BasePadType[] | null;
+export type Required = string[] | null;
+export type Defaults = {
+  [k: string]: unknown;
+} | null;
+export type Type30 = "create_portal";
 export type SourceNode = string;
 export type SourcePad = string;
 /**
@@ -143,26 +193,26 @@ export type SourcePad = string;
  * @maxItems 2
  */
 export type EditorPosition3 = [unknown, unknown];
-export type Type19 = "create_portal_end";
+export type Type31 = "create_portal_end";
 export type PortalId = string;
 /**
  * @minItems 2
  * @maxItems 2
  */
 export type EditorPosition4 = [unknown, unknown];
-export type Type20 = "delete_portal";
+export type Type32 = "delete_portal";
 export type PortalId1 = string;
-export type Type21 = "delete_portal_end";
+export type Type33 = "delete_portal_end";
 export type PortalId2 = string;
 export type PortalEndId = string;
-export type Type22 = "update_portal";
+export type Type34 = "update_portal";
 export type PortalId3 = string;
 /**
  * @minItems 2
  * @maxItems 2
  */
 export type EditorPosition5 = [unknown, unknown];
-export type Type23 = "update_portal_end";
+export type Type35 = "update_portal_end";
 export type PortalId4 = string;
 export type PortalEndId1 = string;
 /**
@@ -191,9 +241,9 @@ export type Edits = (
   | UpdatePortalEdit
   | UpdatePortalEndEdit
 )[];
-export type Type24 = "load_from_snapshot";
+export type Type36 = "load_from_snapshot";
 export type Id3 = string;
-export type Type25 = string;
+export type Type37 = string;
 export type EditorName3 = string;
 /**
  * @minItems 2
@@ -203,15 +253,15 @@ export type EditorPosition7 = [unknown, unknown];
 export type EditorDimensions3 = [unknown, unknown] | null;
 export type Id4 = string;
 export type Group = string;
-export type Type26 = string;
+export type Type38 = string;
 export type DefaultAllowedTypes =
   | (
       | String1
       | Integer1
       | Float1
       | Boolean1
-      | Enum
-      | Secret
+      | Enum1
+      | Secret1
       | BoundingBox
       | Point
       | Audio
@@ -222,50 +272,33 @@ export type DefaultAllowedTypes =
       | AVClip
       | TextStream
       | ContextMessage1
-      | ContextMessageRole
+      | ContextMessageRole1
       | List1
-      | Schema
+      | Schema1
       | Object
-      | NodeReference
+      | NodeReference1
     )[]
   | null;
-export type Type27 = "string";
-export type MaxLength = number | null;
-export type MinLength = number | null;
-export type Type28 = "integer";
-export type Maximum = number | null;
-export type Minimum = number | null;
-export type Type29 = "float";
-export type Maximum1 = number | null;
-export type Minimum1 = number | null;
-export type Type30 = "boolean";
-export type Type31 = "enum";
-export type Options = string[] | null;
-export type Type32 = "secret";
+export type Type39 = "enum";
+export type Options2 = string[] | null;
+export type Type40 = "secret";
 export type UpdatedAt = string;
 export type CreatedAt = string;
 export type Id5 = string;
-export type Name = string;
-export type Options1 = PublicSecret[];
-export type Type33 = "bounding_box";
-export type Type34 = "point";
-export type Type35 = "audio";
-export type Type36 = "video";
-export type Type37 = "audio_clip";
-export type Type38 = "video_clip";
-export type Type39 = "av_clip";
-export type Type40 = "text_stream";
-export type Type41 = "context_message";
-export type Type42 = "context_message_role";
-export type Type43 = "list";
-export type MaxLength1 = number | null;
-export type ItemTypeConstraints = BasePadType[] | null;
-export type Type44 = "schema";
-export type Type45 = "object";
-export type ObjectSchema = {
-  [k: string]: unknown;
-} | null;
-export type Type46 = "node_reference";
+export type Name1 = string;
+export type Options3 = PublicSecret[];
+export type Type41 = "bounding_box";
+export type Type42 = "point";
+export type Type43 = "audio";
+export type Type44 = "video";
+export type Type45 = "audio_clip";
+export type Type46 = "video_clip";
+export type Type47 = "av_clip";
+export type Type48 = "text_stream";
+export type Type49 = "context_message";
+export type Type50 = "context_message_role";
+export type Type51 = "schema";
+export type Type52 = "node_reference";
 export type NodeTypes = string[];
 export type AllowedTypes =
   | (
@@ -273,8 +306,8 @@ export type AllowedTypes =
       | Integer1
       | Float1
       | Boolean1
-      | Enum
-      | Secret
+      | Enum1
+      | Secret1
       | BoundingBox
       | Point
       | Audio
@@ -285,17 +318,17 @@ export type AllowedTypes =
       | AVClip
       | TextStream
       | ContextMessage1
-      | ContextMessageRole
+      | ContextMessageRole1
       | List1
-      | Schema
+      | Schema1
       | Object
-      | NodeReference
+      | NodeReference1
     )[]
   | null;
 export type NextPads1 = PadReference[];
 export type PadLinks = string[];
 export type Pads = PadEditorRepresentation[];
-export type Description = string | null;
+export type Description1 = string | null;
 export type Primary = string;
 export type Secondary = string;
 export type Tags = string[];
@@ -325,7 +358,7 @@ export type Edits1 =
 export type Nodes = NodeEditorRepresentation[];
 export type Portals = Portal[] | null;
 export type Id6 = string;
-export type Name1 = string;
+export type Name2 = string;
 export type SourceNode1 = string;
 export type SourcePad1 = string;
 /**
@@ -342,7 +375,7 @@ export type EditorPosition9 = [unknown, unknown];
 export type NextPads2 = PadReference[];
 export type Ends = PortalEnd[];
 export type ReqId2 = string;
-export type Type47 = "query_eligible_node_library_items";
+export type Type53 = "query_eligible_node_library_items";
 export type ReqId3 = string;
 export type SourceNode2 = string;
 export type SourcePad2 = string;
@@ -354,22 +387,22 @@ export type Response =
   | LoadFromSnapshotResponse
   | NodeLibraryResponse
   | QueryEligibleNodeLibraryItemsResponse;
-export type Type48 = "edit";
+export type Type54 = "edit";
 export type ReqId4 = string;
-export type Type49 = "load_from_snapshot";
+export type Type55 = "load_from_snapshot";
 export type ReqId5 = string;
-export type Type50 = "node_library";
+export type Type56 = "node_library";
 export type ReqId6 = string;
-export type Type51 = "node";
+export type Type57 = "node";
 /**
  * Name of the node
  */
-export type Name2 = string;
+export type Name3 = string;
 /**
  * Human-readable description of what the node does
  */
-export type Description1 = string;
-export type Type52 = "subgraph";
+export type Description2 = string;
+export type Type58 = "subgraph";
 /**
  * ID of the subgraph
  */
@@ -377,7 +410,7 @@ export type Id8 = string;
 /**
  * Name of the subgraph
  */
-export type Name3 = string;
+export type Name4 = string;
 /**
  * Whether the subgraph can be edited in the editor
  */
@@ -386,7 +419,7 @@ export type Editable = boolean;
  * List of available nodes in the library
  */
 export type NodeLibrary = (GraphLibraryItem_Node | GraphLibraryItem_SubGraph)[];
-export type Type53 = "query_eligible_node_library_items";
+export type Type59 = "query_eligible_node_library_items";
 export type ReqId7 = string;
 /**
  * Type of graph library item
@@ -423,8 +456,8 @@ export type PadConstraint =
   | Integer1
   | Float1
   | Boolean1
-  | Enum
-  | Secret
+  | Enum1
+  | Secret1
   | BoundingBox
   | Point
   | Audio
@@ -435,13 +468,29 @@ export type PadConstraint =
   | AVClip
   | TextStream
   | ContextMessage1
-  | ContextMessageRole
+  | ContextMessageRole1
   | List1
-  | Schema
+  | Schema1
   | Object
-  | NodeReference;
+  | NodeReference1;
 export type PadValue =
-  | (String | Integer | Float | Boolean | Trigger | AudioClip | VideoClip | List | ContextMessage)
+  | (
+      | String
+      | Integer
+      | Float
+      | Boolean
+      | Trigger
+      | AudioClip
+      | VideoClip
+      | List
+      | ContextMessageRole
+      | ContextMessage
+      | Enum
+      | Secret
+      | NodeReference
+      | ToolDefinition
+      | Schema
+    )
   | null;
 /**
  * Type of graph library item
@@ -568,9 +617,14 @@ export interface List {
   items: Items;
   [k: string]: unknown;
 }
-export interface ContextMessage {
+export interface ContextMessageRole {
   type?: Type17;
-  role: Role;
+  value: ContextMessageRoleEnum;
+  [k: string]: unknown;
+}
+export interface ContextMessage {
+  type?: Type18;
+  role: ContextMessageRole;
   content: Content;
   [k: string]: unknown;
 }
@@ -601,38 +655,108 @@ export interface ContextMessageContentItem_Video {
   handle: Handle2;
   [k: string]: unknown;
 }
+export interface Enum {
+  type?: Type19;
+  value: Value5;
+  options: Options;
+  [k: string]: unknown;
+}
+export interface Secret {
+  type?: Type20;
+  value: Value6;
+  options: Options1;
+  [k: string]: unknown;
+}
+export interface NodeReference {
+  type?: Type21;
+  node_id: NodeId1;
+  [k: string]: unknown;
+}
+export interface ToolDefinition {
+  type?: Type22;
+  name: Name;
+  description: Description;
+  parameters?: Schema | null;
+  [k: string]: unknown;
+}
+export interface Schema {
+  type?: Type23;
+  properties: Properties;
+  required?: Required;
+  defaults?: Defaults;
+  [k: string]: unknown;
+}
+export interface Properties {
+  [k: string]: String1 | Integer1 | Float1 | Boolean1 | Object | List1;
+}
+export interface String1 {
+  type?: Type24;
+  max_length?: MaxLength;
+  min_length?: MinLength;
+  [k: string]: unknown;
+}
+export interface Integer1 {
+  type?: Type25;
+  maximum?: Maximum;
+  minimum?: Minimum;
+  [k: string]: unknown;
+}
+export interface Float1 {
+  type?: Type26;
+  maximum?: Maximum1;
+  minimum?: Minimum1;
+  [k: string]: unknown;
+}
+export interface Boolean1 {
+  type?: Type27;
+  [k: string]: unknown;
+}
+export interface Object {
+  type?: Type28;
+  object_schema?: ObjectSchema;
+  [k: string]: unknown;
+}
+export interface List1 {
+  type?: Type29;
+  max_length?: MaxLength1;
+  item_type_constraints: ItemTypeConstraints;
+  [k: string]: unknown;
+}
+export interface BasePadType {
+  [k: string]: unknown;
+}
 export interface CreatePortalEdit {
-  type?: Type18;
+  type?: Type30;
   source_node: SourceNode;
   source_pad: SourcePad;
   editor_position: EditorPosition3;
   [k: string]: unknown;
 }
 export interface CreatePortalEndEdit {
-  type?: Type19;
+  type?: Type31;
   portal_id: PortalId;
   editor_position: EditorPosition4;
   [k: string]: unknown;
 }
 export interface DeletePortalEdit {
-  type?: Type20;
+  type?: Type32;
   portal_id: PortalId1;
   [k: string]: unknown;
 }
 export interface DeletePortalEndEdit {
-  type?: Type21;
+  type?: Type33;
   portal_id: PortalId2;
   portal_end_id: PortalEndId;
   [k: string]: unknown;
 }
 export interface UpdatePortalEdit {
-  type?: Type22;
+  type?: Type34;
   portal_id: PortalId3;
   editor_position: EditorPosition5;
   [k: string]: unknown;
 }
 export interface UpdatePortalEndEdit {
-  type?: Type23;
+  type?: Type35;
   portal_id: PortalId4;
   portal_end_id: PortalEndId1;
   editor_position: EditorPosition6;
@@ -645,7 +769,7 @@ export interface PadReference {
   [k: string]: unknown;
 }
 export interface LoadFromSnapshotRequest {
-  type?: Type24;
+  type?: Type36;
   graph: GraphEditorRepresentation;
   req_id: ReqId2;
   [k: string]: unknown;
@@ -657,12 +781,12 @@ export interface GraphEditorRepresentation {
 }
 export interface NodeEditorRepresentation {
   id: Id3;
-  type: Type25;
+  type: Type37;
   editor_name: EditorName3;
   editor_position: EditorPosition7;
   editor_dimensions?: EditorDimensions3;
   pads: Pads;
-  description?: Description;
+  description?: Description1;
   metadata: NodeMetadata;
   notes?: Notes;
   [k: string]: unknown;
@@ -670,7 +794,7 @@ export interface NodeEditorRepresentation {
 export interface PadEditorRepresentation {
   id: Id4;
   group: Group;
-  type: Type26;
+  type: Type38;
   default_allowed_types?: DefaultAllowedTypes;
   allowed_types?: AllowedTypes;
   value?: unknown;
@@ -679,105 +803,69 @@ export interface PadEditorRepresentation {
   pad_links?: PadLinks;
   [k: string]: unknown;
 }
-export interface String1 {
-  type?: Type27;
-  max_length?: MaxLength;
-  min_length?: MinLength;
+export interface Enum1 {
+  type?: Type39;
+  options?: Options2;
   [k: string]: unknown;
 }
-export interface Integer1 {
-  type?: Type28;
-  maximum?: Maximum;
-  minimum?: Minimum;
-  [k: string]: unknown;
-}
-export interface Float1 {
-  type?: Type29;
-  maximum?: Maximum1;
-  minimum?: Minimum1;
-  [k: string]: unknown;
-}
-export interface Boolean1 {
-  type?: Type30;
-  [k: string]: unknown;
-}
-export interface Enum {
-  type?: Type31;
-  options?: Options;
-  [k: string]: unknown;
-}
-export interface Secret {
-  type?: Type32;
-  options?: Options1;
+export interface Secret1 {
+  type?: Type40;
+  options?: Options3;
   [k: string]: unknown;
 }
 export interface PublicSecret {
   updated_at: UpdatedAt;
   created_at: CreatedAt;
   id: Id5;
-  name: Name;
+  name: Name1;
   [k: string]: unknown;
 }
 export interface BoundingBox {
-  type?: Type33;
-  [k: string]: unknown;
-}
-export interface Point {
-  type?: Type34;
-  [k: string]: unknown;
-}
-export interface Audio {
-  type?: Type35;
-  [k: string]: unknown;
-}
-export interface Video {
-  type?: Type36;
-  [k: string]: unknown;
-}
-export interface AudioClip1 {
-  type?: Type37;
-  [k: string]: unknown;
-}
-export interface VideoClip1 {
-  type?: Type38;
-  [k: string]: unknown;
-}
-export interface AVClip {
-  type?: Type39;
-  [k: string]: unknown;
-}
-export interface TextStream {
-  type?: Type40;
-  [k: string]: unknown;
-}
-export interface ContextMessage1 {
   type?: Type41;
   [k: string]: unknown;
 }
-export interface ContextMessageRole {
+export interface Point {
   type?: Type42;
   [k: string]: unknown;
 }
-export interface List1 {
+export interface Audio {
   type?: Type43;
-  max_length?: MaxLength1;
-  item_type_constraints: ItemTypeConstraints;
   [k: string]: unknown;
 }
-export interface BasePadType {
-  [k: string]: unknown;
-}
-export interface Schema {
+export interface Video {
   type?: Type44;
   [k: string]: unknown;
 }
-export interface Object {
+export interface AudioClip1 {
   type?: Type45;
-  object_schema?: ObjectSchema;
   [k: string]: unknown;
 }
-export interface NodeReference {
+export interface VideoClip1 {
   type?: Type46;
+  [k: string]: unknown;
+}
+export interface AVClip {
+  type?: Type47;
+  [k: string]: unknown;
+}
+export interface TextStream {
+  type?: Type48;
+  [k: string]: unknown;
+}
+export interface ContextMessage1 {
+  type?: Type49;
+  [k: string]: unknown;
+}
+export interface ContextMessageRole1 {
+  type?: Type50;
+  [k: string]: unknown;
+}
+export interface Schema1 {
+  type?: Type51;
+  [k: string]: unknown;
+}
+export interface NodeReference1 {
+  type?: Type52;
   node_types: NodeTypes;
   [k: string]: unknown;
 }
@@ -801,7 +889,7 @@ export interface NodeNoteRecommendation {
 }
 export interface Portal {
   id: Id6;
-  name: Name1;
+  name: Name2;
   source_node: SourceNode1;
   source_pad: SourcePad1;
   editor_position: EditorPosition8;
@@ -815,14 +903,14 @@ export interface PortalEnd {
   [k: string]: unknown;
 }
 export interface QueryEligibleNodeLibraryItemsRequest {
-  type?: Type47;
+  type?: Type53;
   req_id: ReqId3;
   source_node: SourceNode2;
   source_pad: SourcePad2;
   [k: string]: unknown;
 }
 export interface EditResponse {
-  type?: Type48;
+  type?: Type54;
   req_id: ReqId4;
   graph: GraphEditorRepresentation1;
   [k: string]: unknown;
@@ -836,7 +924,7 @@ export interface GraphEditorRepresentation1 {
   [k: string]: unknown;
 }
 export interface LoadFromSnapshotResponse {
-  type?: Type49;
+  type?: Type55;
   req_id: ReqId5;
   graph: GraphEditorRepresentation2;
   [k: string]: unknown;
@@ -850,16 +938,16 @@ export interface GraphEditorRepresentation2 {
   [k: string]: unknown;
 }
 export interface NodeLibraryResponse {
-  type?: Type50;
+  type?: Type56;
   req_id: ReqId6;
   node_library?: NodeLibrary;
   [k: string]: unknown;
 }
 export interface GraphLibraryItem_Node {
-  type?: Type51;
-  name: Name2;
+  type?: Type57;
+  name: Name3;
   node_type: NodeType1;
-  description: Description1;
+  description: Description2;
   metadata: NodeMetadata1;
   [k: string]: unknown;
 }
@@ -879,9 +967,9 @@ export interface NodeMetadata1 {
   [k: string]: unknown;
 }
 export interface GraphLibraryItem_SubGraph {
-  type?: Type52;
+  type?: Type58;
   id: Id8;
-  name: Name3;
+  name: Name4;
   graph: GraphEditorRepresentation3;
   editable?: Editable;
   [k: string]: unknown;
@@ -895,7 +983,7 @@ export interface GraphEditorRepresentation3 {
   [k: string]: unknown;
 }
 export interface QueryEligibleNodeLibraryItemsResponse {
-  type?: Type53;
+  type?: Type59;
   req_id: ReqId7;
   direct_eligible_items?: DirectEligibleItems;
   autoconvert_eligible_items?: AutoconvertEligibleItems;

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 from typing import Any, Literal, Annotated
+from enum import Enum as PyEnum
+from ..types import pad_constraints
 
 
 class String(BaseModel):
@@ -66,10 +68,64 @@ class ContextMessageContentItem(BaseModel):
     video: ContextMessageContentItem_Video | None = None
 
 
+class ContextMessageRoleEnum(str, PyEnum):
+    USER = "user"
+    ASSISTANT = "assistant"
+    SYSTEM = "system"
+    TOOL = "tool"
+
+
+class ContextMessageRole(BaseModel):
+    type: Literal["context_message_role"] = "context_message_role"
+    value: ContextMessageRoleEnum
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
 class ContextMessage(BaseModel):
     type: Literal["context_message"] = "context_message"
-    role: str
+    role: ContextMessageRole
     content: list[ContextMessageContentItem]
+
+
+class Enum(BaseModel):
+    type: Literal["enum"] = "enum"
+    value: str
+    options: list[str]
+
+
+class Secret(BaseModel):
+    type: Literal["secret"] = "secret"
+    value: str
+    options: list[str]
+
+
+class NodeReference(BaseModel):
+    type: Literal["node_reference"] = "node_reference"
+    node_id: str
+
+
+class Schema(BaseModel):
+    type: Literal["schema"] = "schema"
+    properties: dict[
+        str,
+        pad_constraints.String
+        | pad_constraints.Integer
+        | pad_constraints.Float
+        | pad_constraints.Boolean
+        | pad_constraints.Object
+        | pad_constraints.List,
+    ]
+    required: list[str] | None = None
+    defaults: dict[str, Any] | None = None
+
+
+class ToolDefinition(BaseModel):
+    type: Literal["tool_definition"] = "tool_definition"
+    name: str
+    description: str
+    parameters: "Schema | None" = None
 
 
 class List(BaseModel):
@@ -87,7 +143,13 @@ ClientPadValue = (
     | AudioClip
     | VideoClip
     | List
+    | ContextMessageRole
     | ContextMessage
+    | Enum
+    | Secret
+    | NodeReference
+    | ToolDefinition
+    | Schema
     | None
 )
 

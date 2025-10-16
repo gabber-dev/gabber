@@ -150,7 +150,9 @@ class Mapper:
                 )
 
         return client.ContextMessage(
-            role=runtime_value.role,
+            role=client.ContextMessageRole(
+                value=client.ContextMessageRoleEnum(runtime_value.role.value)
+            ),
             content=cnts,
         )
 

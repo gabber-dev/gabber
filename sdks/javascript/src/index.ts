@@ -43,6 +43,7 @@ export type {
     String,
     List,
     ContextMessage,
+    ContextMessageRole,
     ContextMessageContentItem_Audio,
     ContextMessageContentItem_Video,
     ContextMessageContentItem_Image,

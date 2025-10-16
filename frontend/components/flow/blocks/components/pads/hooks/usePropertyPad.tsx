@@ -9,12 +9,15 @@ import {
   Value,
 } from "@/generated/editor";
 import { useCallback, useMemo } from "react";
-import { usePropertyPad as useRuntimePropertyPad } from "@gabber/client-react";
+import {
+  PadValue,
+  usePropertyPad as useRuntimePropertyPad,
+} from "@gabber/client-react";
 import { useEditor } from "@/hooks/useEditor";
 import { useRun } from "@/hooks/useRun";
 import toast from "react-hot-toast";
 
-type Result<T> = {
+type Result<T extends PadValue> = {
   pad: PadEditorRepresentation | undefined;
   editorValue: T | undefined;
   singleAllowedType: BasePadType | undefined;
@@ -24,9 +27,15 @@ type Result<T> = {
   setEditorValue: (value: T) => void;
 };
 
-export function usePropertyPad<T>(nodeId: string, padId: string): Result<T> {
+export function usePropertyPad<T extends PadValue>(
+  nodeId: string,
+  padId: string,
+): Result<T> {
   const { editorRepresentation, updatePad } = useEditor();
-  const { currentValue, loadListItems } = useRuntimePropertyPad(nodeId, padId);
+  const { currentValue, loadListItems } = useRuntimePropertyPad<T>(
+    nodeId,
+    padId,
+  );
   const { connectionState } = useRun();
 
   const node = editorRepresentation.nodes.find((n) => n.id === nodeId);
@@ -81,21 +90,14 @@ export function usePropertyPad<T>(nodeId: string, padId: string): Result<T> {
     if (currentValue === "loading") {
       return editorValue;
     }
-    const cv = currentValue.value;
-    if (cv !== editorValue) {
-      if (currentValue.type === "list") {
-        return currentValue as T;
-      }
-      return cv as T;
-    }
-    return editorValue;
+    return currentValue;
   }, [currentValue, editorValue]);
 
   const runtimeChanged = useMemo(() => {
     if (currentValue === "loading") {
       return false;
     }
-    return currentValue.value !== editorValue;
+    return !compare(editorValue, currentValue);
   }, [currentValue, editorValue]);
 
   return {
@@ -106,4 +108,27 @@ export function usePropertyPad<T>(nodeId: string, padId: string): Result<T> {
     singleAllowedType,
     setEditorValue,
   };
+}
+
+function compare(a: PadValue | undefined, b: PadValue | undefined) {
+  if (a === undefined || b === undefined) return false;
+  if (a?.type !== b?.type) return false;
+  if (a?.type === "list" && b?.type === "list") {
+    const aItems = a.items || [];
+    const bItems = b.items || [];
+    if (aItems.length !== bItems.length) return false;
+    for (let i = 0; i < aItems.length; i++) {
+      if (aItems[i] !== bItems[i]) return false;
+    }
+    return true;
+  } else if (a?.type === "string" && b?.type === "string") {
+    return a.value === b.value;
+  } else if (a?.type === "integer" && b?.type === "integer") {
+    return a.value === b.value;
+  } else if (a?.type === "float" && b?.type === "float") {
+    return a.value === b.value;
+  } else if (a?.type === "boolean" && b?.type === "boolean") {
+    return a.value === b.value;
+  }
+  return true;
 }
