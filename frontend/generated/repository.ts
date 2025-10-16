@@ -281,10 +281,8 @@ export type Handle2 = string;
 export type Content = ContextMessageContentItem[];
 export type Type33 = "enum";
 export type Value5 = string;
-export type Options2 = string[];
 export type Type34 = "secret";
 export type Value6 = string;
-export type Options3 = string[];
 export type Type35 = "node_reference";
 export type NodeId = string;
 export type Type36 = "tool_definition";
@@ -712,13 +710,11 @@ export interface ContextMessageContentItem_Video {
 export interface Enum1 {
   type?: Type33;
   value: Value5;
-  options: Options2;
   [k: string]: unknown;
 }
 export interface Secret1 {
   type?: Type34;
   value: Value6;
-  options: Options3;
   [k: string]: unknown;
 }
 export interface NodeReference1 {

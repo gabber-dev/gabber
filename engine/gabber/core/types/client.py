@@ -92,13 +92,11 @@ class ContextMessage(BaseModel):
 class Enum(BaseModel):
     type: Literal["enum"] = "enum"
     value: str
-    options: list[str]
 
 
 class Secret(BaseModel):
     type: Literal["secret"] = "secret"
     value: str
-    options: list[str]
 
 
 class NodeReference(BaseModel):

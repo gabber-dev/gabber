@@ -154,10 +154,8 @@ export type Handle2 = string;
 export type Content = ContextMessageContentItem[];
 export type Type19 = "enum";
 export type Value5 = string;
-export type Options = string[];
 export type Type20 = "secret";
 export type Value6 = string;
-export type Options1 = string[];
 export type Type21 = "node_reference";
 export type NodeId1 = string;
 export type Type22 = "tool_definition";
@@ -280,13 +278,13 @@ export type DefaultAllowedTypes =
     )[]
   | null;
 export type Type39 = "enum";
-export type Options2 = string[] | null;
+export type Options = string[] | null;
 export type Type40 = "secret";
 export type UpdatedAt = string;
 export type CreatedAt = string;
 export type Id5 = string;
 export type Name1 = string;
-export type Options3 = PublicSecret[];
+export type Options1 = PublicSecret[];
 export type Type41 = "bounding_box";
 export type Type42 = "point";
 export type Type43 = "audio";
@@ -658,13 +656,11 @@ export interface ContextMessageContentItem_Video {
 export interface Enum {
   type?: Type19;
   value: Value5;
-  options: Options;
   [k: string]: unknown;
 }
 export interface Secret {
   type?: Type20;
   value: Value6;
-  options: Options1;
   [k: string]: unknown;
 }
 export interface NodeReference {
@@ -805,12 +801,12 @@ export interface PadEditorRepresentation {
 }
 export interface Enum1 {
   type?: Type39;
-  options?: Options2;
+  options?: Options;
   [k: string]: unknown;
 }
 export interface Secret1 {
   type?: Type40;
-  options?: Options3;
+  options?: Options1;
   [k: string]: unknown;
 }
 export interface PublicSecret {
