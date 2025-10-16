@@ -41,4 +41,8 @@ export type { ConnectionDetails,
     ContextMessageContentItem_Audio,
     ContextMessageContentItem_Image,
     ContextMessageContentItem_Video,
-    RuntimeEventPayload_LogItem } from '@gabber/client'
+    RuntimeEventPayload_LogItem, 
+    PadConstraint, 
+    Trigger, 
+    AudioClip, 
+    VideoClip } from '@gabber/client'
