@@ -546,5 +546,6 @@ RuntimePadValue = (
     | ToolDefinition
     | Schema
     | NodeReference
+    | None
     | list["RuntimePadValue"]
 )

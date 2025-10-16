@@ -1,5 +1,7 @@
-from pydantic import BaseModel
-from typing import Any, Literal
+from __future__ import annotations
+
+from pydantic import BaseModel, Field
+from typing import Any, Literal, Annotated
 
 
 class String(BaseModel):
@@ -86,4 +88,12 @@ ClientPadValue = (
     | VideoClip
     | List
     | ContextMessage
+    | None
 )
+
+DiscriminatedClientPadValue = Annotated[
+    ClientPadValue,
+    Field(discriminator="type"),
+]
+
+OldClientPadValue = int | float | str | bool | dict[str, Any] | list[Any]

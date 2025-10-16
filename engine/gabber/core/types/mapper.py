@@ -38,7 +38,9 @@ class Mapper:
         elif isinstance(client_value, (int, float)):
             return client_value
         elif isinstance(client_value, client.ClientPadValue):
-            if client_value.type == "string":
+            if client_value is None:
+                return None
+            elif client_value.type == "string":
                 return client_value.value
             elif client_value.type == "integer":
                 return client_value.value
@@ -68,6 +70,8 @@ class Mapper:
     def runtime_to_client(
         runtime_value: runtime.RuntimePadValue | Any,
     ) -> client.ClientPadValue:
+        if runtime_value is None:
+            return None
         if isinstance(runtime_value, bool):
             return client.Boolean(value=runtime_value)
         elif isinstance(runtime_value, int):
@@ -157,6 +161,7 @@ def is_client_pad_value(client_value: Any) -> client.ClientPadValue | None:
             return client_pad_value_adapter.validate_python(client_value)
         except Exception:
             pass
+
     return None
 
 

@@ -5,7 +5,7 @@ from enum import Enum
 from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, Field
-from ..types import pad_constraints
+from ..types import pad_constraints, client
 
 
 class NodeMetadata(BaseModel):
@@ -94,7 +94,7 @@ class UpdatePadEdit(BaseModel):
     type: Literal[EditType.UPDATE_PAD] = EditType.UPDATE_PAD
     node: str = Field(..., description="ID of the node containing the pad")
     pad: str = Field(..., description="ID of the pad to update")
-    value: Any = Field(..., description="New value for the pad")
+    value: client.ClientPadValue = Field(..., description="New value for the pad")
 
 
 class CreatePortalEdit(BaseModel):
@@ -206,7 +206,7 @@ class PadEditorRepresentation(BaseModel):
     type: str
     default_allowed_types: list[pad_constraints.PadType] | None = None
     allowed_types: list[pad_constraints.PadType] | None = None
-    value: Any | None = None
+    value: client.DiscriminatedClientPadValue | client.OldClientPadValue | None = None
     next_pads: list[PadReference]
     previous_pad: PadReference | None = None
     pad_links: list[str] = []

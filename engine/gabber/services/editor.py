@@ -1,13 +1,15 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
+from __future__ import annotations
+
 import asyncio
 import logging
 
 import aiohttp
 import aiohttp.web
 from aiohttp import web
-from pydantic import TypeAdapter
+from pydantic import TypeAdapter, ValidationError
 
 from gabber.core import graph, secret
 from gabber.core.editor import messages
@@ -125,4 +127,10 @@ class GraphEditorSession:
 
         # If you need to send a response back to the client
         if response:
-            await self.ws.send_str(response.model_dump_json(serialize_as_any=True))
+            try:
+                json_response = response.model_dump_json(serialize_as_any=True)
+                await self.ws.send_str(json_response)
+            except ValidationError as e:
+                self.logger.error(f"Validation error: {e}", exc_info=True)
+            except Exception as e:
+                self.logger.error(f"Error sending response: {e}", exc_info=True)
