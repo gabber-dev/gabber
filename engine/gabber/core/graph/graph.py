@@ -22,6 +22,7 @@ from ..editor.models import (
     UpdateNodeEdit,
     UpdatePadEdit,
 )
+from pydantic import TypeAdapter
 from ..node import Node
 from ..secret import PublicSecret, SecretProvider
 from gabber.nodes.core.sub_graph import SubGraph
@@ -30,6 +31,8 @@ from .runtime_api import RuntimeApi
 from ..types import pad_constraints, mapper, client
 
 T = TypeVar("T", bound=Node)
+
+client_pad_value_adapter = TypeAdapter(client.ClientPadValue)
 
 
 class Graph:
@@ -620,9 +623,8 @@ def create_pad_from_editor(
     allowed_types = cast(list[pad_constraints.BasePadType] | None, e.allowed_types)
     if e.type == "PropertySourcePad":
         logging.debug(f"Creating PropertySourcePad {e.id} with value {e.value}")
-        v: Any = None
-        if allowed_types and len(allowed_types) == 1:
-            v = mapper.Mapper.client_to_runtime(e.value)
+        v = client_pad_value_adapter.validate_python(e.value)
+        v = mapper.Mapper.client_to_runtime(v)
         p = pad.PropertySourcePad(
             id=e.id,
             group=e.group,
@@ -631,9 +633,8 @@ def create_pad_from_editor(
             value=v,
         )
     elif e.type == "PropertySinkPad":
-        v: Any = None
-        if allowed_types and len(allowed_types) == 1:
-            v = mapper.Mapper.client_to_runtime(e.value)
+        v = client_pad_value_adapter.validate_python(e.value)
+        v = mapper.Mapper.client_to_runtime(v)
         p = pad.PropertySinkPad(
             id=e.id,
             group=e.group,

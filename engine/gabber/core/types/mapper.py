@@ -12,72 +12,42 @@ class Mapper:
     def client_to_runtime(
         client_value: client.ClientPadValue | Any,
     ) -> runtime.RuntimePadValue:
-        if isinstance(client_value, dict):
-            c_v = is_client_pad_value(client_value)
-            if c_v is not None:
-                client_value = c_v
-                return Mapper.client_to_runtime(client_value)
-            else:
-                old_cm = is_old_context_message(client_value)
-                if old_cm is not None:
-                    return old_cm
+        if not isinstance(client_value, (client.ClientPadValue)):
+            raise ValueError(f"Unexpected client pad value: {type(client_value)}")
 
-                old_schema = is_old_schema(client_value)
-                if old_schema is not None:
-                    return old_schema
-        elif isinstance(client_value, list):
+        if client_value is None:
+            return None
+        elif client_value.type == "string":
+            return client_value.value
+        elif client_value.type == "integer":
+            return client_value.value
+        elif client_value.type == "float":
+            return client_value.value
+        elif client_value.type == "boolean":
+            return client_value.value
+        elif client_value.type == "trigger":
+            return runtime.Trigger()
+        elif client_value.type == "list":
             rvs: list[runtime.RuntimePadValue] = []
-            for item in client_value:
+            for item in client_value.items:
                 r_item = Mapper.client_to_runtime(item)
                 if r_item is not None:
                     rvs.append(r_item)
             return rvs
-        elif isinstance(client_value, str):
-            return client_value
-        elif isinstance(client_value, bool):
-            return client_value
-        elif isinstance(client_value, (int, float)):
-            return client_value
-        elif isinstance(client_value, client.ClientPadValue):
-            if client_value is None:
-                return None
-            elif client_value.type == "string":
-                return client_value.value
-            elif client_value.type == "integer":
-                return client_value.value
-            elif client_value.type == "float":
-                return client_value.value
-            elif client_value.type == "boolean":
-                return client_value.value
-            elif client_value.type == "trigger":
-                return runtime.Trigger()
-            elif client_value.type == "list":
-                rvs: list[runtime.RuntimePadValue] = []
-                for item in client_value.items:
-                    r_item = Mapper.client_to_runtime(item)
-                    if r_item is not None:
-                        rvs.append(r_item)
-                return rvs
-            elif client_value.type == "secret":
-                return client_value.value
-            elif client_value.type == "enum":
-                return client_value.value
-            elif client_value.type == "context_message":
-                return Mapper.client_context_message_to_runtime(client_value)
-            elif client_value.type == "object":
-                return client_value.value
-            elif client_value.type == "node_reference":
-                return runtime.NodeReference(node_id=client_value.node_id)
-            elif client_value.type == "schema":
-                return Mapper.client_schema_to_runtime(client_value)
-            else:
-                raise ValueError(
-                    f"Unsupported client pad value type: {client_value.type}"
-                )
+        elif client_value.type == "secret":
+            return client_value.value
+        elif client_value.type == "enum":
+            return client_value.value
+        elif client_value.type == "context_message":
+            return Mapper.client_context_message_to_runtime(client_value)
+        elif client_value.type == "object":
+            return client_value.value
+        elif client_value.type == "node_reference":
+            return runtime.NodeReference(node_id=client_value.node_id)
+        elif client_value.type == "schema":
+            return Mapper.client_schema_to_runtime(client_value)
 
-        raise ValueError(
-            f"Unknown client pad value: {client_value} ({type(client_value)})"
-        )
+        raise ValueError(f"Unsupported client pad value type: {client_value.type}")
 
     @staticmethod
     def runtime_to_client(
