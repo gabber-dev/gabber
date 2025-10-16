@@ -77,11 +77,6 @@ class PropertySourcePad(SourcePad, PropertyPad):
     def set_value(self, value: Any):
         self._value = value
         if isinstance(value, NOTIFIABLE_TYPES):
-            logging.info(
-                "NEIL DEBUG: Notifiable type set to pad, notifying type %s, %s",
-                self.get_id(),
-                type(value),
-            )
             self._notify_update(value)
         for np in self.get_next_pads():
             if isinstance(np, PropertyPad):

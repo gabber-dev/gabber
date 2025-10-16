@@ -65,7 +65,6 @@ class Pad(Protocol):
     def _notify_update(self, value: Any) -> None:
         for handler in self._update_handlers:
             try:
-                logging.info("NEIL calling handler %s", self.get_id())
                 handler(self, value)
             except Exception as e:
                 logging.error(f"Error in update handler {handler}: {e}")

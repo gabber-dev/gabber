@@ -131,11 +131,6 @@ class RuntimeApi:
 
         def on_pad(p: pad.Pad, value: Any):
             ev_value = self._trigger_value_from_pad_value(value=value)
-            logging.info(
-                "NEIL DEBUG: on_pad triggered, emitting event %s %s",
-                p.get_id(),
-                ev_value,
-            )
             self._dc_queue.put_nowait(
                 QueueItem(
                     payload=RuntimeEvent(
