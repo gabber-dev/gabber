@@ -8,10 +8,9 @@ from livekit import rtc
 from dataclasses import dataclass
 from .. import node, pad
 import logging
-from ..editor import serialize
 from ..node import Node
 from gabber.nodes.core.media.publish import Publish
-from ..types import runtime, client
+from ..types import client, mapper
 
 PING_BYTES = "ping".encode("utf-8")
 
@@ -32,87 +31,6 @@ class RuntimeApi:
         self._publish_locks: dict[str, PublishLock] = {}
         self._dc_queue = asyncio.Queue[QueueItem | None]()
 
-    def _trigger_value_from_pad_value(self, *, value: Any):
-        v = serialize.serialize_pad_value(value)
-        ev_value: client.ClientPadValue
-        if isinstance(v, bool):
-            ev_value = client.Boolean(value=v)
-        elif isinstance(v, int):
-            ev_value = client.Integer(value=v)
-        elif isinstance(v, float):
-            ev_value = client.Float(value=v)
-        elif isinstance(v, str):
-            ev_value = client.String(value=v)
-        elif isinstance(value, runtime.AudioClip):
-            trans = value.transcription if value.transcription else ""
-            ev_value = client.AudioClip(transcript=trans, duration=value.duration)
-        elif isinstance(value, runtime.VideoClip):
-            ev_value = client.VideoClip(duration=value.duration)
-        elif isinstance(v, list):
-            ev_value = client.List(count=len(v), items=[])
-        elif isinstance(value, runtime.ContextMessage):
-            ev_value = self._context_message_trigger_value(value)
-        else:
-            ev_value = client.Trigger()
-
-        return ev_value
-
-    def _context_message_trigger_value(self, msg: runtime.ContextMessage):
-        content: list[client.ContextMessageContentItem] = []
-        for item in msg.content:
-            if isinstance(item, runtime.ContextMessageContentItem_Text):
-                content.append(
-                    client.ContextMessageContentItem(
-                        content_type="text", text=item.content
-                    )
-                )
-            elif isinstance(item, runtime.ContextMessageContentItem_Image):
-                content.append(
-                    client.ContextMessageContentItem(
-                        content_type="image",
-                        image=client.ContextMessageContentItem_Image(
-                            width=item.frame.width,
-                            height=item.frame.height,
-                            handle="",
-                        ),
-                    )
-                )
-            elif isinstance(item, runtime.ContextMessageContentItem_Audio):
-                dur = item.clip.duration if item.clip.duration else 0.0
-                content.append(
-                    client.ContextMessageContentItem(
-                        content_type="audio",
-                        audio=client.ContextMessageContentItem_Audio(
-                            duration=dur,
-                            transcription=item.clip.transcription,
-                            handle="",
-                        ),
-                    )
-                )
-            elif isinstance(item, runtime.ContextMessageContentItem_Video):
-                dur = item.clip.duration if item.clip.duration else 0.0
-                width = 0
-                height = 0
-                if item.clip.video and len(item.clip.video) > 0:
-                    width = item.clip.video[0].width
-                    height = item.clip.video[0].height
-                content.append(
-                    client.ContextMessageContentItem(
-                        content_type="video",
-                        video=client.ContextMessageContentItem_Video(
-                            duration=dur,
-                            width=width,
-                            height=height,
-                            handle="",
-                        ),
-                    )
-                )
-        res = client.ContextMessage(
-            role=msg.role,
-            content=content,
-        )
-        return res
-
     def emit_logs(self, items: list["RuntimeEventPayload_LogItem"]):
         self._dc_queue.put_nowait(
             QueueItem(
@@ -130,7 +48,7 @@ class RuntimeApi:
         all_pads = list(node_pad_lookup.values())
 
         def on_pad(p: pad.Pad, value: Any):
-            ev_value = self._trigger_value_from_pad_value(value=value)
+            ev_value = mapper.Mapper.runtime_to_client(value)
             self._dc_queue.put_nowait(
                 QueueItem(
                     payload=RuntimeEvent(
@@ -244,8 +162,7 @@ class RuntimeApi:
                         QueueItem(payload=complete_resp, participant=packet.participant)
                     )
                     return
-
-                value = serialize.deserialize_pad_value(tcs[0], payload.value)
+                value = mapper.Mapper.client_to_runtime(payload.value)
                 ctx = pad.RequestContext(parent=None)
                 complete_resp.payload = RuntimeResponsePayload_PushValue(
                     type="push_value"
@@ -274,15 +191,14 @@ class RuntimeApi:
                     )
                     return
 
-                value = pad_obj.get_value()
-                value_obj = self._trigger_value_from_pad_value(value=value)
+                value = mapper.Mapper.runtime_to_client(pad_obj.get_value())
 
                 # Don't get node references
                 if isinstance(value, Node):
                     return
 
                 complete_resp.payload = RuntimeResponsePayload_GetValue(
-                    type="get_value", value=value_obj
+                    type="get_value", value=value
                 )
                 self._dc_queue.put_nowait(
                     QueueItem(payload=complete_resp, participant=packet.participant)
@@ -315,9 +231,8 @@ class RuntimeApi:
                     )
                     return
 
-                ev_values = [
-                    self._trigger_value_from_pad_value(value=item) for item in value
-                ]
+                # TODO
+                ev_values = []
                 complete_resp.payload = RuntimeResponsePayload_GetListItems(
                     type="get_list_items", items=ev_values
                 )

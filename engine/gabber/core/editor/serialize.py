@@ -30,11 +30,11 @@ def pad_editor_rep(p: pad.Pad):
 
     # TODO: remove this cast. BasePadType is used for covariance elsewhere
     # but pydantic needs the Annotated PadType for serialization
-    allowed_types: list[pad_constraints.PadType] | None = cast(
-        list[pad_constraints.PadType], p.get_type_constraints()
+    allowed_types: list[pad_constraints.PadConstraint] | None = cast(
+        list[pad_constraints.PadConstraint], p.get_type_constraints()
     )
-    default_allowed_types: list[pad_constraints.PadType] | None = cast(
-        list[pad_constraints.PadType], p.get_default_type_constraints()
+    default_allowed_types: list[pad_constraints.PadConstraint] | None = cast(
+        list[pad_constraints.PadConstraint], p.get_default_type_constraints()
     )
     return PadEditorRepresentation(
         id=p.get_id(),

@@ -316,7 +316,7 @@ class NodeReference(BasePadType):
         return NodeReference(node_types=list(interection_set))
 
 
-PadType = Annotated[
+PadConstraint = Annotated[
     String
     | Integer
     | Float

@@ -204,9 +204,9 @@ class PadEditorRepresentation(BaseModel):
     id: str
     group: str
     type: str
-    default_allowed_types: list[pad_constraints.PadType] | None = None
-    allowed_types: list[pad_constraints.PadType] | None = None
-    value: client.DiscriminatedClientPadValue | client.OldClientPadValue | None = None
+    default_allowed_types: list[pad_constraints.PadConstraint] | None = None
+    allowed_types: list[pad_constraints.PadConstraint] | None = None
+    value: client.DiscriminatedClientPadValue | Any | None = None
     next_pads: list[PadReference]
     previous_pad: PadReference | None = None
     pad_links: list[str] = []

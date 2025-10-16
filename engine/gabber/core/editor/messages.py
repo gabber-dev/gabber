@@ -3,7 +3,7 @@
 
 from enum import Enum
 from typing import Annotated, Literal
-from ..types import pad_constraints
+from ..types import pad_constraints, client
 
 from pydantic import BaseModel, Field
 
@@ -127,7 +127,8 @@ class DummyModel(BaseModel):
     request: Request
     response: Response
     edit: Edit
-    pad_type: pad_constraints.PadType
+    pad_constraint: pad_constraints.PadConstraint
+    pad_value: client.DiscriminatedClientPadValue
     graph_library_item: GraphLibraryItem
     graph_library_item_node: GraphLibraryItem_Node
     graph_library_item_subgraph: GraphLibraryItem_SubGraph

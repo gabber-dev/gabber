@@ -95,5 +95,3 @@ DiscriminatedClientPadValue = Annotated[
     ClientPadValue,
     Field(discriminator="type"),
 ]
-
-OldClientPadValue = int | float | str | bool | dict[str, Any] | list[Any]

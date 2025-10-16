@@ -17,7 +17,7 @@
  */
 
 import { Room } from "livekit-client";
-import { PadValue, PadValue_List, RuntimeRequestPayload_PushValue } from "../generated/runtime"
+import { PadValue, RuntimeRequestPayload_PushValue } from "../generated/runtime"
 import { Engine } from "../Engine";
 
 type PadParams = {

@@ -47,19 +47,17 @@ export type Payload1 =
   | null;
 export type Type6 = "push_value";
 export type Type7 = "get_value";
-/**
- * Type of the pad triggered value
- */
 export type Value1 =
-  | PadValue_String
-  | PadValue_Integer
-  | PadValue_Float
-  | PadValue_Boolean
-  | PadValue_Trigger
-  | PadValue_AudioClip
-  | PadValue_VideoClip
-  | PadValue_List
-  | PadValue_ContextMessage;
+  | String
+  | Integer
+  | Float
+  | Boolean
+  | Trigger
+  | AudioClip
+  | VideoClip
+  | List
+  | ContextMessage
+  | null;
 export type Type8 = "string";
 export type Value2 = string;
 export type Type9 = "integer";
@@ -79,7 +77,6 @@ export type Count = number;
 export type Items = unknown[];
 export type Type16 = "context_message";
 export type Role = string;
-export type Type17 = "context_message_content";
 export type ContentType = "text" | "image" | "audio" | "video";
 export type Text = string | null;
 export type Width = number;
@@ -92,20 +89,21 @@ export type Width1 = number;
 export type Height1 = number;
 export type Duration3 = number;
 export type Handle2 = string;
-export type Content = PadValue_ContextMessageContentItem[];
-export type Type18 = "get_list_items";
+export type Content = ContextMessageContentItem[];
+export type Type17 = "get_list_items";
 export type Items1 = (
-  | PadValue_String
-  | PadValue_Integer
-  | PadValue_Float
-  | PadValue_Boolean
-  | PadValue_Trigger
-  | PadValue_AudioClip
-  | PadValue_VideoClip
-  | PadValue_List
-  | PadValue_ContextMessage
+  | String
+  | Integer
+  | Float
+  | Boolean
+  | Trigger
+  | AudioClip
+  | VideoClip
+  | List
+  | ContextMessage
+  | null
 )[];
-export type Type19 = "lock_publisher";
+export type Type18 = "lock_publisher";
 export type Success = boolean;
 /**
  * Payload for the runtime request complete
@@ -115,28 +113,26 @@ export type RuntimeResponsePayload =
   | RuntimeResponsePayload_GetValue
   | RuntimeResponsePayload_GetListItems
   | RuntimeResponsePayload_LockPublisher;
-export type Type20 = "event";
+export type Type19 = "event";
 /**
  * Payload for the runtime event
  */
 export type Payload2 = RuntimeEventPayload_Value | RuntimeEventPayload_Logs;
-export type Type21 = "value";
-/**
- * Type of the pad triggered value
- */
+export type Type20 = "value";
 export type Value6 =
-  | PadValue_String
-  | PadValue_Integer
-  | PadValue_Float
-  | PadValue_Boolean
-  | PadValue_Trigger
-  | PadValue_AudioClip
-  | PadValue_VideoClip
-  | PadValue_List
-  | PadValue_ContextMessage;
+  | String
+  | Integer
+  | Float
+  | Boolean
+  | Trigger
+  | AudioClip
+  | VideoClip
+  | List
+  | ContextMessage
+  | null;
 export type NodeId3 = string;
 export type PadId3 = string;
-export type Type22 = "logs";
+export type Type21 = "logs";
 export type Message = string;
 export type Level = string;
 export type Timestamp = string;
@@ -148,19 +144,17 @@ export type Items2 = RuntimeEventPayload_LogItem[];
  * Payload for the runtime event
  */
 export type RuntimeEventPayload = RuntimeEventPayload_Value | RuntimeEventPayload_Logs;
-/**
- * Type of the pad triggered value
- */
 export type PadValue =
-  | PadValue_String
-  | PadValue_Integer
-  | PadValue_Float
-  | PadValue_Boolean
-  | PadValue_Trigger
-  | PadValue_AudioClip
-  | PadValue_VideoClip
-  | PadValue_List
-  | PadValue_ContextMessage;
+  | String
+  | Integer
+  | Float
+  | Boolean
+  | Trigger
+  | AudioClip
+  | VideoClip
+  | List
+  | ContextMessage
+  | null;
 
 export interface DummyType {
   req: RuntimeRequest;
@@ -222,75 +216,74 @@ export interface RuntimeResponsePayload_GetValue {
   value: Value1;
   [k: string]: unknown;
 }
-export interface PadValue_String {
+export interface String {
   type?: Type8;
   value: Value2;
   [k: string]: unknown;
 }
-export interface PadValue_Integer {
+export interface Integer {
   type?: Type9;
   value: Value3;
   [k: string]: unknown;
 }
-export interface PadValue_Float {
+export interface Float {
   type?: Type10;
   value: Value4;
   [k: string]: unknown;
 }
-export interface PadValue_Boolean {
+export interface Boolean {
   type?: Type11;
   value: Value5;
   [k: string]: unknown;
 }
-export interface PadValue_Trigger {
+export interface Trigger {
   type?: Type12;
   [k: string]: unknown;
 }
-export interface PadValue_AudioClip {
+export interface AudioClip {
   type?: Type13;
   transcript: Transcript;
   duration: Duration;
   [k: string]: unknown;
 }
-export interface PadValue_VideoClip {
+export interface VideoClip {
   type?: Type14;
   duration: Duration1;
   [k: string]: unknown;
 }
-export interface PadValue_List {
+export interface List {
   type?: Type15;
   count: Count;
   items: Items;
   [k: string]: unknown;
 }
-export interface PadValue_ContextMessage {
+export interface ContextMessage {
   type?: Type16;
   role: Role;
   content: Content;
   [k: string]: unknown;
 }
-export interface PadValue_ContextMessageContentItem {
-  type?: Type17;
+export interface ContextMessageContentItem {
   content_type: ContentType;
   text?: Text;
-  image?: PadValue_ContextMessageContentItem_Image | null;
-  audio?: PadValue_ContextMessageContentItem_Audio | null;
-  video?: PadValue_ContextMessageContentItem_Video | null;
+  image?: ContextMessageContentItem_Image | null;
+  audio?: ContextMessageContentItem_Audio | null;
+  video?: ContextMessageContentItem_Video | null;
   [k: string]: unknown;
 }
-export interface PadValue_ContextMessageContentItem_Image {
+export interface ContextMessageContentItem_Image {
   width: Width;
   height: Height;
   handle: Handle;
   [k: string]: unknown;
 }
-export interface PadValue_ContextMessageContentItem_Audio {
+export interface ContextMessageContentItem_Audio {
   duration: Duration2;
   transcription: Transcription;
   handle: Handle1;
   [k: string]: unknown;
 }
-export interface PadValue_ContextMessageContentItem_Video {
+export interface ContextMessageContentItem_Video {
   width: Width1;
   height: Height1;
   duration: Duration3;
@@ -298,29 +291,29 @@ export interface PadValue_ContextMessageContentItem_Video {
   [k: string]: unknown;
 }
 export interface RuntimeResponsePayload_GetListItems {
-  type?: Type18;
+  type?: Type17;
   items: Items1;
   [k: string]: unknown;
 }
 export interface RuntimeResponsePayload_LockPublisher {
-  type?: Type19;
+  type?: Type18;
   success: Success;
   [k: string]: unknown;
 }
 export interface RuntimeEvent {
-  type?: Type20;
+  type?: Type19;
   payload: Payload2;
   [k: string]: unknown;
 }
 export interface RuntimeEventPayload_Value {
-  type?: Type21;
+  type?: Type20;
   value: Value6;
   node_id: NodeId3;
   pad_id: PadId3;
   [k: string]: unknown;
 }
 export interface RuntimeEventPayload_Logs {
-  type?: Type22;
+  type?: Type21;
   items: Items2;
   [k: string]: unknown;
 }

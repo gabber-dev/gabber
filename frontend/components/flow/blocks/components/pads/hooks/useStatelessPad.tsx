@@ -3,14 +3,14 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { PadEditorRepresentation, PadType } from "@/generated/editor";
+import { PadEditorRepresentation, PadConstraint } from "@/generated/editor";
 import { useEditor } from "@/hooks/useEditor";
 import { useNodeId } from "@xyflow/react";
 import { useMemo } from "react";
 
 type Result = {
   pad: PadEditorRepresentation | undefined;
-  singleAllowedType: PadType | undefined;
+  singleAllowedType: PadConstraint | undefined;
 };
 
 export function useStatelessPad(padId: string): Result {

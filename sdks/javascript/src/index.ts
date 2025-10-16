@@ -37,17 +37,15 @@ export type { RemoteTrack, RemoteAudioTrack, RemoteVideoTrack } from './RemoteTr
 export type { SourcePad, SinkPad, PropertyPad } from './pad/Pad';
 
 export type { 
-    PadValue_VideoClip,
-    PadValue_AudioClip,
-    PadValue_Boolean,
-    PadValue_Float,
-    PadValue_Integer,
-    PadValue_String,
-    PadValue_List,
-    PadValue_ContextMessage,
-    PadValue_ContextMessageContentItem_Audio,
-    PadValue_ContextMessageContentItem_Video,
-    PadValue_ContextMessageContentItem_Image,
+    Integer,
+    Float,
+    Boolean,
+    String,
+    List,
+    ContextMessage,
+    ContextMessageContentItem_Audio,
+    ContextMessageContentItem_Video,
+    ContextMessageContentItem_Image,
     PadValue,
     RuntimeEventPayload_LogItem,
 } from './generated/runtime';
