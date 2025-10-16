@@ -262,7 +262,6 @@ export type Type29 = "video_clip";
 export type Duration1 = number;
 export type Type30 = "list";
 export type Count = number;
-export type Items = unknown[];
 export type Type31 = "context_message_role";
 export type ContextMessageRoleEnum = "user" | "assistant" | "system" | "tool";
 export type Type32 = "context_message";
@@ -293,6 +292,24 @@ export type Required = string[] | null;
 export type Defaults = {
   [k: string]: unknown;
 } | null;
+export type Items = (
+  | String1
+  | Integer1
+  | Float1
+  | Boolean1
+  | Trigger
+  | AudioClip1
+  | VideoClip1
+  | List1
+  | ContextMessageRole1
+  | ContextMessage1
+  | Enum1
+  | Secret1
+  | NodeReference1
+  | ToolDefinition
+  | Schema1
+  | null
+)[];
 export type Type45 = "create_portal";
 export type SourceNode = string;
 export type SourcePad = string;

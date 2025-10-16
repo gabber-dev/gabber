@@ -1,6 +1,8 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
+from __future__ import annotations
+
 import asyncio
 import base64
 from abc import abstractmethod, ABC
@@ -535,14 +537,19 @@ class ContextMessageDeltaStream:
 
 RuntimePadValuePrimitive = str | int | float | bool
 
+
 RuntimePadValue = (
     RuntimePadValuePrimitive
+    | Enum
     | Trigger
     | AudioClip
     | VideoClip
     | AVClip
-    | ContextMessage
+    | TextStream
+    | AudioFrame
+    | VideoFrame
     | ToolCall
+    | ContextMessage
     | ToolDefinition
     | Schema
     | NodeReference

@@ -2,11 +2,13 @@
 # SPDX-License-Identifier: SUL-1.0
 
 from .llm_context import LLMContext
+from .llm_context_2 import LLMContext2
 from .openai_compatible_llm import OpenAICompatibleLLM
 from .base_llm import BaseLLM
 
 ALL_NODES = [
     LLMContext,
+    LLMContext2,
     OpenAICompatibleLLM,
 ]
 

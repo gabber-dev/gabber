@@ -129,7 +129,7 @@ class ToolDefinition(BaseModel):
 class List(BaseModel):
     type: Literal["list"] = "list"
     count: int
-    items: list[Any]
+    items: list["ClientPadValue"]
 
 
 ClientPadValue = (
