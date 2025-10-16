@@ -42,6 +42,7 @@ export type {
     Boolean,
     String,
     List,
+    Object,
     ContextMessage,
     ContextMessageRole,
     ContextMessageRoleEnum,

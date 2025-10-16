@@ -3,7 +3,11 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { BasePadType, NodeEditorRepresentation } from "@/generated/editor";
+import {
+  BasePadType,
+  NodeEditorRepresentation,
+  Object,
+} from "@/generated/editor";
 import {
   Edge,
   EdgeChange,
@@ -26,6 +30,7 @@ import {
   StateMachineState,
   StateMachineTransition,
 } from "@/generated/stateMachine";
+import { Integer } from "@gabber/client-react";
 
 type StateMachineContextType = {
   handleNodeChanges: (changes: NodeChange[]) => void;
@@ -66,7 +71,7 @@ type Props = {
 export function StateMachineProvider({ children, nodeId }: Props) {
   const node = useNodesData<Node<NodeEditorRepresentation>>(nodeId || "");
   const editorNode = node?.data;
-  const { setEditorValue, editorValue } = usePropertyPad(
+  const { setEditorValue, editorValue } = usePropertyPad<Integer>(
     nodeId || "",
     "num_parameters",
   );
@@ -81,7 +86,7 @@ export function StateMachineProvider({ children, nodeId }: Props) {
   }>({ nodes: [], edges: [] });
 
   const { editorValue: configuration, setEditorValue: setConfiguration } =
-    usePropertyPad<StateMachineConfiguration>(nodeId || "", "configuration");
+    usePropertyPad<Object>(nodeId || "", "configuration");
 
   const updateState = useCallback(
     (stateId: string, newName: string) => {
