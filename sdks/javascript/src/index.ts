@@ -44,6 +44,7 @@ export type {
     List,
     ContextMessage,
     ContextMessageRole,
+    ContextMessageRoleEnum,
     ContextMessageContentItem_Audio,
     ContextMessageContentItem_Video,
     ContextMessageContentItem_Image,
