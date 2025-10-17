@@ -106,6 +106,8 @@ function Condition({
   const isBoolean = valueType === "boolean";
   const isCompare = !isTrigger && !isBoolean;
 
+  console.log("NEIL Rendering Condition:", parameterPads);
+
   return (
     <div className="flex items-center gap-1 w-full">
       <select

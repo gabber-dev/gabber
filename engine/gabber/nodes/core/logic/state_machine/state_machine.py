@@ -445,6 +445,14 @@ class StateMachine(node.Node):
         all_idxes = self._get_parameter_indices()
         tasks = [pad_task(idx) for idx in all_idxes if idx is not None and idx >= 0]
 
+        # Check transitions once at startup
+        current_state = get_current_state()
+        check_transitions(
+            ctx=pad.RequestContext(parent=None, originator=self.id),
+            from_id=current_state.id,
+            current_state_name=current_state.name,
+        )
+
         await asyncio.gather(*tasks)
 
     def _fix_missing_pads(self):

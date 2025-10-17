@@ -3,7 +3,11 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { BasePadType, NodeEditorRepresentation } from "@/generated/editor";
+import {
+  BasePadType,
+  NodeEditorRepresentation,
+  Object1,
+} from "@/generated/editor";
 import {
   Edge,
   EdgeChange,
@@ -81,8 +85,14 @@ export function StateMachineProvider({ children, nodeId }: Props) {
     edges: Edge[];
   }>({ nodes: [], edges: [] });
 
-  const { editorValue: configuration, setEditorValue: setConfiguration } =
-    usePropertyPad<StateMachineConfiguration>(nodeId || "", "configuration");
+  const {
+    editorValue: configurationPadValue,
+    setEditorValue: setConfiguration,
+  } = usePropertyPad<Object1>(nodeId || "", "configuration");
+
+  const configuration = configurationPadValue?.value as
+    | StateMachineConfiguration
+    | undefined;
 
   const updateState = useCallback(
     (stateId: string, newName: string) => {
@@ -92,7 +102,10 @@ export function StateMachineProvider({ children, nodeId }: Props) {
       const updatedStates = configuration.states.map((state) =>
         state.id === stateId ? { ...state, name: newName } : state,
       );
-      setConfiguration({ ...configuration, states: updatedStates });
+      setConfiguration({
+        type: "object",
+        value: { ...configuration, states: updatedStates },
+      });
     },
     [configuration, setConfiguration],
   );
@@ -105,7 +118,10 @@ export function StateMachineProvider({ children, nodeId }: Props) {
       const updatedStates = configuration.states.filter(
         (state) => state.name !== name,
       );
-      setConfiguration({ ...configuration, states: updatedStates });
+      setConfiguration({
+        type: "object",
+        value: { ...configuration, states: updatedStates },
+      });
     },
     [configuration, setConfiguration],
   );
@@ -117,8 +133,11 @@ export function StateMachineProvider({ children, nodeId }: Props) {
       }
       if (source === "__ENTRY__") {
         setConfiguration({
-          ...configuration,
-          entry_state: target,
+          type: "object",
+          value: {
+            ...configuration,
+            entry_state: target,
+          },
         });
         return;
       }
@@ -128,8 +147,11 @@ export function StateMachineProvider({ children, nodeId }: Props) {
         to_state: target,
       };
       setConfiguration({
-        ...configuration,
-        transitions: [...(configuration.transitions || []), newTransition],
+        type: "object",
+        value: {
+          ...configuration,
+          transitions: [...(configuration.transitions || []), newTransition],
+        },
       });
     },
     [configuration, setConfiguration],
@@ -144,7 +166,10 @@ export function StateMachineProvider({ children, nodeId }: Props) {
       const updatedTransitions = configuration.transitions.map((t) =>
         t.id === id ? newTransition : t,
       );
-      setConfiguration({ ...configuration, transitions: updatedTransitions });
+      setConfiguration({
+        type: "object",
+        value: { ...configuration, transitions: updatedTransitions },
+      });
     },
     [configuration, setConfiguration],
   );
@@ -157,7 +182,10 @@ export function StateMachineProvider({ children, nodeId }: Props) {
       const updatedTransitions = configuration.transitions.filter(
         (t) => t.id !== transitionId,
       );
-      setConfiguration({ ...configuration, transitions: updatedTransitions });
+      setConfiguration({
+        type: "object",
+        value: { ...configuration, transitions: updatedTransitions },
+      });
     },
     [configuration, setConfiguration],
   );
@@ -167,7 +195,10 @@ export function StateMachineProvider({ children, nodeId }: Props) {
       if (!configuration) {
         return;
       }
-      setConfiguration({ ...configuration, entry_state: state });
+      setConfiguration({
+        type: "object",
+        value: { ...configuration, entry_state: state },
+      });
     },
     [configuration, setConfiguration],
   );
@@ -214,18 +245,24 @@ export function StateMachineProvider({ children, nodeId }: Props) {
             // Commit final position to configuration on drop
             if (change.id === "__ENTRY__") {
               setConfiguration({
-                ...prevConfiguration,
-                entry_node_position: {
-                  x: change.position?.x || 0,
-                  y: change.position?.y || 0,
+                type: "object",
+                value: {
+                  ...prevConfiguration,
+                  entry_node_position: {
+                    x: change.position?.x || 0,
+                    y: change.position?.y || 0,
+                  },
                 },
               });
             } else if (change.id === "__ANY__") {
               setConfiguration({
-                ...prevConfiguration,
-                special_any_state_position: {
-                  x: change.position?.x || 0,
-                  y: change.position?.y || 0,
+                type: "object",
+                value: {
+                  ...prevConfiguration,
+                  special_any_state_position: {
+                    x: change.position?.x || 0,
+                    y: change.position?.y || 0,
+                  },
                 },
               });
             } else {
@@ -234,7 +271,10 @@ export function StateMachineProvider({ children, nodeId }: Props) {
                   ? { ...state, position: change.position || { x: 0, y: 0 } }
                   : state,
               );
-              setConfiguration({ ...prevConfiguration, states: updatedStates });
+              setConfiguration({
+                type: "object",
+                value: { ...prevConfiguration, states: updatedStates },
+              });
             }
           }
         } else if (change.type === "select") {
@@ -255,8 +295,11 @@ export function StateMachineProvider({ children, nodeId }: Props) {
             (state) => state.id !== change.id,
           );
           setConfiguration({
-            ...prevConfiguration,
-            states: updatedStates,
+            type: "object",
+            value: {
+              ...prevConfiguration,
+              states: updatedStates,
+            },
           });
         } else {
           console.warn("Unhandled node change type:", change.type);
@@ -283,24 +326,30 @@ export function StateMachineProvider({ children, nodeId }: Props) {
 
       if (source === "__ENTRY__") {
         setConfiguration({
-          ...prevConfiguration,
-          entry_state: newState.id,
+          type: "object",
+          value: {
+            ...prevConfiguration,
+            entry_state: newState.id,
+          },
         });
         return;
       }
 
       setConfiguration({
-        ...prevConfiguration,
-        states: prevConfiguration.states,
-        transitions: [
-          ...(prevConfiguration.transitions || []),
-          {
-            id: v4(),
-            from_state: source,
-            to_state: newState.id,
-            conditions: [],
-          },
-        ],
+        type: "object",
+        value: {
+          ...prevConfiguration,
+          states: prevConfiguration.states,
+          transitions: [
+            ...(prevConfiguration.transitions || []),
+            {
+              id: v4(),
+              from_state: source,
+              to_state: newState.id,
+              conditions: [],
+            },
+          ],
+        },
       });
     },
     [configuration, setConfiguration],
@@ -325,8 +374,11 @@ export function StateMachineProvider({ children, nodeId }: Props) {
             (t) => t.id !== change.id,
           );
           setConfiguration({
-            ...prevConfiguration,
-            transitions: updatedTransitions,
+            type: "object",
+            value: {
+              ...prevConfiguration,
+              transitions: updatedTransitions,
+            },
           });
         } else if (change.type === "select") {
           if (change.selected) {
@@ -401,9 +453,15 @@ export function StateMachineProvider({ children, nodeId }: Props) {
       if (tcs?.length === 1) {
         valueType = tcs[0];
       }
+      const nameValue = namePads[i].value as
+        | { type: "string"; value: string }
+        | undefined;
+
+      console.log("NEIL parameter pad:", valueType);
+      const name = nameValue?.value || "";
       res.push({
         namePadId: namePads[i].id,
-        nameValue: namePads[i].value as string,
+        nameValue: name,
         valuePadId: valuePads[i]?.id,
         valueType,
       });
