@@ -18,7 +18,7 @@ class PropertySinkPad(SinkPad, PropertyPad):
         id: str,
         group: str,
         owner_node: "Node",
-        value: runtime.RuntimePadValue = None,
+        value: runtime.RuntimePadValue,
         default_type_constraints: list[pad_constraints.BasePadType] | None = None,
     ):
         super().__init__()

@@ -26,7 +26,9 @@ class ContextMessage(Node):
                 group="role",
                 owner_node=self,
                 default_type_constraints=[pad_constraints.ContextMessageRole()],
-                value=runtime.ContextMessageRole.SYSTEM,
+                value=runtime.ContextMessageRole(
+                    value=runtime.ContextMessageRoleEnum.SYSTEM
+                ),
             )
 
         content_sink = cast(PropertySinkPad, self.get_pad("content"))
@@ -41,29 +43,33 @@ class ContextMessage(Node):
 
         message_source = cast(PropertySourcePad, self.get_pad("context_message"))
         if not message_source:
+            content_sink_value = content_sink.get_value()
+            assert isinstance(content_sink_value, str)
             message_source = PropertySourcePad(
                 id="context_message",
                 group="context_message",
                 owner_node=self,
                 default_type_constraints=[pad_constraints.ContextMessage()],
                 value=runtime.ContextMessage(
-                    role=runtime.ContextMessageRole.SYSTEM,
+                    role=runtime.ContextMessageRoleEnum.SYSTEM,
                     content=[
                         runtime.ContextMessageContentItem_Text(
-                            content=content_sink.get_value()
+                            content=content_sink_value
                         )
                     ],
                     tool_calls=[],
                 ),
             )
 
+        role_value = role.get_value()
+        assert isinstance(role_value, runtime.ContextMessageRole)
+        content_sink_value = content_sink.get_value()
+        assert isinstance(content_sink_value, str)
         message_source.set_value(
             runtime.ContextMessage(
-                role=runtime.ContextMessageRole.SYSTEM,
+                role=role_value.value,
                 content=[
-                    runtime.ContextMessageContentItem_Text(
-                        content=content_sink.get_value()
-                    )
+                    runtime.ContextMessageContentItem_Text(content=content_sink_value)
                 ],
                 tool_calls=[],
             )
@@ -86,22 +92,26 @@ class ContextMessage(Node):
             """Task to handle content from the content sink."""
             async for item in content_sink:
                 role = role_pad.get_value()
+                value = item.value
+                assert isinstance(value, str)
+                assert isinstance(role, runtime.ContextMessageRole)
                 content: list[runtime.ContextMessageContentItem] = [
-                    runtime.ContextMessageContentItem_Text(content=item.value)
+                    runtime.ContextMessageContentItem_Text(content=value)
                 ]
                 message_source.push_item(
-                    runtime.ContextMessage(role=role, content=content, tool_calls=[]),
+                    runtime.ContextMessage(
+                        role=role.value, content=content, tool_calls=[]
+                    ),
                     item.ctx,
                 )
 
         async def role_sink_task():
             """Task to handle role changes."""
             async for item in role_pad:
-                if isinstance(item, runtime.ContextMessageRole):
-                    # Update the role in the last message
-                    last_message = message_source.get_value()[-1]
-                    last_message.role = item.value
-                    message_source.push_item(last_message, item.ctx)
+                assert isinstance(item.value, runtime.ContextMessageRole)
+                message = message_source.get_value()
+                assert isinstance(message, runtime.ContextMessage)
+                message.role = item.value.value
 
         await asyncio.gather(
             content_sink_task(),

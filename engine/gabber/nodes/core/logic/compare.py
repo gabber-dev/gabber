@@ -154,7 +154,8 @@ class Compare(Node):
         if not num_conditions_pad.get_value():
             num_conditions_pad.set_value(1)
 
-        num_conditions: int = num_conditions_pad.get_value()
+        num_conditions = num_conditions_pad.get_value()
+        assert isinstance(num_conditions, int)
 
         current_count = len(indices)
 
@@ -165,18 +166,21 @@ class Compare(Node):
                     group="condition_A",
                     owner_node=self,
                     default_type_constraints=ALL_ALLOWED_TYPES,
+                    value=None,
                 )
                 pad_b = pad.PropertySinkPad(
                     id=f"condition_{i}_B",
                     group="condition_B",
                     owner_node=self,
                     default_type_constraints=ALL_ALLOWED_TYPES,
+                    value=None,
                 )
                 operator_pad = pad.PropertySinkPad(
                     id=f"condition_{i}_operator",
                     group="condition_operator",
                     owner_node=self,
                     default_type_constraints=[pad_constraints.Enum(options=[])],
+                    value=None,
                 )
                 self.pads.extend([pad_a, pad_b, operator_pad])
         elif current_count > num_conditions:

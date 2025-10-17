@@ -25,6 +25,7 @@ class TypeConstraint(Node):
                         options=["string", "integer", "float", "boolean", "trigger"]
                     )
                 ],
+                value="string",
             )
 
         sink = cast(pad.StatelessSinkPad, self.get_pad("sink"))

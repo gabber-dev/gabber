@@ -347,15 +347,25 @@ ContextMessageContentItem = Annotated[
 ]
 
 
-class ContextMessageRole(str, PyEnum):
+class ContextMessageRoleEnum(str, PyEnum):
     USER = "user"
     ASSISTANT = "assistant"
     SYSTEM = "system"
     TOOL = "tool"
 
 
+class ContextMessageRole(BaseModel, BaseRuntimeType):
+    value: ContextMessageRoleEnum
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    def log_type(self) -> str:
+        return "context_message_role"
+
+
 class ContextMessage(BaseModel, BaseRuntimeType):
-    role: ContextMessageRole
+    role: ContextMessageRoleEnum
     content: list[ContextMessageContentItem]
     tool_calls: list[ToolCall]
     tool_call_id: str | None = None
@@ -511,6 +521,13 @@ class Secret(BaseModel, BaseRuntimeType):
         return "secret"
 
 
+class Enum(BaseModel, BaseRuntimeType):
+    value: str
+
+    def log_type(self) -> str:
+        return "enum"
+
+
 @dataclass
 class ContextMessageContent_ChoiceDelta:
     content: str | None
@@ -555,11 +572,13 @@ RuntimePadValue = (
     | AudioFrame
     | VideoFrame
     | ToolCall
+    | ContextMessageRole
     | ContextMessage
     | ToolDefinition
     | Schema
     | NodeReference
     | Secret
+    | Enum
     | None
     | list["RuntimePadValue"]
 )

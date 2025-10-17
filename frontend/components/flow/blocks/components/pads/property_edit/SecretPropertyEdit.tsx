@@ -16,7 +16,8 @@ export function SecretPropertyEdit({ nodeId, padId }: PropertyEditProps) {
   } = usePropertyPad<Secret>(nodeId, padId);
 
   const handleChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setValue({ type: "secret", value: event.target.value });
+    const name = options.find((o) => o.id === event.target.value)?.name || "";
+    setValue({ type: "secret", secret_id: event.target.value, name });
   };
 
   const options: { name: string; id: string }[] = useMemo(() => {
@@ -29,7 +30,7 @@ export function SecretPropertyEdit({ nodeId, padId }: PropertyEditProps) {
 
   return (
     <select
-      value={runtimeValue?.value || ""}
+      value={runtimeValue?.secret_id || ""}
       onChange={handleChange}
       className="select select-bordered select-sm w-full bg-base-300 border-2 border-black border-b-4 border-r-4 rounded-lg text-base-content placeholder-base-content/40 focus:border-primary focus:ring-2 focus:ring-primary font-vt323 text-xs hover:bg-base-100 transition-colors duration-150"
     >

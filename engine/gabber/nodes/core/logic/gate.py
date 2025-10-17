@@ -30,6 +30,7 @@ class Gate(Node):
                 group="open",
                 owner_node=self,
                 default_type_constraints=[pad_constraints.Boolean()],
+                value=False,
             )
 
         source = cast(pad.StatelessSourcePad, self.get_pad("source"))

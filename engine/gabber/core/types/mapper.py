@@ -39,8 +39,12 @@ class Mapper:
                 secret_id=client_value.secret_id, name=client_value.name
             )
         elif client_value.type == "enum":
-            return client_value.value
+            return runtime.Enum(value=client_value.value)
         elif client_value.type == "context_message_role":
+            return runtime.ContextMessageRole(
+                value=runtime.ContextMessageRoleEnum(client_value.value)
+            )
+        elif client_value.type == "float":
             return client_value.value
         elif client_value.type == "context_message":
             return Mapper.client_context_message_to_runtime(client_value)
@@ -195,7 +199,7 @@ class Mapper:
         return runtime.ContextMessage(
             tool_calls=[],
             role=runtime.ContextMessageRole(
-                value=runtime.ContextMessageRole(client_value.role.value)
+                value=runtime.ContextMessageRoleEnum(client_value.role.value)
             ),
             content=cnts,
         )

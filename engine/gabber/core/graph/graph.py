@@ -3,7 +3,7 @@
 
 import asyncio
 import logging
-from typing import Any, Type, TypeVar, cast
+from typing import Type, TypeVar, cast
 
 from livekit import rtc
 
@@ -622,7 +622,6 @@ def create_pad_from_editor(
     )
     allowed_types = cast(list[pad_constraints.BasePadType] | None, e.allowed_types)
     if e.type == "PropertySourcePad":
-        logging.debug(f"Creating PropertySourcePad {e.id} with value {e.value}")
         v = client_pad_value_adapter.validate_python(e.value)
         v = mapper.Mapper.client_to_runtime(v)
         p = pad.PropertySourcePad(
@@ -634,11 +633,10 @@ def create_pad_from_editor(
         )
     elif e.type == "PropertySinkPad":
         v = client_pad_value_adapter.validate_python(e.value)
-        if v is not None and v.type == "secret":
-            logging.info(
-                f"NEIL Creating PropertySinkPad {e.id}, {v.value} with secret value"
-            )
         v = mapper.Mapper.client_to_runtime(v)
+        logging.info(
+            f"NEIL Creating PropertySourcePad {e.id} with value {e.value}, {v}"
+        )
         p = pad.PropertySinkPad(
             id=e.id,
             group=e.group,
