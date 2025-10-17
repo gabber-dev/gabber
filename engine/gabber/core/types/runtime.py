@@ -503,6 +503,14 @@ class NodeReference(BaseModel):
     node_id: str
 
 
+class Secret(BaseModel, BaseRuntimeType):
+    secret_id: str
+    name: str
+
+    def log_type(self) -> str:
+        return "secret"
+
+
 @dataclass
 class ContextMessageContent_ChoiceDelta:
     content: str | None
@@ -551,6 +559,7 @@ RuntimePadValue = (
     | ToolDefinition
     | Schema
     | NodeReference
+    | Secret
     | None
     | list["RuntimePadValue"]
 )

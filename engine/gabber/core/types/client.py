@@ -96,7 +96,8 @@ class Enum(BaseModel):
 
 class Secret(BaseModel):
     type: Literal["secret"] = "secret"
-    value: str
+    secret_id: str
+    name: str
 
 
 class NodeReference(BaseModel):

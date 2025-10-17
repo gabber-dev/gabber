@@ -35,7 +35,9 @@ class Mapper:
                     rvs.append(r_item)
             return rvs
         elif client_value.type == "secret":
-            return client_value.value
+            return runtime.Secret(
+                secret_id=client_value.secret_id, name=client_value.name
+            )
         elif client_value.type == "enum":
             return client_value.value
         elif client_value.type == "context_message_role":
@@ -94,6 +96,10 @@ class Mapper:
         elif isinstance(runtime_value, runtime.ContextMessageRole):
             return client.ContextMessageRole(
                 value=client.ContextMessageRoleEnum(runtime_value.value)
+            )
+        elif isinstance(runtime_value, runtime.Secret):
+            return client.Secret(
+                secret_id=runtime_value.secret_id, name=runtime_value.name
             )
 
         raise ValueError(

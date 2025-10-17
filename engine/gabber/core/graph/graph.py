@@ -32,7 +32,7 @@ from ..types import pad_constraints, mapper, client
 
 T = TypeVar("T", bound=Node)
 
-client_pad_value_adapter = TypeAdapter(client.ClientPadValue)
+client_pad_value_adapter = TypeAdapter[client.ClientPadValue](client.ClientPadValue)
 
 
 class Graph:
@@ -634,6 +634,10 @@ def create_pad_from_editor(
         )
     elif e.type == "PropertySinkPad":
         v = client_pad_value_adapter.validate_python(e.value)
+        if v is not None and v.type == "secret":
+            logging.info(
+                f"NEIL Creating PropertySinkPad {e.id}, {v.value} with secret value"
+            )
         v = mapper.Mapper.client_to_runtime(v)
         p = pad.PropertySinkPad(
             id=e.id,

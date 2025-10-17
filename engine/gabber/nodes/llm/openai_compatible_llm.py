@@ -89,7 +89,7 @@ class OpenAICompatibleLLM(BaseLLM):
                 group="api_key",
                 owner_node=self,
                 default_type_constraints=[pad_constraints.Secret(options=[])],
-                value="",
+                value=None,
             )
 
         model_sink = cast(pad.PropertySinkPad, self.get_pad("model"))

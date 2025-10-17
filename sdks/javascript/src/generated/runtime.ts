@@ -63,6 +63,7 @@ export type Value1 =
   | NodeReference
   | ToolDefinition
   | Schema
+  | Object1
   | null;
 export type Type8 = "string";
 export type Value2 = string;
@@ -99,11 +100,12 @@ export type Content = ContextMessageContentItem[];
 export type Type18 = "enum";
 export type Value6 = string;
 export type Type19 = "secret";
-export type Value7 = string;
+export type SecretId = string;
+export type Name = string;
 export type Type20 = "node_reference";
 export type NodeId3 = string;
 export type Type21 = "tool_definition";
-export type Name = string;
+export type Name1 = string;
 export type Description = string;
 export type Type22 = "schema";
 export type Type23 = "string";
@@ -127,6 +129,7 @@ export type Required = string[] | null;
 export type Defaults = {
   [k: string]: unknown;
 } | null;
+export type Type29 = "object";
 export type Items = (
   | String
   | Integer
@@ -143,9 +146,10 @@ export type Items = (
   | NodeReference
   | ToolDefinition
   | Schema
+  | Object1
   | null
 )[];
-export type Type29 = "get_list_items";
+export type Type30 = "get_list_items";
 export type Items1 = (
   | String
   | Integer
@@ -162,9 +166,10 @@ export type Items1 = (
   | NodeReference
   | ToolDefinition
   | Schema
+  | Object1
   | null
 )[];
-export type Type30 = "lock_publisher";
+export type Type31 = "lock_publisher";
 export type Success = boolean;
 /**
  * Payload for the runtime request complete
@@ -174,12 +179,12 @@ export type RuntimeResponsePayload =
   | RuntimeResponsePayload_GetValue
   | RuntimeResponsePayload_GetListItems
   | RuntimeResponsePayload_LockPublisher;
-export type Type31 = "event";
+export type Type32 = "event";
 /**
  * Payload for the runtime event
  */
 export type Payload2 = RuntimeEventPayload_Value | RuntimeEventPayload_Logs;
-export type Type32 = "value";
+export type Type33 = "value";
 export type Value8 =
   | String
   | Integer
@@ -196,10 +201,11 @@ export type Value8 =
   | NodeReference
   | ToolDefinition
   | Schema
+  | Object1
   | null;
 export type NodeId4 = string;
 export type PadId3 = string;
-export type Type33 = "logs";
+export type Type34 = "logs";
 export type Message = string;
 export type Level = string;
 export type Timestamp = string;
@@ -227,6 +233,7 @@ export type PadValue =
   | NodeReference
   | ToolDefinition
   | Schema
+  | Object1
   | null;
 export type PadConstraint =
   | String1
@@ -250,26 +257,26 @@ export type PadConstraint =
   | Schema1
   | Object
   | NodeReference1;
-export type Type34 = "enum";
+export type Type35 = "enum";
 export type Options = string[] | null;
-export type Type35 = "secret";
+export type Type36 = "secret";
 export type UpdatedAt = string;
 export type CreatedAt = string;
 export type Id = string;
-export type Name1 = string;
+export type Name2 = string;
 export type Options1 = PublicSecret[];
-export type Type36 = "bounding_box";
-export type Type37 = "point";
-export type Type38 = "audio";
-export type Type39 = "video";
-export type Type40 = "audio_clip";
-export type Type41 = "video_clip";
-export type Type42 = "av_clip";
-export type Type43 = "text_stream";
-export type Type44 = "context_message";
-export type Type45 = "context_message_role";
-export type Type46 = "schema";
-export type Type47 = "node_reference";
+export type Type37 = "bounding_box";
+export type Type38 = "point";
+export type Type39 = "audio";
+export type Type40 = "video";
+export type Type41 = "audio_clip";
+export type Type42 = "video_clip";
+export type Type43 = "av_clip";
+export type Type44 = "text_stream";
+export type Type45 = "context_message";
+export type Type46 = "context_message_role";
+export type Type47 = "schema";
+export type Type48 = "node_reference";
 export type NodeTypes = string[];
 
 export interface DummyType {
@@ -419,7 +426,8 @@ export interface Enum {
 }
 export interface Secret {
   type?: Type19;
-  value: Value7;
+  secret_id: SecretId;
+  name: Name;
   [k: string]: unknown;
 }
 export interface NodeReference {
@@ -429,7 +437,7 @@ export interface NodeReference {
 }
 export interface ToolDefinition {
   type?: Type21;
-  name: Name;
+  name: Name1;
   description: Description;
   parameters?: Schema | null;
   [k: string]: unknown;
@@ -480,30 +488,38 @@ export interface List1 {
 export interface BasePadType {
   [k: string]: unknown;
 }
-export interface RuntimeResponsePayload_GetListItems {
+export interface Object1 {
   type?: Type29;
+  value: Value7;
+  [k: string]: unknown;
+}
+export interface Value7 {
+  [k: string]: unknown;
+}
+export interface RuntimeResponsePayload_GetListItems {
+  type?: Type30;
   items: Items1;
   [k: string]: unknown;
 }
 export interface RuntimeResponsePayload_LockPublisher {
-  type?: Type30;
+  type?: Type31;
   success: Success;
   [k: string]: unknown;
 }
 export interface RuntimeEvent {
-  type?: Type31;
+  type?: Type32;
   payload: Payload2;
   [k: string]: unknown;
 }
 export interface RuntimeEventPayload_Value {
-  type?: Type32;
+  type?: Type33;
   value: Value8;
   node_id: NodeId4;
   pad_id: PadId3;
   [k: string]: unknown;
 }
 export interface RuntimeEventPayload_Logs {
-  type?: Type33;
+  type?: Type34;
   items: Items2;
   [k: string]: unknown;
 }
@@ -517,12 +533,12 @@ export interface RuntimeEventPayload_LogItem {
   [k: string]: unknown;
 }
 export interface Enum1 {
-  type?: Type34;
+  type?: Type35;
   options?: Options;
   [k: string]: unknown;
 }
 export interface Secret1 {
-  type?: Type35;
+  type?: Type36;
   options?: Options1;
   [k: string]: unknown;
 }
@@ -530,55 +546,55 @@ export interface PublicSecret {
   updated_at: UpdatedAt;
   created_at: CreatedAt;
   id: Id;
-  name: Name1;
+  name: Name2;
   [k: string]: unknown;
 }
 export interface BoundingBox {
-  type?: Type36;
-  [k: string]: unknown;
-}
-export interface Point {
   type?: Type37;
   [k: string]: unknown;
 }
-export interface Audio {
+export interface Point {
   type?: Type38;
   [k: string]: unknown;
 }
-export interface Video {
+export interface Audio {
   type?: Type39;
   [k: string]: unknown;
 }
-export interface AudioClip1 {
+export interface Video {
   type?: Type40;
   [k: string]: unknown;
 }
-export interface VideoClip1 {
+export interface AudioClip1 {
   type?: Type41;
   [k: string]: unknown;
 }
-export interface AVClip {
+export interface VideoClip1 {
   type?: Type42;
   [k: string]: unknown;
 }
-export interface TextStream {
+export interface AVClip {
   type?: Type43;
   [k: string]: unknown;
 }
-export interface ContextMessage1 {
+export interface TextStream {
   type?: Type44;
   [k: string]: unknown;
 }
-export interface ContextMessageRole1 {
+export interface ContextMessage1 {
   type?: Type45;
   [k: string]: unknown;
 }
-export interface Schema1 {
+export interface ContextMessageRole1 {
   type?: Type46;
   [k: string]: unknown;
 }
-export interface NodeReference1 {
+export interface Schema1 {
   type?: Type47;
+  [k: string]: unknown;
+}
+export interface NodeReference1 {
+  type?: Type48;
   node_types: NodeTypes;
   [k: string]: unknown;
 }
