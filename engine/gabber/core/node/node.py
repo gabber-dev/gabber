@@ -100,28 +100,24 @@ class Node:
         self, _: type[T], pad_id: str
     ) -> PropertySourcePad[T] | None:
         pad = self.get_pad(pad_id)
-        assert isinstance(pad, PropertySourcePad)
         return cast(PropertySourcePad[T], pad)
 
     def get_property_sink_pad(
         self, _: type[T], pad_id: str
     ) -> PropertySinkPad[T] | None:
         pad = self.get_pad(pad_id)
-        assert isinstance(pad, PropertySinkPad)
         return cast(PropertySinkPad[T], pad)
 
     def get_stateless_source_pad(
         self, _: type[T], pad_id: str
     ) -> StatelessSourcePad[T] | None:
         pad = self.get_pad(pad_id)
-        assert isinstance(pad, StatelessSourcePad)
         return cast(StatelessSourcePad[T], pad)
 
     def get_stateless_sink_pad(
         self, _: type[T], pad_id: str
     ) -> StatelessSinkPad[T] | None:
         pad = self.get_pad(pad_id)
-        assert isinstance(pad, StatelessSinkPad)
         return cast(StatelessSinkPad[T], pad)
 
     def get_property_source_pad_required(

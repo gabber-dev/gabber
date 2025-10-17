@@ -28,11 +28,13 @@ from ..secret import PublicSecret, SecretProvider
 from gabber.nodes.core.sub_graph import SubGraph
 from gabber.utils import short_uuid
 from .runtime_api import RuntimeApi
-from ..types import pad_constraints, mapper, client
+from ..types import pad_constraints, mapper, client, runtime
 
 T = TypeVar("T", bound=Node)
 
-client_pad_value_adapter = TypeAdapter[client.ClientPadValue](client.ClientPadValue)
+client_pad_value_adapter = TypeAdapter[client.DiscriminatedClientPadValue](
+    client.DiscriminatedClientPadValue
+)
 
 
 class Graph:
@@ -555,10 +557,17 @@ class Graph:
                 if tcs and len(tcs) == 1:
                     if isinstance(tcs[0], pad_constraints.Secret):
                         tcs[0].options = secret_options
-                        if isinstance(p, pad.PropertyPad) and p.get_value() not in [
-                            s.id for s in secret_options
-                        ]:
+                        if not isinstance(p, pad.PropertyPad):
                             p.set_value(None)
+                            continue
+
+                        secret_value = p.get_value()
+                        if isinstance(secret_value, runtime.Secret):
+                            if secret_value.secret_id not in [
+                                s.id for s in secret_options
+                            ]:
+                                p.set_value(None)
+
                 if d_tcs and len(d_tcs) == 1:
                     if isinstance(d_tcs[0], pad_constraints.Secret):
                         d_tcs[0].options = secret_options
@@ -634,9 +643,6 @@ def create_pad_from_editor(
     elif e.type == "PropertySinkPad":
         v = client_pad_value_adapter.validate_python(e.value)
         v = mapper.Mapper.client_to_runtime(v)
-        logging.info(
-            f"NEIL Creating PropertySourcePad {e.id} with value {e.value}, {v}"
-        )
         p = pad.PropertySinkPad(
             id=e.id,
             group=e.group,

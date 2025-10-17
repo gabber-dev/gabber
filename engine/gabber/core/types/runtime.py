@@ -8,7 +8,7 @@ import base64
 from abc import abstractmethod, ABC
 from dataclasses import dataclass
 from enum import Enum as PyEnum
-from typing import Annotated, Any, Literal, cast
+from typing import Annotated, Any, Literal, cast, TypeVar
 
 import cv2
 import numpy as np
@@ -561,6 +561,7 @@ class ContextMessageDeltaStream:
 
 RuntimePadValuePrimitive = str | int | float | bool | dict
 
+LIST_T = TypeVar("LIST_T", bound="RuntimePadValue", covariant=True)
 
 RuntimePadValue = (
     RuntimePadValuePrimitive
@@ -580,5 +581,5 @@ RuntimePadValue = (
     | Secret
     | Enum
     | None
-    | list["RuntimePadValue"]
+    | list[LIST_T]
 )

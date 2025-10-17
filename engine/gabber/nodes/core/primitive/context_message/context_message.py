@@ -62,6 +62,7 @@ class ContextMessage(Node):
             )
 
         role_value = role.get_value()
+        self.logger.info("NEIL DEBUG role_value: %s", type(role_value))
         assert isinstance(role_value, runtime.ContextMessageRole)
         content_sink_value = content_sink.get_value()
         assert isinstance(content_sink_value, str)

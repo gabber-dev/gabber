@@ -111,9 +111,9 @@ class TTS(node.Node):
         ]
 
     async def run(self):
-        api_key_pad = cast(pad.PropertySinkPad, self.get_pad_required("api_key"))
+        api_key_pad = self.get_property_sink_pad_required(runtime.Secret, "api_key")
         secret = api_key_pad.get_value()
-        api_key = await self.secret_provider.resolve_secret(secret)
+        api_key = await self.secret_provider.resolve_secret(secret.secret_id)
         service = cast(pad.PropertySinkPad, self.get_pad_required("service"))
         voice_id = cast(pad.PropertySinkPad, self.get_pad_required("voice_id"))
         audio_source = cast(pad.StatelessSourcePad, self.get_pad_required("audio"))
@@ -179,7 +179,6 @@ class TTS(node.Node):
 
         async def text_task():
             async for item in text_sink:
-                self.logger.info("NEIL TTS node received text input %s", item.value)
                 if isinstance(item.value, runtime.TextStream):
                     job = TTSJob(tts, item.ctx, voice=voice_id.get_value())
                     job_queue.put_nowait(job)

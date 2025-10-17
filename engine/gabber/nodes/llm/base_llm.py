@@ -134,7 +134,9 @@ class BaseLLM(node.Node, ABC):
                 default_type_constraints=[pad_constraints.Trigger()],
             )
 
-        context_sink = cast(pad.PropertySinkPad, self.get_pad("context"))
+        context_sink = self.get_property_sink_pad(
+            list[runtime.ContextMessage], "context"
+        )
         if not context_sink:
             context_sink = pad.PropertySinkPad(
                 id="context",
@@ -371,7 +373,7 @@ class BaseLLM(node.Node, ABC):
                 full_content = get_full_content_from_deltas(all_deltas)
                 context_message_source.push_item(
                     runtime.ContextMessage(
-                        role=runtime.ContextMessageRole.ASSISTANT,
+                        role=runtime.ContextMessageRoleEnum.ASSISTANT,
                         content=[
                             runtime.ContextMessageContentItem_Text(content=full_content)
                         ],
@@ -504,7 +506,7 @@ class BaseLLM(node.Node, ABC):
             tg_res = await self.call_tg_calls(tg_tool_calls=tg_tool_calls, ctx=ctx)
             for i, res in enumerate(tg_res):
                 msg = runtime.ContextMessage(
-                    role=runtime.ContextMessageRole.TOOL,
+                    role=runtime.ContextMessageRoleEnum.TOOL,
                     content=[runtime.ContextMessageContentItem_Text(content=res)],
                     tool_call_id=tg_tool_calls[i].call_id,
                     tool_calls=[],
@@ -515,7 +517,7 @@ class BaseLLM(node.Node, ABC):
             res = await node.call_tool(tc)
             if isinstance(res, Exception):
                 msg = runtime.ContextMessage(
-                    role=runtime.ContextMessageRole.TOOL,
+                    role=runtime.ContextMessageRoleEnum.TOOL,
                     content=[
                         runtime.ContextMessageContentItem_Text(
                             content=f"Error calling tool '{tc.name}': {res}"
@@ -533,7 +535,7 @@ class BaseLLM(node.Node, ABC):
                         )
                         contents.append(content)
                 msg = runtime.ContextMessage(
-                    role=runtime.ContextMessageRole.TOOL,
+                    role=runtime.ContextMessageRoleEnum.TOOL,
                     content=contents,
                     tool_call_id=tc.call_id,
                     tool_calls=[],
@@ -605,7 +607,7 @@ class BaseLLM(node.Node, ABC):
         dummy_request = LLMRequest(
             context=[
                 runtime.ContextMessage(
-                    role=runtime.ContextMessageRole.SYSTEM,
+                    role=runtime.ContextMessageRoleEnum.SYSTEM,
                     content=[
                         runtime.ContextMessageContentItem_Text(content="."),
                         runtime.ContextMessageContentItem_Video(
@@ -642,7 +644,7 @@ class BaseLLM(node.Node, ABC):
         dummy_request = LLMRequest(
             context=[
                 runtime.ContextMessage(
-                    role=runtime.ContextMessageRole.SYSTEM,
+                    role=runtime.ContextMessageRoleEnum.SYSTEM,
                     content=[
                         runtime.ContextMessageContentItem_Text(content="."),
                         runtime.ContextMessageContentItem_Audio(
