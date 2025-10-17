@@ -4,7 +4,7 @@ import { ContextMessage, List, PadValue } from "@gabber/client-react";
 import { ContextMessageContentItem } from "@/generated/editor";
 
 export function PadDetailsView() {
-  const { detailedView } = useEditor();
+  const { detailedView, setDetailedView } = useEditor();
 
   if (!detailedView) {
     return null;
@@ -12,11 +12,21 @@ export function PadDetailsView() {
 
   if (detailedView.type === "property") {
     return (
-      <div className="w-full h-full overflow-auto p-1">
-        <PadDetailsViewInnerProperty
-          nodeId={detailedView.nodeId}
-          padId={detailedView.padId}
-        />
+      <div className="w-full h-full overflow-auto p-1 flex flex-col">
+        <button
+          className="btn btn-error self-end btn-sm"
+          onClick={() => {
+            setDetailedView(undefined);
+          }}
+        >
+          Close
+        </button>
+        <div>
+          <PadDetailsViewInnerProperty
+            nodeId={detailedView.nodeId}
+            padId={detailedView.padId}
+          />
+        </div>
       </div>
     );
   } else if (detailedView.type === "stateless") {
@@ -102,6 +112,7 @@ function ContentItem({ item }: { item: ContextMessageContentItem }) {
       <div className="flex flex-col items-center mb-1">
         Image
         <div className="flex gap-1">
+          <div>Time: {item.image?.timestamp || "N/A"}</div>
           <div className="badge badge-secondary badge-sm">
             W: {item.image?.width || "N/A"}
           </div>
@@ -131,13 +142,8 @@ function ContentItem({ item }: { item: ContextMessageContentItem }) {
   } else if (item.content_type === "video") {
     return (
       <div className="flex flex-col items-center gap-1 mb-1">
-        <div className="mockup-browser border p-2">
-          <video className="w-48" controls>
-            <track kind="captions" />
-            Your browser does not support the video tag.
-          </video>
-        </div>
         <div className="flex gap-1 flex-wrap">
+          Video
           <div className="badge badge-info badge-sm">
             W: {item.video?.width || "N/A"}
           </div>
