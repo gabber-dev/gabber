@@ -53,9 +53,13 @@ class AVClipZip(Node):
         self.pads = [audio_clip, video_clip, av_clip]
 
     async def run(self):
-        video_clip_pad = cast(pad.StatelessSinkPad, self.get_pad_required("video_clip"))
-        audio_clip_pad = cast(pad.StatelessSinkPad, self.get_pad_required("audio_clip"))
-        av_clip = cast(pad.StatelessSourcePad, self.get_pad_required("av_clip"))
+        video_clip_pad = self.get_stateless_sink_pad_required(
+            runtime.VideoClip, "video_clip"
+        )
+        audio_clip_pad = self.get_stateless_sink_pad_required(
+            runtime.AudioClip, "audio_clip"
+        )
+        av_clip = self.get_stateless_source_pad_required(runtime.AVClip, "av_clip")
 
         connected_pads = [
             p

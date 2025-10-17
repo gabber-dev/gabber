@@ -7,7 +7,7 @@ from abc import abstractmethod
 from livekit import rtc
 
 from ..secret import PublicSecret, SecretProvider
-from typing import TYPE_CHECKING, Callable, TypeVar, cast
+from typing import TYPE_CHECKING, TypeVar, cast
 
 from ..pad import (
     Pad,
@@ -24,7 +24,7 @@ from ..types import runtime
 if TYPE_CHECKING:
     from ..graph import Graph
 
-T = TypeVar("T", bound=runtime.RuntimePadValue)
+T = TypeVar("T", bound=runtime.RuntimePadValue, covariant=True)
 
 
 class Node:

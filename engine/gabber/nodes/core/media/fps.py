@@ -8,7 +8,7 @@ from typing import cast
 from gabber.core import pad
 from gabber.core.node import Node, NodeMetadata
 from gabber.core.pad import PropertySinkPad, StatelessSinkPad, StatelessSourcePad
-from gabber.core.types.runtime import VideoFrame
+from gabber.core.types import runtime
 from gabber.core.types import pad_constraints
 
 
@@ -55,11 +55,11 @@ class FPS(Node):
         self.pads = [sink, source, fps_sink]
 
     async def run(self):
-        sink = cast(StatelessSinkPad, self.get_pad_required("video_in"))
-        fps_pad = cast(PropertySinkPad, self.get_pad_required("fps"))
-        source = cast(StatelessSourcePad, self.get_pad_required("video_out"))
+        sink = self.get_stateless_sink_pad_required(runtime.VideoFrame, "video_in")
+        fps_pad = self.get_property_sink_pad_required(float, "fps")
+        source = self.get_stateless_source_pad_required(runtime.VideoFrame, "video_out")
 
-        last_frame: VideoFrame | None = None
+        last_frame: runtime.VideoFrame | None = None
         last_ctx = pad.RequestContext(parent=None)
 
         async def sink_task():
