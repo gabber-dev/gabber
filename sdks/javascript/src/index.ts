@@ -60,4 +60,5 @@ export type {
     NodeReference,
     RuntimeEventPayload_LogItem,
     PadConstraint,
+    AVClip,
 } from './generated/runtime';
