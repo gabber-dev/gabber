@@ -42,7 +42,7 @@ class TTS(node.Node):
                 value=runtime.Enum(value="gabber"),
             )
 
-        api_key = cast(pad.PropertySinkPad, self.get_pad("api_key"))
+        api_key = cast(pad.PropertySinkPad[str], self.get_pad("api_key"))
         if not api_key:
             api_key = pad.PropertySinkPad(
                 id="api_key",
@@ -68,7 +68,10 @@ class TTS(node.Node):
                 id="text",
                 group="text",
                 owner_node=self,
-                default_type_constraints=[pad_constraints.TextStream()],
+                default_type_constraints=[
+                    pad_constraints.TextStream(),
+                    pad_constraints.String(),
+                ],
             )
 
         audio_source = cast(pad.StatelessSourcePad, self.get_pad("audio"))
@@ -114,10 +117,15 @@ class TTS(node.Node):
         api_key_pad = self.get_property_sink_pad_required(runtime.Secret, "api_key")
         secret = api_key_pad.get_value()
         api_key = await self.secret_provider.resolve_secret(secret.secret_id)
-        service = cast(pad.PropertySinkPad, self.get_pad_required("service"))
-        voice_id = cast(pad.PropertySinkPad, self.get_pad_required("voice_id"))
-        audio_source = cast(pad.StatelessSourcePad, self.get_pad_required("audio"))
-        text_sink = cast(pad.StatelessSinkPad, self.get_pad_required("text"))
+        service = self.get_property_sink_pad_required(runtime.Enum, "service")
+        voice_id = self.get_property_sink_pad_required(str, "voice_id")
+        audio_source = self.get_stateless_source_pad_required(
+            runtime.AudioFrame, "audio"
+        )
+        text_sink = cast(
+            pad.StatelessSinkPad[runtime.TextStream | str],
+            self.get_pad_required("text"),
+        )
         cancel_trigger = cast(
             pad.StatelessSinkPad, self.get_pad_required("cancel_trigger")
         )
@@ -125,13 +133,13 @@ class TTS(node.Node):
             pad.StatelessSourcePad, self.get_pad_required("complete_transcription")
         )
         tts: BaseTTS
-        if service.get_value() == "gabber":
+        if service.get_value().value == "gabber":
             tts = GabberTTS(api_key=api_key, logger=self.logger)
-        elif service.get_value() == "elevenlabs":
+        elif service.get_value().value == "elevenlabs":
             tts = ElevenLabsTTS(
                 api_key=api_key, voice=voice_id.get_value(), logger=self.logger
             )
-        elif service.get_value() == "cartesia":
+        elif service.get_value().value == "cartesia":
             tts = CartesiaTTS(api_key=api_key, logger=self.logger)
         elif service.get_value() == "openai":
             tts = OpenAITTS(
