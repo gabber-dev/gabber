@@ -111,7 +111,9 @@ class Mapper:
                 transcription=runtime_value.transcription,
             )
         elif isinstance(runtime_value, runtime.VideoClip):
-            return client.VideoClip(duration=runtime_value.duration)
+            return client.VideoClip(
+                duration=runtime_value.duration, frame_count=len(runtime_value.video)
+            )
 
         raise ValueError(f"Unknown runtime pad value ({type(runtime_value)})")
 
