@@ -212,8 +212,8 @@ function FlowEditInner({ editable }: Props) {
             selectNodesOnDrag={false}
             minZoom={0.1}
             onClickCapture={() => {
-              setDetailedView(undefined);
-              setLogsShowing(false);
+              // setDetailedView(undefined);
+              // setLogsShowing(false);
             }}
           >
             <Background variant={BackgroundVariant.Dots} gap={12} size={1} />

@@ -256,6 +256,8 @@ class LLMContext(node.Node):
                         )
                     ]
 
+            final_pruned = [msg for msg in final_pruned if msg.content]
+
             new_values.extend(final_pruned)
             return new_values
 

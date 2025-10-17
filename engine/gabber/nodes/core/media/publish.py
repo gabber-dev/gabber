@@ -157,7 +157,9 @@ class Publish(node.Node):
                     frame_44_1 = resampler_44100hz.push_audio(original_data)
                     frame_48 = resampler_48000hz.push_audio(original_data)
 
+                    # TODO use timestamp based on audio samples
                     frame = runtime.AudioFrame(
+                        start_timestamp=time.time(),
                         original_data=original_data,
                         data_16000hz=frame_16,
                         data_24000hz=frame_24,

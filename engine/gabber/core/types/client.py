@@ -46,12 +46,14 @@ class ContextMessageContentItem_Image(BaseModel):
     width: int
     height: int
     handle: str
+    timestamp: float | None
 
 
 class ContextMessageContentItem_Audio(BaseModel):
     duration: float
     transcription: str | None
     handle: str
+    start_timestamp: float | None
 
 
 class ContextMessageContentItem_Video(BaseModel):
@@ -59,6 +61,8 @@ class ContextMessageContentItem_Video(BaseModel):
     height: int
     duration: float
     handle: str
+    frame_count: int
+    start_timestamp: float | None
 
 
 class ContextMessageContentItem(BaseModel):

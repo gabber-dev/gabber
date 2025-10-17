@@ -133,6 +133,7 @@ class Mapper:
                             duration=cnt.clip.duration,
                             transcription=cnt.clip.transcription,
                             handle="",
+                            start_timestamp=cnt.clip.start_timestamp,
                         ),
                     )
                 )
@@ -144,6 +145,7 @@ class Mapper:
                             width=cnt.frame.width,
                             height=cnt.frame.height,
                             handle="",
+                            timestamp=cnt.frame.timestamp,
                         ),
                     )
                 )
@@ -160,6 +162,8 @@ class Mapper:
                             height=h,
                             duration=cnt.clip.duration,
                             handle="",
+                            start_timestamp=cnt.clip.start_timestamp,
+                            frame_count=len(cnt.clip.video),
                         ),
                     )
                 )
