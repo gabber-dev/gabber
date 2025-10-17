@@ -682,10 +682,10 @@ class StateMachine(node.Node):
             pad.PropertySinkPad, self.get_pad_required("num_parameters")
         )
         current_state_pad = cast(
-            pad.PropertySourcePad, self.get_pad_required("current_state")
+            pad.PropertySourcePad[runtime.Enum], self.get_pad_required("current_state")
         )
         previous_state_pad = cast(
-            pad.PropertySourcePad, self.get_pad_required("previous_state")
+            pad.PropertySourcePad[runtime.Enum], self.get_pad_required("previous_state")
         )
 
         indices = self._get_parameter_indices()
