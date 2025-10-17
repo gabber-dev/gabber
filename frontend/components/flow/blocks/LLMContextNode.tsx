@@ -42,14 +42,6 @@ export function LLMContextNode({ data }: BaseBlockProps) {
     );
   }, [data]);
 
-  // Use contextMessages from runtime, fallback to editorValue
-  const messages = useMemo(() => {
-    const msgs = contextMessages || editorValue || [];
-    // Ensure it's an array
-    const result = Array.isArray(msgs) ? msgs : [];
-    return result;
-  }, [contextMessages, editorValue]);
-
   return (
     <div className="w-80 flex flex-col bg-base-200 border-2 border-black border-b-4 border-r-4 rounded-lg relative">
       <div className="flex w-full items-center gap-2 bg-base-300 border-b-2 border-black p-3 rounded-t-lg drag-handle cursor-grab active:cursor-grabbing">
@@ -65,7 +57,7 @@ export function LLMContextNode({ data }: BaseBlockProps) {
       </div>
 
       {/* Context Messages Viewer */}
-      {/* <div className="flex flex-col gap-1 p-1">
+      <div className="flex flex-col gap-1 p-1">
         <button
           className="btn btn-sm btn-ghost gap-1"
           onClick={() =>
@@ -76,9 +68,9 @@ export function LLMContextNode({ data }: BaseBlockProps) {
             })
           }
         >
-          Inspect ({messageCount}) Items
+          Inspect Items
         </button>
-      </div> */}
+      </div>
 
       <div className="flex flex-1 flex-col gap-2 p-4 nodrag cursor-default">
         {sourcePads.map((pad) => {

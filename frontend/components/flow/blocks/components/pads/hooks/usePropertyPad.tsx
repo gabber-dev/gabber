@@ -10,6 +10,7 @@ import {
 } from "@/generated/editor";
 import { useCallback, useMemo } from "react";
 import {
+  PadConstraint,
   PadValue,
   usePropertyPad as useRuntimePropertyPad,
 } from "@gabber/client-react";
@@ -20,7 +21,7 @@ import toast from "react-hot-toast";
 type Result<T extends PadValue> = {
   pad: PadEditorRepresentation | undefined;
   editorValue: T | undefined;
-  singleAllowedType: BasePadType | undefined;
+  singleAllowedType: PadConstraint | undefined;
   runtimeValue: T | undefined;
   runtimeChanged: boolean;
   loadListItems?: () => Promise<void>;
