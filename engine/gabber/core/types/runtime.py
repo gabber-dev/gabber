@@ -559,10 +559,10 @@ class ContextMessageDeltaStream:
         return item
 
 
-RuntimePadValuePrimitive = str | int | float | bool | dict
+type RuntimePadValuePrimitive = str | int | float | bool | dict
 
 
-RuntimePadValue = (
+type RuntimePadValue = (
     RuntimePadValuePrimitive
     | Trigger
     | AudioClip
