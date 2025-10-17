@@ -114,6 +114,8 @@ class Mapper:
             return client.VideoClip(
                 duration=runtime_value.duration, frame_count=len(runtime_value.video)
             )
+        elif isinstance(runtime_value, runtime.Enum):
+            return client.Enum(value=runtime_value.value)
 
         raise ValueError(f"Unknown runtime pad value ({type(runtime_value)})")
 

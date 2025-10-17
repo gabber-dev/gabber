@@ -105,25 +105,29 @@ class StateMachine(node.Node):
         if num_parameters.get_value() < 0:
             num_parameters.set_value(0)
 
-        current_state = cast(pad.PropertySourcePad, self.get_pad("current_state"))
+        current_state = cast(
+            pad.PropertySourcePad[runtime.Enum], self.get_pad("current_state")
+        )
         if not current_state:
             current_state = pad.PropertySourcePad(
                 id="current_state",
                 owner_node=self,
                 default_type_constraints=[pad_constraints.Enum(options=[])],
                 group="current_state",
-                value="",
+                value=runtime.Enum(value=""),
             )
             self.pads.append(current_state)
 
-        previous_state = cast(pad.PropertySourcePad, self.get_pad("previous_state"))
+        previous_state = cast(
+            pad.PropertySourcePad[runtime.Enum], self.get_pad("previous_state")
+        )
         if not previous_state:
             previous_state = pad.PropertySourcePad(
                 id="previous_state",
                 owner_node=self,
                 default_type_constraints=[pad_constraints.Enum(options=[])],
                 group="previous_state",
-                value="",
+                value=runtime.Enum(value=""),
             )
             self.pads.append(previous_state)
 
@@ -254,11 +258,13 @@ class StateMachine(node.Node):
                 entry = next(
                     (s for s in config.states if s.id == config.entry_state), None
                 )
-                previous_state.set_value(entry.name if entry else "")
-                current_state.set_value(entry.name if entry else "")
+                previous_state.set_value(
+                    runtime.Enum(value=entry.name if entry else "")
+                )
+                current_state.set_value(runtime.Enum(value=entry.name if entry else ""))
             else:
-                previous_state.set_value("")
-                current_state.set_value("")
+                previous_state.set_value(runtime.Enum(value=""))
+                current_state.set_value(runtime.Enum(value=""))
         except Exception as e:
             logging.warning(f"Failed to update current_state pad: {e}")
 
@@ -273,21 +279,21 @@ class StateMachine(node.Node):
     async def run(self):
         configuration_pad = self.get_property_sink_pad_required(dict, "configuration")
         current_state_pad = cast(
-            pad.PropertySourcePad, self.get_pad_required("current_state")
+            pad.PropertySourcePad[runtime.Enum], self.get_pad_required("current_state")
         )
         previous_state_pad = cast(
-            pad.PropertySourcePad, self.get_pad_required("previous_state")
+            pad.PropertySourcePad[runtime.Enum], self.get_pad_required("previous_state")
         )
 
         triggers: dict[str, bool] = {}
         original_trigger_ctx: pad.RequestContext | None = None
 
         def get_current_state() -> StateMachineState:
-            state_name = cast(str, current_state_pad.get_value())
+            state_name = current_state_pad.get_value()
             config_dict = configuration_pad.get_value()
             config = StateMachineConfiguration.model_validate(config_dict)
             for state in config.states:
-                if state.name == state_name:
+                if state.name == state_name.value:
                     return state
             raise ValueError(
                 f"Current state '{state_name}' not found in configuration."
@@ -414,8 +420,12 @@ class StateMachine(node.Node):
                         f"Transitioning from state '{current_state_name}' to '{next_state.name}'"
                     )
 
-                    previous_state_pad.push_item(current_state_name, ctx)
-                    current_state_pad.push_item(next_state.name, ctx)
+                    previous_state_pad.push_item(
+                        runtime.Enum(value=current_state_name), ctx
+                    )
+                    current_state_pad.push_item(
+                        runtime.Enum(value=next_state.name), ctx
+                    )
 
         async def pad_task(idx: int):
             nonlocal original_trigger_ctx
