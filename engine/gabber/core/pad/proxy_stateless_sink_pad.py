@@ -2,16 +2,18 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeVar, Generic
 
 from ..pad import Item, Pad, ProxyPad, SinkPad, SourcePad
-from ..types import pad_constraints
+from ..types import pad_constraints, runtime
 
 if TYPE_CHECKING:
     from ..node import Node
 
+T = TypeVar("T", bound=runtime.RuntimePadValue)
 
-class ProxyStatelessSinkPad(SinkPad, ProxyPad):
+
+class ProxyStatelessSinkPad(SinkPad[T], ProxyPad[T]):
     def __init__(
         self,
         *,
@@ -24,10 +26,10 @@ class ProxyStatelessSinkPad(SinkPad, ProxyPad):
         self._id = id
         self._group = group
         self._owner_node = owner_node
-        self._queue = asyncio.Queue[Item | None]()
+        self._queue = asyncio.Queue[Item[T] | None]()
         self._other = other
 
-    def get_other(self) -> Pad:
+    def get_other(self) -> Pad[T]:
         return self._other
 
     def get_id(self) -> str:
@@ -58,14 +60,14 @@ class ProxyStatelessSinkPad(SinkPad, ProxyPad):
     ) -> None:
         self._other.set_default_type_constraints(constraints)
 
-    def get_previous_pad(self) -> SourcePad | None:
+    def get_previous_pad(self) -> SourcePad[T] | None:
         return self._other.get_previous_pad()
 
-    def set_previous_pad(self, pad: SourcePad | None) -> None:
+    def set_previous_pad(self, pad: SourcePad[T] | None) -> None:
         self._other.set_previous_pad(pad)
 
     def get_editor_type(self) -> str:
         return "StatelessSinkPad"
 
-    def _get_queue(self) -> asyncio.Queue[Item | None]:
+    def _get_queue(self) -> asyncio.Queue[Item[T] | None]:
         return self._other._get_queue()

@@ -5,16 +5,26 @@ import asyncio
 import logging
 from dataclasses import dataclass
 from ..types import runtime, pad_constraints
-from typing import TYPE_CHECKING, Any, Callable, Protocol, runtime_checkable
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Protocol,
+    runtime_checkable,
+    Generic,
+    TypeVar,
+)
 
 from .request_context import RequestContext
 
 if TYPE_CHECKING:
     from ..node import Node
 
+PAD_T = TypeVar("PAD_T", bound=runtime.RuntimePadValue)
 
-class Pad(Protocol):
-    _update_handlers: set[Callable[["Pad", runtime.RuntimePadValue], None]]
+
+class Pad(Protocol, Generic[PAD_T]):
+    _update_handlers: set[Callable[["Pad[PAD_T]", PAD_T], None]]
     _pad_links: set["Pad"]
     _logger: logging.LoggerAdapter | None
 
@@ -117,26 +127,32 @@ class Pad(Protocol):
         return self._logger
 
 
-@runtime_checkable
-class ProxyPad(Protocol):
-    def get_other(self) -> Pad: ...
+PROXY_PAD_T = TypeVar("PROXY_PAD_T", bound=runtime.RuntimePadValue)
 
 
 @runtime_checkable
-class SinkPad(Pad, Protocol):
-    def get_previous_pad(self) -> "SourcePad | None": ...
-    def set_previous_pad(self, pad: "SourcePad | None") -> None: ...
-    def _get_queue(self) -> asyncio.Queue["Item | None"]: ...
+class ProxyPad(Protocol, Generic[PROXY_PAD_T]):
+    def get_other(self) -> Pad[PROXY_PAD_T]: ...
+
+
+SINK_PAD_T = TypeVar("SINK_PAD_T", bound=runtime.RuntimePadValue)
+
+
+@runtime_checkable
+class SinkPad(Pad[SINK_PAD_T], Protocol, Generic[SINK_PAD_T]):
+    def get_previous_pad(self) -> "SourcePad[SINK_PAD_T] | None": ...
+    def set_previous_pad(self, pad: "SourcePad[SINK_PAD_T] | None") -> None: ...
+    def _get_queue(self) -> asyncio.Queue["Item[SINK_PAD_T] | None"]: ...
 
     def disconnect(self) -> None:
         prev_pad = self.get_previous_pad()
         if prev_pad:
             prev_pad.disconnect(self)
 
-    def __aiter__(self) -> "SinkPad":
+    def __aiter__(self) -> "SinkPad[SINK_PAD_T]":
         return self
 
-    async def __anext__(self) -> "Item":
+    async def __anext__(self) -> "Item[SINK_PAD_T]":
         queue = self._get_queue()
         item = await queue.get()
         if item is None:
@@ -144,12 +160,15 @@ class SinkPad(Pad, Protocol):
         return item
 
 
-@runtime_checkable
-class SourcePad(Pad, Protocol):
-    def get_next_pads(self) -> list["SinkPad"]: ...
-    def set_next_pads(self, pads: list["SinkPad"]) -> None: ...
+SOURCE_PAD_T = TypeVar("SOURCE_PAD_T", bound=runtime.RuntimePadValue)
 
-    def push_item(self, value: runtime.RuntimePadValue, ctx: RequestContext) -> None:
+
+@runtime_checkable
+class SourcePad(Pad[SOURCE_PAD_T], Protocol, Generic[SOURCE_PAD_T]):
+    def get_next_pads(self) -> list["SinkPad[SOURCE_PAD_T]"]: ...
+    def set_next_pads(self, pads: list["SinkPad[SOURCE_PAD_T]"]) -> None: ...
+
+    def push_item(self, value: SOURCE_PAD_T, ctx: RequestContext) -> None:
         notify_type = False
         if isinstance(value, NOTIFIABLE_TYPES):
             notify_type = True
@@ -187,13 +206,13 @@ class SourcePad(Pad, Protocol):
                 parent=ctx, timeout=ctx._timeout_s, originator=self.get_id()
             )
 
-            item = Item(value=value, ctx=new_ctx)
+            item = Item[SOURCE_PAD_T](value=value, ctx=new_ctx)
 
             q.put_nowait(item)
 
         ctx.complete()
 
-    def connect(self, sink_pad: "SinkPad") -> None:
+    def connect(self, sink_pad: "SinkPad[SOURCE_PAD_T]") -> None:
         if not self.can_connect(sink_pad):
             raise ValueError(
                 f"Cannot connect to this type of SinkPad: {self.get_owner_node().id}.{self.get_id()} -> {sink_pad.get_owner_node().id}.{sink_pad.get_id()}"
@@ -211,7 +230,7 @@ class SourcePad(Pad, Protocol):
                 if isinstance(np, PropertyPad):
                     np.set_value(v)
 
-    def disconnect(self, sink_pad: "SinkPad") -> None:
+    def disconnect(self, sink_pad: "SinkPad[SOURCE_PAD_T]") -> None:
         next_pads = self.get_next_pads()
         next_pads = [
             np
@@ -237,7 +256,7 @@ class SourcePad(Pad, Protocol):
             np.set_previous_pad(None)
         self.set_next_pads([])
 
-    def can_connect(self, other: "Pad") -> bool:
+    def can_connect(self, other: "Pad[SOURCE_PAD_T]") -> bool:
         if not isinstance(other, SinkPad):
             return False
 
@@ -254,15 +273,21 @@ class SourcePad(Pad, Protocol):
         return True
 
 
+PROPERTY_PAD_T = TypeVar("PROPERTY_PAD_T", bound=runtime.RuntimePadValue)
+
+
 @runtime_checkable
-class PropertyPad(Pad, Protocol):
-    def get_value(self) -> runtime.RuntimePadValue: ...
-    def set_value(self, value: runtime.RuntimePadValue): ...
+class PropertyPad(Pad[PROPERTY_PAD_T], Protocol, Generic[PROPERTY_PAD_T]):
+    def get_value(self) -> PROPERTY_PAD_T: ...
+    def set_value(self, value: PROPERTY_PAD_T): ...
+
+
+ITEM_T = TypeVar("ITEM_T", bound=runtime.RuntimePadValue)
 
 
 @dataclass
-class Item:
-    value: runtime.RuntimePadValue
+class Item(Generic[ITEM_T]):
+    value: ITEM_T
     ctx: "RequestContext"
 
 

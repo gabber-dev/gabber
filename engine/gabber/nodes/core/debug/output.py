@@ -7,7 +7,7 @@ from typing import cast
 import numpy as np
 from gabber.core import pad
 from gabber.core.node import Node
-from gabber.core.types.runtime import AudioFrame, VideoFrame
+from gabber.core.types import runtime
 from livekit import rtc
 from gabber.core.node import NodeMetadata, NodeNote
 from gabber.core.types import pad_constraints
@@ -25,7 +25,7 @@ class Output(Node):
         )
 
     def resolve_pads(self):
-        audio = cast(pad.StatelessSinkPad, self.get_pad("audio"))
+        audio = self.get_stateless_sink_pad(runtime.AudioFrame, "audio")
         if not audio:
             audio = pad.StatelessSinkPad(
                 id="audio",
@@ -33,7 +33,7 @@ class Output(Node):
                 default_type_constraints=[pad_constraints.Audio()],
                 group="audio",
             )
-        video = cast(pad.StatelessSinkPad, self.get_pad("video"))
+        video = self.get_stateless_sink_pad(runtime.VideoFrame, "video")
         if not video:
             video = pad.StatelessSinkPad(
                 id="video",
@@ -45,8 +45,8 @@ class Output(Node):
         self.pads = [audio, video]
 
     def get_notes(self) -> list[NodeNote]:
-        audio_pad = cast(pad.StatelessSinkPad, self.get_pad("audio"))
-        video_pad = cast(pad.StatelessSinkPad, self.get_pad("video"))
+        audio_pad = self.get_stateless_sink_pad_required(runtime.AudioFrame, "audio")
+        video_pad = self.get_stateless_sink_pad_required(runtime.VideoFrame, "video")
         notes: list[NodeNote] = []
         any_connections = False
 
@@ -75,8 +75,8 @@ class Output(Node):
         return notes
 
     async def run(self):
-        audio = cast(pad.StatelessSinkPad, self.get_pad_required("audio"))
-        video = cast(pad.StatelessSinkPad, self.get_pad_required("video"))
+        audio = self.get_stateless_sink_pad_required(runtime.AudioFrame, "audio")
+        video = self.get_stateless_sink_pad_required(runtime.VideoFrame, "video")
 
         async def audio_consume():
             source = rtc.AudioSource(24000, 1)
@@ -85,15 +85,15 @@ class Output(Node):
             options.source = rtc.TrackSource.SOURCE_MICROPHONE
             await self.room.local_participant.publish_track(track, options)
 
-            async for f in audio:
-                a_frame = cast(AudioFrame, f.value)
+            async for item in audio:
+                a_frame = item.value
                 rtc_frame = rtc.AudioFrame.create(
                     24000, 1, a_frame.data_24000hz.sample_count
                 )
                 dst = np.frombuffer(rtc_frame.data, dtype=np.int16)
                 np.copyto(dst, a_frame.data_24000hz.data[:])
                 await source.capture_frame(rtc_frame)
-                f.ctx.complete()
+                item.ctx.complete()
 
         async def video_consume():
             source = rtc.VideoSource(width=640, height=480)
@@ -102,7 +102,7 @@ class Output(Node):
             options.source = rtc.TrackSource.SOURCE_CAMERA
             await self.room.local_participant.publish_track(track, options)
             async for f in video:
-                v_frame = cast(VideoFrame, f.value)
+                v_frame = f.value
                 frame = rtc.VideoFrame(
                     v_frame.width,
                     v_frame.height,

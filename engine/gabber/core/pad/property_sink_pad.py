@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, Generic, TypeVar
 
 from .pad import Item, PropertyPad, SinkPad, SourcePad, NOTIFIABLE_TYPES
 from ..types import pad_constraints, runtime
@@ -10,15 +10,21 @@ from ..types import pad_constraints, runtime
 if TYPE_CHECKING:
     from ..node import Node
 
+PROPERTY_SINK_PAD_T = TypeVar("PROPERTY_SINK_PAD_T", bound=runtime.RuntimePadValue)
 
-class PropertySinkPad(SinkPad, PropertyPad):
+
+class PropertySinkPad(
+    SinkPad[PROPERTY_SINK_PAD_T],
+    PropertyPad[PROPERTY_SINK_PAD_T],
+    Generic[PROPERTY_SINK_PAD_T],
+):
     def __init__(
         self,
         *,
         id: str,
         group: str,
         owner_node: "Node",
-        value: runtime.RuntimePadValue,
+        value: PROPERTY_SINK_PAD_T,
         default_type_constraints: list[pad_constraints.BasePadType] | None = None,
     ):
         super().__init__()
@@ -72,10 +78,10 @@ class PropertySinkPad(SinkPad, PropertyPad):
     def get_direction(self) -> Literal["source"] | Literal["sink"]:
         return "sink"
 
-    def get_value(self) -> runtime.RuntimePadValue:
+    def get_value(self) -> PROPERTY_SINK_PAD_T:
         return self._value
 
-    def set_value(self, value: runtime.RuntimePadValue):
+    def set_value(self, value: PROPERTY_SINK_PAD_T):
         self._value = value
         if isinstance(value, NOTIFIABLE_TYPES):
             self._notify_update(value)

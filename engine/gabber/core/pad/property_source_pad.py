@@ -3,14 +3,20 @@
 
 from typing import TYPE_CHECKING, Literal
 
-from .pad import PropertyPad, SinkPad, SourcePad, NOTIFIABLE_TYPES
+from .pad import PropertyPad, SinkPad, SourcePad, NOTIFIABLE_TYPES, TypeVar, Generic
 from ..types import pad_constraints, runtime
 
 if TYPE_CHECKING:
     from ..node import Node
 
+PROPERTY_SOURCE_PAD_T = TypeVar("PROPERTY_SOURCE_PAD_T", bound=runtime.RuntimePadValue)
 
-class PropertySourcePad(SourcePad, PropertyPad):
+
+class PropertySourcePad(
+    SourcePad[PROPERTY_SOURCE_PAD_T],
+    PropertyPad[PROPERTY_SOURCE_PAD_T],
+    Generic[PROPERTY_SOURCE_PAD_T],
+):
     def __init__(
         self,
         *,
@@ -18,7 +24,7 @@ class PropertySourcePad(SourcePad, PropertyPad):
         group: str,
         owner_node: "Node",
         default_type_constraints: list[pad_constraints.BasePadType] | None,
-        value: runtime.RuntimePadValue = None,
+        value: PROPERTY_SOURCE_PAD_T = None,
     ):
         super().__init__()
         self._id = id
@@ -70,10 +76,10 @@ class PropertySourcePad(SourcePad, PropertyPad):
     def get_direction(self) -> Literal["source"] | Literal["sink"]:
         return "source"
 
-    def get_value(self) -> runtime.RuntimePadValue:
+    def get_value(self) -> PROPERTY_SOURCE_PAD_T:
         return self._value
 
-    def set_value(self, value: runtime.RuntimePadValue):
+    def set_value(self, value: PROPERTY_SOURCE_PAD_T):
         self._value = value
         if isinstance(value, NOTIFIABLE_TYPES):
             self._notify_update(value)

@@ -7,13 +7,24 @@ from abc import abstractmethod
 from livekit import rtc
 
 from ..secret import PublicSecret, SecretProvider
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, TypeVar, cast
 
-from ..pad import Pad, SinkPad, SourcePad
+from ..pad import (
+    Pad,
+    SinkPad,
+    SourcePad,
+    PropertySourcePad,
+    PropertySinkPad,
+    StatelessSinkPad,
+    StatelessSourcePad,
+)
 from ..editor.models import NodeMetadata, NodeNote
+from ..types import runtime
 
 if TYPE_CHECKING:
     from ..graph import Graph
+
+T = TypeVar("T", bound=runtime.RuntimePadValue)
 
 
 class Node:
@@ -79,6 +90,78 @@ class Node:
         pad = self.get_pad(pad_id)
         if not pad:
             raise ValueError(f"Pad with id {pad_id} not found in node {self.id}")
+        return pad
+
+    def get_typed_pad(self, _: type[T], pad_id: str) -> Pad[T] | None:
+        pad = self.get_pad(pad_id)
+        return cast(Pad[T], pad)
+
+    def get_property_source_pad(
+        self, _: type[T], pad_id: str
+    ) -> PropertySourcePad[T] | None:
+        pad = self.get_pad(pad_id)
+        assert isinstance(pad, PropertySourcePad)
+        return cast(PropertySourcePad[T], pad)
+
+    def get_property_sink_pad(
+        self, _: type[T], pad_id: str
+    ) -> PropertySinkPad[T] | None:
+        pad = self.get_pad(pad_id)
+        assert isinstance(pad, PropertySinkPad)
+        return cast(PropertySinkPad[T], pad)
+
+    def get_stateless_source_pad(
+        self, _: type[T], pad_id: str
+    ) -> StatelessSourcePad[T] | None:
+        pad = self.get_pad(pad_id)
+        assert isinstance(pad, StatelessSourcePad)
+        return cast(StatelessSourcePad[T], pad)
+
+    def get_stateless_sink_pad(
+        self, _: type[T], pad_id: str
+    ) -> StatelessSinkPad[T] | None:
+        pad = self.get_pad(pad_id)
+        assert isinstance(pad, StatelessSinkPad)
+        return cast(StatelessSinkPad[T], pad)
+
+    def get_property_source_pad_required(
+        self, _: type[T], pad_id: str
+    ) -> PropertySourcePad[T]:
+        pad = self.get_property_source_pad(_, pad_id)
+        if not pad:
+            raise ValueError(
+                f"PropertySourcePad with id {pad_id} not found in node {self.id}"
+            )
+        return pad
+
+    def get_property_sink_pad_required(
+        self, _: type[T], pad_id: str
+    ) -> PropertySinkPad[T]:
+        pad = self.get_property_sink_pad(_, pad_id)
+        if not pad:
+            raise ValueError(
+                f"PropertySinkPad with id {pad_id} not found in node {self.id}"
+            )
+        return pad
+
+    def get_stateless_sink_pad_required(
+        self, _: type[T], pad_id: str
+    ) -> StatelessSinkPad[T]:
+        pad = self.get_stateless_sink_pad(_, pad_id)
+        if not pad:
+            raise ValueError(
+                f"PropertySinkPad with id {pad_id} not found in node {self.id}"
+            )
+        return pad
+
+    def get_stateless_source_pad_required(
+        self, _: type[T], pad_id: str
+    ) -> StatelessSourcePad[T]:
+        pad = self.get_stateless_source_pad(_, pad_id)
+        if not pad:
+            raise ValueError(
+                f"StatelessSourcePad with id {pad_id} not found in node {self.id}"
+            )
         return pad
 
     def get_connected_nodes(self) -> list["Node"]:
