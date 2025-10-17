@@ -48,6 +48,7 @@ class MultiParticipantSTT(node.Node):
                 group="api_key",
                 owner_node=self,
                 default_type_constraints=[pad_constraints.Secret(options=self.secrets)],
+                value=None,
             )
 
         num_participants = cast(pad.PropertySinkPad, self.get_pad("num_participants"))

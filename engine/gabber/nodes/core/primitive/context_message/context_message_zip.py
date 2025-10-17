@@ -28,7 +28,7 @@ class ContextMessageZip(Node):
                 group="role",
                 owner_node=self,
                 default_type_constraints=[pad_constraints.ContextMessageRole()],
-                value=runtime.ContextMessageRole.SYSTEM,
+                value=runtime.ContextMessageRoleEnum.SYSTEM,
             )
 
         message_source = cast(StatelessSourcePad, self.get_pad("context_message"))

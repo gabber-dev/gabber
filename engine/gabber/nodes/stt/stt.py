@@ -107,6 +107,7 @@ class STT(node.Node):
                 group="api_key",
                 owner_node=self,
                 default_type_constraints=[pad_constraints.Secret(options=self.secrets)],
+                value=None,
             )
             self.pads.append(api_key)
 

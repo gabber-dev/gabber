@@ -39,6 +39,7 @@ class TTS(node.Node):
                         options=["gabber", "cartesia", "elevenlabs", "openai"]
                     )
                 ],
+                value=runtime.Enum(value="gabber"),
             )
 
         api_key = cast(pad.PropertySinkPad, self.get_pad("api_key"))
@@ -48,6 +49,7 @@ class TTS(node.Node):
                 group="api_key",
                 owner_node=self,
                 default_type_constraints=[pad_constraints.Secret(options=self.secrets)],
+                value=None,
             )
 
         voice_id = cast(pad.PropertySinkPad, self.get_pad("voice_id"))
@@ -57,6 +59,7 @@ class TTS(node.Node):
                 group="voice_id",
                 owner_node=self,
                 default_type_constraints=[pad_constraints.String()],
+                value="626c3b02-2d2a-4a93-b3e7-be35fd2b95cd",  # Tara
             )
 
         text_sink = cast(pad.StatelessSinkPad, self.get_pad("text"))

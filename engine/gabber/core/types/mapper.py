@@ -198,9 +198,7 @@ class Mapper:
                 )
         return runtime.ContextMessage(
             tool_calls=[],
-            role=runtime.ContextMessageRole(
-                value=runtime.ContextMessageRoleEnum(client_value.role.value)
-            ),
+            role=runtime.ContextMessageRoleEnum(client_value.role.value),
             content=cnts,
         )
 

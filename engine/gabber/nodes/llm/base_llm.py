@@ -147,7 +147,7 @@ class BaseLLM(node.Node, ABC):
                 ],
                 value=[
                     runtime.ContextMessage(
-                        role=runtime.ContextMessageRole.SYSTEM,
+                        role=runtime.ContextMessageRoleEnum.SYSTEM,
                         content=[
                             runtime.ContextMessageContentItem_Text(
                                 content="You are a helpful assistant."
