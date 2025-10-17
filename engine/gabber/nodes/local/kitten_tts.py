@@ -349,6 +349,7 @@ class TTSJob:
                 frame_data_44100 = self._resampler_44100hz.push_audio(frame_data_24000)
                 frame_data_48000 = self._resampler_48000hz.push_audio(frame_data_24000)
                 frame = runtime.AudioFrame(
+                    start_timestamp=time.time(),
                     original_data=frame_data_24000,
                     data_16000hz=frame_data_16000,
                     data_24000hz=frame_data_24000,

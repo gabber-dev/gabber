@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
+import time
 import logging
 from abc import ABC, abstractmethod
 from typing import Any, Protocol
@@ -134,6 +135,7 @@ class MultiplexWebSocketTTS(ABC, TTS):
                     frame_data_44100 = r_44100hz.push_audio(frame_data_24000)
                     frame_data_48000 = r_48000hz.push_audio(frame_data_24000)
                     frame = AudioFrame(
+                        start_timestamp=time.time(),
                         original_data=frame_data_24000,
                         data_16000hz=frame_data_16000,
                         data_24000hz=frame_data_24000,
