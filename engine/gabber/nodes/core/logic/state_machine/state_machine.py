@@ -87,7 +87,13 @@ class StateMachine(node.Node):
                 owner_node=self,
                 default_type_constraints=[pad_constraints.Object()],
                 group="configuration",
-                value={"states": [], "transitions": []},
+                value={
+                    "states": [],
+                    "transitions": [],
+                    "entry_state": None,
+                    "entry_node_position": {"x": 0.0, "y": 0.0},
+                    "special_any_state_position": {"x": 100, "y": 0.0},
+                },
             )
             self.pads.append(configuration)
 
