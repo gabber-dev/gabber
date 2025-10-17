@@ -60,7 +60,7 @@ export function usePropertyPad<DataType extends PadValue>(nodeId: string, padId:
         try {
             const items = await padRef.current?.getListItems() || [];
             setCurrentValue(prev => {
-                if (prev === "loading" || prev.type !== "list") {
+                if (prev === "loading" || prev?.type !== "list") {
                     console.error("Current value is not a list, cannot load list items");
                     return prev
                 };

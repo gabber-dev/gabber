@@ -32,6 +32,7 @@ class EnumSwitchProperty(Node):
                 group="sink",
                 owner_node=self,
                 default_type_constraints=[pad_constraints.Enum(options=None)],
+                value=None,
             )
 
         options: list[str] = []
@@ -52,6 +53,7 @@ class EnumSwitchProperty(Node):
                     owner_node=self,
                     group="value",
                     default_type_constraints=ALLOWED_VALUE_TYPES,
+                    value=None,
                 )
             value_pads.append(s_p)
 

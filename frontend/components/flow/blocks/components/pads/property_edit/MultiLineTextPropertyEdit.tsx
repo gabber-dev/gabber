@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
+import { String } from "@gabber/client-react";
 import { usePropertyPad } from "../hooks/usePropertyPad";
 import { PropertyEditProps } from "./PropertyEdit";
 import { useState, useEffect, useRef } from "react";
@@ -11,16 +12,16 @@ export function MultiLineTextPropertyEdit({
   nodeId,
   padId,
 }: PropertyEditProps) {
-  const { runtimeValue, setEditorValue: setValue } = usePropertyPad<string>(
+  const { runtimeValue, setEditorValue: setValue } = usePropertyPad<String>(
     nodeId,
     padId,
   );
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const [localValue, setLocalValue] = useState(runtimeValue || "");
+  const [localValue, setLocalValue] = useState(runtimeValue?.value || "");
 
   useEffect(() => {
-    setLocalValue(runtimeValue || "");
+    setLocalValue(runtimeValue?.value || "");
   }, [runtimeValue]);
 
   const autoResize = () => {
@@ -39,7 +40,7 @@ export function MultiLineTextPropertyEdit({
   };
 
   const handleBlur = () => {
-    setValue(localValue);
+    setValue({ type: "string", value: localValue });
   };
 
   return (

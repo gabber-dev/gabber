@@ -6,9 +6,10 @@
 import { useState, useEffect } from "react";
 import { usePropertyPad } from "../hooks/usePropertyPad";
 import { PropertyEditProps } from "./PropertyEdit";
+import { Integer } from "@gabber/client-react";
 
 export function IntPropertyEdit({ nodeId, padId }: PropertyEditProps) {
-  const { runtimeValue, setEditorValue: setValue } = usePropertyPad<number>(
+  const { runtimeValue, setEditorValue: setValue } = usePropertyPad<Integer>(
     nodeId,
     padId,
   );
@@ -16,7 +17,7 @@ export function IntPropertyEdit({ nodeId, padId }: PropertyEditProps) {
   const [localValue, setLocalValue] = useState(runtimeValue?.toString() || "0");
 
   useEffect(() => {
-    setLocalValue(runtimeValue?.toString() || "0");
+    setLocalValue(runtimeValue?.value?.toString() || "0");
   }, [runtimeValue]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -25,7 +26,7 @@ export function IntPropertyEdit({ nodeId, padId }: PropertyEditProps) {
 
   const handleBlur = () => {
     const intValue = parseInt(localValue);
-    setValue(isNaN(intValue) ? 0 : intValue);
+    setValue({ type: "integer", value: isNaN(intValue) ? 0 : intValue });
   };
 
   return (

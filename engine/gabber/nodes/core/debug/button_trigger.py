@@ -4,7 +4,7 @@
 from gabber.core import node, pad
 from gabber.core.node import NodeMetadata
 from gabber.core.types import pad_constraints
-from typing import cast
+from gabber.core.types import runtime
 
 
 class ButtonTrigger(node.Node):
@@ -19,7 +19,7 @@ class ButtonTrigger(node.Node):
         )
 
     def resolve_pads(self):
-        trigger = cast(pad.StatelessSourcePad, self.get_pad("trigger"))
+        trigger = self.get_stateless_source_pad(runtime.Trigger, "trigger")
         if not trigger:
             trigger = pad.StatelessSourcePad(
                 id="trigger",

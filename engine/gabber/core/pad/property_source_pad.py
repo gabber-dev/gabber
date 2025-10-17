@@ -1,17 +1,22 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-import logging
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Literal
 
-from .pad import PropertyPad, SinkPad, SourcePad, NOTIFIABLE_TYPES
-from ..types import pad_constraints
+from .pad import PropertyPad, SinkPad, SourcePad, NOTIFIABLE_TYPES, TypeVar, Generic
+from ..types import pad_constraints, runtime
 
 if TYPE_CHECKING:
     from ..node import Node
 
+PROPERTY_SOURCE_PAD_T = TypeVar("PROPERTY_SOURCE_PAD_T", bound=runtime.RuntimePadValue)
 
-class PropertySourcePad(SourcePad, PropertyPad):
+
+class PropertySourcePad(
+    SourcePad[PROPERTY_SOURCE_PAD_T],
+    PropertyPad[PROPERTY_SOURCE_PAD_T],
+    Generic[PROPERTY_SOURCE_PAD_T],
+):
     def __init__(
         self,
         *,
@@ -19,7 +24,7 @@ class PropertySourcePad(SourcePad, PropertyPad):
         group: str,
         owner_node: "Node",
         default_type_constraints: list[pad_constraints.BasePadType] | None,
-        value: Any,
+        value: PROPERTY_SOURCE_PAD_T = None,
     ):
         super().__init__()
         self._id = id
@@ -71,10 +76,10 @@ class PropertySourcePad(SourcePad, PropertyPad):
     def get_direction(self) -> Literal["source"] | Literal["sink"]:
         return "source"
 
-    def get_value(self) -> Any:
+    def get_value(self) -> PROPERTY_SOURCE_PAD_T:
         return self._value
 
-    def set_value(self, value: Any):
+    def set_value(self, value: PROPERTY_SOURCE_PAD_T):
         self._value = value
         if isinstance(value, NOTIFIABLE_TYPES):
             self._notify_update(value)

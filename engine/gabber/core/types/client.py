@@ -1,5 +1,9 @@
+from __future__ import annotations
+
 from pydantic import BaseModel, Field
-from typing import Any, Annotated, Literal
+from typing import Any, Literal, Annotated
+from enum import Enum as PyEnum
+from ..types import pad_constraints
 
 
 class String(BaseModel):
@@ -28,13 +32,14 @@ class Trigger(BaseModel):
 
 class AudioClip(BaseModel):
     type: Literal["audio_clip"] = "audio_clip"
-    transcript: str
+    transcription: str | None
     duration: float
 
 
 class VideoClip(BaseModel):
     type: Literal["video_clip"] = "video_clip"
     duration: float
+    frame_count: int
 
 
 class ContextMessageContentItem_Image(BaseModel):
@@ -57,7 +62,6 @@ class ContextMessageContentItem_Video(BaseModel):
 
 
 class ContextMessageContentItem(BaseModel):
-    type: Literal["context_message_content"] = "context_message_content"
     content_type: Literal["text", "image", "audio", "video"]
     text: str | None = None
     image: ContextMessageContentItem_Image | None = None
@@ -65,19 +69,77 @@ class ContextMessageContentItem(BaseModel):
     video: ContextMessageContentItem_Video | None = None
 
 
+class ContextMessageRoleEnum(str, PyEnum):
+    USER = "user"
+    ASSISTANT = "assistant"
+    SYSTEM = "system"
+    TOOL = "tool"
+
+
+class ContextMessageRole(BaseModel):
+    type: Literal["context_message_role"] = "context_message_role"
+    value: ContextMessageRoleEnum
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
 class ContextMessage(BaseModel):
     type: Literal["context_message"] = "context_message"
-    role: str
+    role: ContextMessageRole
     content: list[ContextMessageContentItem]
+
+
+class Enum(BaseModel):
+    type: Literal["enum"] = "enum"
+    value: str
+
+
+class Secret(BaseModel):
+    type: Literal["secret"] = "secret"
+    secret_id: str
+    name: str
+
+
+class NodeReference(BaseModel):
+    type: Literal["node_reference"] = "node_reference"
+    node_id: str
+
+
+class Schema(BaseModel):
+    type: Literal["schema"] = "schema"
+    properties: dict[
+        str,
+        pad_constraints.String
+        | pad_constraints.Integer
+        | pad_constraints.Float
+        | pad_constraints.Boolean
+        | pad_constraints.Object
+        | pad_constraints.List,
+    ]
+    required: list[str] | None = None
+    defaults: dict[str, Any] | None = None
+
+
+class ToolDefinition(BaseModel):
+    type: Literal["tool_definition"] = "tool_definition"
+    name: str
+    description: str
+    parameters: "Schema | None" = None
 
 
 class List(BaseModel):
     type: Literal["list"] = "list"
     count: int
-    items: list[Any]
+    items: list["ClientPadValue"]
 
 
-PadValue = Annotated[
+class Object(BaseModel):
+    type: Literal["object"] = "object"
+    value: dict[str, Any]
+
+
+ClientPadValue = (
     String
     | Integer
     | Float
@@ -86,6 +148,18 @@ PadValue = Annotated[
     | AudioClip
     | VideoClip
     | List
-    | ContextMessage,
-    Field(discriminator="type", description="Type of the pad triggered value"),
+    | ContextMessageRole
+    | ContextMessage
+    | Enum
+    | Secret
+    | NodeReference
+    | ToolDefinition
+    | Schema
+    | Object
+    | None
+)
+
+DiscriminatedClientPadValue = Annotated[
+    ClientPadValue,
+    Field(discriminator="type"),
 ]

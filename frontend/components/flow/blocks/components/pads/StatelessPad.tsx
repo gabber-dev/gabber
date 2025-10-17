@@ -8,7 +8,7 @@ import { PadHandle } from "./PadHandle";
 import { useStatelessPad } from "./hooks/useStatelessPad";
 import { useRun } from "@/hooks/useRun";
 import { useNodeId } from "@xyflow/react";
-import { useSourcePad, usePad } from "@gabber/client-react";
+import { useSourcePad, usePad, Trigger } from "@gabber/client-react";
 import { useEffect, useState } from "react";
 
 type Props = {
@@ -21,7 +21,7 @@ export function StatelessPad({ data, notes }: Props) {
   const { singleAllowedType } = useStatelessPad(data.id);
   const { connectionState } = useRun();
   const nodeId = useNodeId();
-  const { pushValue } = useSourcePad(nodeId || "error", data.id);
+  const { pushValue } = useSourcePad<Trigger>(nodeId || "error", data.id);
   const [isActive, setIsActive] = useState(false);
   const { lastValue } = usePad(nodeId || "error", data.id);
 
@@ -51,7 +51,7 @@ export function StatelessPad({ data, notes }: Props) {
           <button
             className="btn btn-secondary btn-sm px-1 text-xs py-0 h-5 box-border"
             onClick={async () => {
-              pushValue({ value: "trigger" });
+              pushValue({ type: "trigger" });
             }}
           >
             Test

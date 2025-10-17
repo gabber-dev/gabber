@@ -14,6 +14,7 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import Editor from "@monaco-editor/react";
 import { PadHandle } from "./components/pads/PadHandle";
 import { PropertyEdit } from "./components/pads/property_edit/PropertyEdit";
+import { Boolean, Float, Integer, String } from "@gabber/client-react";
 
 function RenderedTab({ rendered }: { rendered: string }) {
   return (
@@ -25,12 +26,10 @@ function RenderedTab({ rendered }: { rendered: string }) {
 
 export function Jinja2Node({ data }: BaseBlockProps) {
   const {} = useEditor();
-  const { runtimeValue: jinjaRuntimeValue, setEditorValue } = usePropertyPad(
-    data.id,
-    "jinja_template",
-  );
+  const { runtimeValue: jinjaRuntimeValue, setEditorValue } =
+    usePropertyPad<String>(data.id, "jinja_template");
   const { pad: renderedOutputPad, runtimeValue: renderedOutputValue } =
-    usePropertyPad(data.id, "rendered_output");
+    usePropertyPad<String>(data.id, "rendered_output");
   const { pad: numPropertiesPad } = usePropertyPad(data.id, "num_properties");
   const propertyPads = useMemo(() => {
     const propertyNamePads = data.pads.filter((p) =>
@@ -60,11 +59,11 @@ export function Jinja2Node({ data }: BaseBlockProps) {
   const [activeTab, setActiveTab] = useState<"editor" | "rendered">("editor");
 
   const [localJinjaValue, setLocalJinjaValue] = useState(
-    (jinjaRuntimeValue as string) || "",
+    jinjaRuntimeValue?.value || "",
   );
 
   useEffect(() => {
-    setLocalJinjaValue((jinjaRuntimeValue as string) || "");
+    setLocalJinjaValue(jinjaRuntimeValue?.value || "");
   }, [jinjaRuntimeValue]);
 
   const currentValueRef = useRef(localJinjaValue);
@@ -105,7 +104,10 @@ export function Jinja2Node({ data }: BaseBlockProps) {
             onChange={(value) => setLocalJinjaValue(value || "")}
             onMount={(editor) => {
               const handleBlur = () => {
-                setEditorValue(currentValueRef.current);
+                setEditorValue({
+                  type: "string",
+                  value: currentValueRef.current,
+                });
               };
               const disposable = editor.onDidBlurEditorWidget(handleBlur);
               return () => disposable.dispose();
@@ -131,7 +133,7 @@ export function Jinja2Node({ data }: BaseBlockProps) {
             }}
           />
         ) : (
-          <RenderedTab rendered={renderedOutputValue as string} />
+          <RenderedTab rendered={renderedOutputValue?.value || ""} />
         )}
       </div>
       <div className="flex flex-col">
@@ -162,7 +164,7 @@ export function Jinja2Node({ data }: BaseBlockProps) {
               <PadHandle data={valuePad} notes={[]} />
               <div className="text-xs ml-2 text-accent">value</div>
               <div className="text-neutral-200 text-xs italic">
-                {(valuePad.value as string) || ""}
+                {(valuePad.value as String | Integer | Boolean | Float).value}
               </div>
             </div>
           </div>

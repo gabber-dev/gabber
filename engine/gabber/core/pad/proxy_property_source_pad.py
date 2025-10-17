@@ -1,7 +1,7 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from ..pad import (
     Pad,
@@ -11,13 +11,15 @@ from ..pad import (
     SourcePad,
 )
 from .pad import NOTIFIABLE_TYPES
-from ..types import pad_constraints
+from ..types import pad_constraints, runtime
 
 if TYPE_CHECKING:
     from ..node import Node
 
+T = TypeVar("T", bound=runtime.RuntimePadValue)
 
-class ProxyPropertySourcePad(SourcePad, PropertyPad, ProxyPad):
+
+class ProxyPropertySourcePad(SourcePad[T], PropertyPad[T], ProxyPad[T]):
     def __init__(
         self,
         *,
@@ -33,9 +35,9 @@ class ProxyPropertySourcePad(SourcePad, PropertyPad, ProxyPad):
         if not isinstance(other, PropertyPad):
             raise TypeError("Other pad must be a PropertyPad")
         self._other = other
-        self._my_next_pads: list[SinkPad] = []
+        self._my_next_pads: list[SinkPad[T]] = []
 
-    def get_other(self) -> Pad:
+    def get_other(self) -> Pad[T]:
         return self._other
 
     def get_id(self) -> str:
@@ -66,10 +68,10 @@ class ProxyPropertySourcePad(SourcePad, PropertyPad, ProxyPad):
     ) -> None:
         self._other.set_default_type_constraints(constraints)
 
-    def get_next_pads(self) -> list[SinkPad]:
+    def get_next_pads(self) -> list[SinkPad[T]]:
         return self._my_next_pads[:]
 
-    def set_next_pads(self, pads: list[SinkPad]) -> None:
+    def set_next_pads(self, pads: list[SinkPad[T]]) -> None:
         self._my_next_pads = pads
         full_other_next_pads = self._other.get_next_pads()
         other_next_pads = [p for p in full_other_next_pads if p not in pads]
@@ -78,10 +80,10 @@ class ProxyPropertySourcePad(SourcePad, PropertyPad, ProxyPad):
     def get_editor_type(self) -> str:
         return "PropertySourcePad"
 
-    def get_value(self) -> Any:
+    def get_value(self) -> T:
         return self._other.get_value()
 
-    def set_value(self, value: Any):
+    def set_value(self, value: T):
         if isinstance(value, NOTIFIABLE_TYPES):
             self._notify_update(value)
         self._other.set_value(value)

@@ -94,7 +94,7 @@ class UpdatePadEdit(BaseModel):
     type: Literal[EditType.UPDATE_PAD] = EditType.UPDATE_PAD
     node: str = Field(..., description="ID of the node containing the pad")
     pad: str = Field(..., description="ID of the pad to update")
-    value: Any = Field(..., description="New value for the pad")
+    value: client.ClientPadValue = Field(..., description="New value for the pad")
 
 
 class CreatePortalEdit(BaseModel):
@@ -204,9 +204,9 @@ class PadEditorRepresentation(BaseModel):
     id: str
     group: str
     type: str
-    default_allowed_types: list[pad_constraints.PadType] | None = None
-    allowed_types: list[pad_constraints.PadType] | None = None
-    value: Any | None = None
+    default_allowed_types: list[pad_constraints.PadConstraint] | None = None
+    allowed_types: list[pad_constraints.PadConstraint] | None = None
+    value: client.DiscriminatedClientPadValue | Any | None = None
     next_pads: list[PadReference]
     previous_pad: PadReference | None = None
     pad_links: list[str] = []

@@ -107,6 +107,7 @@ class STT(node.Node):
                 group="api_key",
                 owner_node=self,
                 default_type_constraints=[pad_constraints.Secret(options=self.secrets)],
+                value=None,
             )
             self.pads.append(api_key)
 
@@ -128,9 +129,9 @@ class STT(node.Node):
 
         stt_impl: stt.STT
         if service.get_value() == "assembly_ai":
-            api_key_pad = cast(pad.PropertySinkPad, self.get_pad_required("api_key"))
+            api_key_pad = self.get_property_sink_pad_required(runtime.Secret, "api_key")
             api_key_name = api_key_pad.get_value()
-            api_key = await self.secret_provider.resolve_secret(api_key_name)
+            api_key = await self.secret_provider.resolve_secret(api_key_name.secret_id)
             stt_impl = stt.Assembly(api_key=api_key)
         elif service.get_value() == "local_kyutai":
             stt_impl = stt.Kyutai(port=8080)

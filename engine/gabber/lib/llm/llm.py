@@ -20,7 +20,7 @@ from gabber.core.types.runtime import (
     ContextMessageContentItem_Image,
     ContextMessageContentItem_Text,
     ContextMessageContentItem_Video,
-    ContextMessageRole,
+    ContextMessageRoleEnum,
     ToolDefinition,
     Schema,
 )
@@ -65,7 +65,7 @@ class LLMRequest:
         res: list[chat.ChatCompletionMessageParam] = []
         for msg in self.context:
             role = cast(Any, msg.role.value)
-            if msg.role == ContextMessageRole.TOOL:
+            if msg.role == ContextMessageRoleEnum.TOOL:
                 tool_call_id = msg.tool_call_id
                 if tool_call_id is None:
                     logging.warning(
@@ -177,7 +177,7 @@ class LLMRequest:
                 )
                 continue
 
-            if msg.role == ContextMessageRole.ASSISTANT:
+            if msg.role == ContextMessageRoleEnum.ASSISTANT:
                 if msg.tool_calls:
                     tcs: list[chat.ChatCompletionMessageToolCallParam] = []
                     for call in msg.tool_calls:

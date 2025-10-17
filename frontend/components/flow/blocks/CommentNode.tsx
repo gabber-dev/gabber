@@ -9,16 +9,17 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { usePropertyPad } from "./components/pads/hooks/usePropertyPad";
 import { useEffect, useRef, useState } from "react";
+import { Integer, String } from "@gabber/client-react";
 
 export interface CommentNodeProps {
   data: NodeEditorRepresentation;
 }
 
 export function CommentNode({ data }: CommentNodeProps) {
-  const { runtimeValue } = usePropertyPad<string>(data.id, "text");
+  const { runtimeValue } = usePropertyPad<String>(data.id, "text");
   const { editorValue: savedWidth, setEditorValue: setSavedWidth } =
-    usePropertyPad<number>(data.id, "width");
-  const [width, setWidth] = useState<number>(savedWidth ?? 480);
+    usePropertyPad<Integer>(data.id, "width");
+  const [width, setWidth] = useState<number>(savedWidth?.value ?? 480);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const startXRef = useRef<number | null>(null);
   const startWidthRef = useRef<number>(width);
@@ -33,8 +34,8 @@ export function CommentNode({ data }: CommentNodeProps) {
     const handleMouseUp = () => {
       startXRef.current = null;
       // Persist width to graph when user finishes dragging
-      if (width && width !== savedWidth) {
-        setSavedWidth(Math.round(width));
+      if (width && width !== savedWidth?.value) {
+        setSavedWidth({ type: "integer", value: Math.round(width) });
       }
     };
     window.addEventListener("mousemove", handleMouseMove);
@@ -73,7 +74,7 @@ export function CommentNode({ data }: CommentNodeProps) {
             onClick={() => setIsEditing(true)}
           >
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
-              {runtimeValue || "Click to add a comment..."}
+              {runtimeValue?.value || "Click to add a comment..."}
             </ReactMarkdown>
           </div>
         )}

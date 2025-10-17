@@ -48,7 +48,7 @@ class TestClient:
             while remainder.shape[0] >= new_audio_size:
                 segment = remainder[:new_audio_size]
                 res = await self._inference_session.inference(segment)
-                print("NEIL res", res.transcription)
+                print("res", res.transcription)
                 remainder = remainder[new_audio_size:]
 
 

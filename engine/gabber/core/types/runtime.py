@@ -1,12 +1,14 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
+from __future__ import annotations
+
 import asyncio
 import base64
 from abc import abstractmethod, ABC
 from dataclasses import dataclass
-from enum import Enum
-from typing import Annotated, Any, Literal, cast
+from enum import Enum as PyEnum
+from typing import Annotated, Any, Literal, cast, TypeVar
 
 import cv2
 import numpy as np
@@ -103,7 +105,7 @@ class AudioFrame(BaseRuntimeType):
         return "audio_frame"
 
 
-class VideoFormat(Enum):
+class VideoFormat(PyEnum):
     RGBA = "RGBA"
 
 
@@ -310,34 +312,6 @@ class ToolDefinition(BaseModel, BaseRuntimeType):
         return "tool_definition"
 
 
-class String(BaseModel, BaseRuntimeType):
-    value: str
-
-    def log_type(self) -> str:
-        return "string"
-
-
-class Integer(BaseModel, BaseRuntimeType):
-    value: int
-
-    def log_type(self) -> str:
-        return "integer"
-
-
-class Float(BaseModel, BaseRuntimeType):
-    value: float
-
-    def log_type(self) -> str:
-        return "float"
-
-
-class Boolean(BaseModel, BaseRuntimeType):
-    value: bool
-
-    def log_type(self) -> str:
-        return "boolean"
-
-
 class ContextMessageContentItem_Audio(BaseModel):
     type: Literal["audio"] = "audio"
     clip: AudioClip = Field(exclude=True)
@@ -373,15 +347,25 @@ ContextMessageContentItem = Annotated[
 ]
 
 
-class ContextMessageRole(str, Enum):
+class ContextMessageRoleEnum(str, PyEnum):
     USER = "user"
     ASSISTANT = "assistant"
     SYSTEM = "system"
     TOOL = "tool"
 
 
+class ContextMessageRole(BaseModel, BaseRuntimeType):
+    value: ContextMessageRoleEnum
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    def log_type(self) -> str:
+        return "context_message_role"
+
+
 class ContextMessage(BaseModel, BaseRuntimeType):
-    role: ContextMessageRole
+    role: ContextMessageRoleEnum
     content: list[ContextMessageContentItem]
     tool_calls: list[ToolCall]
     tool_call_id: str | None = None
@@ -525,6 +509,25 @@ class Trigger(BaseModel, BaseRuntimeType):
         return "trigger"
 
 
+class NodeReference(BaseModel):
+    node_id: str
+
+
+class Secret(BaseModel, BaseRuntimeType):
+    secret_id: str
+    name: str
+
+    def log_type(self) -> str:
+        return "secret"
+
+
+class Enum(BaseModel, BaseRuntimeType):
+    value: str
+
+    def log_type(self) -> str:
+        return "enum"
+
+
 @dataclass
 class ContextMessageContent_ChoiceDelta:
     content: str | None
@@ -554,3 +557,29 @@ class ContextMessageDeltaStream:
             raise StopAsyncIteration
 
         return item
+
+
+RuntimePadValuePrimitive = str | int | float | bool | dict
+
+LIST_T = TypeVar("LIST_T", bound="RuntimePadValue", covariant=True)
+
+RuntimePadValue = (
+    RuntimePadValuePrimitive
+    | Trigger
+    | AudioClip
+    | VideoClip
+    | AVClip
+    | TextStream
+    | AudioFrame
+    | VideoFrame
+    | ToolCall
+    | ContextMessageRole
+    | ContextMessage
+    | ToolDefinition
+    | Schema
+    | NodeReference
+    | Secret
+    | Enum
+    | None
+    | list[LIST_T]
+)

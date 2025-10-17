@@ -34,14 +34,14 @@ class ToolGroup(node.Node):
             if p.get_group() != "tool":
                 continue
 
-            if not p.get_value():
+            v = p.get_value()
+            if v is None:
                 continue
 
-            if not isinstance(p.get_value(), Tool):
-                raise TypeError(
-                    f"Expected Tool instance, got {p.get_value()} for pad {p.get_id()}"
-                )
-            res.append(p.get_value())
+            assert isinstance(v, runtime.NodeReference)
+            tool_node = self.graph.get_node(v.node_id)
+            assert isinstance(tool_node, Tool)
+            res.append(tool_node)
         return res
 
     def resolve_pads(self):
@@ -54,7 +54,7 @@ class ToolGroup(node.Node):
                 default_type_constraints=[
                     pad_constraints.NodeReference(node_types=["ToolGroup"])
                 ],
-                value=self,
+                value=runtime.NodeReference(node_id=self.id),
             )
 
         num_tools = cast(pad.PropertySinkPad, self.get_pad("num_tools"))

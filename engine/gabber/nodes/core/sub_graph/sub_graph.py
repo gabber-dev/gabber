@@ -35,17 +35,18 @@ class SubGraph(node.Node):
         secret_provider: SecretProvider,
         secrets: list[PublicSecret],
         graph: "Graph",
+        sub_graph: "Graph",
         logger: logging.Logger | logging.LoggerAdapter,
     ):
         super().__init__(
-            secret_provider=secret_provider, secrets=secrets, logger=logger
+            secret_provider=secret_provider, secrets=secrets, logger=logger, graph=graph
         )
-        self.graph = graph
+        self.sub_graph = sub_graph
         self.loaded = False
         self.node_pad_names_map: dict[tuple[str, str], str] = {}
 
     async def run(self):
-        await self.graph.run(room=self.room)
+        await self.sub_graph.run(room=self.room)
 
     def set_subgraph_id(self, subgraph_id: str):
         subgraph_id_pad = cast(pad.PropertySinkPad, self.get_pad("__subgraph_id__"))
@@ -86,7 +87,7 @@ class SubGraph(node.Node):
 
         # Find all subgraph pads that need proxying
         subgraph_pad_refs: list[SubgraphPadReference] = []
-        for n in self.graph.nodes:
+        for n in self.sub_graph.nodes:
             if (
                 not isinstance(n, ProxyStatelessSink)
                 and not isinstance(n, ProxyStatelessSource)
@@ -217,7 +218,7 @@ class SubGraph(node.Node):
 
     def get_notes(self) -> list[node.NodeNote]:
         res: list[node.NodeNote] = []
-        for n in self.graph.nodes:
+        for n in self.sub_graph.nodes:
             notes = n.get_notes()
             for note in notes:
                 if note.pad:

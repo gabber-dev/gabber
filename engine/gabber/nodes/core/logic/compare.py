@@ -3,11 +3,11 @@
 
 import logging
 import asyncio
-from typing import cast
 
 from gabber.core import pad
 from gabber.core.node import Node, NodeMetadata
-from gabber.core.types import pad_constraints
+from gabber.core.types import pad_constraints, runtime
+from typing import cast
 
 STRING_COMPARISON_OPERATORS = [
     "==",
@@ -54,6 +54,8 @@ ALL_ALLOWED_TYPES: list[pad_constraints.BasePadType] = [
     pad_constraints.Enum(),
 ]
 
+RUNTIME_T = str | int
+
 
 class Compare(Node):
     @classmethod
@@ -61,7 +63,7 @@ class Compare(Node):
         return NodeMetadata(primary="core", secondary="logic", tags=["compare"])
 
     def resolve_pads(self):
-        num_conditions = cast(pad.PropertySinkPad, self.get_pad("num_conditions"))
+        num_conditions = self.get_property_sink_pad(int, "num_conditions")
         if not num_conditions:
             num_conditions = pad.PropertySinkPad(
                 id="num_conditions",
@@ -71,7 +73,7 @@ class Compare(Node):
                 value=1,
             )
 
-        mode_pad = cast(pad.PropertySinkPad, self.get_pad("mode"))
+        mode_pad = self.get_property_sink_pad(str, "mode")
         if not mode_pad:
             mode_pad = pad.PropertySinkPad(
                 id="mode",
@@ -81,7 +83,7 @@ class Compare(Node):
                 value="AND",
             )
 
-        value = cast(pad.PropertySourcePad, self.get_pad("value"))
+        value = self.get_property_source_pad(bool, "value")
         if not value:
             value = pad.PropertySourcePad(
                 id="value",
@@ -133,11 +135,9 @@ class Compare(Node):
     def _rename_conditions(self):
         indices = self._get_indices()
         for order, index in enumerate(indices):
-            pad_a = cast(pad.PropertySinkPad, self.get_pad(f"condition_{index}_A"))
-            pad_b = cast(pad.PropertySinkPad, self.get_pad(f"condition_{index}_B"))
-            operator_pad = cast(
-                pad.PropertySinkPad, self.get_pad(f"condition_{index}_operator")
-            )
+            pad_a = self.get_pad(f"condition_{index}_A")
+            pad_b = self.get_pad(f"condition_{index}_B")
+            operator_pad = self.get_pad(f"condition_{index}_operator")
             if pad_a:
                 pad_a.set_id(f"condition_{order}_A")
             if pad_b:
@@ -147,14 +147,13 @@ class Compare(Node):
 
     def _add_or_remove_condition_pads(self):
         indices = self._get_indices()
-        num_conditions_pad = cast(
-            pad.PropertySinkPad, self.get_pad_required("num_conditions")
-        )
+        num_conditions_pad = self.get_property_sink_pad_required(int, "num_conditions")
 
         if not num_conditions_pad.get_value():
             num_conditions_pad.set_value(1)
 
-        num_conditions: int = num_conditions_pad.get_value()
+        num_conditions = num_conditions_pad.get_value()
+        assert isinstance(num_conditions, int)
 
         current_count = len(indices)
 
@@ -165,26 +164,29 @@ class Compare(Node):
                     group="condition_A",
                     owner_node=self,
                     default_type_constraints=ALL_ALLOWED_TYPES,
+                    value=None,
                 )
                 pad_b = pad.PropertySinkPad(
                     id=f"condition_{i}_B",
                     group="condition_B",
                     owner_node=self,
                     default_type_constraints=ALL_ALLOWED_TYPES,
+                    value=None,
                 )
                 operator_pad = pad.PropertySinkPad(
                     id=f"condition_{i}_operator",
                     group="condition_operator",
                     owner_node=self,
                     default_type_constraints=[pad_constraints.Enum(options=[])],
+                    value=None,
                 )
                 self.pads.extend([pad_a, pad_b, operator_pad])
         elif current_count > num_conditions:
             for i in range(num_conditions, current_count):
-                pad_a = cast(pad.SinkPad, self.get_pad(f"condition_{i}_A"))
-                pad_b = cast(pad.SinkPad, self.get_pad(f"condition_{i}_B"))
+                pad_a = cast(pad.PropertySinkPad, self.get_pad(f"condition_{i}_A"))
+                pad_b = cast(pad.PropertySinkPad, self.get_pad(f"condition_{i}_B"))
                 operator_pad = cast(
-                    pad.SinkPad, self.get_pad(f"condition_{i}_operator")
+                    pad.PropertySinkPad, self.get_pad(f"condition_{i}_operator")
                 )
                 if pad_a:
                     self.pads.remove(pad_a)
@@ -206,7 +208,8 @@ class Compare(Node):
             operator_pad = cast(
                 pad.PropertySinkPad, self.get_pad(f"condition_{i}_operator")
             )
-            pad_a.link_types_to_pad(pad_b)
+            if pad_a and pad_b:
+                pad_a.link_types_to_pad(pad_b)
             condition_pads.append((pad_a, pad_b, operator_pad))
             if not pad_a or not pad_b or not operator_pad:
                 logging.error(
@@ -265,8 +268,8 @@ class Compare(Node):
 
     async def run(self):
         condition_pads = self._get_condition_pads()
-        mode_pad = cast(pad.PropertySinkPad, self.get_pad_required("mode"))
-        value_pad = cast(pad.PropertySourcePad, self.get_pad_required("value"))
+        mode_pad = self.get_property_sink_pad_required(str, "mode")
+        value_pad = self.get_property_source_pad_required(bool, "value")
 
         async def pad_task(pad: pad.PropertySinkPad):
             async for item in pad:
@@ -410,15 +413,15 @@ class Compare(Node):
         elif isinstance(tc_a, pad_constraints.Enum) and isinstance(
             tc_b, pad_constraints.Enum
         ):
-            if not isinstance(a, str) or not isinstance(b, str):
+            if not isinstance(a, runtime.Enum) or not isinstance(b, runtime.Enum):
                 logging.error(
                     f"Type mismatch for enum comparison: {type(a)} vs {type(b)}"
                 )
                 return False
             if op == "==":
-                return a == b
+                return a.value == b.value
             elif op == "!=":
-                return a != b
+                return a.value != b.value
             else:
                 logging.error(f"Unsupported operator for enum comparison: {op}")
                 return False

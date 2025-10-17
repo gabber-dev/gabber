@@ -33,7 +33,7 @@ class MCP(node.Node):
                 default_type_constraints=[
                     pad_constraints.NodeReference(node_types=["MCP"])
                 ],
-                value=self,
+                value=runtime.NodeReference(node_id=self.id),
             )
 
         mcp_server = cast(pad.PropertySinkPad, self.get_pad("mcp_server"))
@@ -78,6 +78,7 @@ class MCP(node.Node):
             raise ValueError("MCP server pad not configured")
 
         mcp_server_name = mcp_server_pad.get_value()
+        assert isinstance(mcp_server_name, str)
 
         self.logger.info(f"Connecting to MCP server '{mcp_server_name}'")
         read_stream, write_stream = await exit_stack.enter_async_context(
@@ -108,7 +109,7 @@ class MCP(node.Node):
                 tool_def = runtime.ToolDefinition(
                     name=t.name,
                     description=t.description or "",
-                    parameters=t.inputSchema,
+                    parameters=runtime.Schema.from_json_schema(t.inputSchema),
                 )
                 tool_defs.append(tool_def)
 

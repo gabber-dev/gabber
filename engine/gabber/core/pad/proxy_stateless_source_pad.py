@@ -1,25 +1,27 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Generic, TypeVar
 
 from ..pad import Pad, ProxyPad, SinkPad, SourcePad
-from ..types import pad_constraints
+from ..types import pad_constraints, runtime
 
 if TYPE_CHECKING:
     from ..node import Node
 
+T = TypeVar("T", bound=runtime.RuntimePadValue)
 
-class ProxyStatelessSourcePad(SourcePad, ProxyPad):
-    def __init__(self, *, id: str, group: str, owner_node: "Node", other: SourcePad):
+
+class ProxyStatelessSourcePad(SourcePad[T], ProxyPad[T], Generic[T]):
+    def __init__(self, *, id: str, group: str, owner_node: "Node", other: SourcePad[T]):
         super().__init__()
         self._id = id
         self._group = group
         self._owner_node = owner_node
         self._other = other
-        self._my_next_pads: list[SinkPad] = []
+        self._my_next_pads: list[SinkPad[T]] = []
 
-    def get_other(self) -> Pad:
+    def get_other(self) -> Pad[T]:
         return self._other
 
     def get_id(self) -> str:
@@ -53,10 +55,10 @@ class ProxyStatelessSourcePad(SourcePad, ProxyPad):
     def get_editor_type(self) -> str:
         return "StatelessSourcePad"
 
-    def get_next_pads(self) -> list[SinkPad]:
+    def get_next_pads(self) -> list[SinkPad[T]]:
         return self._my_next_pads[:]
 
-    def set_next_pads(self, pads: list[SinkPad]) -> None:
+    def set_next_pads(self, pads: list[SinkPad[T]]) -> None:
         self._my_next_pads = pads
         full_other_next_pads = self._other.get_next_pads()
         other_next_pads = [p for p in full_other_next_pads if p not in pads]

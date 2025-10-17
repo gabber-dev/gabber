@@ -53,8 +53,8 @@ class AutoConvert(Node):
             if not sink_type or not source_type:
                 continue
 
-            sink_type = cast(pad_constraints.PadType, sink_type)
-            source_type = cast(pad_constraints.PadType, source_type)
+            sink_type = cast(pad_constraints.PadConstraint, sink_type)
+            source_type = cast(pad_constraints.PadConstraint, source_type)
             if isinstance(source_type, pad_constraints.Trigger):
                 source.push_item(runtime.Trigger(), item.ctx)
             elif isinstance(source_type, pad_constraints.Audio):

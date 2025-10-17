@@ -15,7 +15,8 @@ import { StateMachineGraphMini } from "./StateMachineGraphMini";
 import { usePropertyPad } from "../flow/blocks/components/pads/hooks/usePropertyPad";
 import { useNodeId } from "@xyflow/react";
 import { PadHandle } from "../flow/blocks/components/pads/PadHandle";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { Boolean, Float, Integer, String } from "@gabber/client-react";
 
 export function StateMachineNode({ data }: BaseBlockProps) {
   const {} = useEditor();
@@ -73,7 +74,7 @@ function Parameters() {
 }
 
 function StatePad({ label, padId }: { label: string; padId: string }) {
-  const { runtimeValue, editorValue, pad } = usePropertyPad<string>(
+  const { runtimeValue, editorValue, pad } = usePropertyPad<String>(
     useNodeId() || "",
     padId,
   );
@@ -82,7 +83,7 @@ function StatePad({ label, padId }: { label: string; padId: string }) {
     <div className="flex items-center justify-between p-2 border-b border-black w-full">
       <div className="relative flex flex-col items-center gap-1 grow-5 basis-0 pb-4">
         <div className="text-xs border border-base-300 bg-base-100 px-2 py-1 rounded w-4/5">
-          {runtimeValue ?? ""}
+          {runtimeValue?.value ?? ""}
         </div>
         <label className="italic absolute bottom-0 label text-xs text-base-content/50">
           {label}
@@ -102,24 +103,23 @@ function StatePad({ label, padId }: { label: string; padId: string }) {
 
 function Parameter({ pads }: { pads: StateMachineParameterPads }) {
   const nodeId = useNodeId();
-  const { runtimeValue: name, setEditorValue } = usePropertyPad<string>(
+  const { runtimeValue: name, setEditorValue } = usePropertyPad<String>(
     nodeId || "",
     pads.namePadId,
   );
-  const { pad } = usePropertyPad<unknown>(nodeId || "", pads.valuePadId);
+  const { pad } = usePropertyPad<String | Integer | Boolean | Float>(
+    nodeId || "",
+    pads.valuePadId,
+  );
 
-  const [localName, setLocalName] = useState(name || "");
-
-  useEffect(() => {
-    setLocalName(name || "");
-  }, [name]);
+  const [localName, setLocalName] = useState(name?.value || "");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setLocalName(e.target.value);
   };
 
   const handleBlur = () => {
-    setEditorValue(localName);
+    setEditorValue({ type: "string", value: localName });
   };
 
   return (

@@ -20,7 +20,7 @@ class ChatInput(node.Node):
         return NodeMetadata(primary="core", secondary="debug", tags=["input", "text"])
 
     def resolve_pads(self):
-        output = cast(pad.StatelessSourcePad | None, self.get_pad("output"))
+        output = self.get_stateless_source_pad(str, "output")
         if output is None:
             output = pad.StatelessSourcePad(
                 id="output",
@@ -30,28 +30,6 @@ class ChatInput(node.Node):
             )
 
         self.pads = [output]
-
-    def get_notes(self) -> list[NodeNote]:
-        audio_pad = cast(pad.StatelessSinkPad, self.get_pad("audio"))
-        video_pad = cast(pad.StatelessSinkPad, self.get_pad("video"))
-        notes: list[NodeNote] = []
-        any_connections = False
-
-        if audio_pad and audio_pad.get_previous_pad():
-            any_connections = True
-
-        if video_pad and video_pad.get_previous_pad():
-            any_connections = True
-
-        if not any_connections:
-            notes.append(
-                NodeNote(
-                    level="warning",
-                    message="Output node has no connected pads. No media will be sent to the user.",
-                )
-            )
-
-        return notes
 
     async def run(self):
         pass

@@ -10,7 +10,7 @@ from gabber.core.types import runtime
 from gabber.core.types import pad_constraints
 
 DEFAULT_SYSTEM_MESSAGE = runtime.ContextMessage(
-    role=runtime.ContextMessageRole.SYSTEM,
+    role=runtime.ContextMessageRoleEnum.SYSTEM,
     content=[
         runtime.ContextMessageContentItem_Text(content="You are a helpful assistant.")
     ],
@@ -119,7 +119,10 @@ class LLMContext(node.Node):
         source.set_value([system_message.get_value()])
 
         insert_pads: list[pad.Pad] = []
-        for i in range(num_inserts.get_value() or 1):
+        num_inserts_value = num_inserts.get_value() or 1
+        assert isinstance(num_inserts_value, int)
+
+        for i in range(num_inserts_value):
             pad_id = f"insert_{i}"
             insert_pad = self.get_pad(pad_id)
             if not insert_pad:
@@ -176,23 +179,30 @@ class LLMContext(node.Node):
         tasks: list[asyncio.Task] = []
 
         def prune(msgs: list[runtime.ContextMessage]):
-            new_values: list[runtime.ContextMessage] = [system_message.get_value()]
+            system_message_value = system_message.get_value()
+            max_non_system_messages_value = max_non_system_messages.get_value()
+            assert isinstance(max_non_system_messages_value, int)
+            assert isinstance(system_message_value, runtime.ContextMessage)
+            new_values: list[runtime.ContextMessage] = [system_message_value]
             non_system_messages: list[runtime.ContextMessage] = []
             for item in msgs:
-                if item.role != runtime.ContextMessageRole.SYSTEM:
+                if item.role != runtime.ContextMessageRoleEnum.SYSTEM:
                     non_system_messages.append(item)
 
-            pruned = non_system_messages[-max_non_system_messages.get_value() :]
+            pruned = non_system_messages[-max_non_system_messages_value:]
 
             tool_call_ids = set()
             for msg in pruned:
-                if msg.role == runtime.ContextMessageRole.ASSISTANT and msg.tool_calls:
+                if (
+                    msg.role == runtime.ContextMessageRoleEnum.ASSISTANT
+                    and msg.tool_calls
+                ):
                     for tool_call in msg.tool_calls:
                         tool_call_ids.add(tool_call.call_id)
 
             final_pruned: list[runtime.ContextMessage] = []
             for msg in pruned:
-                if msg.role == runtime.ContextMessageRole.TOOL:
+                if msg.role == runtime.ContextMessageRoleEnum.TOOL:
                     if msg.tool_call_id in tool_call_ids:
                         final_pruned.append(msg)
                 else:
@@ -252,7 +262,10 @@ class LLMContext(node.Node):
         async def pad_task(p: pad.SinkPad):
             async for item in p:
                 assert isinstance(item.value, runtime.ContextMessage)
-                new_msgs = prune(source.get_value() + [item.value])
+                source_value = source.get_value()
+                assert isinstance(source_value, list)
+                source_value = cast(list[runtime.ContextMessage], source_value)
+                new_msgs = prune(source_value + [item.value])
                 # types = {"image": 0, "video": 0, "audio": 0, "text": 0}
                 # for m in new_msgs:
                 #     for c in m.content:
@@ -271,7 +284,7 @@ class LLMContext(node.Node):
                 #         ):
                 #             types["text"] += 1
                 # logging.info(f"NEIL Context now has {types}")
-                if item.value.role == runtime.ContextMessageRole.USER:
+                if item.value.role == runtime.ContextMessageRoleEnum.USER:
                     new_user_message.push_item(item.value, item.ctx)
 
                 source.set_value(new_msgs)
@@ -279,8 +292,11 @@ class LLMContext(node.Node):
 
         async def system_message_task():
             async for item in system_message:
+                source_value = source.get_value()
+                assert isinstance(source_value, list)
+                source_value = cast(list[runtime.ContextMessage], source_value)
                 if isinstance(item.value, runtime.ContextMessage):
-                    source.get_value()[0] = item.value
+                    source_value[0] = item.value
                     source.set_value(source.get_value())
                 item.ctx.complete()
 

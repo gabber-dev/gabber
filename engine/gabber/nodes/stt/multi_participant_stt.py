@@ -48,6 +48,7 @@ class MultiParticipantSTT(node.Node):
                 group="api_key",
                 owner_node=self,
                 default_type_constraints=[pad_constraints.Secret(options=self.secrets)],
+                value=None,
             )
 
         num_participants = cast(pad.PropertySinkPad, self.get_pad("num_participants"))
@@ -207,20 +208,22 @@ class MultiParticipantSTT(node.Node):
 
         async def create_stt_instance() -> stt.STT:
             if service.get_value() == "assembly_ai":
-                api_key_pad = cast(
-                    pad.PropertySinkPad, self.get_pad_required("api_key")
+                api_key_pad = self.get_property_sink_pad_required(
+                    runtime.Secret, "api_key"
                 )
-                api_key_name = api_key_pad.get_value()
-                api_key = await self.secret_provider.resolve_secret(api_key_name)
+                api_key = await self.secret_provider.resolve_secret(
+                    api_key_pad.get_value().secret_id
+                )
                 return stt.Assembly(api_key=api_key)
             elif service.get_value() == "local_kyutai":
                 return stt.Kyutai(port=8080)
             elif service.get_value() == "deepgram":
-                api_key_pad = cast(
-                    pad.PropertySinkPad, self.get_pad_required("api_key")
+                api_key_pad = self.get_property_sink_pad_required(
+                    runtime.Secret, "api_key"
                 )
-                api_key_name = api_key_pad.get_value()
-                api_key = await self.secret_provider.resolve_secret(api_key_name)
+                api_key = await self.secret_provider.resolve_secret(
+                    api_key_pad.get_value().secret_id
+                )
                 return stt.Deepgram(api_key=api_key)
             else:
                 logging.error("Unsupported STT service: %s", service.get_value())

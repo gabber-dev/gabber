@@ -13,7 +13,7 @@ class And(node.Node):
         return node.NodeMetadata(primary="core", secondary="logic", tags=["and"])
 
     def resolve_pads(self):
-        num_inputs_pad = cast(pad.PropertySinkPad, self.get_pad("num_inputs"))
+        num_inputs_pad = self.get_property_sink_pad(int, "num_inputs")
         if not num_inputs_pad:
             num_inputs_pad = pad.PropertySinkPad(
                 id="num_inputs",
@@ -28,9 +28,9 @@ class And(node.Node):
             num_inputs = 2
             num_inputs_pad.set_value(2)
 
-        input_pads: list[pad.PropertySinkPad] = []
+        input_pads: list[pad.PropertySinkPad[bool]] = []
         for i in range(num_inputs):
-            input_pad = cast(pad.PropertySinkPad, self.get_pad(f"input_{i + 1}"))
+            input_pad = self.get_property_sink_pad(bool, f"input_{i + 1}")
             if not input_pad:
                 input_pad = pad.PropertySinkPad(
                     id=f"input_{i + 1}",
@@ -50,7 +50,7 @@ class And(node.Node):
             if p not in input_pads:
                 input_pads.remove(p)
 
-        source = cast(pad.PropertySourcePad, self.get_pad("source"))
+        source = self.get_property_source_pad(bool, "source")
         if not source:
             source = pad.PropertySourcePad(
                 id="source",
@@ -80,7 +80,7 @@ class And(node.Node):
             for p in self.pads
             if p.get_group() == "input" and isinstance(p, pad.PropertySinkPad)
         ]
-        source = cast(pad.PropertySourcePad, self.get_pad_required("source"))
+        source = self.get_property_source_pad_required(bool, "source")
 
         async def pad_task(p: pad.PropertySinkPad):
             async for item in p:

@@ -3,7 +3,7 @@
 
 import asyncio
 import logging
-from typing import Any, Type, TypeVar, cast
+from typing import Type, TypeVar, cast
 
 from livekit import rtc
 
@@ -22,14 +22,19 @@ from ..editor.models import (
     UpdateNodeEdit,
     UpdatePadEdit,
 )
+from pydantic import TypeAdapter
 from ..node import Node
 from ..secret import PublicSecret, SecretProvider
 from gabber.nodes.core.sub_graph import SubGraph
 from gabber.utils import short_uuid
 from .runtime_api import RuntimeApi
-from ..types import pad_constraints
+from ..types import pad_constraints, mapper, client, runtime
 
 T = TypeVar("T", bound=Node)
+
+client_pad_value_adapter = TypeAdapter[client.DiscriminatedClientPadValue](
+    client.DiscriminatedClientPadValue
+)
 
 
 class Graph:
@@ -60,6 +65,7 @@ class Graph:
                 self._node_cls_lookup[item.name] = item.node_type
                 node_cls: Type[Node] = self._node_cls_lookup[item.name]
                 n = node_cls(
+                    graph=self,
                     secret_provider=self.secret_provider,
                     secrets=self.secrets,
                     logger=logging.getLogger(f"virtual_node.{item.name}"),
@@ -171,6 +177,7 @@ class Graph:
     async def _handle_insert_node(self, edit: InsertNodeEdit):
         node_cls: Type[Node] = self._node_cls_lookup[edit.node_type]
         node = node_cls(
+            graph=self,
             secret_provider=self.secret_provider,
             secrets=self.secrets,
             logger=self.logger,
@@ -201,7 +208,8 @@ class Graph:
         node = SubGraph(
             secrets=self.secrets,
             secret_provider=self.secret_provider,
-            graph=graph,
+            graph=self,
+            sub_graph=graph,
             logger=self.logger,
         )
         node.set_subgraph_id(subgraph_item.id)
@@ -310,7 +318,7 @@ class Graph:
             if isinstance(tcs[0], pad_constraints.NodeReference):
                 pass
             else:
-                v = serialize.deserialize_pad_value(tcs[0], edit.value)
+                v = mapper.Mapper.client_to_runtime(edit.value)
                 p.set_value(v)
 
         for node in self.nodes:
@@ -419,6 +427,7 @@ class Graph:
                     self.logger, extra={"node": node_data.id}
                 )
                 node = node_cls(
+                    graph=self,
                     secret_provider=self.secret_provider,
                     secrets=self.secrets,
                     logger=node_logger,
@@ -432,12 +441,14 @@ class Graph:
                     continue
 
                 subgraph_id = subgraph_id_pad.value
+                assert (
+                    isinstance(subgraph_id, client.ClientPadValue)
+                    and subgraph_id is not None
+                    and subgraph_id.type == "string"
+                )
                 subgraph_li: GraphLibraryItem_SubGraph | None = None
                 for item in self.library_items:
-                    if (
-                        isinstance(item, GraphLibraryItem_SubGraph)
-                        and item.id == subgraph_id
-                    ):
+                    if item.type == "subgraph" and subgraph_id.value == item.id:
                         subgraph_li = item
                         break
 
@@ -458,7 +469,8 @@ class Graph:
                 node = SubGraph(
                     secret_provider=self.secret_provider,
                     secrets=self.secrets,
-                    graph=subgraph,
+                    graph=self,
+                    sub_graph=subgraph,
                     logger=self.logger,
                 )
             else:
@@ -533,18 +545,6 @@ class Graph:
                 logging.error(f"Node {node_data.id} not found in node lookup.")
                 continue
 
-        # resolve node references
-        for n in self.nodes:
-            for p in n.pads:
-                tcs = p.get_type_constraints()
-                if tcs and len(tcs) == 1:
-                    if isinstance(tcs[0], pad_constraints.NodeReference) and isinstance(
-                        p, pad.PropertyPad
-                    ):
-                        self._resolve_node_reference_property(
-                            p, p.get_value(), node_lookup
-                        )
-
         for n in self.nodes:
             n.resolve_pads()
 
@@ -557,28 +557,23 @@ class Graph:
                 if tcs and len(tcs) == 1:
                     if isinstance(tcs[0], pad_constraints.Secret):
                         tcs[0].options = secret_options
-                        if isinstance(p, pad.PropertyPad) and p.get_value() not in [
-                            s.id for s in secret_options
-                        ]:
+                        if not isinstance(p, pad.PropertyPad):
                             p.set_value(None)
+                            continue
+
+                        secret_value = p.get_value()
+                        if isinstance(secret_value, runtime.Secret):
+                            if secret_value.secret_id not in [
+                                s.id for s in secret_options
+                            ]:
+                                p.set_value(None)
+
                 if d_tcs and len(d_tcs) == 1:
                     if isinstance(d_tcs[0], pad_constraints.Secret):
                         d_tcs[0].options = secret_options
 
         if snapshot.portals:
             self.portals = snapshot.portals
-
-    def _resolve_node_reference_property(
-        self, p: pad.PropertyPad, v: str, nodes: dict[str, Node]
-    ):
-        if not isinstance(p, pad.SourcePad):
-            return
-
-        # Proxy pads would already be handled by the subgraph
-        if not isinstance(p, pad.ProxyPad):
-            node = next((n for n in nodes.values() if n.id == v), None)
-            p.set_value(node)
-            return
 
     async def run(self, room: rtc.Room, runtime_api: RuntimeApi | None = None):
         for node in self.nodes:
@@ -636,9 +631,8 @@ def create_pad_from_editor(
     )
     allowed_types = cast(list[pad_constraints.BasePadType] | None, e.allowed_types)
     if e.type == "PropertySourcePad":
-        v: Any = None
-        if allowed_types and len(allowed_types) == 1:
-            v = serialize.deserialize_pad_value(allowed_types[0], e.value)
+        v = client_pad_value_adapter.validate_python(e.value)
+        v = mapper.Mapper.client_to_runtime(v)
         p = pad.PropertySourcePad(
             id=e.id,
             group=e.group,
@@ -647,9 +641,8 @@ def create_pad_from_editor(
             value=v,
         )
     elif e.type == "PropertySinkPad":
-        v: Any = None
-        if allowed_types and len(allowed_types) == 1:
-            v = serialize.deserialize_pad_value(allowed_types[0], e.value)
+        v = client_pad_value_adapter.validate_python(e.value)
+        v = mapper.Mapper.client_to_runtime(v)
         p = pad.PropertySinkPad(
             id=e.id,
             group=e.group,

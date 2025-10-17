@@ -28,7 +28,9 @@ class ContextMessageZip(Node):
                 group="role",
                 owner_node=self,
                 default_type_constraints=[pad_constraints.ContextMessageRole()],
-                value=runtime.ContextMessageRole.SYSTEM,
+                value=runtime.ContextMessageRole(
+                    value=runtime.ContextMessageRoleEnum.USER
+                ),
             )
 
         message_source = cast(StatelessSourcePad, self.get_pad("context_message"))
@@ -89,7 +91,9 @@ class ContextMessageZip(Node):
         return content_pads
 
     async def run(self):
-        role_pad = cast(PropertySinkPad, self.get_pad_required("role"))
+        role_pad = self.get_property_sink_pad_required(
+            runtime.ContextMessageRole, "role"
+        )
         message_source = cast(
             StatelessSourcePad, self.get_pad_required("context_message")
         )
@@ -146,7 +150,7 @@ class ContextMessageZip(Node):
                         )
 
                 message = runtime.ContextMessage(
-                    role=role, content=content, tool_calls=[]
+                    role=role.value, content=content, tool_calls=[]
                 )
 
                 # TODO: propagate context properly

@@ -39,6 +39,7 @@ class TTS(node.Node):
                         options=["gabber", "cartesia", "elevenlabs", "openai"]
                     )
                 ],
+                value=runtime.Enum(value="gabber"),
             )
 
         api_key = cast(pad.PropertySinkPad, self.get_pad("api_key"))
@@ -48,6 +49,7 @@ class TTS(node.Node):
                 group="api_key",
                 owner_node=self,
                 default_type_constraints=[pad_constraints.Secret(options=self.secrets)],
+                value=None,
             )
 
         voice_id = cast(pad.PropertySinkPad, self.get_pad("voice_id"))
@@ -57,6 +59,7 @@ class TTS(node.Node):
                 group="voice_id",
                 owner_node=self,
                 default_type_constraints=[pad_constraints.String()],
+                value="626c3b02-2d2a-4a93-b3e7-be35fd2b95cd",  # Tara
             )
 
         text_sink = cast(pad.StatelessSinkPad, self.get_pad("text"))
@@ -108,9 +111,9 @@ class TTS(node.Node):
         ]
 
     async def run(self):
-        api_key_pad = cast(pad.PropertySinkPad, self.get_pad_required("api_key"))
+        api_key_pad = self.get_property_sink_pad_required(runtime.Secret, "api_key")
         secret = api_key_pad.get_value()
-        api_key = await self.secret_provider.resolve_secret(secret)
+        api_key = await self.secret_provider.resolve_secret(secret.secret_id)
         service = cast(pad.PropertySinkPad, self.get_pad_required("service"))
         voice_id = cast(pad.PropertySinkPad, self.get_pad_required("voice_id"))
         audio_source = cast(pad.StatelessSourcePad, self.get_pad_required("audio"))

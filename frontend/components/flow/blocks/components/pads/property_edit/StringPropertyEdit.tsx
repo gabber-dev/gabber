@@ -6,17 +6,18 @@
 import { useState, useEffect } from "react";
 import { usePropertyPad } from "../hooks/usePropertyPad";
 import { PropertyEditProps } from "./PropertyEdit";
+import { String } from "@gabber/client-react";
 
 export function StringPropertyEdit({ nodeId, padId }: PropertyEditProps) {
-  const { runtimeValue, setEditorValue: setValue } = usePropertyPad<string>(
+  const { runtimeValue, setEditorValue: setValue } = usePropertyPad<String>(
     nodeId,
     padId,
   );
 
-  const [localValue, setLocalValue] = useState(runtimeValue || "");
+  const [localValue, setLocalValue] = useState(runtimeValue?.value || "");
 
   useEffect(() => {
-    setLocalValue(runtimeValue || "");
+    setLocalValue(runtimeValue?.value || "");
   }, [runtimeValue]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -24,7 +25,7 @@ export function StringPropertyEdit({ nodeId, padId }: PropertyEditProps) {
   };
 
   const handleBlur = () => {
-    setValue(localValue);
+    setValue({ type: "string", value: localValue });
   };
 
   return (

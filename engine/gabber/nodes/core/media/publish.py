@@ -8,7 +8,7 @@ import time
 import numpy as np
 from gabber.core import node, pad
 from gabber.core.node import NodeMetadata
-from gabber.core.types.runtime import AudioFrame, AudioFrameData, VideoFrame
+from gabber.core.types import runtime
 from gabber.lib.audio import Resampler
 from livekit import rtc
 from gabber.utils import audio_stream_provider, video_stream_provider
@@ -87,14 +87,14 @@ class Publish(node.Node):
 
     async def run(self):
         self._allowed_participant: str | None = None
-        audio_source = cast(pad.StatelessSourcePad, self.get_pad_required("audio"))
-        video_source = cast(pad.StatelessSourcePad, self.get_pad_required("video"))
-        audio_enabled = cast(
-            pad.PropertySourcePad, self.get_pad_required("audio_enabled")
+        audio_source = self.get_stateless_source_pad_required(
+            runtime.AudioFrame, "audio"
         )
-        video_enabled = cast(
-            pad.PropertySourcePad, self.get_pad_required("video_enabled")
+        video_source = self.get_stateless_source_pad_required(
+            runtime.VideoFrame, "video"
         )
+        audio_enabled = self.get_property_source_pad_required(bool, "audio_enabled")
+        video_enabled = self.get_property_source_pad_required(bool, "video_enabled")
 
         last_audio_frame_time: float | None = None
         last_video_frame_time: float | None = None
@@ -122,7 +122,7 @@ class Publish(node.Node):
                     np_buf = np.frombuffer(converted.data, dtype=np.uint8).reshape(
                         frame.frame.height, frame.frame.width, 4
                     )
-                    video_frame = VideoFrame(
+                    video_frame = runtime.VideoFrame(
                         data=np_buf,
                         width=frame.frame.width,
                         height=frame.frame.height,
@@ -145,7 +145,7 @@ class Publish(node.Node):
 
                 async for frame in audio_stream:
                     last_audio_frame_time = time.time()
-                    original_data = AudioFrameData(
+                    original_data = runtime.AudioFrameData(
                         data=np.frombuffer(frame.frame.data, dtype=np.int16).reshape(
                             1, -1
                         ),
@@ -157,7 +157,7 @@ class Publish(node.Node):
                     frame_44_1 = resampler_44100hz.push_audio(original_data)
                     frame_48 = resampler_48000hz.push_audio(original_data)
 
-                    frame = AudioFrame(
+                    frame = runtime.AudioFrame(
                         original_data=original_data,
                         data_16000hz=frame_16,
                         data_24000hz=frame_24,

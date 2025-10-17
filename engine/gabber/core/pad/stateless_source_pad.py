@@ -1,18 +1,20 @@
 # Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
 # SPDX-License-Identifier: SUL-1.0
 
-from typing import TYPE_CHECKING, Literal
+from typing import TYPE_CHECKING, Literal, Generic, TypeVar
 
 from ..pad.pad import SourcePad
 
 from .pad import SinkPad
-from ..types import pad_constraints
+from ..types import pad_constraints, runtime
 
 if TYPE_CHECKING:
     from ..node import Node
 
+T = TypeVar("T", bound=runtime.RuntimePadValue)
 
-class StatelessSourcePad(SourcePad):
+
+class StatelessSourcePad(SourcePad[T], Generic[T]):
     def __init__(
         self,
         *,
@@ -27,7 +29,7 @@ class StatelessSourcePad(SourcePad):
         self._owner_node = owner_node
         self._type_constraints = default_type_constraints
         self._default_type_constraints = default_type_constraints
-        self._next_pads: list[SinkPad] = []
+        self._next_pads: list[SinkPad[T]] = []
 
     def get_id(self) -> str:
         return self._id
@@ -64,8 +66,8 @@ class StatelessSourcePad(SourcePad):
     def get_direction(self) -> Literal["source"] | Literal["sink"]:
         return "source"
 
-    def get_next_pads(self) -> list[SinkPad]:
+    def get_next_pads(self) -> list[SinkPad[T]]:
         return self._next_pads[:]
 
-    def set_next_pads(self, pads: list[SinkPad]) -> None:
+    def set_next_pads(self, pads: list[SinkPad[T]]) -> None:
         self._next_pads = pads

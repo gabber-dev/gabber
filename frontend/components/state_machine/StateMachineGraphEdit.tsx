@@ -90,6 +90,9 @@ function Inner() {
         proOptions={{
           hideAttribution: true,
         }}
+        onClickCapture={() => {
+          console.log("NEIL ReactFlow clicked");
+        }}
       >
         <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
       </ReactFlow>

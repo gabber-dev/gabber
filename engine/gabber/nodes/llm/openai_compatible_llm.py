@@ -5,7 +5,7 @@ from typing import Any, cast
 
 from gabber.core import pad
 from gabber.core.node import NodeMetadata
-from gabber.core.types import pad_constraints
+from gabber.core.types import pad_constraints, runtime
 
 from .base_llm import BaseLLM
 from gabber.lib.llm import (
@@ -43,13 +43,10 @@ class OpenAICompatibleLLM(BaseLLM):
         return model_value if isinstance(model_value, str) else "gpt-4.1-mini"
 
     async def api_key(self) -> str:
-        api_key_pad = cast(pad.PropertySinkPad, self.get_pad_required("api_key"))
-        api_key_name = api_key_pad.get_value()
-        if not isinstance(api_key_name, str):
-            raise ValueError("API key must be a string.")
-        if not self.secret_provider:
-            raise RuntimeError("Secret provider is not set for OpenAICompatibleLLM.")
-        return await self.secret_provider.resolve_secret(api_key_name)
+        api_key_pad = self.get_property_sink_pad_required(runtime.Secret, "api_key")
+        return await self.secret_provider.resolve_secret(
+            api_key_pad.get_value().secret_id
+        )
 
     def get_token_estimator(self) -> Any:
         if "openai" in self.model():
@@ -89,7 +86,7 @@ class OpenAICompatibleLLM(BaseLLM):
                 group="api_key",
                 owner_node=self,
                 default_type_constraints=[pad_constraints.Secret(options=[])],
-                value="",
+                value=None,
             )
 
         model_sink = cast(pad.PropertySinkPad, self.get_pad("model"))
