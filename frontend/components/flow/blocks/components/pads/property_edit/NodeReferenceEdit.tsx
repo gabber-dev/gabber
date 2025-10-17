@@ -6,13 +6,14 @@
 import { usePropertyPad } from "../hooks/usePropertyPad";
 import { useEditor } from "@/hooks/useEditor";
 import { PropertyEditProps } from "./PropertyEdit";
+import { NodeReference } from "@gabber/client-react";
 
 export function NodeReferenceEdit({ nodeId, padId }: PropertyEditProps) {
-  const { runtimeValue } = usePropertyPad(nodeId, padId);
+  const { runtimeValue } = usePropertyPad<NodeReference>(nodeId, padId);
   const { editorRepresentation } = useEditor();
 
   const selectedNode = editorRepresentation.nodes.find(
-    (n) => n.id === runtimeValue,
+    (n) => n.id === runtimeValue?.node_id,
   );
 
   return (

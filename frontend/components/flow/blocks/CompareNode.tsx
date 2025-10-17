@@ -13,6 +13,7 @@ import { useMemo } from "react";
 import { NodeEditorRepresentation } from "@/generated/repository";
 import { NodeName } from "./components/NodeName";
 import { NodeId } from "./components/NodeId";
+import { Boolean, Enum, Integer, String } from "@gabber/client-react";
 
 export function CompareNode({}: BaseBlockProps) {
   return (
@@ -71,7 +72,7 @@ function Mode() {
 
 function AddRemoveCondition() {
   const nodeId = useNodeId();
-  const { editorValue, setEditorValue } = usePropertyPad<number>(
+  const { editorValue, setEditorValue } = usePropertyPad<Integer>(
     nodeId || "",
     "num_conditions",
   );
@@ -80,7 +81,10 @@ function AddRemoveCondition() {
       <button
         className="btn btn-sm btn-success p-0 m-0 w-4 h-4"
         onClick={() => {
-          setEditorValue((editorValue || 0) + 1);
+          setEditorValue({
+            type: "integer",
+            value: (editorValue?.value || 0) + 1,
+          });
         }}
       >
         <PlusIcon className="w-full h-full" />
@@ -88,8 +92,11 @@ function AddRemoveCondition() {
       <button
         className="btn btn-sm btn-error p-0 m-0 w-4 h-4"
         onClick={() => {
-          if (editorValue && editorValue > 0) {
-            setEditorValue(editorValue - 1);
+          if (editorValue && editorValue.value > 0) {
+            setEditorValue({
+              type: "integer",
+              value: (editorValue.value || 0) - 1,
+            });
           }
         }}
       >
@@ -102,7 +109,7 @@ function AddRemoveCondition() {
 function AllConditions() {
   const nodeId = useNodeId();
   const node = useNodesData<Node<NodeEditorRepresentation>>(nodeId || "");
-  const { runtimeValue: modeValue } = usePropertyPad<string>(
+  const { runtimeValue: modeValue } = usePropertyPad<Enum>(
     nodeId || "",
     "mode",
   );
@@ -128,7 +135,7 @@ function AllConditions() {
           <Condition idx={idx} />
           {idx !== indexes.length - 1 && (
             <div className="divider text-xs p-0 m-0">
-              {modeValue || "ERROR: mode not set"}
+              {modeValue?.value || "ERROR: mode not set"}
             </div>
           )}
         </div>
@@ -141,7 +148,7 @@ function Condition({ idx }: { idx: number }) {
   const nodeId = useNodeId();
   const padA = usePropertyPad(nodeId || "", `condition_${idx}_A`);
   const padB = usePropertyPad(nodeId || "", `condition_${idx}_B`);
-  const padOperator = usePropertyPad<string>(
+  const padOperator = usePropertyPad<String>(
     nodeId || "",
     `condition_${idx}_operator`,
   );
