@@ -130,61 +130,51 @@ function ListItem({ item }: { item: List }) {
 }
 
 function ContextMessageItem({ item }: { item: ContextMessage }) {
-  const roleBadgeClass = getRoleBadgeClass(item.role.value);
-
   // Get unique content types for this message
   const contentTypes = [...new Set(item.content.map((c) => c.content_type))];
 
   return (
-    <div className="relative flex flex-col p-2 bg-base-200 card">
-      {/* Media type tags in top-right */}
-      <div className="absolute top-2 right-2 flex gap-1 flex-wrap">
-        {contentTypes.map((type) => {
-          switch (type) {
-            case "text":
-              return (
-                <div
-                  key={type}
-                  className="badge badge-neutral badge-sm font-semibold"
-                >
-                  TEXT
-                </div>
-              );
-            case "image":
-              return (
-                <div
-                  key={type}
-                  className="badge badge-secondary badge-sm font-semibold"
-                >
-                  IMAGE
-                </div>
-              );
-            case "audio":
-              return (
-                <div
-                  key={type}
-                  className="badge badge-accent badge-sm font-semibold"
-                >
-                  AUDIO
-                </div>
-              );
-            case "video":
-              return (
-                <div
-                  key={type}
-                  className="badge badge-primary badge-sm font-semibold"
-                >
-                  VIDEO
-                </div>
-              );
-            default:
-              return null;
-          }
-        })}
+    <div className="flex flex-col p-2 bg-base-200 card">
+      <div className="flex justify-between items-center">
+        <div
+          className={`text-xs font-semibold ${getRoleTextClass(item.role.value)}`}
+        >
+          {item.role.value.toUpperCase()}
+        </div>
+        <div className="flex gap-2 text-xs font-semibold">
+          {contentTypes.map((type) => {
+            switch (type) {
+              case "text":
+                return (
+                  <span key={type} className="text-base-content">
+                    TEXT
+                  </span>
+                );
+              case "image":
+                return (
+                  <span key={type} className="text-secondary">
+                    IMAGE
+                  </span>
+                );
+              case "audio":
+                return (
+                  <span key={type} className="text-accent">
+                    AUDIO
+                  </span>
+                );
+              case "video":
+                return (
+                  <span key={type} className="text-info">
+                    VIDEO
+                  </span>
+                );
+              default:
+                return null;
+            }
+          })}
+        </div>
       </div>
-
-      <div className={`badge ${roleBadgeClass} text-xs`}>{item.role.value}</div>
-      <div className="max-w-none pt-1 pr-20">
+      <div className="max-w-none pt-1">
         {item.content.map((contentItem, index) => (
           <ContentItem key={index} item={contentItem} />
         ))}
@@ -193,16 +183,16 @@ function ContextMessageItem({ item }: { item: ContextMessage }) {
   );
 }
 
-function getRoleBadgeClass(role: string): string {
+function getRoleTextClass(role: string): string {
   switch (role.toLowerCase()) {
     case "user":
-      return "badge-primary";
+      return "text-primary";
     case "assistant":
-      return "badge-success";
+      return "text-success";
     case "system":
-      return "badge-secondary";
+      return "text-secondary";
     default:
-      return "badge-info";
+      return "text-info";
   }
 }
 
@@ -242,7 +232,7 @@ function ContentItem({ item }: { item: ContextMessageContentItem }) {
     );
   } else if (item.content_type === "video") {
     return (
-      <div className="flex flex-col items-center gap-1 mb-1">
+      <div className="flex flex-col gap-1 mb-1">
         <div className="flex gap-1 flex-wrap">
           <div className="badge badge-info badge-sm">
             W: {item.video?.width || "N/A"}
