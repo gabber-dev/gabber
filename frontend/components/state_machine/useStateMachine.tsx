@@ -3,11 +3,7 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import {
-  BasePadType,
-  NodeEditorRepresentation,
-  Object,
-} from "@/generated/editor";
+import { BasePadType, NodeEditorRepresentation } from "@/generated/editor";
 import {
   Edge,
   EdgeChange,
@@ -86,7 +82,7 @@ export function StateMachineProvider({ children, nodeId }: Props) {
   }>({ nodes: [], edges: [] });
 
   const { editorValue: configuration, setEditorValue: setConfiguration } =
-    usePropertyPad<Object>(nodeId || "", "configuration");
+    usePropertyPad<StateMachineConfiguration>(nodeId || "", "configuration");
 
   const updateState = useCallback(
     (stateId: string, newName: string) => {
@@ -177,18 +173,17 @@ export function StateMachineProvider({ children, nodeId }: Props) {
   );
 
   const addParameter = useCallback(async () => {
-    if (editorValue === undefined || typeof editorValue !== "number") {
-      setEditorValue(1);
-      return;
-    }
-    setEditorValue(editorValue + 1);
+    setEditorValue({
+      type: "integer",
+      value: editorValue ? editorValue.value + 1 : 1,
+    });
   }, [editorValue, setEditorValue]);
 
   const removeParameter = useCallback(async () => {
-    if (editorValue === undefined || typeof editorValue !== "number") {
-      return;
-    }
-    setEditorValue(editorValue - 1);
+    setEditorValue({
+      type: "integer",
+      value: editorValue ? Math.max(0, editorValue.value - 1) : 0,
+    });
   }, [editorValue, setEditorValue]);
 
   const handleNodeChanges = useCallback(

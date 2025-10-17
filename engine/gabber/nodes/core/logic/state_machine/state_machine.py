@@ -80,7 +80,7 @@ class StateMachine(node.Node):
         return "Create logic to control the flow of your application based on parameter conditions."
 
     def resolve_pads(self):
-        configuration = cast(pad.PropertySinkPad, self.get_pad("configuration"))
+        configuration = self.get_property_sink_pad(dict, "configuration")
         if not configuration:
             configuration = pad.PropertySinkPad(
                 id="configuration",
@@ -271,7 +271,7 @@ class StateMachine(node.Node):
         self._resolve_condition_operators()
 
     async def run(self):
-        configuration_pad = cast(pad.PropertySinkPad, self.get_pad("configuration"))
+        configuration_pad = self.get_property_sink_pad_required(dict, "configuration")
         current_state_pad = cast(
             pad.PropertySourcePad, self.get_pad_required("current_state")
         )
@@ -566,6 +566,7 @@ class StateMachine(node.Node):
                             owner_node=self,
                             default_type_constraints=tcs,
                             group=p.get_group(),
+                            value=None,
                         )
                         if prev_pad:
                             prev_pad.disconnect(p)

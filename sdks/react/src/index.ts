@@ -52,4 +52,5 @@ export type { ConnectionDetails,
     ToolDefinition, 
     Secret, 
     NodeReference,
+    Object,
     VideoClip } from '@gabber/client'
