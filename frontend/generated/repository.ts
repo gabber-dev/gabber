@@ -272,13 +272,17 @@ export type Text = string | null;
 export type Width = number;
 export type Height = number;
 export type Handle = string;
+export type Timestamp = number | null;
 export type Duration2 = number;
 export type Transcription1 = string | null;
 export type Handle1 = string;
+export type StartTimestamp = number | null;
 export type Width1 = number;
 export type Height1 = number;
 export type Duration3 = number;
 export type Handle2 = string;
+export type FrameCount1 = number;
+export type StartTimestamp1 = number | null;
 export type Content = ContextMessageContentItem[];
 export type Type33 = "enum";
 export type Value5 = string;
@@ -715,12 +719,14 @@ export interface ContextMessageContentItem_Image {
   width: Width;
   height: Height;
   handle: Handle;
+  timestamp: Timestamp;
   [k: string]: unknown;
 }
 export interface ContextMessageContentItem_Audio {
   duration: Duration2;
   transcription: Transcription1;
   handle: Handle1;
+  start_timestamp: StartTimestamp;
   [k: string]: unknown;
 }
 export interface ContextMessageContentItem_Video {
@@ -728,6 +734,8 @@ export interface ContextMessageContentItem_Video {
   height: Height1;
   duration: Duration3;
   handle: Handle2;
+  frame_count: FrameCount1;
+  start_timestamp: StartTimestamp1;
   [k: string]: unknown;
 }
 export interface Enum1 {

@@ -80,6 +80,7 @@ class AudioFrameData:
 
 @dataclass
 class AudioFrame(BaseRuntimeType):
+    start_timestamp: float
     original_data: AudioFrameData
     data_16000hz: AudioFrameData
     data_24000hz: AudioFrameData
@@ -94,6 +95,7 @@ class AudioFrame(BaseRuntimeType):
         data_44100hz = np.zeros((1, int(duration * 44100)), dtype=np.int16)
         data_48000hz = np.zeros((1, int(duration * 48000)), dtype=np.int16)
         return AudioFrame(
+            start_timestamp=0.0,
             original_data=AudioFrameData(data_16000hz, 16000, 1),
             data_16000hz=AudioFrameData(data_16000hz, 16000, 1),
             data_24000hz=AudioFrameData(data_24000hz, 24000, 1),
@@ -219,6 +221,12 @@ class AudioClip(BaseRuntimeType):
     def log_type(self) -> str:
         return "audio_clip"
 
+    @property
+    def start_timestamp(self) -> float:
+        if not self.audio:
+            return 0.0
+        return self.audio[0].start_timestamp
+
 
 @dataclass
 class VideoClip(BaseRuntimeType):
@@ -257,6 +265,12 @@ class VideoClip(BaseRuntimeType):
             return 1
 
         return int((len(self.video) - 1) / total_time)
+
+    @property
+    def start_timestamp(self) -> float:
+        if not self.video:
+            return 0.0
+        return self.video[0].timestamp
 
 
 @dataclass

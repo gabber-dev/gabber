@@ -5,7 +5,7 @@ from typing import Any, cast
 
 from gabber.core import pad
 from gabber.core.node import Node, NodeMetadata
-from gabber.core.types import pad_constraints
+from gabber.core.types import pad_constraints, runtime
 
 
 class TypeConstraint(Node):
@@ -14,7 +14,7 @@ class TypeConstraint(Node):
         return NodeMetadata(primary="core", secondary="utility", tags=[])
 
     def resolve_pads(self):
-        type_selector = cast(pad.PropertySinkPad, self.get_pad("type_selector"))
+        type_selector = self.get_property_sink_pad(runtime.Enum, "type_selector")
         if not type_selector:
             type_selector = pad.PropertySinkPad(
                 id="type_selector",
@@ -25,7 +25,7 @@ class TypeConstraint(Node):
                         options=["string", "integer", "float", "boolean", "trigger"]
                     )
                 ],
-                value="string",
+                value=runtime.Enum(value="string"),
             )
 
         sink = cast(pad.StatelessSinkPad, self.get_pad("sink"))
@@ -48,23 +48,23 @@ class TypeConstraint(Node):
 
         selected_type = type_selector.get_value()
         default_value: Any | None = None
-        if selected_type == "string":
+        if selected_type.value == "string":
             sink.set_default_type_constraints([pad_constraints.String()])
             source.set_default_type_constraints([pad_constraints.String()])
             default_value = ""
-        elif selected_type == "integer":
+        elif selected_type.value == "integer":
             sink.set_default_type_constraints([pad_constraints.Integer()])
             source.set_default_type_constraints([pad_constraints.Integer()])
             default_value = 0
-        elif selected_type == "float":
+        elif selected_type.value == "float":
             sink.set_default_type_constraints([pad_constraints.Float()])
             source.set_default_type_constraints([pad_constraints.Float()])
             default_value = 0.0
-        elif selected_type == "boolean":
+        elif selected_type.value == "boolean":
             sink.set_default_type_constraints([pad_constraints.Boolean()])
             source.set_default_type_constraints([pad_constraints.Boolean()])
             default_value = False
-        elif selected_type == "trigger":
+        elif selected_type.value == "trigger":
             sink.set_default_type_constraints([pad_constraints.Trigger()])
             source.set_default_type_constraints([pad_constraints.Trigger()])
             default_value = None
