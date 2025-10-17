@@ -257,10 +257,11 @@ export type Value3 = number;
 export type Type27 = "boolean";
 export type Value4 = boolean;
 export type Type28 = "audio_clip";
-export type Transcript = string;
+export type Transcription = string | null;
 export type Duration = number;
 export type Type29 = "video_clip";
 export type Duration1 = number;
+export type FrameCount = number;
 export type Type30 = "list";
 export type Count = number;
 export type Type31 = "context_message_role";
@@ -272,7 +273,7 @@ export type Width = number;
 export type Height = number;
 export type Handle = string;
 export type Duration2 = number;
-export type Transcription = string | null;
+export type Transcription1 = string | null;
 export type Handle1 = string;
 export type Width1 = number;
 export type Height1 = number;
@@ -675,13 +676,14 @@ export interface Boolean1 {
 }
 export interface AudioClip1 {
   type?: Type28;
-  transcript: Transcript;
+  transcription: Transcription;
   duration: Duration;
   [k: string]: unknown;
 }
 export interface VideoClip1 {
   type?: Type29;
   duration: Duration1;
+  frame_count: FrameCount;
   [k: string]: unknown;
 }
 export interface List1 {
@@ -717,7 +719,7 @@ export interface ContextMessageContentItem_Image {
 }
 export interface ContextMessageContentItem_Audio {
   duration: Duration2;
-  transcription: Transcription;
+  transcription: Transcription1;
   handle: Handle1;
   [k: string]: unknown;
 }
