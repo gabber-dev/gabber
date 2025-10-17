@@ -311,23 +311,23 @@ class Compare(Node):
         ],
         mode_pad: pad.PropertySinkPad[runtime.Enum],
     ):
-        mode = mode_pad.get_value()
-        if mode.value not in ["AND", "OR"]:
+        mode = mode_pad.get_value().value
+        if mode not in ["AND", "OR"]:
             mode_pad.set_value(runtime.Enum(value="AND"))
             mode = runtime.Enum(value="AND")
 
         res = False
-        if mode.value == "AND":
+        if mode == "AND":
             res = True
         for cps in condition_pads:
             a, b, op = cps
             if a and b and op and op.get_value() is not None:
                 result = self.compare_values(a, b, op.get_value())
-                if mode.value == "AND":
+                if mode == "AND":
                     res = res and result
                     if not res:
                         break
-                elif mode.value == "OR":
+                elif mode == "OR":
                     res = res or result
                     if res:
                         break

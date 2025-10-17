@@ -302,4 +302,5 @@ NOTIFIABLE_TYPES = (
     runtime.ContextMessage,
     runtime.AudioClip,
     runtime.VideoClip,
+    runtime.Enum,
 )
