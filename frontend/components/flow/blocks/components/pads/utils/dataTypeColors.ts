@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { PadType } from "@/generated/editor";
+import { PadConstraint } from "@/generated/editor";
 
 export interface DataTypeColor {
   background: string;
@@ -162,7 +162,7 @@ export function getDataTypeColor(dataType: string): DataTypeColor {
 }
 
 export function getPrimaryDataType(
-  allowedTypes: PadType[],
+  allowedTypes: PadConstraint[],
 ): string | undefined {
   if (!allowedTypes || allowedTypes.length === 0) {
     return undefined;

@@ -12,16 +12,13 @@ import { PropertyPad } from "./components/pads/PropertyPad";
 import { StatelessPad } from "./components/pads/StatelessPad";
 import { SelfPad } from "./components/pads/SelfPad";
 import { useMemo } from "react";
-import { PadValue, PadValue_List } from "@gabber/client-react";
+import { List, PadValue } from "@gabber/client-react";
 import { useEditor } from "@/hooks/useEditor";
 import { useRun } from "@/hooks/useRun";
 
 export function LLMContextNode({ data }: BaseBlockProps) {
   const { detailedView, setDetailedView } = useEditor();
-  const propertyPadResult = usePropertyPad<PadValue_List | PadValue[]>(
-    data.id,
-    "source",
-  );
+  const propertyPadResult = usePropertyPad<List>(data.id, "source");
   const { runtimeValue: contextMessages, editorValue } = propertyPadResult;
   const { connectionState } = useRun();
 
@@ -52,17 +49,6 @@ export function LLMContextNode({ data }: BaseBlockProps) {
     const result = Array.isArray(msgs) ? msgs : [];
     return result;
   }, [contextMessages, editorValue]);
-
-  const messageCount = useMemo(() => {
-    if (connectionState === "connected") {
-      const l = contextMessages as PadValue_List;
-      if (l?.type === "list" && Array.isArray(l.items)) {
-        return l.count;
-      }
-      return 0;
-    }
-    return messages.length;
-  }, [connectionState, contextMessages, messages.length]);
 
   return (
     <div className="w-80 flex flex-col bg-base-200 border-2 border-black border-b-4 border-r-4 rounded-lg relative">

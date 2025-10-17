@@ -12,10 +12,11 @@ import { CubeIcon } from "@heroicons/react/24/outline";
 import { useStatelessPad } from "./components/pads/hooks/useStatelessPad";
 import { NodeName } from "./components/NodeName";
 import { NodeId } from "./components/NodeId";
+import { Object1 } from "@/generated/editor";
 
 export function JsonNode({ data }: BaseBlockProps) {
   const {} = useEditor();
-  const { runtimeValue, setEditorValue, pad } = usePropertyPad(
+  const { runtimeValue, setEditorValue, pad } = usePropertyPad<Object1>(
     data.id,
     "value",
   );
@@ -34,7 +35,9 @@ export function JsonNode({ data }: BaseBlockProps) {
         <JsonEditor
           theme={githubDarkTheme}
           data={runtimeValue || null}
-          setData={setEditorValue}
+          setData={(d) => {
+            setEditorValue({ type: "object", value: d });
+          }}
         />
       </div>
       <div className="flex flex-col">
