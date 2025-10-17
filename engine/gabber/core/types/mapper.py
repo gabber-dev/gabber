@@ -105,10 +105,15 @@ class Mapper:
             return client.Secret(
                 secret_id=runtime_value.secret_id, name=runtime_value.name
             )
+        elif isinstance(runtime_value, runtime.AudioClip):
+            return client.AudioClip(
+                duration=runtime_value.duration,
+                transcription=runtime_value.transcription,
+            )
+        elif isinstance(runtime_value, runtime.VideoClip):
+            return client.VideoClip(duration=runtime_value.duration)
 
-        raise ValueError(
-            f"Unknown runtime pad value: {runtime_value} ({type(runtime_value)})"
-        )
+        raise ValueError(f"Unknown runtime pad value ({type(runtime_value)})")
 
     @staticmethod
     def runtime_context_message_to_client(

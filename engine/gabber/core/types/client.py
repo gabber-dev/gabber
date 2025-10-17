@@ -32,13 +32,14 @@ class Trigger(BaseModel):
 
 class AudioClip(BaseModel):
     type: Literal["audio_clip"] = "audio_clip"
-    transcript: str
+    transcription: str | None
     duration: float
 
 
 class VideoClip(BaseModel):
     type: Literal["video_clip"] = "video_clip"
     duration: float
+    frame_count: int
 
 
 class ContextMessageContentItem_Image(BaseModel):

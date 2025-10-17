@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: SUL-1.0
 
 from typing import Any, cast
-import logging
 
 from .. import node, pad
 from ..types import pad_constraints, mapper
@@ -15,10 +14,6 @@ def pad_editor_rep(p: pad.Pad):
     if isinstance(p, pad.PropertyPad):
         value = mapper.Mapper.runtime_to_client(p.get_value())
 
-    if p.get_id() == "api_key":
-        logging.info(
-            f"NEIL pad_editor_rep for api_key pad, value: {value}, {p.get_value()}"
-        )
     next_pads: list[PadReference] = []
     if isinstance(p, pad.SourcePad):
         next_pads = [
