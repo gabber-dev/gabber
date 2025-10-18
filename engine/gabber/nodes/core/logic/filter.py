@@ -7,7 +7,7 @@ from typing import cast, Any
 
 from gabber.core import pad
 from gabber.core.node import Node, NodeMetadata
-from gabber.core.types import pad_constraints
+from gabber.core.types import pad_constraints, runtime
 
 STRING_COMPARISON_OPERATORS = [
     "==",
@@ -54,6 +54,8 @@ ALL_PAD_TYPES = [
     pad_constraints.Enum(),
 ]
 
+ALL_RUNTIME_TYPES = str | int | float | bool | runtime.Enum
+
 
 class Filter(Node):
     @classmethod
@@ -61,7 +63,7 @@ class Filter(Node):
         return NodeMetadata(primary="core", secondary="logic", tags=["gate"])
 
     def resolve_pads(self):
-        sink = cast(pad.StatelessSinkPad, self.get_pad("sink"))
+        sink = cast(pad.StatelessSinkPad[ALL_RUNTIME_TYPES], self.get_pad("sink"))
         if not sink:
             sink = pad.StatelessSinkPad(
                 id="sink",
@@ -79,14 +81,14 @@ class Filter(Node):
                 default_type_constraints=ALL_PAD_TYPES,
             )
 
-        operator = cast(pad.PropertySinkPad, self.get_pad("operator"))
+        operator = cast(pad.PropertySinkPad[runtime.Enum], self.get_pad("operator"))
         if not operator:
-            operator = pad.PropertySinkPad(
+            operator = pad.PropertySinkPad[runtime.Enum](
                 id="operator",
                 group="operator",
                 owner_node=self,
                 default_type_constraints=[pad_constraints.Enum()],
-                value="",
+                value=runtime.Enum(value="=="),
             )
 
         compare_value = cast(pad.PropertySinkPad, self.get_pad("compare_value"))
@@ -106,8 +108,8 @@ class Filter(Node):
 
     def _resolve_operators(
         self,
-        pad_a: pad.SinkPad,
-        operator_pad: pad.PropertySinkPad,
+        pad_a: pad.SinkPad[ALL_RUNTIME_TYPES],
+        operator_pad: pad.PropertySinkPad[runtime.Enum],
     ):
         tcs = pad_a.get_type_constraints()
         if tcs is not None and len(tcs) == 1:
@@ -116,46 +118,57 @@ class Filter(Node):
                 operator_pad.set_default_type_constraints(
                     [pad_constraints.Enum(options=STRING_COMPARISON_OPERATORS)]
                 )
-                if operator_pad.get_value() not in STRING_COMPARISON_OPERATORS:
-                    operator_pad.set_value(STRING_COMPARISON_OPERATORS[0])
+                if operator_pad.get_value().value not in STRING_COMPARISON_OPERATORS:
+                    operator_pad.set_value(
+                        runtime.Enum(value=STRING_COMPARISON_OPERATORS[0])
+                    )
             elif isinstance(tc, pad_constraints.Integer):
                 operator_pad.set_default_type_constraints(
                     [pad_constraints.Enum(options=INTEGER_COMPARISON_OPERATORS)]
                 )
-                if operator_pad.get_value() not in INTEGER_COMPARISON_OPERATORS:
-                    operator_pad.set_value(INTEGER_COMPARISON_OPERATORS[0])
+                if operator_pad.get_value().value not in INTEGER_COMPARISON_OPERATORS:
+                    operator_pad.set_value(
+                        runtime.Enum(value=INTEGER_COMPARISON_OPERATORS[0])
+                    )
             elif isinstance(tc, pad_constraints.Float):
                 operator_pad.set_default_type_constraints(
                     [pad_constraints.Enum(options=FLOAT_COMPARISON_OPERATORS)]
                 )
-                if operator_pad.get_value() not in FLOAT_COMPARISON_OPERATORS:
-                    operator_pad.set_value(FLOAT_COMPARISON_OPERATORS[0])
+                if operator_pad.get_value().value not in FLOAT_COMPARISON_OPERATORS:
+                    operator_pad.set_value(
+                        runtime.Enum(value=FLOAT_COMPARISON_OPERATORS[0])
+                    )
             elif isinstance(tc, pad_constraints.Boolean):
                 operator_pad.set_default_type_constraints(
                     [pad_constraints.Enum(options=BOOL_COMPARISON_OPERATORS)]
                 )
-                if operator_pad.get_value() not in BOOL_COMPARISON_OPERATORS:
-                    operator_pad.set_value(BOOL_COMPARISON_OPERATORS[0])
+                if operator_pad.get_value().value not in BOOL_COMPARISON_OPERATORS:
+                    operator_pad.set_value(
+                        runtime.Enum(value=BOOL_COMPARISON_OPERATORS[0])
+                    )
             elif isinstance(tc, pad_constraints.Enum):
                 operator_pad.set_default_type_constraints(
                     [pad_constraints.Enum(options=ENUM_COMPARISON_OPERATORS)]
                 )
-                if operator_pad.get_value() not in ENUM_COMPARISON_OPERATORS:
-                    operator_pad.set_value(ENUM_COMPARISON_OPERATORS[0])
-            else:
-                logging.error(
-                    f"Unsupported type for comparison: {tc}. No operator pad will be created."
-                )
-                operator_pad.set_default_type_constraints(
-                    [pad_constraints.Enum(options=[])]
-                )
-                operator_pad.set_value(None)
+                if operator_pad.get_value().value not in ENUM_COMPARISON_OPERATORS:
+                    operator_pad.set_value(
+                        runtime.Enum(value=ENUM_COMPARISON_OPERATORS[0])
+                    )
 
     async def run(self):
-        sink = cast(pad.StatelessSinkPad, self.get_pad_required("sink"))
-        source = cast(pad.StatelessSourcePad, self.get_pad_required("source"))
-        operator_pad = cast(pad.PropertySinkPad, self.get_pad_required("operator"))
-        compare_pad = cast(pad.PropertySinkPad, self.get_pad_required("compare_value"))
+        sink = cast(
+            pad.StatelessSinkPad[ALL_RUNTIME_TYPES], self.get_pad_required("sink")
+        )
+        source = cast(
+            pad.StatelessSourcePad[ALL_RUNTIME_TYPES], self.get_pad_required("source")
+        )
+        operator_pad = cast(
+            pad.PropertySinkPad[runtime.Enum], self.get_pad_required("operator")
+        )
+        compare_pad = cast(
+            pad.PropertySinkPad[ALL_RUNTIME_TYPES],
+            self.get_pad_required("compare_value"),
+        )
 
         async def process_sink():
             async for item in sink:
@@ -167,7 +180,7 @@ class Filter(Node):
                         tcs_a[0],
                         compare_pad.get_value(),
                         tcs_b[0],
-                        operator_pad.get_value(),
+                        operator_pad.get_value().value,
                     ):
                         source.push_item(item.value, item.ctx)
                 item.ctx.complete()
