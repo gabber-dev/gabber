@@ -59,7 +59,6 @@ class PipeCatEOTInference(EOTInference):
 
         outputs = self._onnx_session.run(None, {"input_features": input_features})
         results = outputs[0].flatten().tolist()  # type: ignore
-        print("EOT OUTPUTS:", results)
         return [AudioInferenceInternalResult(result=r, state=None) for r in results]
 
     @property

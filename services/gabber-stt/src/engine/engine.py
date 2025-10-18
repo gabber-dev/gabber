@@ -18,7 +18,7 @@ VAD_SMOOTHING_HISTORY = 2
 class EngineSettings:
     initial_vad_threshold: float = 0.6
     vad_sustained_threshold: float = 0.4
-    speaking_started_warmup_time_s: float = 0.250
+    speaking_started_warmup_time_s: float = 0.15
     vad_cooldown_time_s: float = 0.4
     eot_timeout_s: float = 1.0
     eot_warmup_time_s: float = 0.75
@@ -108,13 +108,20 @@ class EngineState_TalkingWarmUp(BaseEngineState):
         await self.state.update_vad()
         await self.state.update_stt()
 
-        time_since_last_voice = (
+        time_since_last_non_voice = (
             self.state.latest_voice - self.state.last_non_voice
+        ) / self.state.engine.vad_session.sample_rate
+
+        time_since_last_voice = (
+            self.state.engine.audio_window._end_cursors.get(
+                self.state.engine.vad_session.sample_rate, 0
+            )
+            - self.state.latest_voice
         ) / self.state.engine.vad_session.sample_rate
 
         if (
             self.state.current_stt_result.transcription != ""
-            and time_since_last_voice
+            and time_since_last_non_voice
             > self.state.engine.settings.speaking_started_warmup_time_s
         ):
             self.state.eot_cursor = self.state.latest_voice
