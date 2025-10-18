@@ -31,17 +31,11 @@ export function PropertyEdit({ nodeId, padId }: PropertyEditProps) {
     return <ContextMessageRoleEdit nodeId={nodeId} padId={padId} />;
   }
 
-  if (
-    singleAllowedType.type === "string" ||
-    singleAllowedType.type === "text"
-  ) {
+  if (singleAllowedType.type === "string") {
     return <StringPropertyEdit nodeId={nodeId} padId={padId} />;
   }
 
-  if (
-    singleAllowedType.type === "float" ||
-    singleAllowedType.type === "number"
-  ) {
+  if (singleAllowedType.type === "float") {
     return <FloatPropertyEdit nodeId={nodeId} padId={padId} />;
   }
 
