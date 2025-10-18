@@ -314,7 +314,7 @@ class Compare(Node):
         mode = mode_pad.get_value().value
         if mode not in ["AND", "OR"]:
             mode_pad.set_value(runtime.Enum(value="AND"))
-            mode = runtime.Enum(value="AND")
+            mode = "AND"
 
         res = False
         if mode == "AND":
@@ -337,7 +337,7 @@ class Compare(Node):
         self,
         pad_a: pad.PropertySinkPad,
         pad_b: pad.PropertySinkPad,
-        op: runtime.Enum,
+        op: str,
     ) -> bool:
         a = pad_a.get_value()
         b = pad_b.get_value()
@@ -357,17 +357,17 @@ class Compare(Node):
                     f"Type mismatch for string comparison: {type(a)} vs {type(b)}"
                 )
                 return False
-            if op.value == "==":
+            if op == "==":
                 return a == b
-            elif op.value == "!=":
+            elif op == "!=":
                 return a != b
-            elif op.value == "CONTAINS":
+            elif op == "CONTAINS":
                 return a in b
-            elif op.value == "NOT_CONTAINS":
+            elif op == "NOT_CONTAINS":
                 return a not in b
-            elif op.value == "STARTS_WITH":
+            elif op == "STARTS_WITH":
                 return a.startswith(b)
-            elif op.value == "ENDS_WITH":
+            elif op == "ENDS_WITH":
                 return a.endswith(b)
             else:
                 logging.error(f"Unsupported operator for string comparison: {op}")
@@ -380,17 +380,17 @@ class Compare(Node):
                     f"Type mismatch for integer comparison: {type(a)} vs {type(b)}"
                 )
                 return False
-            if op.value == "==":
+            if op == "==":
                 return a == b
-            elif op.value == "!=":
+            elif op == "!=":
                 return a != b
-            elif op.value == "<":
+            elif op == "<":
                 return a < b
-            elif op.value == ">":
+            elif op == ">":
                 return a > b
-            elif op.value == "<=":
+            elif op == "<=":
                 return a <= b
-            elif op.value == ">=":
+            elif op == ">=":
                 return a >= b
             else:
                 logging.error(f"Unsupported operator for integer comparison: {op}")
@@ -403,17 +403,17 @@ class Compare(Node):
                     f"Type mismatch for float comparison: {type(a)} vs {type(b)}"
                 )
                 return False
-            if op.value == "==":
+            if op == "==":
                 return a == b
-            elif op.value == "!=":
+            elif op == "!=":
                 return a != b
-            elif op.value == "<":
+            elif op == "<":
                 return a < b
-            elif op.value == ">":
+            elif op == ">":
                 return a > b
-            elif op.value == "<=":
+            elif op == "<=":
                 return a <= b
-            elif op.value == ">=":
+            elif op == ">=":
                 return a >= b
             else:
                 logging.error(f"Unsupported operator for float comparison: {op}")
@@ -421,9 +421,9 @@ class Compare(Node):
         elif isinstance(tc_a, pad_constraints.Boolean) and isinstance(
             tc_b, pad_constraints.Boolean
         ):
-            if op.value == "==":
+            if op == "==":
                 return a == b
-            elif op.value == "!=":
+            elif op == "!=":
                 return a != b
             else:
                 logging.error(f"Unsupported operator for boolean comparison: {op}")
@@ -436,9 +436,9 @@ class Compare(Node):
                     f"Type mismatch for enum comparison: {type(a)} vs {type(b)}"
                 )
                 return False
-            if op.value == "==":
+            if op == "==":
                 return a.value == b.value
-            elif op.value == "!=":
+            elif op == "!=":
                 return a.value != b.value
             else:
                 logging.error(f"Unsupported operator for enum comparison: {op}")
