@@ -12,7 +12,7 @@ import { CubeIcon } from "@heroicons/react/24/outline";
 import { useStatelessPad } from "./components/pads/hooks/useStatelessPad";
 import { NodeName } from "./components/NodeName";
 import { NodeId } from "./components/NodeId";
-import { Object1 } from "@/generated/editor";
+import { Object1, Value6 } from "@/generated/editor";
 
 export function JsonNode({ data }: BaseBlockProps) {
   const {} = useEditor();
@@ -36,7 +36,7 @@ export function JsonNode({ data }: BaseBlockProps) {
           theme={githubDarkTheme}
           data={runtimeValue || null}
           setData={(d) => {
-            setEditorValue({ type: "object", value: d });
+            setEditorValue({ type: "object", value: d as Value6 });
           }}
         />
       </div>
