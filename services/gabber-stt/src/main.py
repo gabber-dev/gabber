@@ -11,7 +11,7 @@ async def main():
     vad_engine = vad.VADInferenceEngine(inference_impl=vad.silero.SileroVADInference())
     stt_engine = stt.STTInferenceEngine(
         inference_impl=stt.parakeet.ParakeetSTTInference(
-            window_secs=120.0,  # There is a bug I can't find with the continuation states so for now we will just use a long window.
+            window_secs=120.0,  # There is a bug I can't find with the RNN continuation logic so for now we will just use a long window which is fine in practice for realtime conversational use cases.
         )
         # inference_impl=stt.mock.MockSTTInference(window_secs=20.0),
     )
