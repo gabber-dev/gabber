@@ -67,7 +67,7 @@ class PipeCatEOTInference(EOTInference):
 
     @property
     def new_audio_size(self) -> int:
-        return int(16000 * 0.2)
+        return int(16000 * 0.25)
 
     @property
     def full_audio_size(self) -> int:

@@ -1,7 +1,6 @@
 from core import (
     AudioInference,
     AudioInferenceEngine,
-    AudioInferenceSession,
 )
 from dataclasses import dataclass
 
@@ -26,8 +25,4 @@ class STTInferenceEngine(AudioInferenceEngine[STTInferenceResult]):
 
 
 class STTInference(AudioInference[STTInferenceResult]):
-    pass
-
-
-class STTSession(AudioInferenceSession[STTInferenceResult]):
     pass

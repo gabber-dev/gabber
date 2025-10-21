@@ -1,6 +1,5 @@
 from .audio_inference import (
     AudioInferenceEngine,
-    AudioInferenceSession,
     AudioInference,
     AudioInferenceBatcher,
     AudioInferenceBatcherPromise,
@@ -12,7 +11,6 @@ from .resampler import Resampler
 
 __all__ = [
     "AudioInferenceEngine",
-    "AudioInferenceSession",
     "AudioInference",
     "AudioInferenceBatcher",
     "AudioInferenceBatcherPromise",

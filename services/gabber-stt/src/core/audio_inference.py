@@ -1,11 +1,9 @@
 import asyncio
 import logging
-import time
 import queue
 import threading
 from dataclasses import dataclass
 from typing import Any, Protocol, Generic, TypeVar
-from .audio_window import AudioWindow
 
 import numpy as np
 
@@ -31,76 +29,19 @@ class AudioInferenceEngine(Generic[RESULT]):
     def sample_rate(self) -> int:
         return self.inference_impl.sample_rate
 
-    def create_session(self) -> "AudioInferenceSession[RESULT]":
-        return AudioInferenceSession(batcher=self.batcher)
+    async def simple_inference(self, audio: np.typing.NDArray[np.int16]) -> RESULT:
+        samples = audio.shape[0]
+        if audio.shape[0] != self.inference_impl.full_audio_size:
+            audio = np.pad(
+                audio,
+                (0, self.inference_impl.full_audio_size - audio.shape[0]),
+            )
+        res = await self.batcher.inference(audio, None, samples)
+        return res.result
 
     async def initialize(self) -> None:
         await self.inference_impl.initialize()
         self.batcher.start()
-
-
-class AudioInferenceSession(Generic[RESULT]):
-    def __init__(self, *, batcher: "AudioInferenceBatcher"):
-        self.batcher = batcher
-        self.audio_window = AudioWindow(
-            max_length_s=(
-                self.batcher._inference_impl.full_audio_size / self.batcher.sample_rate
-            )
-            * 3,
-            sample_rates=[self.batcher.sample_rate],
-            input_sample_rate=self.batcher.sample_rate,
-        )
-        self._state: Any = None
-        self._curs = 0
-
-    @property
-    def new_audio_size(self) -> int:
-        return self.batcher._inference_impl.new_audio_size
-
-    @property
-    def sample_rate(self) -> int:
-        return self.batcher.sample_rate
-
-    async def inference(self, audio: np.typing.NDArray[np.int16]) -> RESULT:
-        if audio.ndim != 1:
-            raise ValueError(f"Invalid audio shape: {audio.shape}, must be 1D")
-
-        if audio.shape[0] != self.new_audio_size:
-            raise ValueError(
-                f"Invalid audio size: {audio.shape[0]}, must be {self.new_audio_size}"
-            )
-
-        self.audio_window.push_audio(audio=audio)
-        self._curs += audio.shape[0]
-
-        start_curs = max(0, self._curs - self.batcher._inference_impl.full_audio_size)
-        end_curs = self._curs
-        inference_audio = self.audio_window.get_segment(
-            sample_rate=self.batcher.sample_rate,
-            start_curs=start_curs,
-            ends_curs=end_curs,
-        )
-
-        num_samples = inference_audio.shape[0]
-
-        if inference_audio.shape[0] != self.batcher._inference_impl.full_audio_size:
-            inference_audio = np.pad(
-                inference_audio,
-                (
-                    0,
-                    self.batcher._inference_impl.full_audio_size
-                    - inference_audio.shape[0],
-                ),
-            )
-
-        res = await self.batcher.inference(inference_audio, self._state, num_samples)
-        self._state = res.state
-        return res.result
-
-    def reset(self):
-        self._state = None
-        self._curs = 0
-        self.audio_window.clear()
 
 
 @dataclass

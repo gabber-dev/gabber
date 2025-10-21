@@ -37,7 +37,7 @@ class ParakeetSTTInference(STTInference):
         self,
         *,
         window_secs: float = 10.0,
-        chunk_secs: float = 0.320,
+        chunk_secs: float = 0.280,
     ):
         self._window_sec = window_secs
         self._chunk_secs = chunk_secs
@@ -89,7 +89,13 @@ class ParakeetSTTInference(STTInference):
         )
 
         encode_res = batch.encode()
-        prev_states = [p.prev_decoder_state for p in input.prev_states if p is not None]
+        prev_states: list[LabelLoopingStateItem | None] = []
+        for p in input.prev_states:
+            if p is not None:
+                prev_states.append(p.prev_decoder_state)
+            else:
+                prev_states.append(None)
+
         prev_hyps = [p.prev_hyp for p in input.prev_states if p is not None]
         decode_results = batch.decode(
             encode_result=encode_res,

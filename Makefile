@@ -46,6 +46,12 @@ generate-python:
 	echo "__all__ = ['runtime']" >> ../../../sdks/python/gabber/generated/__init__.py && \
 	cp runtime.py ../../../sdks/python/gabber/generated/runtime.py
 
+generate-csharp:
+	mkdir -p .gabber/.generate/csharp && \
+	engine/.venv/bin/python engine/gabber/main.py generate-runtime-schema > .gabber/.generate/csharp/runtime.json && \
+	cd .gabber/.generate/csharp && \
+	nswag jsonschema2csclient runtime.json -o Runtime.cs -c Gabber.Runtime -d
+
 frontend:
 	cd frontend && \
 	npm install && \
