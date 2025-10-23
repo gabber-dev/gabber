@@ -96,7 +96,7 @@ class AVClipZip(Node):
                 # TODO: propagate context properly
                 ctx = cast(
                     pad.RequestContext,
-                    pad.RequestContext(parent=None, metadata=metadata),
+                    pad.RequestContext(parent=None, publisher_metadata=metadata),
                 )
                 av_clip.push_item(res, ctx)
                 for item in items:

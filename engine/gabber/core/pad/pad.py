@@ -206,7 +206,7 @@ class SourcePad(Pad[SOURCE_PAD_T], Protocol, Generic[SOURCE_PAD_T]):
                 parent=ctx,
                 timeout=ctx._timeout_s,
                 originator=self.get_id(),
-                metadata=ctx.metadata,
+                publisher_metadata=ctx.publisher_metadata,
             )
 
             item = Item[SOURCE_PAD_T](value=value, ctx=new_ctx)

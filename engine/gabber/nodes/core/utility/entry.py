@@ -34,5 +34,5 @@ class Entry(Node):
         # Wait a bit to make sure the clients are ready
         await asyncio.sleep(0.5)
         trigger.push_item(
-            runtime.Trigger(), pad.RequestContext(parent=None, metadata=None)
+            runtime.Trigger(), pad.RequestContext(parent=None, publisher_metadata=None)
         )

@@ -279,7 +279,9 @@ class SileroVAD(node.Node):
                 self._continued_speech_emitted = False
                 speech_started_trigger.push_item(
                     runtime.Trigger(),
-                    pad.RequestContext(parent=None, metadata=ctx.metadata),
+                    pad.RequestContext(
+                        parent=None, publisher_metadata=ctx.publisher_metadata
+                    ),
                 )
             elif self._speech_state == SpeechState.ENDING:
                 self._speech_state = SpeechState.SPEAKING
@@ -298,7 +300,9 @@ class SileroVAD(node.Node):
                 ):
                     continued_speech_trigger.push_item(
                         runtime.Trigger(),
-                        pad.RequestContext(parent=None, metadata=ctx.metadata),
+                        pad.RequestContext(
+                            parent=None, publisher_metadata=ctx.publisher_metadata
+                        ),
                     )
                     self._continued_speech_emitted = True
                     logger.info(
@@ -324,12 +328,16 @@ class SileroVAD(node.Node):
                         audio_clip = list(self._speech_audio_frames)
                         audio_clip_source.push_item(
                             AudioClip(audio=audio_clip),
-                            pad.RequestContext(parent=None, metadata=ctx.metadata),
+                            pad.RequestContext(
+                                parent=None, publisher_metadata=ctx.publisher_metadata
+                            ),
                         )
 
                     speech_ended_trigger.push_item(
                         runtime.Trigger(),
-                        pad.RequestContext(parent=None, metadata=ctx.metadata),
+                        pad.RequestContext(
+                            parent=None, publisher_metadata=ctx.publisher_metadata
+                        ),
                     )
                     logger.info(
                         f"Speech ENDED after {self._silence_duration_ms_counter:.1f}ms silence - trigger emitted"

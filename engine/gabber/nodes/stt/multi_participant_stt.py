@@ -230,7 +230,7 @@ class MultiParticipantSTT(node.Node):
                 raise ValueError(f"Unsupported STT service: {service.get_value()}")
 
         def sm_callback(old_state: State, new_state: State) -> None:
-            ctx = pad.RequestContext(parent=None, metadata=None)
+            ctx = pad.RequestContext(parent=None, publisher_metadata=None)
             previous_state.push_item(old_state.name, ctx)
             current_state.push_item(new_state.name, ctx)
 
@@ -250,7 +250,7 @@ class MultiParticipantSTT(node.Node):
         ) -> None:
             async for audio in sink:
                 if not md_promise.done():
-                    md_promise.set_result(audio.ctx.metadata)
+                    md_promise.set_result(audio.ctx.publisher_metadata)
                 if audio is None:
                     continue
                 stt_impl.push_audio(audio.value)
@@ -272,7 +272,7 @@ class MultiParticipantSTT(node.Node):
             async for event in stt_impl:
                 if isinstance(event, stt.STTEvent_SpeechStarted):
                     talking_state.set_talking(idx, True)
-                    ctx = pad.RequestContext(parent=None, metadata=md)
+                    ctx = pad.RequestContext(parent=None, publisher_metadata=md)
                     speech_started_source.push_item(runtime.Trigger(), ctx)
                 elif isinstance(event, stt.STTEvent_Transcription):
                     # TODO

@@ -663,15 +663,19 @@ class RepositoryServer:
         req = messages.CreateAppRunRequest.model_validate(await request.json())
 
         at = api.AccessToken(livekit_api_key, livekit_api_secret)
-        at = at.with_grants(
-            api.VideoGrants(
-                room_join=True,
-                room=req.run_id,
-                room_create=False,
-                can_publish=True,
-                can_subscribe=True,
+        at = (
+            at.with_grants(
+                api.VideoGrants(
+                    room_join=True,
+                    room=req.run_id,
+                    room_create=False,
+                    can_publish=True,
+                    can_subscribe=True,
+                )
             )
-        ).with_identity(f"human-{short_uuid()}")
+            .with_identity(f"human-{short_uuid()}")
+            .with_metadata(json.dumps({"name": "test-name"}))
+        )
         lkapi = api.LiveKitAPI(
             url=internal_livekit_url,
             api_key=livekit_api_key,

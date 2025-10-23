@@ -153,7 +153,9 @@ class STT(node.Node):
         ) -> None:
             async for audio in audio_sink:
                 if not md_prom.done():
-                    md_prom.set_result(audio.ctx.metadata if audio.ctx else None)
+                    md_prom.set_result(
+                        audio.ctx.publisher_metadata if audio.ctx else None
+                    )
                 if audio is None:
                     continue
                 stt_impl.push_audio(audio.value)
@@ -165,7 +167,7 @@ class STT(node.Node):
             md = await md_prom
             async for event in stt_impl:
                 if isinstance(event, stt.STTEvent_SpeechStarted):
-                    ctx = pad.RequestContext(parent=None, metadata=md)
+                    ctx = pad.RequestContext(parent=None, publisher_metadata=md)
                     speech_started_source.push_item(runtime.Trigger(), ctx)
                 elif isinstance(event, stt.STTEvent_Transcription):
                     # TODO

@@ -115,7 +115,7 @@ class ContextMessageZip(Node):
                 content: list[runtime.ContextMessageContentItem] = []
                 md: dict[str, str] | None = None
                 for item in items:
-                    md = item.ctx.metadata
+                    md = item.ctx.publisher_metadata
                     if isinstance(item.value, runtime.AudioClip):
                         content.append(
                             runtime.ContextMessageContentItem_Audio(clip=item.value)
@@ -161,7 +161,7 @@ class ContextMessageZip(Node):
                     pad.RequestContext(
                         parent=None,
                         originator=self.id,
-                        metadata=md,
+                        publisher_metadata=md,
                     ),
                 )
 

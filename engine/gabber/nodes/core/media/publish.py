@@ -131,7 +131,7 @@ class Publish(node.Node):
                         timestamp=timestamp_s,
                     )
                     ctx = pad.RequestContext(
-                        parent=None, metadata=self._part_metadata(part)
+                        parent=None, publisher_metadata=self._part_metadata(part)
                     )
                     video_source.push_item(video_frame, ctx)
                     ctx.complete()
@@ -172,7 +172,7 @@ class Publish(node.Node):
                     )
 
                     ctx = pad.RequestContext(
-                        parent=None, metadata=self._part_metadata(part)
+                        parent=None, publisher_metadata=self._part_metadata(part)
                     )
                     audio_source.push_item(frame, ctx)
                     ctx.complete()
@@ -189,7 +189,7 @@ class Publish(node.Node):
                             pad.RequestContext(
                                 parent=None,
                                 originator=self.id,
-                                metadata=self._part_metadata(part),
+                                publisher_metadata=self._part_metadata(part),
                             ),
                         )
                 else:
@@ -200,7 +200,7 @@ class Publish(node.Node):
                                 pad.RequestContext(
                                     parent=None,
                                     originator=self.id,
-                                    metadata=self._part_metadata(part),
+                                    publisher_metadata=self._part_metadata(part),
                                 ),
                             )
                     else:
@@ -210,7 +210,7 @@ class Publish(node.Node):
                                 pad.RequestContext(
                                     parent=None,
                                     originator=self.id,
-                                    metadata=self._part_metadata(part),
+                                    publisher_metadata=self._part_metadata(part),
                                 ),
                             )
                 if last_video_frame_time is None:
@@ -220,7 +220,7 @@ class Publish(node.Node):
                             pad.RequestContext(
                                 parent=None,
                                 originator=self.id,
-                                metadata=self._part_metadata(part),
+                                publisher_metadata=self._part_metadata(part),
                             ),
                         )
                 else:
@@ -231,7 +231,7 @@ class Publish(node.Node):
                                 pad.RequestContext(
                                     parent=None,
                                     originator=self.id,
-                                    metadata=self._part_metadata(part),
+                                    publisher_metadata=self._part_metadata(part),
                                 ),
                             )
                     else:
@@ -241,7 +241,7 @@ class Publish(node.Node):
                                 pad.RequestContext(
                                     parent=None,
                                     originator=self.id,
-                                    metadata=self._part_metadata(part),
+                                    publisher_metadata=self._part_metadata(part),
                                 ),
                             )
 
@@ -260,6 +260,7 @@ class Publish(node.Node):
             for k, v in json_md.items():
                 if not isinstance(v, str):
                     json_md[k] = str(v)
+            part_md = json_md
         except Exception:
             self.logger.warning(
                 f"failed to parse participant metadata: {part.metadata}"

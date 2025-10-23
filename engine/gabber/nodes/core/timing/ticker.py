@@ -105,7 +105,7 @@ class Ticker(node.Node):
                     tick_pad.push_item(
                         new_tick,
                         pad.RequestContext(
-                            parent=None, originator=self.id, metadata=None
+                            parent=None, originator=self.id, publisher_metadata=None
                         ),
                     )
                     last_time = current_time + delta - (interval_ms / 1000.0)

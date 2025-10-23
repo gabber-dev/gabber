@@ -464,7 +464,9 @@ class StateMachine(node.Node):
         # Check transitions once at startup
         current_state = get_current_state()
         check_transitions(
-            ctx=pad.RequestContext(parent=None, originator=self.id, metadata=None),
+            ctx=pad.RequestContext(
+                parent=None, originator=self.id, publisher_metadata=None
+            ),
             from_id=current_state.id,
             current_state_name=current_state.name,
         )
