@@ -144,7 +144,7 @@ async def audio_stream_provider(room: rtc.Room, track_name: str, participant: st
                 stream = rtc.AudioStream.from_track(
                     track=track_pub.track, noise_cancellation=noise_canc
                 )
-                return stream
+                return (stream, p)
 
 
 # TODO: validate lock in runtime_api
@@ -168,7 +168,7 @@ async def video_stream_provider(room: rtc.Room, track_name: str, participant: st
 
                 stream = rtc.VideoStream.from_track(track=track_pub.track)
                 logging.info(f"got video stream {track_pub.track.sid}")
-                return stream
+                return (stream, p)
 
 
 def get_tool_calls_from_deltas(

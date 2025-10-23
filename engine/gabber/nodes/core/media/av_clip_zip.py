@@ -73,12 +73,15 @@ class AVClipZip(Node):
 
                 video_clip: runtime.VideoClip | None = None
                 audio_clip: runtime.AudioClip | None = None
+                metadata: dict[str, str] | None = None
 
                 for item in items:
                     if isinstance(item.value, runtime.VideoClip):
                         video_clip = item.value
+                        metadata = item.ctx.metadata
                     elif isinstance(item.value, runtime.AudioClip):
                         audio_clip = item.value
+                        metadata = item.ctx.metadata
 
                 if not video_clip:
                     video_clip = runtime.VideoClip(video=[])
@@ -91,7 +94,10 @@ class AVClipZip(Node):
                 )
 
                 # TODO: propagate context properly
-                ctx = cast(pad.RequestContext, pad.RequestContext(parent=None))
+                ctx = cast(
+                    pad.RequestContext,
+                    pad.RequestContext(parent=None, metadata=metadata),
+                )
                 av_clip.push_item(res, ctx)
                 for item in items:
                     item.ctx.complete()

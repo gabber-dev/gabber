@@ -203,7 +203,10 @@ class SourcePad(Pad[SOURCE_PAD_T], Protocol, Generic[SOURCE_PAD_T]):
                 if notify_type:
                     np._notify_update(value)
             new_ctx = RequestContext(
-                parent=ctx, timeout=ctx._timeout_s, originator=self.get_id()
+                parent=ctx,
+                timeout=ctx._timeout_s,
+                originator=self.get_id(),
+                metadata=ctx.metadata,
             )
 
             item = Item[SOURCE_PAD_T](value=value, ctx=new_ctx)

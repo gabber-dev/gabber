@@ -113,7 +113,9 @@ class Tool(node.Node):
 
             fut.set_result(" | ".join(all_results))
 
-        new_ctx = pad.RequestContext(parent=ctx, originator="tool_call")
+        new_ctx = pad.RequestContext(
+            parent=ctx, originator="tool_call", metadata=ctx.metadata
+        )
         new_ctx.add_done_callback(on_tool_call_done)
         # TODO validate schema
         source.push_item(tool_call.arguments, new_ctx)

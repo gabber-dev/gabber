@@ -148,8 +148,12 @@ class STT(node.Node):
 
         stt_run_t = asyncio.create_task(stt_impl.run())
 
-        async def audio_sink_task() -> None:
+        async def audio_sink_task(
+            md_prom: asyncio.Future[dict[str, str] | None],
+        ) -> None:
             async for audio in audio_sink:
+                if not md_prom.done():
+                    md_prom.set_result(audio.ctx.metadata if audio.ctx else None)
                 if audio is None:
                     continue
                 stt_impl.push_audio(audio.value)
@@ -157,9 +161,11 @@ class STT(node.Node):
 
         async def stt_event_task() -> None:
             ctx: pad.RequestContext | None = None
+            md_prom: asyncio.Future[dict[str, str] | None] = asyncio.Future()
+            md = await md_prom
             async for event in stt_impl:
                 if isinstance(event, stt.STTEvent_SpeechStarted):
-                    ctx = pad.RequestContext(parent=None)
+                    ctx = pad.RequestContext(parent=None, metadata=md)
                     speech_started_source.push_item(runtime.Trigger(), ctx)
                 elif isinstance(event, stt.STTEvent_Transcription):
                     # TODO
@@ -179,7 +185,7 @@ class STT(node.Node):
                     speech_ended_source.push_item(runtime.Trigger(), ctx)
                     ctx.complete()
 
-        audio_sink_t = asyncio.create_task(audio_sink_task())
+        audio_sink_t = asyncio.create_task(audio_sink_task(md_prom))
         kyutai_event_t = asyncio.create_task(stt_event_task())
 
         try:

@@ -230,7 +230,7 @@ class MultiParticipantSTT(node.Node):
                 raise ValueError(f"Unsupported STT service: {service.get_value()}")
 
         def sm_callback(old_state: State, new_state: State) -> None:
-            ctx = pad.RequestContext(parent=None)
+            ctx = pad.RequestContext(parent=None, metadata=None)
             previous_state.push_item(old_state.name, ctx)
             current_state.push_item(new_state.name, ctx)
 
@@ -244,9 +244,13 @@ class MultiParticipantSTT(node.Node):
         )
 
         async def audio_sink_task(
-            sink: pad.StatelessSinkPad, stt_impl: stt.STT
+            sink: pad.StatelessSinkPad,
+            stt_impl: stt.STT,
+            md_promise: asyncio.Future[dict[str, str] | None],
         ) -> None:
             async for audio in sink:
+                if not md_promise.done():
+                    md_promise.set_result(audio.ctx.metadata)
                 if audio is None:
                     continue
                 stt_impl.push_audio(audio.value)
@@ -259,12 +263,16 @@ class MultiParticipantSTT(node.Node):
         ) -> None:
             stt_impl = await create_stt_instance()
             stt_run_t = asyncio.create_task(stt_impl.run())
-            audio_sink_t = asyncio.create_task(audio_sink_task(audio_sink, stt_impl))
+            md_promise: asyncio.Future[dict[str, str] | None] = asyncio.Future()
+            audio_sink_t = asyncio.create_task(
+                audio_sink_task(audio_sink, stt_impl, md_promise)
+            )
             ctx: pad.RequestContext | None = None
+            md: dict[str, str] | None = await md_promise
             async for event in stt_impl:
                 if isinstance(event, stt.STTEvent_SpeechStarted):
                     talking_state.set_talking(idx, True)
-                    ctx = pad.RequestContext(parent=None)
+                    ctx = pad.RequestContext(parent=None, metadata=md)
                     speech_started_source.push_item(runtime.Trigger(), ctx)
                 elif isinstance(event, stt.STTEvent_Transcription):
                     # TODO

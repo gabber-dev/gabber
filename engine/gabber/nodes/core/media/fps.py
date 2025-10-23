@@ -60,7 +60,7 @@ class FPS(Node):
         source = self.get_stateless_source_pad_required(runtime.VideoFrame, "video_out")
 
         last_frame: runtime.VideoFrame | None = None
-        last_ctx = pad.RequestContext(parent=None)
+        last_ctx = pad.RequestContext(parent=None, metadata=None)
 
         async def sink_task():
             nonlocal last_frame, last_ctx

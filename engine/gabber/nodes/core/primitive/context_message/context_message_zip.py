@@ -113,7 +113,9 @@ class ContextMessageZip(Node):
                 )
                 role = role_pad.get_value()
                 content: list[runtime.ContextMessageContentItem] = []
+                md: dict[str, str] | None = None
                 for item in items:
+                    md = item.ctx.metadata
                     if isinstance(item.value, runtime.AudioClip):
                         content.append(
                             runtime.ContextMessageContentItem_Audio(clip=item.value)
@@ -154,7 +156,14 @@ class ContextMessageZip(Node):
                 )
 
                 # TODO: propagate context properly
-                message_source.push_item(message, pad.RequestContext(parent=None))
+                message_source.push_item(
+                    message,
+                    pad.RequestContext(
+                        parent=None,
+                        originator=self.id,
+                        metadata=md,
+                    ),
+                )
 
                 for item in items:
                     item.ctx.complete()
