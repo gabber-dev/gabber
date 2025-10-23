@@ -201,14 +201,14 @@ class SileroVAD(node.Node):
         async def audio_processing_task():
             try:
                 async for audio_event in audio_sink:
-                    await self._process_audio_frame(audio_event.value)
+                    await self._process_audio_frame(audio_event.value, audio_event.ctx)
                     audio_event.ctx.complete()
             except Exception as e:
                 logger.error(f"Error in VAD audio processing task: {e}", exc_info=True)
 
         await audio_processing_task()
 
-    async def _process_audio_frame(self, frame: AudioFrame):
+    async def _process_audio_frame(self, frame: AudioFrame, ctx: pad.RequestContext):
         """Process incoming audio frame with VAD"""
         self._frame_count += 1
 
@@ -216,7 +216,7 @@ class SileroVAD(node.Node):
             if frame.data_16000hz.sample_count == 0:
                 return
             audio_data = frame.data_16000hz.fp32.reshape(1, -1).flatten()
-            await self._process_vad_analysis(audio_data, frame)
+            await self._process_vad_analysis(audio_data, frame, ctx)
 
         except Exception as e:
             logger.error(f"VAD processing error: {e}", exc_info=True)
@@ -242,7 +242,9 @@ class SileroVAD(node.Node):
             return vad_chunk[:VAD_CHUNK_SIZE]
         return vad_chunk
 
-    def _update_speech_state(self, vad_prob: float, frame_duration_ms: float) -> None:
+    def _update_speech_state(
+        self, vad_prob: float, frame_duration_ms: float, ctx: pad.RequestContext
+    ) -> None:
         """Update speech state based on VAD probability and emit triggers"""
         vad_threshold = cast(
             pad.PropertySinkPad, self.get_pad_required("vad_threshold")
@@ -276,7 +278,10 @@ class SileroVAD(node.Node):
                 self._speech_duration_ms_counter = 0.0
                 self._continued_speech_emitted = False
                 speech_started_trigger.push_item(
-                    runtime.Trigger(), pad.RequestContext(parent=None)
+                    runtime.Trigger(),
+                    pad.RequestContext(
+                        parent=None, publisher_metadata=ctx.publisher_metadata
+                    ),
                 )
             elif self._speech_state == SpeechState.ENDING:
                 self._speech_state = SpeechState.SPEAKING
@@ -294,7 +299,10 @@ class SileroVAD(node.Node):
                     >= speech_duration_ms.get_value()
                 ):
                     continued_speech_trigger.push_item(
-                        runtime.Trigger(), pad.RequestContext(parent=None)
+                        runtime.Trigger(),
+                        pad.RequestContext(
+                            parent=None, publisher_metadata=ctx.publisher_metadata
+                        ),
                     )
                     self._continued_speech_emitted = True
                     logger.info(
@@ -319,11 +327,17 @@ class SileroVAD(node.Node):
                     if self._speech_audio_frames:
                         audio_clip = list(self._speech_audio_frames)
                         audio_clip_source.push_item(
-                            AudioClip(audio=audio_clip), pad.RequestContext(parent=None)
+                            AudioClip(audio=audio_clip),
+                            pad.RequestContext(
+                                parent=None, publisher_metadata=ctx.publisher_metadata
+                            ),
                         )
 
                     speech_ended_trigger.push_item(
-                        runtime.Trigger(), pad.RequestContext(parent=None)
+                        runtime.Trigger(),
+                        pad.RequestContext(
+                            parent=None, publisher_metadata=ctx.publisher_metadata
+                        ),
                     )
                     logger.info(
                         f"Speech ENDED after {self._silence_duration_ms_counter:.1f}ms silence - trigger emitted"
@@ -333,7 +347,7 @@ class SileroVAD(node.Node):
                     self._speech_audio_frames.clear()
 
     async def _process_vad_analysis(
-        self, data: NDArray[np.float32], frame: AudioFrame
+        self, data: NDArray[np.float32], frame: AudioFrame, ctx: pad.RequestContext
     ) -> None:
         """Process VAD analysis and collect speech frames"""
         vad_chunk_size, frame_duration_ms = self._calculate_chunk_sizes(16000)
@@ -378,4 +392,4 @@ class SileroVAD(node.Node):
 
         if vad_results:
             vad_prob = vad_results[-1]
-            self._update_speech_state(vad_prob, frame_duration_ms)
+            self._update_speech_state(vad_prob, frame_duration_ms, ctx)

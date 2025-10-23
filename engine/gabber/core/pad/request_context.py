@@ -14,6 +14,7 @@ class RequestContext:
     def __init__(
         self,
         *,
+        publisher_metadata: dict[str, str] | None,
         parent: "RequestContext | None",
         timeout: float = 30.0,
         originator: str | None = None,
@@ -31,6 +32,7 @@ class RequestContext:
         self.parent = parent
         self.dependencies: list[RequestContext] = []
         parent.dependencies.append(self) if parent else None
+        self._publisher_metadata = publisher_metadata
         self._self_completed = False
         self._finished = False
         self._done_callbacks: list[Callable[[list[runtime.RuntimePadValue]], None]] = []
@@ -100,6 +102,10 @@ class RequestContext:
     @property
     def original_request(self) -> "RequestContext":
         return self._original_request
+
+    @property
+    def publisher_metadata(self) -> dict[str, str] | None:
+        return self._publisher_metadata
 
     def find_parent_by_originator(self, originator: str) -> "RequestContext | None":
         if self.originator == originator:

@@ -168,7 +168,7 @@ class RuntimeApi:
                 if payload.value is not None:
                     parsed = client_value_adapter.validate_python(payload.value)
                 value = mapper.Mapper.client_to_runtime(parsed)
-                ctx = pad.RequestContext(parent=None)
+                ctx = pad.RequestContext(parent=None, publisher_metadata=None)
                 complete_resp.payload = RuntimeResponsePayload_PushValue(
                     type="push_value"
                 )

@@ -103,7 +103,10 @@ class Ticker(node.Node):
                     if not active_hold.is_set():
                         continue
                     tick_pad.push_item(
-                        new_tick, pad.RequestContext(parent=None, originator=self.id)
+                        new_tick,
+                        pad.RequestContext(
+                            parent=None, originator=self.id, publisher_metadata=None
+                        ),
                     )
                     last_time = current_time + delta - (interval_ms / 1000.0)
                 else:

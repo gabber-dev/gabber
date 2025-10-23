@@ -83,7 +83,7 @@ class BouncingBall(node.Node):
                 data_44100hz=frame_44_1,
                 data_48000hz=frame_48,
             )
-            ctx = pad.RequestContext(parent=None)
+            ctx = pad.RequestContext(parent=None, publisher_metadata=None)
             audio_source.push_item(frame, ctx)
             ctx.complete()
 
@@ -142,7 +142,7 @@ class BouncingBall(node.Node):
                     height=height,
                     timestamp=sim_time,
                 )
-                ctx = pad.RequestContext(parent=None)
+                ctx = pad.RequestContext(parent=None, publisher_metadata=None)
                 video_source.push_item(video_frame, ctx)
                 ctx.complete()
                 last_video_frame_time = time.time()

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
+import json
 from typing import cast
 import time
 
@@ -98,6 +99,7 @@ class Publish(node.Node):
 
         last_audio_frame_time: float | None = None
         last_video_frame_time: float | None = None
+        part: rtc.RemoteParticipant | None = None
 
         resampler_16000hz = Resampler(16000)
         resampler_24000hz = Resampler(24000)
@@ -105,13 +107,13 @@ class Publish(node.Node):
         resampler_48000hz = Resampler(48000)
 
         async def video_consume():
-            nonlocal last_video_frame_time
+            nonlocal last_video_frame_time, part
             while True:
                 if not self._allowed_participant:
                     await asyncio.sleep(0.5)
                     continue
 
-                video_stream = await video_stream_provider(
+                (video_stream, part) = await video_stream_provider(
                     self.room, f"{self.id}:video", self._allowed_participant
                 )
 
@@ -128,18 +130,20 @@ class Publish(node.Node):
                         height=frame.frame.height,
                         timestamp=timestamp_s,
                     )
-                    ctx = pad.RequestContext(parent=None)
+                    ctx = pad.RequestContext(
+                        parent=None, publisher_metadata=self._part_metadata(part)
+                    )
                     video_source.push_item(video_frame, ctx)
                     ctx.complete()
 
         async def audio_consume():
-            nonlocal last_audio_frame_time
+            nonlocal last_audio_frame_time, part
             while True:
                 if not self._allowed_participant:
                     await asyncio.sleep(0.5)
                     continue
 
-                audio_stream = await audio_stream_provider(
+                (audio_stream, part) = await audio_stream_provider(
                     self.room, f"{self.id}:audio", self._allowed_participant
                 )
 
@@ -167,7 +171,9 @@ class Publish(node.Node):
                         data_48000hz=frame_48,
                     )
 
-                    ctx = pad.RequestContext(parent=None)
+                    ctx = pad.RequestContext(
+                        parent=None, publisher_metadata=self._part_metadata(part)
+                    )
                     audio_source.push_item(frame, ctx)
                     ctx.complete()
 
@@ -179,38 +185,64 @@ class Publish(node.Node):
                 if last_audio_frame_time is None:
                     if audio_enabled.get_value():
                         audio_enabled.push_item(
-                            False, pad.RequestContext(parent=None, originator=self.id)
+                            False,
+                            pad.RequestContext(
+                                parent=None,
+                                originator=self.id,
+                                publisher_metadata=self._part_metadata(part),
+                            ),
                         )
                 else:
                     if current_time - last_audio_frame_time > 1:
                         if audio_enabled.get_value():
                             audio_enabled.push_item(
                                 False,
-                                pad.RequestContext(parent=None, originator=self.id),
+                                pad.RequestContext(
+                                    parent=None,
+                                    originator=self.id,
+                                    publisher_metadata=self._part_metadata(part),
+                                ),
                             )
                     else:
                         if not audio_enabled.get_value():
                             audio_enabled.push_item(
                                 True,
-                                pad.RequestContext(parent=None, originator=self.id),
+                                pad.RequestContext(
+                                    parent=None,
+                                    originator=self.id,
+                                    publisher_metadata=self._part_metadata(part),
+                                ),
                             )
                 if last_video_frame_time is None:
                     if video_enabled.get_value():
                         video_enabled.push_item(
-                            False, pad.RequestContext(parent=None, originator=self.id)
+                            False,
+                            pad.RequestContext(
+                                parent=None,
+                                originator=self.id,
+                                publisher_metadata=self._part_metadata(part),
+                            ),
                         )
                 else:
                     if current_time - last_video_frame_time > 1:
                         if video_enabled.get_value():
                             video_enabled.push_item(
                                 False,
-                                pad.RequestContext(parent=None, originator=self.id),
+                                pad.RequestContext(
+                                    parent=None,
+                                    originator=self.id,
+                                    publisher_metadata=self._part_metadata(part),
+                                ),
                             )
                     else:
                         if not video_enabled.get_value():
                             video_enabled.push_item(
                                 True,
-                                pad.RequestContext(parent=None, originator=self.id),
+                                pad.RequestContext(
+                                    parent=None,
+                                    originator=self.id,
+                                    publisher_metadata=self._part_metadata(part),
+                                ),
                             )
 
         await asyncio.gather(
@@ -218,3 +250,20 @@ class Publish(node.Node):
             audio_consume(),
             frame_timeout(),
         )
+
+    def _part_metadata(self, part: rtc.RemoteParticipant | None):
+        if part is None:
+            return None
+        part_md: dict[str, str] | None = None
+        try:
+            json_md = json.loads(part.metadata)
+            for k, v in json_md.items():
+                if not isinstance(v, str):
+                    json_md[k] = str(v)
+            part_md = json_md
+        except Exception:
+            self.logger.warning(
+                f"failed to parse participant metadata: {part.metadata}"
+            )
+
+        return part_md

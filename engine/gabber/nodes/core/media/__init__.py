@@ -5,5 +5,6 @@ from .fps import FPS
 from .publish import Publish
 from .sliding_window import SlidingWindow
 from .av_clip_zip import AVClipZip
+from .publisher_metadata import PublisherMetadata
 
-ALL_NODES = [FPS, Publish, SlidingWindow, AVClipZip]
+ALL_NODES = [FPS, Publish, SlidingWindow, AVClipZip, PublisherMetadata]
