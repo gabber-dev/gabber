@@ -13,6 +13,7 @@ from .models import (
     RepositoryApp,
     RepositorySubGraph,
     AppExport,
+    SubGraphExport,
 )
 
 
@@ -51,6 +52,11 @@ class ImportAppRequest(BaseModel):
     export: AppExport
 
 
+class ImportSubGraphRequest(BaseModel):
+    type: Literal["import_subgraph"] = "import_subgraph"
+    export: SubGraphExport
+
+
 class AddSecretRequest(BaseModel):
     type: Literal["add_secret"] = "add_secret"
     name: str
@@ -68,6 +74,7 @@ Request = Annotated[
     | CreateAppRunRequest
     | DebugConnectionRequest
     | ImportAppRequest
+    | ImportSubGraphRequest
     | MCPProxyConnectionRequest
     | AddSecretRequest
     | UpdateSecretRequest,
@@ -130,6 +137,15 @@ class ExportAppResponse(BaseModel):
     export: AppExport
 
 
+class ImportSubGraphResponse(BaseModel):
+    type: Literal["import_subgraph"] = "import_subgraph"
+
+
+class ExportSubGraphResponse(BaseModel):
+    type: Literal["export_subgraph"] = "export_subgraph"
+    export: SubGraphExport
+
+
 class ListSecretsResponse(BaseModel):
     type: Literal["list_secrets"] = "list_secrets"
     secrets: list[PublicSecret]
@@ -161,6 +177,8 @@ Response = Annotated[
     | DebugConnectionResponse
     | ImportAppResponse
     | ExportAppResponse
+    | ImportSubGraphResponse
+    | ExportSubGraphResponse
     | MCPProxyConnectionResponse
     | ListSecretsResponse
     | AddSecretResponse
