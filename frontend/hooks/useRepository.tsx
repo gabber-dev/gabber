@@ -12,6 +12,7 @@ import {
   RepositorySubGraph,
   SaveAppRequest,
   SaveSubgraphRequest,
+  SubGraphExport,
 } from "@/generated/repository";
 import React, { createContext, useCallback, useContext, useState } from "react";
 import toast from "react-hot-toast";
@@ -33,6 +34,9 @@ type RepositoryContextType = {
 
   importApp(exp: AppExport): Promise<RepositoryApp>;
   exportApp(appId: string): Promise<AppExport>;
+
+  importSubGraph(exp: SubGraphExport): Promise<RepositorySubGraph>;
+  exportSubGraph(subGraphId: string): Promise<SubGraphExport>;
 
   subgraphEditPath: (id: string) => string;
   appEditPath: (id: string) => string;
@@ -73,6 +77,9 @@ type Props = {
   importAppImpl: (exp: AppExport) => Promise<RepositoryApp>;
   exportAppImpl: (appId: string) => Promise<AppExport>;
 
+  importSubGraphImpl: (exp: SubGraphExport) => Promise<RepositorySubGraph>;
+  exportSubGraphImpl: (subGraphId: string) => Promise<SubGraphExport>;
+
   subgraphEditPath: (id: string) => string;
   appEditPath: (id: string) => string;
   debugRunPath: (id: string) => string;
@@ -103,6 +110,9 @@ export function RepositoryProvider({
 
   importAppImpl,
   exportAppImpl,
+
+  importSubGraphImpl,
+  exportSubGraphImpl,
 
   subgraphEditPath,
   appEditPath,
@@ -291,6 +301,34 @@ export function RepositoryProvider({
     }
   };
 
+  const importSubGraph = async (
+    exp: SubGraphExport,
+  ): Promise<RepositorySubGraph> => {
+    try {
+      const resp = await importSubGraphImpl(exp);
+      await refreshSubGraphs();
+      toast.success("Subgraph imported successfully");
+      return resp;
+    } catch (error) {
+      toast.error("Error importing subgraph. Please refresh.");
+      console.error("Error importing subgraph:", error);
+      throw error;
+    }
+  };
+
+  const exportSubGraph = async (
+    subGraphId: string,
+  ): Promise<SubGraphExport> => {
+    try {
+      const resp = await exportSubGraphImpl(subGraphId);
+      return resp;
+    } catch (error) {
+      toast.error("Error exporting subgraph. Please refresh.");
+      console.error("Error exporting subgraph:", error);
+      throw error;
+    }
+  };
+
   return (
     <RepositoryContext.Provider
       value={{
@@ -302,6 +340,9 @@ export function RepositoryProvider({
 
         importApp,
         exportApp,
+
+        importSubGraph,
+        exportSubGraph,
 
         subGraphs,
         subGraphsLoading,

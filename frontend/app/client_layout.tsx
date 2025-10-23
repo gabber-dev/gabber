@@ -13,6 +13,7 @@ import {
   RepositorySubGraph,
   SaveAppRequest,
   SaveSubgraphRequest,
+  SubGraphExport,
 } from "@/generated/repository";
 import { RepositoryProvider } from "@/hooks/useRepository";
 import {
@@ -21,7 +22,9 @@ import {
   deleteSecret,
   deleteSubGraph,
   exportApp,
+  exportSubGraph,
   importApp,
+  importSubGraph,
   listApps,
   listSecrets,
   listSubGraphs,
@@ -100,6 +103,17 @@ export function ClientLayout({
     return await deleteSecret(id);
   }, []);
 
+  const importSubGraphImpl = useCallback(
+    async (exp: SubGraphExport) => {
+      return await importSubGraph(exp);
+    },
+    [],
+  );
+
+  const exportSubGraphImpl = useCallback(async (subGraphId: string) => {
+    return await exportSubGraph(subGraphId);
+  }, []);
+
   return (
     <RepositoryProvider
       initialApps={initialApps}
@@ -113,6 +127,8 @@ export function ClientLayout({
       deleteSubGraphImpl={deleteSubGraphImpl}
       importAppImpl={importAppImpl}
       exportAppImpl={exportAppImpl}
+      importSubGraphImpl={importSubGraphImpl}
+      exportSubGraphImpl={exportSubGraphImpl}
       examples={initialExamples}
       initialSecrets={initialSecrets}
       listSecretsImpl={listSecretsImpl}

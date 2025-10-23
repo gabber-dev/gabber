@@ -30,3 +30,8 @@ class AppRunConnectionDetails(BaseModel):
 class AppExport(BaseModel):
     app: RepositoryApp
     subgraphs: list[RepositorySubGraph]
+
+
+class SubGraphExport(BaseModel):
+    subgraph: RepositorySubGraph
+    nested_subgraphs: list[RepositorySubGraph]

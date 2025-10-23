@@ -62,6 +62,8 @@ class RepositoryServer:
         self.app.router.add_post("/app/mcp_proxy_connection", self.mcp_proxy_connection)
         self.app.router.add_post("/app/import", self.import_app)
         self.app.router.add_get("/app/{id}/export", self.export_app)
+        self.app.router.add_post("/sub_graph/import", self.import_subgraph)
+        self.app.router.add_get("/sub_graph/{id}/export", self.export_subgraph)
         self.app.router.add_get("/secret/list", self.list_secrets)
         self.app.router.add_post("/secret", self.add_secret)
         self.app.router.add_put("/secret/{name}", self.update_secret)
@@ -529,6 +531,256 @@ class RepositoryServer:
             logging.error(f"Error deleting subgraph: {e}")
             return aiohttp.web.json_response(
                 {"status": "error", "message": str(e)}, status=500
+            )
+
+    async def export_subgraph(self, request: aiohttp.web.Request):
+        subgraph_id = request.match_info.get("id")
+        if not subgraph_id:
+            return aiohttp.web.json_response(
+                {"status": "error", "message": "Missing subgraph ID"}, status=400
+            )
+
+        try:
+            async with aiofiles.open(
+                f"{self.file_path}/sub_graph/{subgraph_id}.json", mode="r"
+            ) as json_file:
+                json_content = await json_file.read()
+
+            obj = models.RepositorySubGraph.model_validate_json(json_content)
+            
+            # Remove secret options from pads
+            for node in obj.graph.nodes:
+                for p in node.pads:
+                    if p.allowed_types:
+                        for at in p.allowed_types:
+                            if at.type == "secret":
+                                at.options = []
+                    if p.default_allowed_types:
+                        for at in p.default_allowed_types:
+                            if at.type == "secret":
+                                at.options = []
+
+            # Extract nested subgraph IDs recursively
+            def extract_subgraph_ids(graph: GraphEditorRepresentation) -> set[str]:
+                ids = set()
+                for node in graph.nodes:
+                    if node.type != "SubGraph":
+                        continue
+
+                    id_pads = [p for p in node.pads if p.id == "__subgraph_id__"]
+                    if len(id_pads) == 0:
+                        raise ValueError("No __subgraph_id__ pad found")
+
+                    if len(id_pads) > 1:
+                        raise ValueError("Multiple __subgraph_id__ pads found")
+
+                    val = id_pads[0].value
+                    if not val:
+                        raise ValueError("__subgraph_id__ pad has no value")
+
+                    ids.add(val)
+                return ids
+
+            subgraph_ids = extract_subgraph_ids(obj.graph)
+            nested_subgraphs = []
+            processed_ids = set()
+            
+            # Recursively collect all nested subgraphs
+            while subgraph_ids:
+                sg_id = subgraph_ids.pop()
+                if sg_id in processed_ids:
+                    continue
+                processed_ids.add(sg_id)
+                
+                path = f"{self.file_path}/sub_graph/{sg_id}.json"
+                if not await asyncio.to_thread(os.path.exists, path):
+                    continue
+                    
+                async with aiofiles.open(path, mode="r") as f:
+                    content = await f.read()
+
+                sg = models.RepositorySubGraph.model_validate_json(content)
+
+                # Remove secret options
+                for node in sg.graph.nodes:
+                    for p in node.pads:
+                        if p.allowed_types:
+                            for at in p.allowed_types:
+                                if at.type == "secret":
+                                    at.options = []
+                        if p.default_allowed_types:
+                            for at in p.default_allowed_types:
+                                if at.type == "secret":
+                                    at.options = []
+
+                nested_subgraphs.append(sg)
+                
+                # Check if this subgraph contains other subgraphs
+                nested_ids = extract_subgraph_ids(sg.graph)
+                subgraph_ids.update(nested_ids - processed_ids)
+
+            export_obj = models.SubGraphExport(
+                subgraph=obj, nested_subgraphs=nested_subgraphs
+            )
+            resp = messages.ExportSubGraphResponse(export=export_obj)
+            return aiohttp.web.Response(
+                body=resp.model_dump_json(), content_type="application/json"
+            )
+        except FileNotFoundError:
+            return aiohttp.web.json_response(
+                {"status": "error", "message": "Subgraph not found"}, status=404
+            )
+        except Exception as e:
+            logging.error(f"Error exporting subgraph: {e}", exc_info=True)
+            return aiohttp.web.json_response(
+                {"status": "error", "message": str(e)}, status=500
+            )
+
+    async def import_subgraph(self, request: aiohttp.web.Request):
+        try:
+            data = await request.json()
+            export = models.SubGraphExport.model_validate(data)
+            sub_graph_dir = f"{self.file_path}/sub_graph"
+            mapping: dict[str, str] = {}
+            
+            # First import all nested subgraphs
+            for sg in export.nested_subgraphs:
+                original_id = sg.id
+                new_id = original_id
+                while True:
+                    try:
+                        await asyncio.to_thread(
+                            os.stat, f"{sub_graph_dir}/{new_id}.json"
+                        )
+                        new_id += " duplicate"
+                    except FileNotFoundError:
+                        break
+                        
+                existing_names = set()
+                try:
+                    files = await asyncio.to_thread(os.listdir, sub_graph_dir)
+                except FileNotFoundError:
+                    await self.ensure_dir(sub_graph_dir)
+                    files = []
+                    
+                for file in files:
+                    if file.endswith(".json") and file[:-5] != new_id:
+                        async with aiofiles.open(f"{sub_graph_dir}/{file}", "r") as f:
+                            content = await f.read()
+                            existing_sg = models.RepositorySubGraph.model_validate_json(
+                                content
+                            )
+                            existing_names.add(existing_sg.name)
+                            
+                name = sg.name
+                while name in existing_names:
+                    name += " duplicate"
+                    
+                sg.id = new_id
+                sg.name = name
+                sg.created_at = datetime.datetime.now()
+                sg.updated_at = datetime.datetime.now()
+                save_path = f"{sub_graph_dir}/{sg.id}.json"
+                await self.ensure_dir(sub_graph_dir)
+                async with aiofiles.open(save_path, "w") as f:
+                    await f.write(sg.model_dump_json())
+                    
+                if original_id != new_id:
+                    mapping[original_id] = new_id
+                    
+            # Now import the main subgraph
+            subgraph = export.subgraph
+            original_id = subgraph.id
+            new_id = original_id
+            while True:
+                try:
+                    await asyncio.to_thread(os.stat, f"{sub_graph_dir}/{new_id}.json")
+                    new_id += " duplicate"
+                except FileNotFoundError:
+                    break
+                    
+            existing_names = set()
+            try:
+                files = await asyncio.to_thread(os.listdir, sub_graph_dir)
+            except FileNotFoundError:
+                await self.ensure_dir(sub_graph_dir)
+                files = []
+                
+            for file in files:
+                if file.endswith(".json"):
+                    async with aiofiles.open(f"{sub_graph_dir}/{file}", "r") as f:
+                        content = await f.read()
+                        existing_sg = models.RepositorySubGraph.model_validate_json(
+                            content
+                        )
+                        existing_names.add(existing_sg.name)
+                        
+            name = subgraph.name
+            while name in existing_names:
+                name += " duplicate"
+                
+            subgraph.id = new_id
+            subgraph.name = name
+            subgraph.created_at = datetime.datetime.now()
+            subgraph.updated_at = datetime.datetime.now()
+            
+            # Apply ID mapping if needed
+            if mapping:
+                graph_json = subgraph.graph.model_dump_json()
+                for old, new in mapping.items():
+                    graph_json = graph_json.replace(f'"{old}"', f'"{new}"')
+                graph_dict = json.loads(graph_json)
+                subgraph.graph = GraphEditorRepresentation.model_validate(graph_dict)
+                
+            save_path = f"{sub_graph_dir}/{subgraph.id}.json"
+            await self.ensure_dir(sub_graph_dir)
+            async with aiofiles.open(save_path, "w") as f:
+                await f.write(subgraph.model_dump_json())
+
+            # Check for missing premade subgraphs
+            def extract_subgraph_ids(graph: GraphEditorRepresentation) -> set[str]:
+                ids = set()
+                for node in graph.nodes:
+                    if node.type != "SubGraph":
+                        continue
+
+                    id_pads = [p for p in node.pads if p.id == "__subgraph_id__"]
+                    if len(id_pads) == 0:
+                        raise ValueError("No __subgraph_id__ pad found")
+
+                    if len(id_pads) > 1:
+                        raise ValueError("Multiple __subgraph_id__ pads found")
+
+                    val = id_pads[0].value
+                    if not val:
+                        raise ValueError("__subgraph_id__ pad has no value")
+
+                    ids.add(val)
+                return ids
+
+            subgraph_ids = extract_subgraph_ids(subgraph.graph)
+            for sg_id in subgraph_ids:
+                custom_path = f"{self.file_path}/sub_graph/{sg_id}.json"
+                if await asyncio.to_thread(os.path.exists, custom_path):
+                    continue
+                premade_path = f"data/sub_graph/{sg_id}.json"
+                if not await asyncio.to_thread(os.path.exists, premade_path):
+                    return aiohttp.web.json_response(
+                        {
+                            "status": "error",
+                            "message": f"Premade subgraph {sg_id} doesn't exist",
+                        },
+                        status=400,
+                    )
+
+            response = messages.SaveSubgraphResponse(sub_graph=subgraph)
+            return aiohttp.web.Response(
+                body=response.model_dump_json(), content_type="application/json"
+            )
+        except Exception as e:
+            logging.error(f"Error importing subgraph: {e}", exc_info=True)
+            return aiohttp.web.json_response(
+                {"status": "error", "message": str(e)}, status=400
             )
 
     async def run(self):

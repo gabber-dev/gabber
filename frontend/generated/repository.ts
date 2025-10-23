@@ -14,6 +14,7 @@ export type Request =
   | CreateAppRunRequest
   | DebugConnectionRequest
   | ImportAppRequest
+  | ImportSubGraphRequest
   | MCPProxyConnectionRequest
   | AddSecretRequest
   | UpdateSecretRequest;
@@ -391,12 +392,14 @@ export type Name7 = string;
 export type CreatedAt2 = string;
 export type UpdatedAt2 = string;
 export type Subgraphs = RepositorySubGraph[];
-export type Type56 = "mcp_proxy_connection";
+export type Type56 = "import_subgraph";
+export type NestedSubgraphs = RepositorySubGraph[];
+export type Type57 = "mcp_proxy_connection";
 export type RunId2 = string;
-export type Type57 = "add_secret";
+export type Type58 = "add_secret";
 export type Name8 = string;
 export type Value8 = string;
-export type Type58 = "update_secret";
+export type Type59 = "update_secret";
 export type Value9 = string;
 /**
  * Response from the graph editor
@@ -412,30 +415,34 @@ export type Response =
   | DebugConnectionResponse
   | ImportAppResponse
   | ExportAppResponse
+  | ImportSubGraphResponse
+  | ExportSubGraphResponse
   | MCPProxyConnectionResponse
   | ListSecretsResponse
   | AddSecretResponse
   | UpdateSecretResponse;
-export type Type59 = "save_subgraph";
-export type Type60 = "save_app";
-export type Type61 = "list_apps";
+export type Type60 = "save_subgraph";
+export type Type61 = "save_app";
+export type Type62 = "list_apps";
 export type Apps = RepositoryApp[];
-export type Type62 = "get_app";
-export type Type63 = "get_subgraph";
-export type Type64 = "list_subgraphs";
+export type Type63 = "get_app";
+export type Type64 = "get_subgraph";
+export type Type65 = "list_subgraphs";
 export type SubGraphs = RepositorySubGraph[];
-export type Type65 = "create_app_run";
+export type Type66 = "create_app_run";
 export type Url = string;
 export type Token = string;
-export type Type66 = "debug_connection";
-export type Type67 = "import_app";
-export type Type68 = "export_app";
-export type Type69 = "mcp_proxy_connection";
-export type Type70 = "list_secrets";
+export type Type67 = "debug_connection";
+export type Type68 = "import_app";
+export type Type69 = "export_app";
+export type Type70 = "import_subgraph";
+export type Type71 = "export_subgraph";
+export type Type72 = "mcp_proxy_connection";
+export type Type73 = "list_secrets";
 export type Secrets = PublicSecret[];
-export type Type71 = "add_secret";
+export type Type74 = "add_secret";
 export type Success = boolean;
-export type Type72 = "update_secret";
+export type Type75 = "update_secret";
 export type Success1 = boolean;
 
 export interface SaveSubgraphRequest {
@@ -876,54 +883,64 @@ export interface RepositorySubGraph {
   graph: GraphEditorRepresentation;
   [k: string]: unknown;
 }
-export interface MCPProxyConnectionRequest {
+export interface ImportSubGraphRequest {
   type?: Type56;
+  export: SubGraphExport;
+  [k: string]: unknown;
+}
+export interface SubGraphExport {
+  subgraph: RepositorySubGraph;
+  nested_subgraphs: NestedSubgraphs;
+  [k: string]: unknown;
+}
+export interface MCPProxyConnectionRequest {
+  type?: Type57;
   run_id: RunId2;
   [k: string]: unknown;
 }
 export interface AddSecretRequest {
-  type?: Type57;
+  type?: Type58;
   name: Name8;
   value: Value8;
   [k: string]: unknown;
 }
 export interface UpdateSecretRequest {
-  type?: Type58;
+  type?: Type59;
   value: Value9;
   [k: string]: unknown;
 }
 export interface SaveSubgraphResponse {
-  type?: Type59;
+  type?: Type60;
   sub_graph: RepositorySubGraph;
   [k: string]: unknown;
 }
 export interface SaveAppResponse {
-  type?: Type60;
+  type?: Type61;
   app: RepositoryApp;
   [k: string]: unknown;
 }
 export interface ListAppsResponse {
-  type?: Type61;
+  type?: Type62;
   apps: Apps;
   [k: string]: unknown;
 }
 export interface GetAppResponse {
-  type?: Type62;
+  type?: Type63;
   app: RepositoryApp;
   [k: string]: unknown;
 }
 export interface GetSubgraphResponse {
-  type?: Type63;
+  type?: Type64;
   sub_graph: RepositorySubGraph;
   [k: string]: unknown;
 }
 export interface ListSubgraphsResponse {
-  type?: Type64;
+  type?: Type65;
   sub_graphs: SubGraphs;
   [k: string]: unknown;
 }
 export interface CreateAppRunResponse {
-  type?: Type65;
+  type?: Type66;
   connection_details: AppRunConnectionDetails;
   [k: string]: unknown;
 }
@@ -933,37 +950,46 @@ export interface AppRunConnectionDetails {
   [k: string]: unknown;
 }
 export interface DebugConnectionResponse {
-  type?: Type66;
+  type?: Type67;
   connection_details: AppRunConnectionDetails;
   graph: GraphEditorRepresentation;
   [k: string]: unknown;
 }
 export interface ImportAppResponse {
-  type?: Type67;
+  type?: Type68;
   [k: string]: unknown;
 }
 export interface ExportAppResponse {
-  type?: Type68;
+  type?: Type69;
   export: AppExport;
   [k: string]: unknown;
 }
+export interface ImportSubGraphResponse {
+  type?: Type70;
+  [k: string]: unknown;
+}
+export interface ExportSubGraphResponse {
+  type?: Type71;
+  export: SubGraphExport;
+  [k: string]: unknown;
+}
 export interface MCPProxyConnectionResponse {
-  type?: Type69;
+  type?: Type72;
   connection_details: AppRunConnectionDetails;
   [k: string]: unknown;
 }
 export interface ListSecretsResponse {
-  type?: Type70;
+  type?: Type73;
   secrets: Secrets;
   [k: string]: unknown;
 }
 export interface AddSecretResponse {
-  type?: Type71;
+  type?: Type74;
   success: Success;
   [k: string]: unknown;
 }
 export interface UpdateSecretResponse {
-  type?: Type72;
+  type?: Type75;
   success: Success1;
   [k: string]: unknown;
 }

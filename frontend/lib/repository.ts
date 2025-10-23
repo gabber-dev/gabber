@@ -8,6 +8,7 @@ import {
   AppExport,
   DebugConnectionResponse,
   ExportAppResponse,
+  ExportSubGraphResponse,
   GetAppResponse,
   GetSubgraphResponse,
   ListAppsResponse,
@@ -19,6 +20,7 @@ import {
   SaveAppResponse,
   SaveSubgraphRequest,
   SaveSubgraphResponse,
+  SubGraphExport,
 } from "@/generated/repository";
 import { ConnectionDetails } from "@gabber/client-react";
 import axios from "axios";
@@ -146,6 +148,22 @@ export async function importApp(app: AppExport): Promise<RepositoryApp> {
 export async function exportApp(appId: string): Promise<AppExport> {
   const resp = await axios.get(`${getBaseUrl()}/app/${appId}/export`);
   return (resp.data as ExportAppResponse).export;
+}
+
+export async function importSubGraph(
+  subgraph: SubGraphExport,
+): Promise<RepositorySubGraph> {
+  const resp = await axios.post(`${getBaseUrl()}/sub_graph/import`, subgraph);
+  return resp.data as RepositorySubGraph;
+}
+
+export async function exportSubGraph(
+  subgraphId: string,
+): Promise<SubGraphExport> {
+  const resp = await axios.get(
+    `${getBaseUrl()}/sub_graph/${subgraphId}/export`,
+  );
+  return (resp.data as ExportSubGraphResponse).export;
 }
 
 export async function listSecrets(): Promise<PublicSecret[]> {
