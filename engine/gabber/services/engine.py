@@ -8,7 +8,7 @@ import os
 import sys
 import time
 
-from livekit import agents, rtc, api
+from livekit import agents
 from livekit.agents import cli
 
 from gabber.core.editor import models
@@ -20,13 +20,12 @@ from .default_secret_provider import DefaultSecretProvider
 from gabber.core.logger import GabberLogHandler
 
 
-async def entrypoint(ctx: agents.JobContext):
+async def entrypoint_inner(
+    ctx: agents.JobContext, graph_library: GraphLibrary, secret_provider: SecretProvider
+):
     parsed = json.loads(ctx.job.metadata)
     graph_rep = parsed["graph"]
     graph_rep = models.GraphEditorRepresentation.model_validate(graph_rep)
-
-    graph_library: GraphLibrary = DefaultGraphLibrary()
-    secret_provider: SecretProvider = DefaultSecretProvider()
 
     os.environ["TZ"] = "UTC"
     time.tzset()
@@ -55,88 +54,30 @@ async def entrypoint(ctx: agents.JobContext):
     await graph.load_from_snapshot(graph_rep)
     await ctx.connect()
     room = ctx.room
-    graph_t = asyncio.create_task(graph.run(room=room, runtime_api=runtime_api))
-
-    async def track_participants_loop():
-        lk_api = api.LiveKitAPI()
-        while True:
-            await asyncio.sleep(5)
-            humans = [
-                p
-                for p in ctx.room.remote_participants.values()
-                if p.kind == rtc.ParticipantKind.PARTICIPANT_KIND_STANDARD
-            ]
-
-            if len(humans) == 0:
-                logging.info("No participants detected, starting shutdown timer.")
-                # TODO make this configurable
-                await asyncio.sleep(5)
-                humans = [
-                    p
-                    for p in ctx.room.remote_participants.values()
-                    if p.kind == rtc.ParticipantKind.PARTICIPANT_KIND_STANDARD
-                ]
-                if len(humans) == 0:
-                    logging.info("No participants left, shutting down.")
-
-                    try:
-                        graph_t.cancel()
-                    except Exception as e:
-                        logging.error(
-                            f"Error cancelling graph task: {e}", exc_info=True
-                        )
-                    try:
-                        await lk_api.agent_dispatch.delete_dispatch(
-                            ctx.job.dispatch_id, ctx.room.name
-                        )
-                        logging.info("Deleted agent dispatch.")
-                    except Exception as e:
-                        logging.error(
-                            f"Error deleting agent dispatch: {e}", exc_info=True
-                        )
-
-                    try:
-                        await lk_api.room.delete_room(
-                            api.DeleteRoomRequest(room=ctx.room.name)
-                        )
-                        logging.info("Deleted LiveKit room.")
-                    except Exception as e:
-                        logging.error(
-                            f"Error deleting LiveKit room: {e}", exc_info=True
-                        )
-
-                    try:
-                        logging.info("Disconnecting LiveKit room.")
-                        await ctx.room.disconnect()
-                        logging.info("Disconnected LiveKit room.")
-                    except Exception as e:
-                        logging.error(f"Error disconnecting room: {e}", exc_info=True)
-
-                    return
-
-                logging.info("Participants rejoined, cancelling shutdown.")
-
-    participant_track_task = asyncio.create_task(track_participants_loop())
+    graph_t: asyncio.Task | None = asyncio.create_task(
+        graph.run(room=room, runtime_api=runtime_api)
+    )
 
     try:
         await graph_t
-    except asyncio.CancelledError:
-        logging.info("Job cancelled, shutting down gracefully.")
-    except Exception as e:
-        logging.error(f"An error occurred while running the graph: {e}", exc_info=True)
+    finally:
+        log_handler.close()
+        log_handler_t.cancel()
 
-    try:
-        await participant_track_task
-    except Exception as e:
-        logging.error(f"An error occurred in participant tracking: {e}", exc_info=True)
+        try:
+            await log_handler_t
+        except asyncio.CancelledError:
+            pass
 
-    log_handler.close()
-    log_handler_t.cancel()
 
-    try:
-        await log_handler_t
-    except asyncio.CancelledError:
-        pass
+async def entrypoint(ctx: agents.JobContext):
+    parsed = json.loads(ctx.job.metadata)
+    graph_rep = parsed["graph"]
+    graph_rep = models.GraphEditorRepresentation.model_validate(graph_rep)
+
+    graph_library: GraphLibrary = DefaultGraphLibrary()
+    secret_provider: SecretProvider = DefaultSecretProvider()
+    await entrypoint_inner(ctx, graph_library, secret_provider)
 
 
 def cpu_load_fnc(worker: agents.Worker) -> float:

@@ -254,6 +254,10 @@ class Publish(node.Node):
     def _part_metadata(self, part: rtc.RemoteParticipant | None):
         if part is None:
             return None
+
+        if part.metadata is None or part.metadata == "":
+            return None
+
         part_md: dict[str, str] | None = None
         try:
             json_md = json.loads(part.metadata)
