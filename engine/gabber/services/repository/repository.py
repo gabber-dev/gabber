@@ -295,7 +295,13 @@ class RepositoryServer:
                     if not val:
                         raise ValueError("__subgraph_id__ pad has no value")
 
-                    ids.add(val)
+                    # Extract the string value from the String model
+                    if hasattr(val, 'value'):
+                        ids.add(val.value)
+                    elif isinstance(val, str):
+                        ids.add(val)
+                    else:
+                        raise ValueError(f"Unexpected value type for __subgraph_id__: {type(val)}")
                 return ids
 
             subgraph_ids = extract_subgraph_ids(app.graph)
@@ -366,7 +372,13 @@ class RepositoryServer:
                     if not val:
                         raise ValueError("__subgraph_id__ pad has no value")
 
-                    ids.add(val)
+                    # Extract the string value from the String model
+                    if hasattr(val, 'value'):
+                        ids.add(val.value)
+                    elif isinstance(val, str):
+                        ids.add(val)
+                    else:
+                        raise ValueError(f"Unexpected value type for __subgraph_id__: {type(val)}")
                 return ids
 
             subgraph_ids = extract_subgraph_ids(obj.graph)
