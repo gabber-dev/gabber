@@ -78,10 +78,10 @@ class AVClipZip(Node):
                 for item in items:
                     if isinstance(item.value, runtime.VideoClip):
                         video_clip = item.value
-                        metadata = item.ctx.metadata
+                        metadata = item.ctx.publisher_metadata
                     elif isinstance(item.value, runtime.AudioClip):
                         audio_clip = item.value
-                        metadata = item.ctx.metadata
+                        metadata = item.ctx.publisher_metadata
 
                 if not video_clip:
                     video_clip = runtime.VideoClip(video=[])
