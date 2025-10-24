@@ -196,6 +196,7 @@ class SourcePad(Pad[SOURCE_PAD_T], Protocol, Generic[SOURCE_PAD_T]):
                 )
                 if ctx is not None:
                     ctx.complete()
+                continue
 
             if isinstance(np, PropertyPad):
                 np.set_value(value)

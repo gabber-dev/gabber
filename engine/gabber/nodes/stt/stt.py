@@ -161,9 +161,10 @@ class STT(node.Node):
                 stt_impl.push_audio(audio.value)
                 audio.ctx.complete()
 
+        md_prom: asyncio.Future[dict[str, str] | None] = asyncio.Future()
+
         async def stt_event_task() -> None:
             ctx: pad.RequestContext | None = None
-            md_prom: asyncio.Future[dict[str, str] | None] = asyncio.Future()
             md = await md_prom
             async for event in stt_impl:
                 if isinstance(event, stt.STTEvent_SpeechStarted):
