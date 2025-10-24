@@ -89,7 +89,7 @@ class MultiParticipantSTT(node.Node):
                 default_type_constraints=[
                     pad_constraints.Enum(options=[e.name for e in State])
                 ],
-                value=State.WAITING_FOR_HUMAN.name,
+                value=runtime.Enum(value=State.WAITING_FOR_HUMAN.name),
             )
 
         previous_state = cast(pad.PropertySourcePad, self.get_pad("previous_state"))
@@ -101,7 +101,7 @@ class MultiParticipantSTT(node.Node):
                 default_type_constraints=[
                     pad_constraints.Enum(options=[e.name for e in State])
                 ],
-                value=State.WAITING_FOR_HUMAN.name,
+                value=runtime.Enum(value=State.WAITING_FOR_HUMAN.name),
             )
 
         audio_sinks: list[pad.StatelessSinkPad] = []
@@ -227,8 +227,8 @@ class MultiParticipantSTT(node.Node):
 
         def sm_callback(old_state: State, new_state: State) -> None:
             ctx = pad.RequestContext(parent=None, publisher_metadata=None)
-            previous_state.push_item(old_state.name, ctx)
-            current_state.push_item(new_state.name, ctx)
+            previous_state.push_item(runtime.Enum(value=old_state.name), ctx)
+            current_state.push_item(runtime.Enum(value=new_state.name), ctx)
 
         talking_state = TalkingState()
         state_machine = StateMachine(
