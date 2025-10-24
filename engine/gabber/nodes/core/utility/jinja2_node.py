@@ -52,6 +52,7 @@ class Jinja2(Node):
 
         property_names: list[pad.PropertySinkPad] = []
         property_values: list[pad.PropertySinkPad] = []
+        property_values_sources: list[pad.PropertySourcePad] = []
 
         num_properties = num_properties_pad.get_value()
         assert isinstance(num_properties, int)
@@ -84,18 +85,41 @@ class Jinja2(Node):
                 )
             property_values.append(value_pad)
 
+            value_source = cast(
+                pad.PropertySourcePad, self.get_pad(f"property_value_{i}_source")
+            )
+            if not value_source:
+                value_source = pad.PropertySourcePad(
+                    id=f"property_value_{i}_source",
+                    owner_node=self,
+                    group="property_value_source",
+                    default_type_constraints=[
+                        pad_constraints.String(),
+                        pad_constraints.Integer(),
+                        pad_constraints.Float(),
+                        pad_constraints.Boolean(),
+                        pad_constraints.Enum(),
+                    ],
+                    value="",
+                )
+                value_pad.link_types_to_pad(value_source)
+            property_values_sources.append(value_source)
+
         # Rebuild the pads list with only the pads we need
         self.pads = cast(
             list[pad.Pad],
             [num_properties_pad, jinja_template_pad]
             + property_names
             + property_values
+            + property_values_sources
             + [rendered_output],
         )
 
         # Do an initial render to set the output value
         # This ensures connected nodes get the proper initial value
-        property_pads = list(zip(property_names, property_values))
+        property_pads = list(
+            zip(property_names, property_values, property_values_sources)
+        )
         jinja_template = jinja_template_pad.get_value()
         assert isinstance(jinja_template, str)
         rendered = self.render_jinja(property_pads, jinja_template)
@@ -103,11 +127,13 @@ class Jinja2(Node):
 
     def render_jinja(
         self,
-        property_pads: list[tuple[pad.PropertySinkPad, pad.PropertySinkPad]],
+        property_pads: list[
+            tuple[pad.PropertySinkPad, pad.PropertySinkPad, pad.PropertySourcePad]
+        ],
         template: str,
     ) -> str:
         context: dict[str, object] = {}
-        for name_pad, value_pad in property_pads:
+        for name_pad, value_pad, _ in property_pads:
             name = name_pad.get_value()
             assert isinstance(name, str)
             if name and value_pad.get_value():
@@ -132,8 +158,9 @@ class Jinja2(Node):
         for i in range(num_properties):
             name_pad = self.get_pad(f"property_name_{i}")
             value_pad = self.get_pad(f"property_value_{i}")
-            if name_pad and value_pad:
-                property_pads.append((name_pad, value_pad))
+            value_source_pad = self.get_pad(f"property_value_{i}_source")
+            if name_pad and value_pad and value_source_pad:
+                property_pads.append((name_pad, value_pad, value_source_pad))
 
         template = (
             jinja_template_pad.get_value()
@@ -147,14 +174,17 @@ class Jinja2(Node):
         initial_rendered = self.render_jinja(property_pads, template)
         rendered_output.set_value(initial_rendered)
 
-        async def pad_task(value_pad: pad.PropertySinkPad):
+        async def pad_task(
+            value_pad: pad.PropertySinkPad, value_source_pad: pad.PropertySourcePad
+        ):
             async for item in value_pad:
                 rendered = self.render_jinja(property_pads, template)
                 rendered_output.push_item(rendered, item.ctx)
+                value_source_pad.push_item(item.value, item.ctx)
                 item.ctx.complete()
 
         tasks: list[asyncio.Task] = []
-        for _, value_pad in property_pads:
-            tasks.append(asyncio.create_task(pad_task(value_pad)))
+        for _, value_pad, value_source_pad in property_pads:
+            tasks.append(asyncio.create_task(pad_task(value_pad, value_source_pad)))
 
         await asyncio.gather(*tasks)

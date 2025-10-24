@@ -25,7 +25,6 @@ function RenderedTab({ rendered }: { rendered: string }) {
 }
 
 export function Jinja2Node({ data }: BaseBlockProps) {
-  const {} = useEditor();
   const { runtimeValue: jinjaRuntimeValue, setEditorValue } =
     usePropertyPad<String>(data.id, "jinja_template");
   const { pad: renderedOutputPad, runtimeValue: renderedOutputValue } =
@@ -35,14 +34,20 @@ export function Jinja2Node({ data }: BaseBlockProps) {
     const propertyNamePads = data.pads.filter((p) =>
       p.id.startsWith("property_name_"),
     );
-    const propertyValuePads = data.pads.filter((p) =>
-      p.id.startsWith("property_value_"),
+    const propertyValuePads = data.pads.filter(
+      (p) => p.id.startsWith("property_value_") && !p.id.endsWith("_source"),
+    );
+    const propertyValueSourcePads = data.pads.filter(
+      (p) => p.id.startsWith("property_value_") && p.id.endsWith("_source"),
     );
     const getNum = (id: string) => parseInt(id.split("_").pop() || "0", 10);
     const sortedNames = [...propertyNamePads].sort(
       (a, b) => getNum(a.id) - getNum(b.id),
     );
     const sortedValues = [...propertyValuePads].sort(
+      (a, b) => getNum(a.id) - getNum(b.id),
+    );
+    const sortedValueSources = [...propertyValueSourcePads].sort(
       (a, b) => getNum(a.id) - getNum(b.id),
     );
     if (sortedNames.length !== sortedValues.length) {
@@ -52,7 +57,8 @@ export function Jinja2Node({ data }: BaseBlockProps) {
 
     return sortedNames.map((namePad, index) => {
       const valuePad = sortedValues[index];
-      return { namePad, valuePad };
+      const valueSourcePad = sortedValueSources[index];
+      return { namePad, valuePad, valueSourcePad };
     });
   }, [data]);
 
@@ -149,7 +155,7 @@ export function Jinja2Node({ data }: BaseBlockProps) {
           </div>
         )}
 
-        {propertyPads.map(({ namePad, valuePad }, index) => (
+        {propertyPads.map(({ namePad, valuePad, valueSourcePad }, index) => (
           <div
             key={index}
             className="w-full relative flex space-x-2 flex-col border-t border-base-300 py-2"
@@ -166,6 +172,8 @@ export function Jinja2Node({ data }: BaseBlockProps) {
               <div className="text-neutral-200 text-xs italic">
                 {(valuePad.value as String | Integer | Boolean | Float).value}
               </div>
+              <div className="grow" />
+              {valueSourcePad && <PadHandle data={valueSourcePad} notes={[]} />}
             </div>
           </div>
         ))}
