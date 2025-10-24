@@ -8,7 +8,7 @@ import os
 import sys
 import time
 
-from livekit import agents, rtc
+from livekit import agents, rtc, api
 from livekit.agents import cli
 
 from gabber.core.editor import models
@@ -58,6 +58,7 @@ async def entrypoint(ctx: agents.JobContext):
     graph_t = asyncio.create_task(graph.run(room=room, runtime_api=runtime_api))
 
     async def track_participants_loop():
+        lk_api = api.LiveKitAPI()
         while True:
             await asyncio.sleep(5)
             humans = [
@@ -79,6 +80,10 @@ async def entrypoint(ctx: agents.JobContext):
                     logging.info("No participants left, shutting down.")
                     await ctx.room.disconnect()
                     graph_t.cancel()
+                    await lk_api.room.delete_room(
+                        api.DeleteRoomRequest(room=ctx.room.name)
+                    )
+                    logging.info("Deleted LiveKit room, exiting job.")
                     return
 
                 logging.info("Participants rejoined, cancelling shutdown.")
