@@ -656,7 +656,7 @@ class RepositoryServer:
 
     async def app_run(self, request: aiohttp.web.Request):
         public_host = os.environ.get("GABBER_PUBLIC_HOST", "localhost")
-        livekit_url = f"ws://{public_host}:7880"
+        livekit_url = os.environ.get("GABBER_PUBLIC_LIVEKIT_URL", f"ws://{public_host}:7880")
         internal_livekit_url = os.environ.get("LIVEKIT_URL", livekit_url)
         livekit_api_key = "devkey"
         livekit_api_secret = "secret"
