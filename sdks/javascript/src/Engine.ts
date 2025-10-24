@@ -174,19 +174,27 @@ export class Engine  {
 
   private setupRoomEventListeners(): void {
     this.livekitRoom.on('connected', () => {
-      this.emitConnectionStateChange();
+      setTimeout(() => {
+        this.emitConnectionStateChange();
+      }, 100);
     });
 
     this.livekitRoom.on('disconnected', (reason) => {
-      this.emitConnectionStateChange();
+      setTimeout(() => {
+        this.emitConnectionStateChange();
+      }, 100);
     });
 
     this.livekitRoom.on('participantConnected', (participant) => {
-      this.emitConnectionStateChange();
+      setTimeout(() => {
+        this.emitConnectionStateChange();
+      }, 100);
     });
 
     this.livekitRoom.on('participantDisconnected', (participant) => {
-      this.emitConnectionStateChange();
+      setTimeout(() => {
+        this.emitConnectionStateChange();
+      }, 100);
     });
 
     this.livekitRoom.on('dataReceived', this.onData);
