@@ -6,6 +6,7 @@ from .boolean import Boolean
 from .comment import Comment
 from .integer import Integer
 from .string import String
+from .variable import Variable
 from . import json
 
 ALL_NODES = (
@@ -14,6 +15,7 @@ ALL_NODES = (
         Integer,
         Boolean,
         Comment,
+        Variable,
     ]
     + context_message.ALL_NODES
     + json.ALL_NODES
