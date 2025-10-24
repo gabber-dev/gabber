@@ -178,6 +178,26 @@ class MultiParticipantSTT(node.Node):
             ),
         )
 
+    async def create_stt_instance(self) -> stt.STT:
+        service = cast(pad.PropertySinkPad, self.get_pad_required("service"))
+        if service.get_value() == "assembly_ai":
+            api_key_pad = self.get_property_sink_pad_required(runtime.Secret, "api_key")
+            api_key = await self.secret_provider.resolve_secret(
+                api_key_pad.get_value().secret_id
+            )
+            return stt.Assembly(api_key=api_key)
+        elif service.get_value() == "local_kyutai":
+            return stt.Kyutai(port=8080)
+        elif service.get_value() == "deepgram":
+            api_key_pad = self.get_property_sink_pad_required(runtime.Secret, "api_key")
+            api_key = await self.secret_provider.resolve_secret(
+                api_key_pad.get_value().secret_id
+            )
+            return stt.Deepgram(api_key=api_key)
+        else:
+            logging.error("Unsupported STT service: %s", service.get_value())
+            raise ValueError(f"Unsupported STT service: {service.get_value()}")
+
     async def run(self):
         audio_sinks: list[pad.StatelessSinkPad] = []
         transcription_sources: list[pad.StatelessSourcePad] = []
@@ -189,7 +209,6 @@ class MultiParticipantSTT(node.Node):
             if p.get_group() == "transcription":
                 transcription_sources.append(cast(pad.StatelessSourcePad, p))
 
-        service = cast(pad.PropertySinkPad, self.get_pad_required("service"))
         speech_started_source = cast(
             pad.StatelessSourcePad, self.get_pad_required("speech_started")
         )
@@ -205,29 +224,6 @@ class MultiParticipantSTT(node.Node):
         force_ai_talk = cast(
             pad.StatelessSinkPad, self.get_pad_required("force_ai_talk")
         )
-
-        async def create_stt_instance() -> stt.STT:
-            if service.get_value() == "assembly_ai":
-                api_key_pad = self.get_property_sink_pad_required(
-                    runtime.Secret, "api_key"
-                )
-                api_key = await self.secret_provider.resolve_secret(
-                    api_key_pad.get_value().secret_id
-                )
-                return stt.Assembly(api_key=api_key)
-            elif service.get_value() == "local_kyutai":
-                return stt.Kyutai(port=8080)
-            elif service.get_value() == "deepgram":
-                api_key_pad = self.get_property_sink_pad_required(
-                    runtime.Secret, "api_key"
-                )
-                api_key = await self.secret_provider.resolve_secret(
-                    api_key_pad.get_value().secret_id
-                )
-                return stt.Deepgram(api_key=api_key)
-            else:
-                logging.error("Unsupported STT service: %s", service.get_value())
-                raise ValueError(f"Unsupported STT service: {service.get_value()}")
 
         def sm_callback(old_state: State, new_state: State) -> None:
             ctx = pad.RequestContext(parent=None, publisher_metadata=None)
@@ -261,7 +257,7 @@ class MultiParticipantSTT(node.Node):
             audio_sink: pad.StatelessSinkPad,
             transcription_source: pad.StatelessSourcePad,
         ) -> None:
-            stt_impl = await create_stt_instance()
+            stt_impl = await self.create_stt_instance()
             stt_run_t = asyncio.create_task(stt_impl.run())
             md_promise: asyncio.Future[dict[str, str] | None] = asyncio.Future()
             audio_sink_t = asyncio.create_task(
