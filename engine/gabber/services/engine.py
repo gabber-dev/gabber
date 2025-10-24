@@ -21,7 +21,10 @@ from gabber.core.logger import GabberLogHandler
 
 
 async def entrypoint_inner(
-    ctx: agents.JobContext, graph_library: GraphLibrary, secret_provider: SecretProvider
+    ctx: agents.JobContext,
+    graph_library: GraphLibrary,
+    secret_provider: SecretProvider,
+    extra_secrets_to_omit: list[str] = [],
 ):
     parsed = json.loads(ctx.job.metadata)
     graph_rep = parsed["graph"]
@@ -35,6 +38,7 @@ async def entrypoint_inner(
     all_secrets = await asyncio.gather(
         *[secret_provider.resolve_secret(s.id) for s in secrets]
     )
+    all_secrets.extend(extra_secrets_to_omit)
     runtime_api = RuntimeApi(room=ctx.room)
     log_handler = GabberLogHandler(
         runtime_api=runtime_api, secrets_to_remove=all_secrets
