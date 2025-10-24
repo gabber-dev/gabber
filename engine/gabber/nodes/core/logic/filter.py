@@ -284,15 +284,15 @@ class Filter(Node):
                 logging.error(f"Unsupported operator for boolean comparison: {op}")
                 return False
         elif isinstance(tc_a, pad_constraints.Enum):
-            if not isinstance(a, str) or not isinstance(b, str):
+            if not isinstance(a, runtime.Enum) or not isinstance(b, runtime.Enum):
                 logging.error(
                     f"Type mismatch for enum comparison: {type(a)} vs {type(b)}"
                 )
                 return False
             if op == "==":
-                return a == b
+                return a.value == b.value
             elif op == "!=":
-                return a != b
+                return a.value != b.value
             else:
                 logging.error(f"Unsupported operator for enum comparison: {op}")
                 return False
