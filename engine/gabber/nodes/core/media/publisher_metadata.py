@@ -53,6 +53,7 @@ class PublisherMetadata(node.Node):
                 owner_node=self,
                 group="value",
                 default_type_constraints=[pad_constraints.String()],
+                value="",
             )
 
         sink.link_types_to_pad(source)
