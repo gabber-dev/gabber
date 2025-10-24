@@ -21,14 +21,14 @@ export { usePropertyPad } from './usePropertyPad';
 export { useSourcePad } from './useSourcePad';
 export { usePad } from './usePad';
 
+export { Subscription, Publication } from "@gabber/client"
+
 export type { ConnectionDetails, 
     ConnectionState, 
     LocalAudioTrack, 
     LocalTrack, 
     LocalVideoTrack, 
     GetLocalTrackOptions, 
-    Subscription,
-    Publication, 
     RemoteAudioTrack, 
     RemoteVideoTrack, 
     RemoteTrack, 
