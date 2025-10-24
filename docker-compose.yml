@@ -70,8 +70,8 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - REPOSITORY_HOST=repository:8001
-      - GABBER_PUBLIC_HOST=${GABBER_PUBLIC_HOST:-localhost}
+      - NEXT_PUBLIC_REPOSITORY_URL=http://repository:8001
+      - NEXT_PUBLIC_EDITOR_URL=ws://${GABBER_PUBLIC_HOST:-localhost}:8000/ws
 
   kitten_tts:
     build:
