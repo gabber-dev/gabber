@@ -8,7 +8,7 @@ import os
 import sys
 import time
 
-from livekit import agents, rtc
+from livekit import agents, rtc, api
 from livekit.agents import cli
 
 from gabber.core.editor import models
@@ -58,6 +58,7 @@ async def entrypoint(ctx: agents.JobContext):
     graph_t = asyncio.create_task(graph.run(room=room, runtime_api=runtime_api))
 
     async def track_participants_loop():
+        lk_api = api.LiveKitAPI()
         while True:
             await asyncio.sleep(5)
             humans = [
@@ -77,8 +78,40 @@ async def entrypoint(ctx: agents.JobContext):
                 ]
                 if len(humans) == 0:
                     logging.info("No participants left, shutting down.")
-                    await ctx.room.disconnect()
-                    graph_t.cancel()
+
+                    try:
+                        graph_t.cancel()
+                    except Exception as e:
+                        logging.error(
+                            f"Error cancelling graph task: {e}", exc_info=True
+                        )
+                    try:
+                        await lk_api.agent_dispatch.delete_dispatch(
+                            ctx.job.dispatch_id, ctx.room.name
+                        )
+                        logging.info("Deleted agent dispatch.")
+                    except Exception as e:
+                        logging.error(
+                            f"Error deleting agent dispatch: {e}", exc_info=True
+                        )
+
+                    try:
+                        await lk_api.room.delete_room(
+                            api.DeleteRoomRequest(room=ctx.room.name)
+                        )
+                        logging.info("Deleted LiveKit room.")
+                    except Exception as e:
+                        logging.error(
+                            f"Error deleting LiveKit room: {e}", exc_info=True
+                        )
+
+                    try:
+                        logging.info("Disconnecting LiveKit room.")
+                        await ctx.room.disconnect()
+                        logging.info("Disconnected LiveKit room.")
+                    except Exception as e:
+                        logging.error(f"Error disconnecting room: {e}", exc_info=True)
+
                     return
 
                 logging.info("Participants rejoined, cancelling shutdown.")
