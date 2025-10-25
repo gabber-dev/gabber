@@ -98,6 +98,8 @@ class Publish(node.Node):
         video_enabled = self.get_property_source_pad_required(bool, "video_enabled")
         video_stream: rtc.VideoStream | None = None
         audio_stream: rtc.AudioStream | None = None
+        video_pub: rtc.RemoteTrackPublication | None = None
+        audio_pub: rtc.RemoteTrackPublication | None = None
 
         last_audio_frame_time: float | None = None
         last_video_frame_time: float | None = None
@@ -109,13 +111,13 @@ class Publish(node.Node):
         resampler_48000hz = Resampler(48000)
 
         async def video_consume():
-            nonlocal last_video_frame_time, part, video_stream
+            nonlocal last_video_frame_time, part, video_stream, video_pub
             while True:
                 if not self._allowed_participant:
                     await asyncio.sleep(0.5)
                     continue
 
-                (video_stream, part) = await video_stream_provider(
+                (video_stream, part, video_pub) = await video_stream_provider(
                     self.room, f"{self.id}:video", self._allowed_participant
                 )
 
@@ -141,13 +143,13 @@ class Publish(node.Node):
                 video_stream = None
 
         async def audio_consume():
-            nonlocal last_audio_frame_time, part, audio_stream
+            nonlocal last_audio_frame_time, part, audio_stream, audio_pub
             while True:
                 if not self._allowed_participant:
                     await asyncio.sleep(0.5)
                     continue
 
-                (audio_stream, part) = await audio_stream_provider(
+                (audio_stream, part, audio_pub) = await audio_stream_provider(
                     self.room, f"{self.id}:audio", self._allowed_participant
                 )
 
@@ -185,8 +187,19 @@ class Publish(node.Node):
                 self.logger.info("Audio stream ended")
 
         async def frame_timeout():
+            nonlocal audio_pub, video_pub
             while True:
                 await asyncio.sleep(0.5)
+                if video_pub is not None and not video_pub.subscribed:
+                    if video_stream is not None:
+                        await video_stream.aclose()
+                    video_pub = None
+
+                if audio_pub is not None and not audio_pub.subscribed:
+                    if audio_stream is not None:
+                        await audio_stream.aclose()
+                    audio_pub = None
+
                 current_time = time.time()
 
                 if last_audio_frame_time is None:
