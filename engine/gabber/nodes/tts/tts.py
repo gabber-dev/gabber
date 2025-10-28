@@ -121,6 +121,16 @@ class TTS(node.Node):
                 default_type_constraints=[pad_constraints.Trigger()],
             )
 
+        is_talking = cast(pad.PropertySourcePad, self.get_pad("is_talking"))
+        if is_talking is None:
+            is_talking = pad.PropertySourcePad(
+                id="is_talking",
+                group="is_talking",
+                owner_node=self,
+                default_type_constraints=[pad_constraints.Boolean()],
+                value=False,
+            )
+
         self.pads = [
             service,
             api_key,
@@ -131,6 +141,7 @@ class TTS(node.Node):
             final_transcription_source,
             tts_started_source,
             tts_ended_source,
+            is_talking,
         ]
 
     async def run(self):
@@ -157,6 +168,9 @@ class TTS(node.Node):
         )
         tts_ended_source = cast(
             pad.StatelessSourcePad, self.get_pad_required("tts_ended")
+        )
+        is_talking = cast(
+            pad.PropertySourcePad, self.get_pad_required("is_talking")
         )
         tts: BaseTTS
         if service.get_value().value == "gabber":
@@ -238,6 +252,7 @@ class TTS(node.Node):
                 new_job.ctx.snooze_timeout(
                     120.0
                 )  # Speech playout can take a while so we snooze the timeout. TODO: make this tied to the actual audio playout duration
+                is_talking.set_value(True)
                 tts_started_source.push_item(runtime.Trigger(), new_job.ctx)
                 try:
                     async for audio_frame in new_job:
@@ -252,11 +267,13 @@ class TTS(node.Node):
                 except Exception as e:
                     logging.error(f"Error occurred while processing TTS job: {e}")
                     final_transcription_source.push_item("", new_job.ctx)
+                    is_talking.set_value(False)
                     tts_ended_source.push_item(runtime.Trigger(), new_job.ctx)
                     new_job.ctx.complete()
                     continue
 
                 final_transcription_source.push_item(new_job.spoken_text, new_job.ctx)
+                is_talking.set_value(False)
                 tts_ended_source.push_item(runtime.Trigger(), new_job.ctx)
                 new_job.ctx.complete()
 
