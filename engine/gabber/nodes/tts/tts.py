@@ -252,7 +252,7 @@ class TTS(node.Node):
                 new_job.ctx.snooze_timeout(
                     120.0
                 )  # Speech playout can take a while so we snooze the timeout. TODO: make this tied to the actual audio playout duration
-                is_talking.set_value(True)
+                is_talking.push_item(True, new_job.ctx)
                 tts_started_source.push_item(runtime.Trigger(), new_job.ctx)
                 try:
                     async for audio_frame in new_job:
@@ -267,13 +267,13 @@ class TTS(node.Node):
                 except Exception as e:
                     logging.error(f"Error occurred while processing TTS job: {e}")
                     final_transcription_source.push_item("", new_job.ctx)
-                    is_talking.set_value(False)
+                    is_talking.push_item(False, new_job.ctx)
                     tts_ended_source.push_item(runtime.Trigger(), new_job.ctx)
                     new_job.ctx.complete()
                     continue
 
                 final_transcription_source.push_item(new_job.spoken_text, new_job.ctx)
-                is_talking.set_value(False)
+                is_talking.push_item(False, new_job.ctx)
                 tts_ended_source.push_item(runtime.Trigger(), new_job.ctx)
                 new_job.ctx.complete()
 
