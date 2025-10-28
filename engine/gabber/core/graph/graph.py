@@ -319,7 +319,7 @@ class Graph:
                 pass
             else:
                 v = mapper.Mapper.client_to_runtime(edit.value)
-                p.set_value(v)
+                p._set_value(v)
 
         for node in self.nodes:
             node.resolve_pads()
@@ -558,7 +558,7 @@ class Graph:
                     if isinstance(tcs[0], pad_constraints.Secret):
                         tcs[0].options = secret_options
                         if not isinstance(p, pad.PropertyPad):
-                            p.set_value(None)
+                            p._set_value(None)
                             continue
 
                         secret_value = p.get_value()
@@ -566,7 +566,7 @@ class Graph:
                             if secret_value.secret_id not in [
                                 s.id for s in secret_options
                             ]:
-                                p.set_value(None)
+                                p._set_value(None)
 
                 if d_tcs and len(d_tcs) == 1:
                     if isinstance(d_tcs[0], pad_constraints.Secret):

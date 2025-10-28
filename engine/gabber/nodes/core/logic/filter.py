@@ -119,7 +119,7 @@ class Filter(Node):
                     [pad_constraints.Enum(options=STRING_COMPARISON_OPERATORS)]
                 )
                 if operator_pad.get_value().value not in STRING_COMPARISON_OPERATORS:
-                    operator_pad.set_value(
+                    operator_pad._set_value(
                         runtime.Enum(value=STRING_COMPARISON_OPERATORS[0])
                     )
             elif isinstance(tc, pad_constraints.Integer):
@@ -127,7 +127,7 @@ class Filter(Node):
                     [pad_constraints.Enum(options=INTEGER_COMPARISON_OPERATORS)]
                 )
                 if operator_pad.get_value().value not in INTEGER_COMPARISON_OPERATORS:
-                    operator_pad.set_value(
+                    operator_pad._set_value(
                         runtime.Enum(value=INTEGER_COMPARISON_OPERATORS[0])
                     )
             elif isinstance(tc, pad_constraints.Float):
@@ -135,7 +135,7 @@ class Filter(Node):
                     [pad_constraints.Enum(options=FLOAT_COMPARISON_OPERATORS)]
                 )
                 if operator_pad.get_value().value not in FLOAT_COMPARISON_OPERATORS:
-                    operator_pad.set_value(
+                    operator_pad._set_value(
                         runtime.Enum(value=FLOAT_COMPARISON_OPERATORS[0])
                     )
             elif isinstance(tc, pad_constraints.Boolean):
@@ -143,7 +143,7 @@ class Filter(Node):
                     [pad_constraints.Enum(options=BOOL_COMPARISON_OPERATORS)]
                 )
                 if operator_pad.get_value().value not in BOOL_COMPARISON_OPERATORS:
-                    operator_pad.set_value(
+                    operator_pad._set_value(
                         runtime.Enum(value=BOOL_COMPARISON_OPERATORS[0])
                     )
             elif isinstance(tc, pad_constraints.Enum):
@@ -151,7 +151,7 @@ class Filter(Node):
                     [pad_constraints.Enum(options=ENUM_COMPARISON_OPERATORS)]
                 )
                 if operator_pad.get_value().value not in ENUM_COMPARISON_OPERATORS:
-                    operator_pad.set_value(
+                    operator_pad._set_value(
                         runtime.Enum(value=ENUM_COMPARISON_OPERATORS[0])
                     )
 

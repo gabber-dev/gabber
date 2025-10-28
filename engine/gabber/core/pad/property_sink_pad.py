@@ -81,7 +81,7 @@ class PropertySinkPad(
     def get_value(self) -> PROPERTY_SINK_PAD_T:
         return self._value
 
-    def set_value(self, value: PROPERTY_SINK_PAD_T):
+    def _set_value(self, value: PROPERTY_SINK_PAD_T):
         self._value = value
         if isinstance(value, NOTIFIABLE_TYPES):
             self._notify_update(value)

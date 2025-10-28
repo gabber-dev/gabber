@@ -116,7 +116,7 @@ class LLMContext(node.Node):
                 value=[system_message.get_value()],
             )
 
-        source.set_value([system_message.get_value()])
+        source._set_value([system_message.get_value()])
 
         insert_pads: list[pad.Pad] = []
         num_inserts_value = num_inserts.get_value() or 1
@@ -289,7 +289,7 @@ class LLMContext(node.Node):
                 if item.value.role == runtime.ContextMessageRoleEnum.USER:
                     new_user_message.push_item(item.value, item.ctx)
 
-                source.set_value(new_msgs)
+                source._set_value(new_msgs)
                 item.ctx.complete()
 
         async def system_message_task():
@@ -299,7 +299,7 @@ class LLMContext(node.Node):
                 source_value = cast(list[runtime.ContextMessage], source_value)
                 if isinstance(item.value, runtime.ContextMessage):
                     source_value[0] = item.value
-                    source.set_value(source.get_value())
+                    source._set_value(source.get_value())
                 item.ctx.complete()
 
         for p in self.pads:

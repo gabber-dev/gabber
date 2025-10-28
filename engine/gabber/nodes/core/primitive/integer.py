@@ -87,7 +87,7 @@ class Integer(node.Node):
         decrement = cast(pad.StatelessSinkPad, self.get_pad_required("decrement"))
 
         if value.get_value() is None:
-            value.set_value(0)
+            value._set_value(0)
 
         async def emit_task():
             async for item in emit:

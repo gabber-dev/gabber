@@ -76,7 +76,7 @@ class Ticker(node.Node):
         async def reset_task():
             nonlocal last_time
             async for item in reset_pad:
-                tick_pad.set_value(0)
+                tick_pad._set_value(0)
                 last_time = time.time()
                 item.ctx.complete()
 

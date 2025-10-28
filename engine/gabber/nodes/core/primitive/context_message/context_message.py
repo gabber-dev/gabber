@@ -65,7 +65,7 @@ class ContextMessage(Node):
         assert isinstance(role_value, runtime.ContextMessageRole)
         content_sink_value = content_sink.get_value()
         assert isinstance(content_sink_value, str)
-        message_source.set_value(
+        message_source._set_value(
             runtime.ContextMessage(
                 role=role_value.value,
                 content=[

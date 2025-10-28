@@ -79,13 +79,13 @@ class PropertySourcePad(
     def get_value(self) -> PROPERTY_SOURCE_PAD_T:
         return self._value
 
-    def set_value(self, value: PROPERTY_SOURCE_PAD_T):
+    def _set_value(self, value: PROPERTY_SOURCE_PAD_T):
         self._value = value
         if isinstance(value, NOTIFIABLE_TYPES):
             self._notify_update(value)
         for np in self.get_next_pads():
             if isinstance(np, PropertyPad):
-                np.set_value(value)
+                np._set_value(value)
 
     def get_next_pads(self) -> list[SinkPad]:
         return self._next_pads[:]
