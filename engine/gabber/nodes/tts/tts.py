@@ -103,6 +103,24 @@ class TTS(node.Node):
                 default_type_constraints=[pad_constraints.String()],
             )
 
+        tts_started_source = cast(pad.StatelessSourcePad, self.get_pad("tts_started"))
+        if tts_started_source is None:
+            tts_started_source = pad.StatelessSourcePad(
+                id="tts_started",
+                group="tts_started",
+                owner_node=self,
+                default_type_constraints=[pad_constraints.Trigger()],
+            )
+
+        tts_ended_source = cast(pad.StatelessSourcePad, self.get_pad("tts_ended"))
+        if tts_ended_source is None:
+            tts_ended_source = pad.StatelessSourcePad(
+                id="tts_ended",
+                group="tts_ended",
+                owner_node=self,
+                default_type_constraints=[pad_constraints.Trigger()],
+            )
+
         self.pads = [
             service,
             api_key,
@@ -111,6 +129,8 @@ class TTS(node.Node):
             audio_source,
             cancel_trigger,
             final_transcription_source,
+            tts_started_source,
+            tts_ended_source,
         ]
 
     async def run(self):
@@ -131,6 +151,12 @@ class TTS(node.Node):
         )
         final_transcription_source = cast(
             pad.StatelessSourcePad, self.get_pad_required("complete_transcription")
+        )
+        tts_started_source = cast(
+            pad.StatelessSourcePad, self.get_pad_required("tts_started")
+        )
+        tts_ended_source = cast(
+            pad.StatelessSourcePad, self.get_pad_required("tts_ended")
         )
         tts: BaseTTS
         if service.get_value().value == "gabber":
@@ -212,6 +238,7 @@ class TTS(node.Node):
                 new_job.ctx.snooze_timeout(
                     120.0
                 )  # Speech playout can take a while so we snooze the timeout. TODO: make this tied to the actual audio playout duration
+                tts_started_source.push_item(runtime.Trigger(), new_job.ctx)
                 try:
                     async for audio_frame in new_job:
                         if clock_start_time is None:
@@ -225,10 +252,12 @@ class TTS(node.Node):
                 except Exception as e:
                     logging.error(f"Error occurred while processing TTS job: {e}")
                     final_transcription_source.push_item("", new_job.ctx)
+                    tts_ended_source.push_item(runtime.Trigger(), new_job.ctx)
                     new_job.ctx.complete()
                     continue
 
                 final_transcription_source.push_item(new_job.spoken_text, new_job.ctx)
+                tts_ended_source.push_item(runtime.Trigger(), new_job.ctx)
                 new_job.ctx.complete()
 
         await asyncio.gather(

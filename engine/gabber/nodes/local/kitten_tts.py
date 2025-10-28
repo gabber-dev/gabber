@@ -112,6 +112,26 @@ class KittenTTS(node.Node):
             )
             self.pads.append(final_transcription_source)
 
+        tts_started_source = cast(pad.StatelessSourcePad, self.get_pad("tts_started"))
+        if tts_started_source is None:
+            tts_started_source = pad.StatelessSourcePad(
+                id="tts_started",
+                group="tts_started",
+                owner_node=self,
+                default_type_constraints=[pad_constraints.Trigger()],
+            )
+            self.pads.append(tts_started_source)
+
+        tts_ended_source = cast(pad.StatelessSourcePad, self.get_pad("tts_ended"))
+        if tts_ended_source is None:
+            tts_ended_source = pad.StatelessSourcePad(
+                id="tts_ended",
+                group="tts_ended",
+                owner_node=self,
+                default_type_constraints=[pad_constraints.Trigger()],
+            )
+            self.pads.append(tts_ended_source)
+
     async def run(self):
         voice_id = cast(pad.PropertySinkPad, self.get_pad_required("voice_id"))
         audio_source = cast(pad.StatelessSourcePad, self.get_pad_required("audio"))
@@ -121,6 +141,12 @@ class KittenTTS(node.Node):
         )
         final_transcription_source = cast(
             pad.StatelessSourcePad, self.get_pad_required("complete_transcription")
+        )
+        tts_started_source = cast(
+            pad.StatelessSourcePad, self.get_pad_required("tts_started")
+        )
+        tts_ended_source = cast(
+            pad.StatelessSourcePad, self.get_pad_required("tts_ended")
         )
         job_queue = asyncio.Queue[TTSJob | None]()
         running_job: TTSJob | None = None
@@ -198,10 +224,12 @@ class KittenTTS(node.Node):
                 new_job.ctx.snooze_timeout(
                     120.0
                 )  # Speech playout can take a while so we snooze the timeout. TODO: make this tied to the actual audio playout duration
+                tts_started_source.push_item(runtime.Trigger(), new_job.ctx)
                 async for frame in new_job:
                     audio_source.push_item(frame, new_job.ctx)
 
                 final_transcription_source.push_item(new_job.spoken_text, new_job.ctx)
+                tts_ended_source.push_item(runtime.Trigger(), new_job.ctx)
                 new_job.ctx.complete()
 
         await asyncio.gather(
