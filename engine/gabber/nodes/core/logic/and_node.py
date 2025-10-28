@@ -26,7 +26,7 @@ class And(node.Node):
         num_inputs = num_inputs_pad.get_value()
         if num_inputs is None or num_inputs < 2:
             num_inputs = 2
-            num_inputs_pad.set_value(2)
+            num_inputs_pad._set_value(2)
 
         input_pads: list[pad.PropertySinkPad[bool]] = []
         for i in range(num_inputs):
@@ -61,7 +61,7 @@ class And(node.Node):
             )
 
         self.pads = cast(list[pad.Pad], [num_inputs_pad] + input_pads + [source])
-        source.set_value(self.check_result())
+        source._set_value(self.check_result())
 
     def check_result(self) -> bool:
         input_pads = [
@@ -84,8 +84,8 @@ class And(node.Node):
 
         async def pad_task(p: pad.PropertySinkPad):
             async for item in p:
-                p.set_value(bool(item.value))
-                source.set_value(self.check_result())
+                p._set_value(bool(item.value))
+                source._set_value(self.check_result())
                 item.ctx.complete()
 
         await asyncio.gather(*(pad_task(p) for p in input_pads))

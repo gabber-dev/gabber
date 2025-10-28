@@ -101,7 +101,7 @@ class TypeConstraint(Node):
                     value=value,
                 )
                 if not prev_value:
-                    prev_pad.set_value(value)
+                    prev_pad._set_value(value)
                 for np in next_pads:
                     np.disconnect()
                     source.connect(np)

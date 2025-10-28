@@ -73,19 +73,19 @@ class Variable(node.Node):
 
         tc = set_pad.get_type_constraints()
         if tc is None or len(tc) != 1:
-            current_value.set_value(None)
+            current_value._set_value(None)
         else:
             cv = current_value.get_value()
             if isinstance(tc[0], pad_constraints.String) and not isinstance(cv, str):
-                current_value.set_value("")
+                current_value._set_value("")
             elif isinstance(tc[0], pad_constraints.Integer) and not isinstance(cv, int):
-                current_value.set_value(0)
+                current_value._set_value(0)
             elif isinstance(tc[0], pad_constraints.Boolean) and not isinstance(
                 cv, bool
             ):
-                current_value.set_value(False)
+                current_value._set_value(False)
             elif isinstance(tc[0], pad_constraints.Float) and not isinstance(cv, float):
-                current_value.set_value(0.0)
+                current_value._set_value(0.0)
 
         self.pads = [set_pad, emit, current_value, emit_source]
 

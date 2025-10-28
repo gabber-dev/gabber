@@ -123,7 +123,7 @@ class Jinja2(Node):
         jinja_template = jinja_template_pad.get_value()
         assert isinstance(jinja_template, str)
         rendered = self.render_jinja(property_pads, jinja_template)
-        rendered_output.set_value(rendered)
+        rendered_output._set_value(rendered)
 
     def render_jinja(
         self,
@@ -172,7 +172,7 @@ class Jinja2(Node):
         # Do an initial render with current property values
         # This ensures the output is computed even if nothing has been emitted yet
         initial_rendered = self.render_jinja(property_pads, template)
-        rendered_output.set_value(initial_rendered)
+        rendered_output._set_value(initial_rendered)
 
         async def pad_task(
             value_pad: pad.PropertySinkPad, value_source_pad: pad.PropertySourcePad

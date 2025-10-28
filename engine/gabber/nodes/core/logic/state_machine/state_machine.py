@@ -109,7 +109,7 @@ class StateMachine(node.Node):
             self.pads.append(num_parameters)
 
         if num_parameters.get_value() < 0:
-            num_parameters.set_value(0)
+            num_parameters._set_value(0)
 
         current_state = cast(
             pad.PropertySourcePad[runtime.Enum], self.get_pad("current_state")
@@ -264,17 +264,17 @@ class StateMachine(node.Node):
                 entry = next(
                     (s for s in config.states if s.id == config.entry_state), None
                 )
-                previous_state.set_value(
+                previous_state._set_value(
                     runtime.Enum(value=entry.name if entry else "")
                 )
-                current_state.set_value(runtime.Enum(value=entry.name if entry else ""))
+                current_state._set_value(runtime.Enum(value=entry.name if entry else ""))
             else:
-                previous_state.set_value(runtime.Enum(value=""))
-                current_state.set_value(runtime.Enum(value=""))
+                previous_state._set_value(runtime.Enum(value=""))
+                current_state._set_value(runtime.Enum(value=""))
         except Exception as e:
             logging.warning(f"Failed to update current_state pad: {e}")
 
-        configuration.set_value(config.model_dump())
+        configuration._set_value(config.model_dump())
 
         self._resolve_num_pads()
         self._fix_missing_pads()

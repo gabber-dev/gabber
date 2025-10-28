@@ -111,10 +111,10 @@ class Compare(Node):
 
         mode = mode_pad.get_value()
         if mode.value not in ["AND", "OR"]:
-            mode_pad.set_value(runtime.Enum(value="AND"))
+            mode_pad._set_value(runtime.Enum(value="AND"))
 
         val = self.resolve_value(condition_pads=condition_pads, mode_pad=mode_pad)
-        value.set_value(val)
+        value._set_value(val)
 
     def _get_indices(self) -> list[int]:
         indices = set[int]()
@@ -150,7 +150,7 @@ class Compare(Node):
         num_conditions_pad = self.get_property_sink_pad_required(int, "num_conditions")
 
         if not num_conditions_pad.get_value():
-            num_conditions_pad.set_value(1)
+            num_conditions_pad._set_value(1)
 
         num_conditions = num_conditions_pad.get_value()
         assert isinstance(num_conditions, int)
@@ -234,7 +234,7 @@ class Compare(Node):
                     [pad_constraints.Enum(options=STRING_COMPARISON_OPERATORS)]
                 )
                 if operator_pad.get_value().value not in STRING_COMPARISON_OPERATORS:
-                    operator_pad.set_value(
+                    operator_pad._set_value(
                         runtime.Enum(value=STRING_COMPARISON_OPERATORS[0])
                     )
             elif isinstance(tc, pad_constraints.Integer):
@@ -242,7 +242,7 @@ class Compare(Node):
                     [pad_constraints.Enum(options=INTEGER_COMPARISON_OPERATORS)]
                 )
                 if operator_pad.get_value().value not in INTEGER_COMPARISON_OPERATORS:
-                    operator_pad.set_value(
+                    operator_pad._set_value(
                         runtime.Enum(value=INTEGER_COMPARISON_OPERATORS[0])
                     )
             elif isinstance(tc, pad_constraints.Float):
@@ -250,7 +250,7 @@ class Compare(Node):
                     [pad_constraints.Enum(options=FLOAT_COMPARISON_OPERATORS)]
                 )
                 if operator_pad.get_value().value not in FLOAT_COMPARISON_OPERATORS:
-                    operator_pad.set_value(
+                    operator_pad._set_value(
                         runtime.Enum(value=FLOAT_COMPARISON_OPERATORS[0])
                     )
             elif isinstance(tc, pad_constraints.Boolean):
@@ -258,7 +258,7 @@ class Compare(Node):
                     [pad_constraints.Enum(options=BOOL_COMPARISON_OPERATORS)]
                 )
                 if operator_pad.get_value().value not in BOOL_COMPARISON_OPERATORS:
-                    operator_pad.set_value(
+                    operator_pad._set_value(
                         runtime.Enum(value=BOOL_COMPARISON_OPERATORS[0])
                     )
             elif isinstance(tc, pad_constraints.Enum):
@@ -266,7 +266,7 @@ class Compare(Node):
                     [pad_constraints.Enum(options=ENUM_COMPARISON_OPERATORS)]
                 )
                 if operator_pad.get_value().value not in ENUM_COMPARISON_OPERATORS:
-                    operator_pad.set_value(
+                    operator_pad._set_value(
                         runtime.Enum(value=ENUM_COMPARISON_OPERATORS[0])
                     )
             else:
@@ -313,7 +313,7 @@ class Compare(Node):
     ):
         mode = mode_pad.get_value().value
         if mode not in ["AND", "OR"]:
-            mode_pad.set_value(runtime.Enum(value="AND"))
+            mode_pad._set_value(runtime.Enum(value="AND"))
             mode = "AND"
 
         res = False

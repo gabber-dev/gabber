@@ -90,7 +90,7 @@ class ProxyPropertySinkPad(
     def _get_queue(self) -> asyncio.Queue[Item | None]:
         return self._other._get_queue()
 
-    def set_value(self, value: PROXY_PAD_T):
-        self._other.set_value(value)
+    def _set_value(self, value: PROXY_PAD_T):
+        self._other._set_value(value)
         if isinstance(value, NOTIFIABLE_TYPES):
             self._notify_update(value)
