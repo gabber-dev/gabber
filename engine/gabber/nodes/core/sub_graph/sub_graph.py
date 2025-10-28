@@ -59,7 +59,7 @@ class SubGraph(node.Node):
                 value=subgraph_id,
             )
             self.pads.append(subgraph_id_pad)
-        subgraph_id_pad.set_value(subgraph_id)
+        subgraph_id_pad._set_value(subgraph_id)
 
     def resolve_pads(self):
         self.node_pad_names_map = {}
@@ -185,7 +185,7 @@ class SubGraph(node.Node):
                 assert isinstance(proxy_p, pad.PropertyPad), (
                     f"Expected PropertyPad, got {type(proxy_p)}"
                 )
-                proxy_p.set_value(p.get_value())
+                proxy_p._set_value(p.get_value())
 
             self.pads.append(proxy_p)
             sg_pr_to_remove.append(sg_pr)
@@ -208,7 +208,7 @@ class SubGraph(node.Node):
                 assert isinstance(sg_pr.pad, pad.PropertyPad), (
                     f"Expected PropertyPad, got {type(sg_pr.pad)}"
                 )
-                proxy_pad.set_value(sg_pr.pad.get_value())
+                proxy_pad._set_value(sg_pr.pad.get_value())
 
         # Sort pads (minus __subgraph_id__)
         self.pads = [subgraph_id_pad] + sorted(

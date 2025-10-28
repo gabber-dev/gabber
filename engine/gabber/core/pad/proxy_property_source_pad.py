@@ -83,7 +83,7 @@ class ProxyPropertySourcePad(SourcePad[T], PropertyPad[T], ProxyPad[T]):
     def get_value(self) -> T:
         return self._other.get_value()
 
-    def set_value(self, value: T):
+    def _set_value(self, value: T):
         if isinstance(value, NOTIFIABLE_TYPES):
             self._notify_update(value)
-        self._other.set_value(value)
+        self._other._set_value(value)

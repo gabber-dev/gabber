@@ -76,7 +76,7 @@ class EnumSwitchProperty(Node):
             source_pad.unlink_all()
 
         v = self.get_source_value(sink, value_pads)
-        source_pad.set_value(v)
+        source_pad._set_value(v)
         self.pads = [sink, *value_pads, source_pad]
 
     def get_source_value(
