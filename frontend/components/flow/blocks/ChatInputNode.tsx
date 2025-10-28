@@ -8,7 +8,7 @@ import { useState } from "react";
 import { StatelessPad } from "./components/pads/StatelessPad";
 import { ChatBubbleLeftIcon } from "@heroicons/react/24/outline";
 import toast from "react-hot-toast";
-import { useSourcePad } from "@gabber/client-react";
+import { useSourcePad, String } from "@gabber/client-react";
 import { NodeName } from "./components/NodeName";
 import { NodeId } from "./components/NodeId";
 
@@ -18,7 +18,7 @@ export interface ChatInputNodeProps {
 
 export function ChatInputNode({ data }: ChatInputNodeProps) {
   const [inputText, setInputText] = useState("");
-  const { pushValue } = useSourcePad(data.id, "output");
+  const { pushValue } = useSourcePad<String>(data.id, "output");
 
   // Only show the output pad
   const sourcePad = data.pads.find((p) => p.type === "StatelessSourcePad");
@@ -27,8 +27,8 @@ export function ChatInputNode({ data }: ChatInputNodeProps) {
     e.preventDefault();
     if (!inputText.trim()) return;
     try {
-      // Push raw string. Backend expects plain primitives on source pads.
-      await pushValue(inputText as unknown as never);
+      // Push structured String value that backend expects
+      await pushValue({ type: "string", value: inputText });
       setInputText("");
     } catch (err) {
       console.error("[ChatInput] Failed to send message:", err);
