@@ -266,13 +266,11 @@ class KittenTTS(node.Node):
                 )  # Speech playout can take a while so we snooze the timeout. TODO: make this tied to the actual audio playout duration
                 is_talking.set_value(True)
                 tts_started_source.push_item(runtime.Trigger(), new_job.ctx)
-                tts_started_source.push_item(runtime.Trigger(), new_job.ctx)
                 async for frame in new_job:
                     audio_source.push_item(frame, new_job.ctx)
 
                 final_transcription_source.push_item(new_job.spoken_text, new_job.ctx)
                 is_talking.set_value(False)
-                tts_ended_source.push_item(runtime.Trigger(), new_job.ctx)
                 tts_ended_source.push_item(runtime.Trigger(), new_job.ctx)
                 new_job.ctx.complete()
 
