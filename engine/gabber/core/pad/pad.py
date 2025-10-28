@@ -183,7 +183,7 @@ class SourcePad(Pad[SOURCE_PAD_T], Protocol, Generic[SOURCE_PAD_T]):
 
         # Setting value notifies for itself so we skip it
         if isinstance(self, PropertyPad):
-            self.set_value(value)
+            self._set_value(value)
         else:
             if notify_type:
                 self._notify_update(value)
@@ -199,7 +199,7 @@ class SourcePad(Pad[SOURCE_PAD_T], Protocol, Generic[SOURCE_PAD_T]):
                 continue
 
             if isinstance(np, PropertyPad):
-                np.set_value(value)
+                np._set_value(value)
             else:
                 if notify_type:
                     np._notify_update(value)
@@ -232,7 +232,7 @@ class SourcePad(Pad[SOURCE_PAD_T], Protocol, Generic[SOURCE_PAD_T]):
             v = self.get_value()
             for np in next_pads:
                 if isinstance(np, PropertyPad):
-                    np.set_value(v)
+                    np._set_value(v)
 
     def disconnect(self, sink_pad: "SinkPad[SOURCE_PAD_T]") -> None:
         next_pads = self.get_next_pads()
@@ -253,7 +253,7 @@ class SourcePad(Pad[SOURCE_PAD_T], Protocol, Generic[SOURCE_PAD_T]):
             tc = sink_pad.get_type_constraints()
             if tc is not None and len(tc) == 1:
                 if isinstance(tc[0], pad_constraints.NodeReference):
-                    sink_pad.set_value(None)
+                    sink_pad._set_value(None)
 
     def disconnect_all(self) -> None:
         for np in self.get_next_pads():
@@ -283,7 +283,7 @@ PROPERTY_PAD_T = TypeVar("PROPERTY_PAD_T", bound=runtime.RuntimePadValue)
 @runtime_checkable
 class PropertyPad(Pad[PROPERTY_PAD_T], Protocol, Generic[PROPERTY_PAD_T]):
     def get_value(self) -> PROPERTY_PAD_T: ...
-    def set_value(self, value: PROPERTY_PAD_T): ...
+    def _set_value(self, value: PROPERTY_PAD_T): ...
 
 
 ITEM_T = TypeVar("ITEM_T", bound=runtime.RuntimePadValue)
