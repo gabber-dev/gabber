@@ -7,6 +7,8 @@ import json
 import logging
 import os
 from uuid import uuid4
+import gzip
+import base64
 
 import aiofiles
 import aiohttp
@@ -296,12 +298,14 @@ class RepositoryServer:
                         raise ValueError("__subgraph_id__ pad has no value")
 
                     # Extract the string value from the String model
-                    if hasattr(val, 'value'):
+                    if hasattr(val, "value"):
                         ids.add(val.value)
                     elif isinstance(val, str):
                         ids.add(val)
                     else:
-                        raise ValueError(f"Unexpected value type for __subgraph_id__: {type(val)}")
+                        raise ValueError(
+                            f"Unexpected value type for __subgraph_id__: {type(val)}"
+                        )
                 return ids
 
             subgraph_ids = extract_subgraph_ids(app.graph)
@@ -373,12 +377,14 @@ class RepositoryServer:
                         raise ValueError("__subgraph_id__ pad has no value")
 
                     # Extract the string value from the String model
-                    if hasattr(val, 'value'):
+                    if hasattr(val, "value"):
                         ids.add(val.value)
                     elif isinstance(val, str):
                         ids.add(val)
                     else:
-                        raise ValueError(f"Unexpected value type for __subgraph_id__: {type(val)}")
+                        raise ValueError(
+                            f"Unexpected value type for __subgraph_id__: {type(val)}"
+                        )
                 return ids
 
             subgraph_ids = extract_subgraph_ids(obj.graph)
@@ -559,7 +565,7 @@ class RepositoryServer:
                 json_content = await json_file.read()
 
             obj = models.RepositorySubGraph.model_validate_json(json_content)
-            
+
             # Remove secret options from pads
             for node in obj.graph.nodes:
                 for p in node.pads:
@@ -596,18 +602,18 @@ class RepositoryServer:
             subgraph_ids = extract_subgraph_ids(obj.graph)
             nested_subgraphs = []
             processed_ids = set()
-            
+
             # Recursively collect all nested subgraphs
             while subgraph_ids:
                 sg_id = subgraph_ids.pop()
                 if sg_id in processed_ids:
                     continue
                 processed_ids.add(sg_id)
-                
+
                 path = f"{self.file_path}/sub_graph/{sg_id}.json"
                 if not await asyncio.to_thread(os.path.exists, path):
                     continue
-                    
+
                 async with aiofiles.open(path, mode="r") as f:
                     content = await f.read()
 
@@ -626,7 +632,7 @@ class RepositoryServer:
                                     at.options = []
 
                 nested_subgraphs.append(sg)
-                
+
                 # Check if this subgraph contains other subgraphs
                 nested_ids = extract_subgraph_ids(sg.graph)
                 subgraph_ids.update(nested_ids - processed_ids)
@@ -654,7 +660,7 @@ class RepositoryServer:
             export = models.SubGraphExport.model_validate(data)
             sub_graph_dir = f"{self.file_path}/sub_graph"
             mapping: dict[str, str] = {}
-            
+
             # First import all nested subgraphs
             for sg in export.nested_subgraphs:
                 original_id = sg.id
@@ -667,14 +673,14 @@ class RepositoryServer:
                         new_id += " duplicate"
                     except FileNotFoundError:
                         break
-                        
+
                 existing_names = set()
                 try:
                     files = await asyncio.to_thread(os.listdir, sub_graph_dir)
                 except FileNotFoundError:
                     await self.ensure_dir(sub_graph_dir)
                     files = []
-                    
+
                 for file in files:
                     if file.endswith(".json") and file[:-5] != new_id:
                         async with aiofiles.open(f"{sub_graph_dir}/{file}", "r") as f:
@@ -683,11 +689,11 @@ class RepositoryServer:
                                 content
                             )
                             existing_names.add(existing_sg.name)
-                            
+
                 name = sg.name
                 while name in existing_names:
                     name += " duplicate"
-                    
+
                 sg.id = new_id
                 sg.name = name
                 sg.created_at = datetime.datetime.now()
@@ -696,10 +702,10 @@ class RepositoryServer:
                 await self.ensure_dir(sub_graph_dir)
                 async with aiofiles.open(save_path, "w") as f:
                     await f.write(sg.model_dump_json())
-                    
+
                 if original_id != new_id:
                     mapping[original_id] = new_id
-                    
+
             # Now import the main subgraph
             subgraph = export.subgraph
             original_id = subgraph.id
@@ -710,14 +716,14 @@ class RepositoryServer:
                     new_id += " duplicate"
                 except FileNotFoundError:
                     break
-                    
+
             existing_names = set()
             try:
                 files = await asyncio.to_thread(os.listdir, sub_graph_dir)
             except FileNotFoundError:
                 await self.ensure_dir(sub_graph_dir)
                 files = []
-                
+
             for file in files:
                 if file.endswith(".json"):
                     async with aiofiles.open(f"{sub_graph_dir}/{file}", "r") as f:
@@ -726,16 +732,16 @@ class RepositoryServer:
                             content
                         )
                         existing_names.add(existing_sg.name)
-                        
+
             name = subgraph.name
             while name in existing_names:
                 name += " duplicate"
-                
+
             subgraph.id = new_id
             subgraph.name = name
             subgraph.created_at = datetime.datetime.now()
             subgraph.updated_at = datetime.datetime.now()
-            
+
             # Apply ID mapping if needed
             if mapping:
                 graph_json = subgraph.graph.model_dump_json()
@@ -743,7 +749,7 @@ class RepositoryServer:
                     graph_json = graph_json.replace(f'"{old}"', f'"{new}"')
                 graph_dict = json.loads(graph_json)
                 subgraph.graph = GraphEditorRepresentation.model_validate(graph_dict)
-                
+
             save_path = f"{sub_graph_dir}/{subgraph.id}.json"
             await self.ensure_dir(sub_graph_dir)
             async with aiofiles.open(save_path, "w") as f:
@@ -920,11 +926,15 @@ class RepositoryServer:
 
     async def app_run(self, request: aiohttp.web.Request):
         public_host = os.environ.get("GABBER_PUBLIC_HOST", "localhost")
-        livekit_url = os.environ.get("GABBER_PUBLIC_LIVEKIT_URL", f"ws://{public_host}:7880")
+        livekit_url = os.environ.get(
+            "GABBER_PUBLIC_LIVEKIT_URL", f"ws://{public_host}:7880"
+        )
         internal_livekit_url = os.environ.get("LIVEKIT_URL", livekit_url)
         livekit_api_key = "devkey"
         livekit_api_secret = "secret"
         req = messages.CreateAppRunRequest.model_validate(await request.json())
+        reqGzip = gzip.compress(req.model_dump_json().encode("utf-8"))
+        b64gzip = base64.b64encode(reqGzip).decode("utf-8")
 
         at = api.AccessToken(livekit_api_key, livekit_api_secret)
         at = (
@@ -951,7 +961,7 @@ class RepositoryServer:
                     name=req.run_id,
                     agents=[
                         api.RoomAgentDispatch(
-                            agent_name="gabber-engine", metadata=req.model_dump_json()
+                            agent_name="gabber-engine", metadata=b64gzip
                         )
                     ],
                 )

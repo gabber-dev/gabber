@@ -7,6 +7,8 @@ import logging
 import os
 import sys
 import time
+import gzip
+import base64
 
 from livekit import agents
 from livekit.agents import cli
@@ -26,7 +28,16 @@ async def entrypoint_inner(
     secret_provider: SecretProvider,
     extra_secrets_to_omit: list[str] = [],
 ):
-    parsed = json.loads(ctx.job.metadata)
+    md_str = ctx.job.metadata
+    try:
+        b64_decoded = base64.b64decode(ctx.job.metadata)
+        if b64_decoded.startswith(b"\x1f\x8b"):
+            gzipped_bytes = base64.b64decode(md_str)
+            md_str = gzip.decompress(gzipped_bytes).decode("utf-8")
+    except Exception:
+        pass
+
+    parsed = json.loads(md_str)
     graph_rep = parsed["graph"]
     graph_rep = models.GraphEditorRepresentation.model_validate(graph_rep)
 
@@ -75,10 +86,6 @@ async def entrypoint_inner(
 
 
 async def entrypoint(ctx: agents.JobContext):
-    parsed = json.loads(ctx.job.metadata)
-    graph_rep = parsed["graph"]
-    graph_rep = models.GraphEditorRepresentation.model_validate(graph_rep)
-
     graph_library: GraphLibrary = DefaultGraphLibrary()
     secret_provider: SecretProvider = DefaultSecretProvider()
     await entrypoint_inner(ctx, graph_library, secret_provider)
