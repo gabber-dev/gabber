@@ -100,6 +100,8 @@ class Output(Node):
             track = rtc.LocalVideoTrack.create_video_track(f"{self.id}:video", source)
             options = rtc.TrackPublishOptions()
             options.source = rtc.TrackSource.SOURCE_CAMERA
+            options.video_encoding.max_bitrate = 4_000_000
+            options.video_encoding.max_framerate = 24
             await self.room.local_participant.publish_track(track, options)
             async for f in video:
                 v_frame = f.value
