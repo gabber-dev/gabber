@@ -233,7 +233,8 @@ class Compare(Node):
                 operator_pad.set_default_type_constraints(
                     [pad_constraints.Enum(options=STRING_COMPARISON_OPERATORS)]
                 )
-                if operator_pad.get_value().value not in STRING_COMPARISON_OPERATORS:
+                op_val = operator_pad.get_value()
+                if op_val is None or op_val.value not in STRING_COMPARISON_OPERATORS:
                     operator_pad._set_value(
                         runtime.Enum(value=STRING_COMPARISON_OPERATORS[0])
                     )
@@ -241,7 +242,8 @@ class Compare(Node):
                 operator_pad.set_default_type_constraints(
                     [pad_constraints.Enum(options=INTEGER_COMPARISON_OPERATORS)]
                 )
-                if operator_pad.get_value().value not in INTEGER_COMPARISON_OPERATORS:
+                op_val = operator_pad.get_value()
+                if op_val is None or op_val.value not in INTEGER_COMPARISON_OPERATORS:
                     operator_pad._set_value(
                         runtime.Enum(value=INTEGER_COMPARISON_OPERATORS[0])
                     )
@@ -249,7 +251,8 @@ class Compare(Node):
                 operator_pad.set_default_type_constraints(
                     [pad_constraints.Enum(options=FLOAT_COMPARISON_OPERATORS)]
                 )
-                if operator_pad.get_value().value not in FLOAT_COMPARISON_OPERATORS:
+                op_val = operator_pad.get_value()
+                if op_val is None or op_val.value not in FLOAT_COMPARISON_OPERATORS:
                     operator_pad._set_value(
                         runtime.Enum(value=FLOAT_COMPARISON_OPERATORS[0])
                     )
@@ -257,7 +260,8 @@ class Compare(Node):
                 operator_pad.set_default_type_constraints(
                     [pad_constraints.Enum(options=BOOL_COMPARISON_OPERATORS)]
                 )
-                if operator_pad.get_value().value not in BOOL_COMPARISON_OPERATORS:
+                op_val = operator_pad.get_value()
+                if op_val is None or op_val.value not in BOOL_COMPARISON_OPERATORS:
                     operator_pad._set_value(
                         runtime.Enum(value=BOOL_COMPARISON_OPERATORS[0])
                     )
@@ -265,7 +269,8 @@ class Compare(Node):
                 operator_pad.set_default_type_constraints(
                     [pad_constraints.Enum(options=ENUM_COMPARISON_OPERATORS)]
                 )
-                if operator_pad.get_value().value not in ENUM_COMPARISON_OPERATORS:
+                op_val = operator_pad.get_value()
+                if op_val is None or op_val.value not in ENUM_COMPARISON_OPERATORS:
                     operator_pad._set_value(
                         runtime.Enum(value=ENUM_COMPARISON_OPERATORS[0])
                     )
@@ -278,26 +283,54 @@ class Compare(Node):
                 )
 
     async def run(self):
-        condition_pads = self._get_condition_pads()
+        logging.info(f"Compare node {self.id} starting run method")
+        num_conditions_pad = self.get_property_sink_pad_required(int, "num_conditions")
         mode_pad = self.get_property_sink_pad_required(runtime.Enum, "mode")
         value_pad = self.get_property_source_pad_required(bool, "value")
 
         async def pad_task(pad: pad.PropertySinkPad):
             async for item in pad:
+                logging.info(f"Compare node {self.id}: Pad {pad.get_id()} changed to value: {item.value}")
+                condition_pads = self._get_condition_pads()
                 res = self.resolve_value(
                     condition_pads=condition_pads,
                     mode_pad=mode_pad,
                 )
+                logging.info(f"Compare node {self.id}: Resolved value to {res}, current output is {value_pad.get_value()}")
                 if value_pad.get_value() != res:
+                    logging.info(f"Compare node {self.id}: Pushing new value {res} to output")
                     value_pad.push_item(res, item.ctx)
                 item.ctx.complete()
 
-        await asyncio.gather(
-            *[
-                pad_task(p)
-                for p in [mode_pad] + [p for cps in condition_pads for p in cps]
-            ]
+        # Do an initial evaluation
+        condition_pads = self._get_condition_pads()
+        initial_res = self.resolve_value(
+            condition_pads=condition_pads,
+            mode_pad=mode_pad,
         )
+        logging.info(f"Compare node {self.id}: Initial evaluation result: {initial_res}")
+        value_pad._set_value(initial_res)
+        
+        while True:
+            # Get current condition pads
+            condition_pads = self._get_condition_pads()
+            current_condition_pads = [p for cps in condition_pads for p in cps if p is not None]
+            all_pads = [num_conditions_pad, mode_pad] + current_condition_pads
+            logging.info(f"Compare node {self.id}: Monitoring {len(all_pads)} pads: {[p.get_id() for p in all_pads]}")
+
+            # Create monitoring tasks for all current pads
+            tasks = [asyncio.create_task(pad_task(p)) for p in all_pads]
+
+            # Wait for any change
+            done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+
+            # Cancel remaining tasks
+            for task in pending:
+                task.cancel()
+            try:
+                await asyncio.gather(*pending, return_exceptions=True)
+            except asyncio.CancelledError:
+                pass
 
     def resolve_value(
         self,
@@ -319,10 +352,17 @@ class Compare(Node):
         res = False
         if mode == "AND":
             res = True
-        for cps in condition_pads:
+        
+        for i, cps in enumerate(condition_pads):
             a, b, op = cps
+            a_val = a.get_value() if a else None
+            b_val = b.get_value() if b else None
+            op_val = op.get_value().value if op and op.get_value() else None
+            logging.info(f"Compare node {self.id}: Condition {i}: A={a_val} (type: {type(a_val)}), B={b_val} (type: {type(b_val)}), op={op_val}")
+            
             if a and b and op and op.get_value() is not None:
                 result = self.compare_values(a, b, op.get_value().value)
+                logging.info(f"Compare node {self.id}: Condition {i} result: {result}")
                 if mode == "AND":
                     res = res and result
                     if not res:
@@ -331,6 +371,8 @@ class Compare(Node):
                     res = res or result
                     if res:
                         break
+        
+        logging.info(f"Compare node {self.id}: Final result: {res}")
         return res
 
     def compare_values(
