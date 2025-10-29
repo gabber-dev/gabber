@@ -283,22 +283,18 @@ class Compare(Node):
                 )
 
     async def run(self):
-        logging.info(f"Compare node {self.id} starting run method")
         num_conditions_pad = self.get_property_sink_pad_required(int, "num_conditions")
         mode_pad = self.get_property_sink_pad_required(runtime.Enum, "mode")
         value_pad = self.get_property_source_pad_required(bool, "value")
 
         async def pad_task(pad: pad.PropertySinkPad):
             async for item in pad:
-                logging.info(f"Compare node {self.id}: Pad {pad.get_id()} changed to value: {item.value}")
                 condition_pads = self._get_condition_pads()
                 res = self.resolve_value(
                     condition_pads=condition_pads,
                     mode_pad=mode_pad,
                 )
-                logging.info(f"Compare node {self.id}: Resolved value to {res}, current output is {value_pad.get_value()}")
                 if value_pad.get_value() != res:
-                    logging.info(f"Compare node {self.id}: Pushing new value {res} to output")
                     value_pad.push_item(res, item.ctx)
                 item.ctx.complete()
 
@@ -308,7 +304,6 @@ class Compare(Node):
             condition_pads=condition_pads,
             mode_pad=mode_pad,
         )
-        logging.info(f"Compare node {self.id}: Initial evaluation result: {initial_res}")
         value_pad._set_value(initial_res)
         
         while True:
@@ -316,7 +311,6 @@ class Compare(Node):
             condition_pads = self._get_condition_pads()
             current_condition_pads = [p for cps in condition_pads for p in cps if p is not None]
             all_pads = [num_conditions_pad, mode_pad] + current_condition_pads
-            logging.info(f"Compare node {self.id}: Monitoring {len(all_pads)} pads: {[p.get_id() for p in all_pads]}")
 
             # Create monitoring tasks for all current pads
             tasks = [asyncio.create_task(pad_task(p)) for p in all_pads]
@@ -353,16 +347,10 @@ class Compare(Node):
         if mode == "AND":
             res = True
         
-        for i, cps in enumerate(condition_pads):
+        for cps in condition_pads:
             a, b, op = cps
-            a_val = a.get_value() if a else None
-            b_val = b.get_value() if b else None
-            op_val = op.get_value().value if op and op.get_value() else None
-            logging.info(f"Compare node {self.id}: Condition {i}: A={a_val} (type: {type(a_val)}), B={b_val} (type: {type(b_val)}), op={op_val}")
-            
             if a and b and op and op.get_value() is not None:
                 result = self.compare_values(a, b, op.get_value().value)
-                logging.info(f"Compare node {self.id}: Condition {i} result: {result}")
                 if mode == "AND":
                     res = res and result
                     if not res:
@@ -372,7 +360,6 @@ class Compare(Node):
                     if res:
                         break
         
-        logging.info(f"Compare node {self.id}: Final result: {res}")
         return res
 
     def compare_values(
