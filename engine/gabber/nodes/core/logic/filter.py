@@ -111,6 +111,7 @@ class Filter(Node):
         pad_a: pad.SinkPad[ALL_RUNTIME_TYPES],
         operator_pad: pad.PropertySinkPad[runtime.Enum],
     ):
+        compare_value_pad = cast(pad.PropertySinkPad, self.get_pad("compare_value"))
         tcs = pad_a.get_type_constraints()
         if tcs is not None and len(tcs) == 1:
             tc = tcs[0]
@@ -122,6 +123,9 @@ class Filter(Node):
                     operator_pad._set_value(
                         runtime.Enum(value=STRING_COMPARISON_OPERATORS[0])
                     )
+                # Set default string value if current value is not a string
+                if compare_value_pad and not isinstance(compare_value_pad.get_value(), str):
+                    compare_value_pad._set_value("")
             elif isinstance(tc, pad_constraints.Integer):
                 operator_pad.set_default_type_constraints(
                     [pad_constraints.Enum(options=INTEGER_COMPARISON_OPERATORS)]
@@ -130,6 +134,9 @@ class Filter(Node):
                     operator_pad._set_value(
                         runtime.Enum(value=INTEGER_COMPARISON_OPERATORS[0])
                     )
+                # Set default integer value if current value is not an integer
+                if compare_value_pad and not isinstance(compare_value_pad.get_value(), int):
+                    compare_value_pad._set_value(0)
             elif isinstance(tc, pad_constraints.Float):
                 operator_pad.set_default_type_constraints(
                     [pad_constraints.Enum(options=FLOAT_COMPARISON_OPERATORS)]
@@ -138,6 +145,9 @@ class Filter(Node):
                     operator_pad._set_value(
                         runtime.Enum(value=FLOAT_COMPARISON_OPERATORS[0])
                     )
+                # Set default float value if current value is not a float
+                if compare_value_pad and not isinstance(compare_value_pad.get_value(), float):
+                    compare_value_pad._set_value(0.0)
             elif isinstance(tc, pad_constraints.Boolean):
                 operator_pad.set_default_type_constraints(
                     [pad_constraints.Enum(options=BOOL_COMPARISON_OPERATORS)]
@@ -146,6 +156,9 @@ class Filter(Node):
                     operator_pad._set_value(
                         runtime.Enum(value=BOOL_COMPARISON_OPERATORS[0])
                     )
+                # Set default boolean value if current value is not a boolean
+                if compare_value_pad and not isinstance(compare_value_pad.get_value(), bool):
+                    compare_value_pad._set_value(False)
             elif isinstance(tc, pad_constraints.Enum):
                 operator_pad.set_default_type_constraints(
                     [pad_constraints.Enum(options=ENUM_COMPARISON_OPERATORS)]
@@ -154,6 +167,10 @@ class Filter(Node):
                     operator_pad._set_value(
                         runtime.Enum(value=ENUM_COMPARISON_OPERATORS[0])
                     )
+                # For enums, set the first option as default if needed
+                if compare_value_pad and not isinstance(compare_value_pad.get_value(), runtime.Enum):
+                    if tc.options:
+                        compare_value_pad._set_value(runtime.Enum(value=tc.options[0]))
 
     async def run(self):
         sink = cast(

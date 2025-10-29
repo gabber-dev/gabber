@@ -164,21 +164,21 @@ class Compare(Node):
                     group="condition_A",
                     owner_node=self,
                     default_type_constraints=ALL_ALLOWED_TYPES,
-                    value=None,
+                    value="",  # Default to empty string
                 )
                 pad_b = pad.PropertySinkPad(
                     id=f"condition_{i}_B",
                     group="condition_B",
                     owner_node=self,
                     default_type_constraints=ALL_ALLOWED_TYPES,
-                    value=None,
+                    value="",  # Default to empty string
                 )
                 operator_pad = pad.PropertySinkPad(
                     id=f"condition_{i}_operator",
                     group="condition_operator",
                     owner_node=self,
                     default_type_constraints=[pad_constraints.Enum(options=[])],
-                    value=None,
+                    value=runtime.Enum(value="=="),  # Default to equality operator
                 )
                 self.pads.extend([pad_a, pad_b, operator_pad])
         elif current_count > num_conditions:
@@ -237,6 +237,11 @@ class Compare(Node):
                     operator_pad._set_value(
                         runtime.Enum(value=STRING_COMPARISON_OPERATORS[0])
                     )
+                # Set default string values if current value is not a string
+                if not isinstance(pad_a.get_value(), str):
+                    pad_a._set_value("")
+                if not isinstance(pad_b.get_value(), str):
+                    pad_b._set_value("")
             elif isinstance(tc, pad_constraints.Integer):
                 operator_pad.set_default_type_constraints(
                     [pad_constraints.Enum(options=INTEGER_COMPARISON_OPERATORS)]
@@ -245,6 +250,11 @@ class Compare(Node):
                     operator_pad._set_value(
                         runtime.Enum(value=INTEGER_COMPARISON_OPERATORS[0])
                     )
+                # Set default integer values if current value is not an integer
+                if not isinstance(pad_a.get_value(), int):
+                    pad_a._set_value(0)
+                if not isinstance(pad_b.get_value(), int):
+                    pad_b._set_value(0)
             elif isinstance(tc, pad_constraints.Float):
                 operator_pad.set_default_type_constraints(
                     [pad_constraints.Enum(options=FLOAT_COMPARISON_OPERATORS)]
@@ -253,6 +263,11 @@ class Compare(Node):
                     operator_pad._set_value(
                         runtime.Enum(value=FLOAT_COMPARISON_OPERATORS[0])
                     )
+                # Set default float values if current value is not a float
+                if not isinstance(pad_a.get_value(), float):
+                    pad_a._set_value(0.0)
+                if not isinstance(pad_b.get_value(), float):
+                    pad_b._set_value(0.0)
             elif isinstance(tc, pad_constraints.Boolean):
                 operator_pad.set_default_type_constraints(
                     [pad_constraints.Enum(options=BOOL_COMPARISON_OPERATORS)]
@@ -261,6 +276,11 @@ class Compare(Node):
                     operator_pad._set_value(
                         runtime.Enum(value=BOOL_COMPARISON_OPERATORS[0])
                     )
+                # Set default boolean values if current value is not a boolean
+                if not isinstance(pad_a.get_value(), bool):
+                    pad_a._set_value(False)
+                if not isinstance(pad_b.get_value(), bool):
+                    pad_b._set_value(False)
             elif isinstance(tc, pad_constraints.Enum):
                 operator_pad.set_default_type_constraints(
                     [pad_constraints.Enum(options=ENUM_COMPARISON_OPERATORS)]
@@ -269,6 +289,13 @@ class Compare(Node):
                     operator_pad._set_value(
                         runtime.Enum(value=ENUM_COMPARISON_OPERATORS[0])
                     )
+                # For enums, set the first option as default if needed
+                if not isinstance(pad_a.get_value(), runtime.Enum):
+                    if tc.options:
+                        pad_a._set_value(runtime.Enum(value=tc.options[0]))
+                if not isinstance(pad_b.get_value(), runtime.Enum):
+                    if tc.options:
+                        pad_b._set_value(runtime.Enum(value=tc.options[0]))
             else:
                 logging.error(
                     f"Unsupported type for comparison: {tc}. No operator pad will be created."
