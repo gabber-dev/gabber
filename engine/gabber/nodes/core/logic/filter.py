@@ -203,14 +203,24 @@ class Filter(Node):
         tc_b: pad_constraints.BasePadType,
         op: str,
     ) -> bool:
+        # If both values are None, fail the comparison
+        if a is None and b is None:
+            logging.debug(f"Filter node {self.id}: Both values are None, skipping comparison")
+            return False
+            
         if not isinstance(tc_a, type(tc_b)):
-            logging.error(f"Type mismatch between tc_a and tc_b: {tc_a} vs {tc_b}")
+            logging.error(f"Filter node {self.id}: Type mismatch between tc_a and tc_b: {tc_a} vs {tc_b}")
             return False
 
         if isinstance(tc_a, pad_constraints.String):
+            # Handle None values for strings - treat as empty string
+            if a is None:
+                a = ""
+            if b is None:
+                b = ""
             if not isinstance(a, str) or not isinstance(b, str):
                 logging.error(
-                    f"Type mismatch for string comparison: {type(a)} vs {type(b)}"
+                    f"Filter node {self.id}: Type mismatch for string comparison: {type(a)} vs {type(b)}"
                 )
                 return False
             if op == "==":
@@ -229,9 +239,14 @@ class Filter(Node):
                 logging.error(f"Unsupported operator for string comparison: {op}")
                 return False
         elif isinstance(tc_a, pad_constraints.Integer):
+            # Handle None values for integers - treat as 0
+            if a is None:
+                a = 0
+            if b is None:
+                b = 0
             if not isinstance(a, int) or not isinstance(b, int):
                 logging.error(
-                    f"Type mismatch for integer comparison: {type(a)} vs {type(b)}"
+                    f"Filter node {self.id}: Type mismatch for integer comparison: {type(a)} vs {type(b)}"
                 )
                 return False
             if op == "==":
@@ -250,9 +265,14 @@ class Filter(Node):
                 logging.error(f"Unsupported operator for integer comparison: {op}")
                 return False
         elif isinstance(tc_a, pad_constraints.Float):
+            # Handle None values for floats - treat as 0.0
+            if a is None:
+                a = 0.0
+            if b is None:
+                b = 0.0
             if not isinstance(a, float) or not isinstance(b, float):
                 logging.error(
-                    f"Type mismatch for float comparison: {type(a)} vs {type(b)}"
+                    f"Filter node {self.id}: Type mismatch for float comparison: {type(a)} vs {type(b)}"
                 )
                 return False
             if op == "==":
@@ -271,9 +291,14 @@ class Filter(Node):
                 logging.error(f"Unsupported operator for float comparison: {op}")
                 return False
         elif isinstance(tc_a, pad_constraints.Boolean):
+            # Handle None values for booleans - treat as False
+            if a is None:
+                a = False
+            if b is None:
+                b = False
             if not isinstance(a, bool) or not isinstance(b, bool):
                 logging.error(
-                    f"Type mismatch for boolean comparison: {type(a)} vs {type(b)}"
+                    f"Filter node {self.id}: Type mismatch for boolean comparison: {type(a)} vs {type(b)}"
                 )
                 return False
             if op == "==":
@@ -284,9 +309,13 @@ class Filter(Node):
                 logging.error(f"Unsupported operator for boolean comparison: {op}")
                 return False
         elif isinstance(tc_a, pad_constraints.Enum):
+            # Enums require actual values, None is not acceptable
+            if a is None or b is None:
+                logging.warning(f"Filter node {self.id}: Enum comparison with None value: a={a}, b={b}")
+                return False
             if not isinstance(a, runtime.Enum) or not isinstance(b, runtime.Enum):
                 logging.error(
-                    f"Type mismatch for enum comparison: {type(a)} vs {type(b)}"
+                    f"Filter node {self.id}: Type mismatch for enum comparison: {type(a)} vs {type(b)}"
                 )
                 return False
             if op == "==":
@@ -294,8 +323,8 @@ class Filter(Node):
             elif op == "!=":
                 return a.value != b.value
             else:
-                logging.error(f"Unsupported operator for enum comparison: {op}")
+                logging.error(f"Filter node {self.id}: Unsupported operator for enum comparison: {op}")
                 return False
 
-        logging.error(f"Unsupported type for comparison: {tc_a} vs {tc_b}")
+        logging.error(f"Filter node {self.id}: Unsupported type for comparison: {tc_a} vs {tc_b}")
         return False
