@@ -111,16 +111,16 @@ class STT(node.Node):
             )
             self.pads.append(api_key)
 
-        is_transcribing = cast(pad.PropertySourcePad, self.get_pad("is_transcribing"))
-        if is_transcribing is None:
-            is_transcribing = pad.PropertySourcePad(
-                id="is_transcribing",
-                group="is_transcribing",
+        is_speaking = cast(pad.PropertySourcePad, self.get_pad("is_speaking"))
+        if is_speaking is None:
+            is_speaking = pad.PropertySourcePad(
+                id="is_speaking",
+                group="is_speaking",
                 owner_node=self,
                 default_type_constraints=[pad_constraints.Boolean()],
                 value=False,
             )
-            self.pads.append(is_transcribing)
+            self.pads.append(is_speaking)
 
     async def run(self):
         audio_sink = cast(pad.StatelessSinkPad, self.get_pad_required("audio"))
@@ -137,8 +137,8 @@ class STT(node.Node):
         final_transcription_source = cast(
             pad.StatelessSourcePad, self.get_pad_required("final_transcription")
         )
-        is_transcribing_pad = cast(
-            pad.PropertySourcePad, self.get_pad_required("is_transcribing")
+        is_speaking_pad = cast(
+            pad.PropertySourcePad, self.get_pad_required("is_speaking")
         )
 
         stt_impl: stt.STT
@@ -183,11 +183,11 @@ class STT(node.Node):
             async for event in stt_impl:
                 if isinstance(event, stt.STTEvent_SpeechStarted):
                     ctx = pad.RequestContext(parent=None, publisher_metadata=md)
-                    is_transcribing_pad.push_item(True, ctx)
+                    is_speaking_pad.push_item(True, ctx)
                     speech_started_source.push_item(runtime.Trigger(), ctx)
                 elif isinstance(event, stt.STTEvent_Transcription):
                     if ctx is not None:
-                        is_transcribing_pad.push_item(True, ctx)
+                        is_speaking_pad.push_item(True, ctx)
                 elif isinstance(event, stt.STTEvent_EndOfTurn):
                     txt = event.clip.transcription
                     if txt is None:
@@ -198,7 +198,7 @@ class STT(node.Node):
                             "Received STTEvent_EndOfTurn without a context. This should not happen."
                         )
                         continue
-                    is_transcribing_pad.push_item(False, ctx)
+                    is_speaking_pad.push_item(False, ctx)
                     final_transcription_source.push_item(txt, ctx)
                     speech_clip_source.push_item(event.clip, ctx)
                     speech_ended_source.push_item(runtime.Trigger(), ctx)

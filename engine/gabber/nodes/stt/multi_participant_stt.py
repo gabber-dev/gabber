@@ -130,20 +130,20 @@ class MultiParticipantSTT(node.Node):
                 )
             transcription_sources.append(transcription_source)
 
-        is_transcribing_sources: list[pad.PropertySourcePad] = []
+        is_speaking_sources: list[pad.PropertySourcePad] = []
         for i in range(num_participants.get_value() or 1):
-            is_transcribing_source = cast(
-                pad.PropertySourcePad, self.get_pad(f"is_transcribing_{i}")
+            is_speaking_source = cast(
+                pad.PropertySourcePad, self.get_pad(f"is_speaking_{i}")
             )
-            if is_transcribing_source is None:
-                is_transcribing_source = pad.PropertySourcePad(
-                    id=f"is_transcribing_{i}",
-                    group="is_transcribing",
+            if is_speaking_source is None:
+                is_speaking_source = pad.PropertySourcePad(
+                    id=f"is_speaking_{i}",
+                    group="is_speaking",
                     owner_node=self,
                     default_type_constraints=[pad_constraints.Boolean()],
                     value=False,
                 )
-            is_transcribing_sources.append(is_transcribing_source)
+            is_speaking_sources.append(is_speaking_source)
 
         for p in self.pads:
             if p.get_group() == "audio" and p not in audio_sinks:
@@ -152,7 +152,7 @@ class MultiParticipantSTT(node.Node):
             if p.get_group() == "transcription" and p not in transcription_sources:
                 self.pads.remove(p)
 
-            if p.get_group() == "is_transcribing" and p not in is_transcribing_sources:
+            if p.get_group() == "is_speaking" and p not in is_speaking_sources:
                 self.pads.remove(p)
 
         speech_started_source = cast(
@@ -189,7 +189,7 @@ class MultiParticipantSTT(node.Node):
                 ]
                 + audio_sinks
                 + transcription_sources
-                + is_transcribing_sources
+                + is_speaking_sources
                 + [
                     speech_started_source,
                     speech_ended_source,
@@ -220,7 +220,7 @@ class MultiParticipantSTT(node.Node):
     async def run(self):
         audio_sinks: list[pad.StatelessSinkPad] = []
         transcription_sources: list[pad.StatelessSourcePad] = []
-        is_transcribing_sources: list[pad.PropertySourcePad] = []
+        is_speaking_sources: list[pad.PropertySourcePad] = []
 
         for p in self.pads:
             if p.get_group() == "audio":
@@ -229,8 +229,8 @@ class MultiParticipantSTT(node.Node):
             if p.get_group() == "transcription":
                 transcription_sources.append(cast(pad.StatelessSourcePad, p))
 
-            if p.get_group() == "is_transcribing":
-                is_transcribing_sources.append(cast(pad.PropertySourcePad, p))
+            if p.get_group() == "is_speaking":
+                is_speaking_sources.append(cast(pad.PropertySourcePad, p))
 
         speech_started_source = cast(
             pad.StatelessSourcePad, self.get_pad_required("speech_started")
@@ -279,7 +279,7 @@ class MultiParticipantSTT(node.Node):
             idx: int,
             audio_sink: pad.StatelessSinkPad,
             transcription_source: pad.StatelessSourcePad,
-            is_transcribing_source: pad.PropertySourcePad,
+            is_speaking_source: pad.PropertySourcePad,
         ) -> None:
             stt_impl = await self.create_stt_instance()
             stt_run_t = asyncio.create_task(stt_impl.run())
@@ -293,11 +293,11 @@ class MultiParticipantSTT(node.Node):
                 if isinstance(event, stt.STTEvent_SpeechStarted):
                     talking_state.set_talking(idx, True)
                     ctx = pad.RequestContext(parent=None, publisher_metadata=md)
-                    is_transcribing_source.push_item(True, ctx)
+                    is_speaking_source.push_item(True, ctx)
                     speech_started_source.push_item(runtime.Trigger(), ctx)
                 elif isinstance(event, stt.STTEvent_Transcription):
                     if ctx is not None:
-                        is_transcribing_source.push_item(True, ctx)
+                        is_speaking_source.push_item(True, ctx)
                 elif isinstance(event, stt.STTEvent_EndOfTurn):
                     talking_state.set_talking(idx, False)
                     txt = event.clip.transcription
@@ -310,7 +310,7 @@ class MultiParticipantSTT(node.Node):
                         )
                         continue
 
-                    is_transcribing_source.push_item(False, ctx)
+                    is_speaking_source.push_item(False, ctx)
                     transcription_source.push_item(txt, ctx)
                     speech_ended_source.push_item(runtime.Trigger(), ctx)
                     ctx.complete()
@@ -326,7 +326,7 @@ class MultiParticipantSTT(node.Node):
         for i in range(len(audio_sinks)):
             participant_tasks.append(
                 asyncio.create_task(
-                    participant_task(i, audio_sinks[i], transcription_sources[i], is_transcribing_sources[i])
+                    participant_task(i, audio_sinks[i], transcription_sources[i], is_speaking_sources[i])
                 )
             )
 
