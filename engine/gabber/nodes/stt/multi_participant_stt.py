@@ -296,8 +296,7 @@ class MultiParticipantSTT(node.Node):
                     is_speaking_source.push_item(True, ctx)
                     speech_started_source.push_item(runtime.Trigger(), ctx)
                 elif isinstance(event, stt.STTEvent_Transcription):
-                    if ctx is not None:
-                        is_speaking_source.push_item(True, ctx)
+                    pass
                 elif isinstance(event, stt.STTEvent_EndOfTurn):
                     talking_state.set_talking(idx, False)
                     txt = event.clip.transcription
