@@ -186,7 +186,7 @@ class STT(node.Node):
                     is_speaking_pad.push_item(True, ctx)
                     speech_started_source.push_item(runtime.Trigger(), ctx)
                 elif isinstance(event, stt.STTEvent_Transcription):
-                    is_speaking_pad.push_item(True, ctx)
+                    pass
                 elif isinstance(event, stt.STTEvent_EndOfTurn):
                     txt = event.clip.transcription
                     if txt is None:
