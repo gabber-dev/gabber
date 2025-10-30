@@ -83,7 +83,7 @@ class EnumSwitchProperty(Node):
         self, sink_pad: pad.PropertySinkPad, value_pads: list[pad.PropertySinkPad]
     ):
         vp = next(
-            (p for p in value_pads if p.get_id() == str(sink_pad.get_value())), None
+            (p for p in value_pads if p.get_id() == sink_pad.get_value().value), None
         )
         if not vp:
             return None
