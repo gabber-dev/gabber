@@ -87,6 +87,8 @@ class TestClient:
             "payload": {
                 "type": "start_session",
                 "sample_rate": RATE,
+                "stt_enabled": True,
+                "lipsync_enabled": False,
             },
         }
 

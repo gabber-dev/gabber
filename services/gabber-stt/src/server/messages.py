@@ -2,16 +2,18 @@ from pydantic import BaseModel, Field
 from typing import Literal, Annotated
 from engine import (
     EngineEvent,
-    EngineEvent_Error,
-    EngineEvent_FinalTranscription,
-    EngineEvent_InterimTranscription,
-    EngineEvent_SpeakingStarted,
+    STTEvent_FinalTranscription,
+    STTEvent_InterimTranscription,
+    STTEvent_SpeakingStarted,
+    LipSyncEvent_Viseme,
 )
 
 
 class RequestPayload_StartSession(BaseModel):
     type: Literal["start_session"] = "start_session"
     sample_rate: int
+    stt_enabled: bool = True
+    lipsync_enabled: bool = False
 
 
 class RequestPayload_AudioData(BaseModel):
@@ -61,11 +63,20 @@ class ResponsePayload_FinalTranscription(BaseModel):
     end_sample: int
 
 
+class ResponsePayload_LipSyncViseme(BaseModel):
+    type: Literal["lipsync_viseme"] = "lipsync_viseme"
+    viseme: str
+    probability: float
+    start_sample: int
+    end_sample: int
+
+
 ResponsePayload = Annotated[
     ResponsePayload_Error
     | ResponsePayload_InterimTranscription
     | ResponsePayload_SpeakingStarted
-    | ResponsePayload_FinalTranscription,
+    | ResponsePayload_FinalTranscription
+    | ResponsePayload_LipSyncViseme,
     Field(discriminator="type"),
 ]
 
@@ -78,26 +89,31 @@ class Response(BaseModel):
 def engine_event_to_response_payload(
     evt: EngineEvent,
 ) -> ResponsePayload | Exception:
-    if isinstance(evt, EngineEvent_Error):
-        return ResponsePayload_Error(message=evt.message)
-    elif isinstance(evt, EngineEvent_FinalTranscription):
+    if isinstance(evt, STTEvent_FinalTranscription):
         return ResponsePayload_FinalTranscription(
             trans_id=evt.trans_id,
             transcription=evt.transcription,
             start_sample=evt.start_sample,
             end_sample=evt.end_sample,
         )
-    elif isinstance(evt, EngineEvent_InterimTranscription):
+    elif isinstance(evt, STTEvent_InterimTranscription):
         return ResponsePayload_InterimTranscription(
             trans_id=evt.trans_id,
             start_sample=evt.start_sample,
             end_sample=evt.end_sample,
             transcription=evt.transcription,
         )
-    elif isinstance(evt, EngineEvent_SpeakingStarted):
+    elif isinstance(evt, STTEvent_SpeakingStarted):
         return ResponsePayload_SpeakingStarted(
             trans_id=evt.trans_id,
             start_sample=evt.start_sample,
+        )
+    elif isinstance(evt, LipSyncEvent_Viseme):
+        return ResponsePayload_LipSyncViseme(
+            viseme=evt.viseme.name,
+            probability=evt.probability,
+            start_sample=evt.start_sample,
+            end_sample=evt.end_sample,
         )
 
     raise Exception("Unknown event type")

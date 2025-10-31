@@ -19,6 +19,7 @@ dependencies = [
     "nemo-toolkit[asr]>=2.4.1",
     "cuda-python>=13.0.1",
     "matplotlib>=3.10.6",
+    "torchaudio>=2.9.0",
 ]
 [tool.uv]
 # Always install Werkzeug 2.3.0, regardless of whether transitive dependencies request

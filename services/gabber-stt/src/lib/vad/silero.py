@@ -33,6 +33,8 @@ class SileroVADInference(VADInference):
 
     def _initialize_onnx(self):
         opts = onnxruntime.SessionOptions()
+        opts.add_session_config_entry("session.intra_op.allow_spinning", "0")
+        opts.add_session_config_entry("session.inter_op.allow_spinning", "0")
         opts.intra_op_num_threads = 4
         opts.execution_mode = onnxruntime.ExecutionMode.ORT_SEQUENTIAL
         self._reset_states()
