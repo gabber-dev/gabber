@@ -2,6 +2,11 @@
 
 download-weights:
 	curl -L -o weights/smart-turn-v3.0.onnx https://huggingface.co/pipecat-ai/smart-turn-v3/resolve/main/smart-turn-v3.0.onnx?download=true
+
+	curl -L -o /tmp/openlipsync.zip https://github.com/KyuubiYoru/OpenLipSync/releases/download/0.2.0/model.zip && \
+	unzip -o /tmp/openlipsync.zip -d /tmp/openlipsync && \
+	cp /tmp/openlipsync/model/model.onnx weights/openlipsync.onnx
+
 	cp ../../engine/gabber/lib/audio/vad/files/silero_vad.onnx weights/silero_vad.onnx
 
 install: 

@@ -64,8 +64,8 @@ class AudioInferenceBatcher(Generic[RESULT]):
         self._batch_size = batch_size
         self._inference_impl = inference_impl
         self._fut_lookup: "dict[int, asyncio.Future[AudioInferenceInternalResult[RESULT]]]" = {}
-        self._run_thread = threading.Thread(target=self._run)
         self._batch = queue.Queue[AudioInferenceBatcherPromise](maxsize=1024)
+        self._run_thread = threading.Thread(target=self._run)
         self._loop = asyncio.get_event_loop()
 
     @property
@@ -74,10 +74,14 @@ class AudioInferenceBatcher(Generic[RESULT]):
 
     def _run(self):
         while True:
-            batch_arr = np.empty(
-                (self._batch_size, self._inference_impl.full_audio_size),
-                dtype=np.int16,
-            )
+            try:
+                batch_arr = np.empty(
+                    (self._batch_size, self._inference_impl.full_audio_size),
+                    dtype=np.int16,
+                )
+            except Exception:
+                logging.error("Error in STT inference batcher", exc_info=True)
+                continue
             prev_states: list[Any] = []
             num_samples: list[int] = []
             futs: list[asyncio.Future[AudioInferenceInternalResult[RESULT]]] = []

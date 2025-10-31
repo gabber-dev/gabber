@@ -1,17 +1,23 @@
 from .engine import (
     Engine,
     EngineEvent,
-    EngineEvent_Error,
-    EngineEvent_FinalTranscription,
-    EngineEvent_InterimTranscription,
-    EngineEvent_SpeakingStarted,
+    EngineSettings,
 )
+
+from .stt_state import (
+    STTEvent_FinalTranscription,
+    STTEvent_InterimTranscription,
+    STTEvent_SpeakingStarted,
+)
+
+from .lipsync_state import LipSyncEvent_Viseme
 
 __all__ = [
     "Engine",
-    "EngineEvent_SpeakingStarted",
-    "EngineEvent_InterimTranscription",
-    "EngineEvent_FinalTranscription",
-    "EngineEvent_Error",
+    "EngineSettings",
+    "STTEvent_SpeakingStarted",
+    "STTEvent_InterimTranscription",
+    "STTEvent_FinalTranscription",
+    "LipSyncEvent_Viseme",
     "EngineEvent",
 ]
