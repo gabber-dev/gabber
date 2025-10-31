@@ -235,9 +235,9 @@ class Filter(Node):
             elif op == "!=":
                 return a != b
             elif op == "CONTAINS":
-                return a in b
+                return b in a
             elif op == "NOT_CONTAINS":
-                return a not in b
+                return b not in a
             elif op == "STARTS_WITH":
                 return a.startswith(b)
             elif op == "ENDS_WITH":
