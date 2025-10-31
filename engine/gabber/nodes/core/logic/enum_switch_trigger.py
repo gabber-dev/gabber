@@ -52,7 +52,7 @@ class EnumSwitchTrigger(Node):
     async def run(self):
         sink = cast(pad.PropertySinkPad, self.get_pad_required("sink"))
         async for item in sink:
-            source_pad = cast(pad.StatelessSourcePad, self.get_pad(item.value))
+            source_pad = cast(pad.StatelessSourcePad, self.get_pad(item.value.value))
             if not source_pad:
                 logging.error(
                     f"EnumSwitch received unknown value: {item.value}. Skipping item."
