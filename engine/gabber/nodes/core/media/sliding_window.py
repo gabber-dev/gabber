@@ -135,9 +135,9 @@ class SlidingWindow(Node):
         audio_frames: list[runtime.AudioFrame] = []
         video_frames: list[runtime.VideoFrame] = []
         
-        # Track frame arrival times to estimate FPS dynamically
+        # Track frame count over time to estimate FPS
         import time
-        video_frame_arrival_times: list[float] = []
+        frame_arrivals: list[tuple[runtime.VideoFrame, float]] = []  # (frame, arrival_time)
 
         def slide_audio():
             window_size = cast(float, window.get_value())
@@ -148,21 +148,17 @@ class SlidingWindow(Node):
                 duration -= item.original_data.duration
 
         def slide_video():
-            nonlocal video_frame_arrival_times
+            nonlocal frame_arrivals
             window_size = cast(float, window.get_value())
+            current_time = time.time()
 
-            if len(video_frames) < 2:
-                return
-
-            # Slide based on timestamp duration
-            duration = video_frames[-1].timestamp - video_frames[0].timestamp
-            while duration > window_size and len(video_frames) > 1:
-                video_frames.pop(0)
-                video_frame_arrival_times.pop(0)
-                if len(video_frames) >= 2:
-                    duration = video_frames[-1].timestamp - video_frames[0].timestamp
-                else:
-                    break
+            # Remove frames older than window_size based on arrival time
+            while frame_arrivals and (current_time - frame_arrivals[0][1]) > window_size:
+                frame_arrivals.pop(0)
+            
+            # Sync video_frames with frame_arrivals
+            video_frames.clear()
+            video_frames.extend([frame for frame, _ in frame_arrivals])
 
         async def audio_task():
             async for item in audio_sink:
@@ -171,44 +167,27 @@ class SlidingWindow(Node):
                 slide_audio()
 
         async def video_task():
-            nonlocal video_frame_arrival_times
+            nonlocal frame_arrivals
             async for item in video_sink:
-                video_frames.append(item.value)
-                video_frame_arrival_times.append(time.time())
+                arrival_time = time.time()
+                frame_arrivals.append((item.value, arrival_time))
                 item.ctx.complete()
                 slide_video()
 
         async def flush_task():
-            nonlocal video_frame_arrival_times
             async for item in flush:
                 tcs = clip_pad.get_type_constraints()
                 if not tcs or len(tcs) != 1:
                     continue
 
-                window_size = cast(float, window.get_value())
-
-                # Limit video frames based on estimated FPS from actual arrival times
-                frames_to_flush = video_frames[:]
-                if len(video_frame_arrival_times) >= 2 and len(frames_to_flush) > 0:
-                    # Calculate actual FPS from wall-clock arrival times
-                    arrival_duration = video_frame_arrival_times[-1] - video_frame_arrival_times[0]
-                    if arrival_duration > 0:
-                        estimated_fps = (len(video_frame_arrival_times) - 1) / arrival_duration
-                        expected_frame_count = int(window_size * estimated_fps)
-                        
-                        # Take the most recent expected_frame_count frames
-                        # This ensures consistent frame counts based on actual arrival rate
-                        if expected_frame_count > 0 and len(frames_to_flush) > expected_frame_count:
-                            frames_to_flush = frames_to_flush[-expected_frame_count:]
-
                 if tcs[0] == pad_constraints.VideoClip():
-                    vc = runtime.VideoClip(frames_to_flush)
+                    vc = runtime.VideoClip(video_frames[:])
                     clip_pad.push_item(vc, item.ctx)
                 elif tcs[0] == pad_constraints.AudioClip():
                     ac = runtime.AudioClip(audio_frames[:])
                     clip_pad.push_item(ac, item.ctx)
                 elif tcs[0] == pad_constraints.AVClip():
-                    vc = runtime.VideoClip(frames_to_flush)
+                    vc = runtime.VideoClip(video_frames[:])
                     ac = runtime.AudioClip(audio_frames[:])
                     clip = runtime.AVClip(video=vc, audio=ac)
                     clip_pad.push_item(clip, item.ctx)
@@ -217,13 +196,12 @@ class SlidingWindow(Node):
 
                 audio_frames.clear()
                 video_frames.clear()
-                video_frame_arrival_times.clear()
 
         async def reset_task():
-            nonlocal video_frame_arrival_times
+            nonlocal frame_arrivals
             async for item in reset:
                 audio_frames.clear()
                 video_frames.clear()
-                video_frame_arrival_times.clear()
+                frame_arrivals.clear()
 
         await asyncio.gather(audio_task(), video_task(), flush_task(), reset_task())
