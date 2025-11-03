@@ -134,6 +134,10 @@ class SlidingWindow(Node):
         window = cast(PropertySinkPad, self.get_pad_required("window_size_s"))
         audio_frames: list[runtime.AudioFrame] = []
         video_frames: list[runtime.VideoFrame] = []
+        
+        # Track frame count over time to estimate FPS
+        import time
+        frame_arrivals: list[tuple[runtime.VideoFrame, float]] = []  # (frame, arrival_time)
 
         def slide_audio():
             window_size = cast(float, window.get_value())
@@ -144,16 +148,17 @@ class SlidingWindow(Node):
                 duration -= item.original_data.duration
 
         def slide_video():
+            nonlocal frame_arrivals
             window_size = cast(float, window.get_value())
+            current_time = time.time()
 
-            if len(video_frames) < 2:
-                return
-
-            duration = video_frames[-1].timestamp - video_frames[0].timestamp
-
-            while duration > window_size and len(video_frames) > 1:
-                video_frames.pop(0)
-                duration = video_frames[-1].timestamp - video_frames[0].timestamp
+            # Remove frames older than window_size based on arrival time
+            while frame_arrivals and (current_time - frame_arrivals[0][1]) > window_size:
+                frame_arrivals.pop(0)
+            
+            # Sync video_frames with frame_arrivals
+            video_frames.clear()
+            video_frames.extend([frame for frame, _ in frame_arrivals])
 
         async def audio_task():
             async for item in audio_sink:
@@ -162,8 +167,10 @@ class SlidingWindow(Node):
                 slide_audio()
 
         async def video_task():
+            nonlocal frame_arrivals
             async for item in video_sink:
-                video_frames.append(item.value)
+                arrival_time = time.time()
+                frame_arrivals.append((item.value, arrival_time))
                 item.ctx.complete()
                 slide_video()
 
@@ -191,8 +198,10 @@ class SlidingWindow(Node):
                 video_frames.clear()
 
         async def reset_task():
+            nonlocal frame_arrivals
             async for item in reset:
                 audio_frames.clear()
                 video_frames.clear()
+                frame_arrivals.clear()
 
-        asyncio.gather(audio_task(), video_task(), flush_task(), reset_task())
+        await asyncio.gather(audio_task(), video_task(), flush_task(), reset_task())
