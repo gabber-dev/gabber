@@ -73,7 +73,7 @@ services:
       - NEXT_PUBLIC_REPOSITORY_URL=http://repository:8001
       - NEXT_PUBLIC_EDITOR_URL=ws://${GABBER_PUBLIC_HOST:-localhost}:8000/ws
 
-  kitten_tts:
-    build:
-      context: services/kitten-tts
-      dockerfile: Dockerfile
+  # kitten_tts:
+  #   build:
+  #     context: services/kitten-tts
+  #     dockerfile: Dockerfile
