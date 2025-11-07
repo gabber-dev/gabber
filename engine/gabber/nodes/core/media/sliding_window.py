@@ -3,6 +3,7 @@
 
 import asyncio
 from typing import cast
+import time
 
 from gabber.core.types import runtime, pad_constraints
 from gabber.core.node import Node, NodeMetadata
@@ -135,9 +136,6 @@ class SlidingWindow(Node):
         audio_frames: list[runtime.AudioFrame] = []
         video_frames: list[runtime.VideoFrame] = []
 
-        # Track frame count over time to estimate FPS
-        import time
-
         frame_arrivals: list[
             tuple[runtime.VideoFrame, float]
         ] = []  # (frame, arrival_time)
@@ -155,13 +153,11 @@ class SlidingWindow(Node):
             window_size = cast(float, window.get_value())
             current_time = time.time()
 
-            # Remove frames older than window_size based on arrival time
             while (
                 frame_arrivals and (current_time - frame_arrivals[0][1]) > window_size
             ):
                 frame_arrivals.pop(0)
 
-            # Sync video_frames with frame_arrivals
             video_frames.clear()
             video_frames.extend([frame for frame, _ in frame_arrivals])
 
