@@ -543,6 +543,12 @@ class Enum(BaseModel, BaseRuntimeType):
 
 
 @dataclass
+class Viseme:
+    def __init__(self):
+        pass
+
+
+@dataclass
 class ContextMessageContent_ChoiceDelta:
     content: str | None
     refusal: str | None
