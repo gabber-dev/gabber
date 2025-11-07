@@ -31,8 +31,10 @@ class Gabber(STT):
         *,
         logger: logging.Logger | logging.LoggerAdapter,
         url: str = "ws://localhost:7004",
+        viseme_mode: bool = False,
     ):
         self.logger = logger
+        self._viseme_mode = viseme_mode
         self._process_queue = asyncio.Queue[AudioFrame | None]()
         self._closed = False
         self._output_queue = asyncio.Queue[STTEvent | None]()
@@ -76,13 +78,13 @@ class Gabber(STT):
                 if payload.type == "speaking_started":
                     self.logger.info("Speech started")
                     self._output_queue.put_nowait(
-                        STTEvent_SpeechStarted(id=payload.trans_id)
+                        STTEvent_SpeechStarted(id=str(payload.trans_id))
                     )
                 elif payload.type == "interim_transcription":
                     self.logger.info(f"Interim transcription: {payload.transcription}")
                     self._output_queue.put_nowait(
                         STTEvent_Transcription(
-                            id=payload.trans_id,
+                            id=str(payload.trans_id),
                             delta_text="",
                             running_text=payload.transcription,
                         )
@@ -98,14 +100,18 @@ class Gabber(STT):
                     )
 
                     self._output_queue.put_nowait(
-                        STTEvent_EndOfTurn(clip=clip, id=payload.trans_id)
+                        STTEvent_EndOfTurn(clip=clip, id=str(payload.trans_id))
                     )
                 self.logger.info(f"Received message: {data}")
 
         async def send_task(ws: aiohttp.ClientWebSocketResponse) -> None:
             nonlocal dur
             audio_bytes = b""
-            start_payload = RequestPayload_StartSession(sample_rate=16000)
+            start_payload = RequestPayload_StartSession(
+                sample_rate=16000,
+                lip_sync_enabled=self._viseme_mode,
+                stt_enabled=not self._viseme_mode,
+            )
             start_msg = Request(payload=start_payload, session_id=session_id)
             await ws.send_str(start_msg.model_dump_json())
             while True:

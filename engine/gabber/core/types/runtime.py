@@ -542,10 +542,32 @@ class Enum(BaseModel, BaseRuntimeType):
         return "enum"
 
 
-@dataclass
-class Viseme:
-    def __init__(self):
-        pass
+class VisemeEnum(PyEnum):
+    SILENCE = "SILENCE"
+    PP = "PP"
+    FF = "FF"
+    TH = "TH"
+    DD = "DD"
+    kk = "KK"
+    CH = "CH"
+    SS = "SS"
+    nn = "NN"
+    RR = "RR"
+    aa = "AA"
+    E = "E"
+    ih = "IH"
+    oh = "OH"
+    ou = "OU"
+
+
+class Viseme(BaseModel, BaseRuntimeType):
+    value: VisemeEnum
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    def log_type(self) -> str:
+        return "viseme"
 
 
 @dataclass
@@ -600,6 +622,7 @@ RuntimePadValue = (
     | NodeReference
     | Secret
     | Enum
+    | Viseme
     | None
     | list[LIST_T]
 )

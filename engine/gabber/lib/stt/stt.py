@@ -59,3 +59,10 @@ class STTEvent_Transcription(STTEvent):
 @dataclass
 class STTEvent_EndOfTurn(STTEvent):
     clip: AudioClip
+
+
+@dataclass
+class STTEvent_Viseme(STTEvent):
+    viseme: str
+    start_time: float
+    end_time: float

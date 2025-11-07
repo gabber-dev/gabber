@@ -7,21 +7,21 @@ from dataclasses import dataclass
 
 
 class Viseme(Enum):
-    SILENCE = 0
-    PP = 1
-    FF = 2
-    TH = 3
-    DD = 4
-    kk = 5
-    CH = 6
-    SS = 7
-    nn = 8
-    RR = 9
-    aa = 10
-    E = 11
-    ih = 12
-    oh = 13
-    ou = 14
+    SILENCE = "SILENCE"
+    PP = "PP"
+    FF = "FF"
+    TH = "TH"
+    DD = "DD"
+    KK = "KK"
+    CH = "CH"
+    SS = "SS"
+    NN = "NN"
+    RR = "RR"
+    AA = "AA"
+    E = "E"
+    IH = "IH"
+    OH = "OH"
+    OU = "OU"
 
 
 class LipSyncInference(AudioInference["list[LipSyncResult]"]): ...

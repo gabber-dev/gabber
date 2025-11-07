@@ -54,6 +54,16 @@ class String(BasePadType):
         return schema
 
 
+class Viseme(BasePadType):
+    type: Literal["viseme"] = "viseme"
+
+    def intersect(self, other: BasePadType) -> BasePadType | None:
+        if not isinstance(other, Viseme):
+            return None
+
+        return Viseme()
+
+
 class Enum(BasePadType):
     type: Literal["enum"] = "enum"
     options: list[str] | None = None
@@ -337,7 +347,8 @@ PadConstraint = Annotated[
     | List
     | Schema
     | Object
-    | NodeReference,
+    | NodeReference
+    | Viseme,
     Field(discriminator="type"),
 ]
 
