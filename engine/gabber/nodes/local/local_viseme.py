@@ -66,6 +66,7 @@ class LocalViseme(node.Node):
 
     async def run(self):
         audio_sink = cast(pad.StatelessSinkPad, self.get_pad_required("audio"))
+        audio_sink = self.get_stateless_sink_pad_required(runtime.AudioFrame, "audio")
         viseme = self.get_stateless_source_pad_required(runtime.Viseme, "viseme")
 
         url = self.get_url()
@@ -76,8 +77,6 @@ class LocalViseme(node.Node):
 
         async def audio_sink_task() -> None:
             async for audio in audio_sink:
-                if audio is None:
-                    continue
                 stt_impl.push_audio(audio.value)
                 audio.ctx.complete()
 

@@ -22,6 +22,7 @@ from ..stt import (
     STTEvent_EndOfTurn,
     STTEvent_SpeechStarted,
     STTEvent_Transcription,
+    STTEvent_Viseme,
 )
 
 
@@ -102,6 +103,10 @@ class Gabber(STT):
                     self._output_queue.put_nowait(
                         STTEvent_EndOfTurn(clip=clip, id=str(payload.trans_id))
                     )
+                elif payload.type == "lipsync_viseme":
+                    self._output_queue.put_nowait(
+                        STTEvent_Viseme(viseme=payload.viseme, id="")
+                    )
                 self.logger.info(f"Received message: {data}")
 
         async def send_task(ws: aiohttp.ClientWebSocketResponse) -> None:
@@ -109,7 +114,7 @@ class Gabber(STT):
             audio_bytes = b""
             start_payload = RequestPayload_StartSession(
                 sample_rate=16000,
-                lip_sync_enabled=self._viseme_mode,
+                lipsync_enabled=self._viseme_mode,
                 stt_enabled=not self._viseme_mode,
             )
             start_msg = Request(payload=start_payload, session_id=session_id)

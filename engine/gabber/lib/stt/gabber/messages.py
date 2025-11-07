@@ -6,7 +6,7 @@ class RequestPayload_StartSession(BaseModel):
     type: Literal["start_session"] = "start_session"
     sample_rate: int
     stt_enabled: bool
-    lip_sync_enabled: bool
+    lipsync_enabled: bool
 
 
 class RequestPayload_AudioData(BaseModel):
