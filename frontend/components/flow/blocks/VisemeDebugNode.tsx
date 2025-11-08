@@ -19,27 +19,11 @@ import { useStatelessPad } from "./components/pads/hooks/useStatelessPad";
 import { Viseme } from "@/generated/editor";
 
 export function VisemeDebugNode({ data }: BaseBlockProps) {
-  const padResult = usePad<Viseme>(data.id, "viseme");
-  const { runtimeValue: contextMessages, editorValue } = propertyPadResult;
-  const { connectionState } = useRun();
+  const { lastValue } = usePad<Viseme>(data.id, "viseme");
 
   const sinkPads = useMemo(() => {
     return data.pads.filter(
       (p) => p.type === "StatelessSinkPad" || p.type === "PropertySinkPad",
-    );
-  }, [data]);
-
-  const sourcePads = useMemo(() => {
-    return data.pads.filter(
-      (p) =>
-        p.type === "StatelessSourcePad" ||
-        (p.type === "PropertySourcePad" && p.id !== "self"),
-    );
-  }, [data]);
-
-  const selfPad = useMemo(() => {
-    return data.pads.find(
-      (p) => p.type === "PropertySourcePad" && p.id === "self",
     );
   }, [data]);
 
@@ -51,39 +35,11 @@ export function VisemeDebugNode({ data }: BaseBlockProps) {
           <NodeName />
           <NodeId />
         </div>
-
-        <div className="absolute right-0">
-          {selfPad && <SelfPad data={selfPad} nodeId={data.id} />}
-        </div>
       </div>
 
+      <div>{lastValue?.value as string}</div>
+
       <div className="flex flex-1 flex-col gap-2 p-4 nodrag cursor-default">
-        {sourcePads.map((pad) => {
-          if (pad.type === "StatelessSourcePad") {
-            return (
-              <div key={pad.id}>
-                <StatelessPad
-                  data={pad}
-                  notes={(data.notes || []).filter(
-                    (note) => note.pad === pad.id,
-                  )}
-                />
-              </div>
-            );
-          } else if (pad.type === "PropertySourcePad") {
-            return (
-              <div key={pad.id}>
-                <PropertyPad
-                  nodeId={data.id}
-                  data={pad}
-                  notes={(data.notes || []).filter(
-                    (note) => note.pad === pad.id,
-                  )}
-                />
-              </div>
-            );
-          }
-        })}
         {sinkPads.map((pad) => {
           if (pad.type === "StatelessSinkPad") {
             return (
