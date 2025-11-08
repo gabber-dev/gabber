@@ -12,13 +12,14 @@ import { PropertyPad } from "./components/pads/PropertyPad";
 import { StatelessPad } from "./components/pads/StatelessPad";
 import { SelfPad } from "./components/pads/SelfPad";
 import { useMemo } from "react";
-import { List, PadValue } from "@gabber/client-react";
+import { List, PadValue, usePad } from "@gabber/client-react";
 import { useEditor } from "@/hooks/useEditor";
 import { useRun } from "@/hooks/useRun";
+import { useStatelessPad } from "./components/pads/hooks/useStatelessPad";
+import { Viseme } from "@/generated/editor";
 
 export function VisemeDebugNode({ data }: BaseBlockProps) {
-  const { detailedView, setDetailedView } = useEditor();
-  const propertyPadResult = usePropertyPad<List>(data.id, "source");
+  const padResult = usePad<Viseme>(data.id, "viseme");
   const { runtimeValue: contextMessages, editorValue } = propertyPadResult;
   const { connectionState } = useRun();
 
@@ -54,22 +55,6 @@ export function VisemeDebugNode({ data }: BaseBlockProps) {
         <div className="absolute right-0">
           {selfPad && <SelfPad data={selfPad} nodeId={data.id} />}
         </div>
-      </div>
-
-      {/* Context Messages Viewer */}
-      <div className="flex flex-col gap-1 p-1">
-        <button
-          className="btn btn-sm btn-ghost gap-1"
-          onClick={() =>
-            setDetailedView({
-              nodeId: data.id,
-              padId: "source",
-              type: "property",
-            })
-          }
-        >
-          Inspect Items
-        </button>
       </div>
 
       <div className="flex flex-1 flex-col gap-2 p-4 nodrag cursor-default">
