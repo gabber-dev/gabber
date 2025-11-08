@@ -3,36 +3,31 @@
  * SPDX-License-Identifier: SUL-1.0
  */
 
-import { NodeEditorRepresentation } from "@/generated/editor";
-import { useMemo } from "react";
-import { StatelessPad } from "./components/pads/StatelessPad";
-import { PropertyPad } from "./components/pads/PropertyPad";
+import { BaseBlockProps } from "./BaseBlock";
+import { usePropertyPad } from "./components/pads/hooks/usePropertyPad";
 import { CubeIcon } from "@heroicons/react/24/outline";
-import { Publish } from "./Publish";
-import { Output } from "./Output";
-import { AutoConvertNode } from "./AutoConvertNode";
-import { ChatInputNode } from "./ChatInputNode";
-import { CommentNode } from "./CommentNode";
-import { SelfPad } from "./components/pads/SelfPad";
-import { StateMachineNode } from "@/components/state_machine/StateMachineNode";
-import { CompareNode } from "./CompareNode";
-import { JsonNode } from "./JsonNode";
 import { NodeName } from "./components/NodeName";
 import { NodeId } from "./components/NodeId";
-import { Jinja2Node } from "./Jinja2Node";
-import { LLMContextNode } from "./LLMContextNode";
-import { VisemeDebugNode } from "./VisemeDebugNode";
+import { PropertyPad } from "./components/pads/PropertyPad";
+import { StatelessPad } from "./components/pads/StatelessPad";
+import { SelfPad } from "./components/pads/SelfPad";
+import { useMemo } from "react";
+import { List, PadValue } from "@gabber/client-react";
+import { useEditor } from "@/hooks/useEditor";
+import { useRun } from "@/hooks/useRun";
 
-export interface BaseBlockProps {
-  data: NodeEditorRepresentation;
-}
+export function VisemeDebugNode({ data }: BaseBlockProps) {
+  const { detailedView, setDetailedView } = useEditor();
+  const propertyPadResult = usePropertyPad<List>(data.id, "source");
+  const { runtimeValue: contextMessages, editorValue } = propertyPadResult;
+  const { connectionState } = useRun();
 
-export function BaseBlock({ data }: BaseBlockProps) {
   const sinkPads = useMemo(() => {
     return data.pads.filter(
       (p) => p.type === "StatelessSinkPad" || p.type === "PropertySinkPad",
     );
   }, [data]);
+
   const sourcePads = useMemo(() => {
     return data.pads.filter(
       (p) =>
@@ -42,55 +37,16 @@ export function BaseBlock({ data }: BaseBlockProps) {
   }, [data]);
 
   const selfPad = useMemo(() => {
-    return data.pads.filter(
+    return data.pads.find(
       (p) => p.type === "PropertySourcePad" && p.id === "self",
-    )[0];
+    );
   }, [data]);
 
-  if (data.type === "AutoConvert") {
-    return <AutoConvertNode />;
-  }
-
-  if (data.type === "Comment") {
-    return <CommentNode data={data} />;
-  }
-
-  if (data.type === "ChatInput") {
-    return <ChatInputNode data={data} />;
-  }
-
-  if (data.type === "StateMachine") {
-    return <StateMachineNode data={data} />;
-  }
-
-  if (data.type === "Compare") {
-    return <CompareNode data={data} />;
-  }
-
-  if (data.type === "Json") {
-    return <JsonNode data={data} />;
-  }
-
-  if (data.type === "Jinja2") {
-    return <Jinja2Node data={data} />;
-  }
-
-  if (data.type === "LLMContext") {
-    return <LLMContextNode data={data} />;
-  }
-
-  if (data.type === "VisemeDebug") {
-    return <VisemeDebugNode data={data} />;
-  }
-
-  // Add ambient-float by default, but remove it if selected
-  // React Flow adds .selected to the node when selected
-  // We'll use a className that is always present, and CSS will handle the rest
   return (
-    <div className="min-w-64 flex flex-col bg-base-200 border-2 border-black border-b-4 border-r-4 rounded-lg relative">
+    <div className="w-80 flex flex-col bg-base-200 border-2 border-black border-b-4 border-r-4 rounded-lg relative">
       <div className="flex w-full items-center gap-2 bg-base-300 border-b-2 border-black p-3 rounded-t-lg drag-handle cursor-grab active:cursor-grabbing">
         <CubeIcon className="h-5 w-5 text-accent" />
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <NodeName />
           <NodeId />
         </div>
@@ -100,8 +56,20 @@ export function BaseBlock({ data }: BaseBlockProps) {
         </div>
       </div>
 
-      <div className="">
-        <Inner data={data} />
+      {/* Context Messages Viewer */}
+      <div className="flex flex-col gap-1 p-1">
+        <button
+          className="btn btn-sm btn-ghost gap-1"
+          onClick={() =>
+            setDetailedView({
+              nodeId: data.id,
+              padId: "source",
+              type: "property",
+            })
+          }
+        >
+          Inspect Items
+        </button>
       </div>
 
       <div className="flex flex-1 flex-col gap-2 p-4 nodrag cursor-default">
@@ -160,13 +128,4 @@ export function BaseBlock({ data }: BaseBlockProps) {
       </div>
     </div>
   );
-}
-
-function Inner({ data }: BaseBlockProps) {
-  if (data.type === "Publish") {
-    return <Publish />;
-  } else if (data.type === "Output") {
-    return <Output />;
-  }
-  return null;
 }
