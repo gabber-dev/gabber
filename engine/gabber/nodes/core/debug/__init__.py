@@ -4,9 +4,11 @@
 from .button_trigger import ButtonTrigger
 from .chat_input import ChatInput
 from .output import Output
+from .viseme_debug import VisemeDebug
 
 ALL_NODES = [
     ButtonTrigger,
     ChatInput,
     Output,
+    VisemeDebug,
 ]

@@ -99,6 +99,35 @@ class Enum(BaseModel):
     value: str
 
 
+class VisemeEnum(PyEnum):
+    SILENCE = "SILENCE"
+    PP = "PP"
+    FF = "FF"
+    TH = "TH"
+    DD = "DD"
+    kk = "KK"
+    CH = "CH"
+    SS = "SS"
+    nn = "NN"
+    RR = "RR"
+    aa = "AA"
+    E = "E"
+    ih = "IH"
+    oh = "OH"
+    ou = "OU"
+
+
+class Viseme(BaseModel):
+    type: Literal["viseme"] = "viseme"
+    value: VisemeEnum
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    def log_type(self) -> str:
+        return "viseme"
+
+
 class Secret(BaseModel):
     type: Literal["secret"] = "secret"
     secret_id: str
@@ -160,6 +189,7 @@ ClientPadValue = (
     | ToolDefinition
     | Schema
     | Object
+    | Viseme
     | None
 )
 

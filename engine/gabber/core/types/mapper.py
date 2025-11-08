@@ -54,6 +54,9 @@ class Mapper:
             return runtime.NodeReference(node_id=client_value.node_id)
         elif client_value.type == "schema":
             return Mapper.client_schema_to_runtime(client_value)
+        elif client_value.type == "viseme":
+            val = runtime.VisemeEnum(client_value.value)
+            return runtime.Viseme(value=val)
 
         raise ValueError(f"Unsupported client pad value type: {client_value.type}")
 
@@ -116,6 +119,9 @@ class Mapper:
             )
         elif isinstance(runtime_value, runtime.Enum):
             return client.Enum(value=runtime_value.value)
+        elif isinstance(runtime_value, runtime.Viseme):
+            val = client.VisemeEnum(runtime_value.value)
+            return client.Viseme(value=val)
 
         raise ValueError(f"Unknown runtime pad value ({type(runtime_value)})")
 
@@ -230,23 +236,5 @@ def is_client_pad_value(client_value: Any) -> client.ClientPadValue | None:
             return client_pad_value_adapter.validate_python(client_value)
         except Exception:
             pass
-
-    return None
-
-
-def is_old_context_message(v: dict) -> runtime.ContextMessage | None:
-    try:
-        return runtime.ContextMessage.model_validate(v)
-    except Exception:
-        pass
-
-    return None
-
-
-def is_old_schema(v: dict) -> runtime.Schema | None:
-    try:
-        return runtime.Schema.model_validate(v)
-    except Exception:
-        pass
 
     return None

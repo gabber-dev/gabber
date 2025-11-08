@@ -11,6 +11,7 @@ from .stt import (
     STTEvent_EndOfTurn,
     STTEvent_SpeechStarted,
     STTEvent_Transcription,
+    STTEvent_Viseme,
 )
 
 __all__ = [
@@ -23,4 +24,5 @@ __all__ = [
     "STTEvent_EndOfTurn",
     "STTEvent_SpeechStarted",
     "STTEvent_Transcription",
+    "STTEvent_Viseme",
 ]

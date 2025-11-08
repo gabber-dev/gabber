@@ -5,6 +5,8 @@ from pydantic import BaseModel, Field
 class RequestPayload_StartSession(BaseModel):
     type: Literal["start_session"] = "start_session"
     sample_rate: int
+    stt_enabled: bool
+    lipsync_enabled: bool
 
 
 class RequestPayload_AudioData(BaseModel):
@@ -54,11 +56,20 @@ class ResponsePayload_FinalTranscription(BaseModel):
     end_sample: int
 
 
+class ResponsePayload_LipSyncViseme(BaseModel):
+    type: Literal["lipsync_viseme"] = "lipsync_viseme"
+    viseme: str
+    probability: float
+    start_sample: int
+    end_sample: int
+
+
 ResponsePayload = Annotated[
     ResponsePayload_Error
     | ResponsePayload_InterimTranscription
     | ResponsePayload_SpeakingStarted
-    | ResponsePayload_FinalTranscription,
+    | ResponsePayload_FinalTranscription
+    | ResponsePayload_LipSyncViseme,
     Field(discriminator="type"),
 ]
 

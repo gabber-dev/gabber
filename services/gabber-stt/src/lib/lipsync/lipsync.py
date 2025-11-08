@@ -12,16 +12,16 @@ class Viseme(Enum):
     FF = 2
     TH = 3
     DD = 4
-    kk = 5
+    KK = 5
     CH = 6
     SS = 7
-    nn = 8
+    NN = 8
     RR = 9
-    aa = 10
+    AA = 10
     E = 11
-    ih = 12
-    oh = 13
-    ou = 14
+    IH = 12
+    OH = 13
+    OU = 14
 
 
 class LipSyncInference(AudioInference["list[LipSyncResult]"]): ...
