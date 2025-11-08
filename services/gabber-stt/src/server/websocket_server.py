@@ -76,8 +76,6 @@ class WebSocketServer:
         except Exception as e:
             logging.error(f"Receive task error: {e}", exc_info=True)
 
-        await ws.close()
-
     async def run(self, host="0.0.0.0", port=7004):
         runner = web.AppRunner(self.app)
         await runner.setup()
