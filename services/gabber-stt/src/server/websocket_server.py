@@ -37,19 +37,17 @@ class WebSocketServer:
                 await ws.send_str(message.model_dump_json())
 
         async def recv_task():
-            try:
-                while True:
-                    data = await ws.receive_json()
-                    request: Request
-                    try:
-                        request = Request.model_validate(data)
-                        session_manager.push_request(request)
-                    except Exception as e:
-                        logging.error(f"Failed to parse request: {e}")
-                        continue
+            async for msg in ws:
+                if (
+                    msg.type == web.WSMsgType.CLOSE
+                    or msg.type == web.WSMsgType.ERROR
+                    or msg.type == web.WSMsgType.CLOSED
+                ):
+                    break
 
-            except Exception as e:
-                await ws.send_str(json.dumps({"error": str(e)}))
+                data = json.loads(msg.data)
+                request = Request.model_validate(data)
+                session_manager.push_request(request)
 
         send_t = asyncio.create_task(send_task())
         recv_t = asyncio.create_task(recv_task())

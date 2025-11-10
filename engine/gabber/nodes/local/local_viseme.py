@@ -2,13 +2,15 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
-import logging
-from typing import cast
+import time
+from typing import cast, Tuple
 
 from gabber.core import node, pad
 from gabber.core.types import runtime, pad_constraints
 from gabber.core.node import NodeMetadata
 from gabber.lib import stt
+
+DELAY_SECONDS = 0.25
 
 
 class LocalViseme(node.Node):
@@ -30,6 +32,15 @@ class LocalViseme(node.Node):
             audio_sink = pad.StatelessSinkPad(
                 id="audio",
                 group="audio",
+                owner_node=self,
+                default_type_constraints=[pad_constraints.Audio()],
+            )
+
+        audio_source = cast(pad.StatelessSourcePad, self.get_pad("audio_src"))
+        if audio_source is None:
+            audio_source = pad.StatelessSourcePad(
+                id="audio_src",
+                group="audio_src",
                 owner_node=self,
                 default_type_constraints=[pad_constraints.Audio()],
             )
@@ -56,6 +67,7 @@ class LocalViseme(node.Node):
         self.pads = [
             audio_sink,
             port,
+            audio_source,
             viseme,
         ]
 
@@ -65,8 +77,11 @@ class LocalViseme(node.Node):
         return f"ws://localhost:{port}"
 
     async def run(self):
-        audio_sink = cast(pad.StatelessSinkPad, self.get_pad_required("audio"))
         audio_sink = self.get_stateless_sink_pad_required(runtime.AudioFrame, "audio")
+        audio_source = self.get_stateless_source_pad_required(
+            runtime.AudioFrame, "audio_src"
+        )
+        src_q = asyncio.Queue[Tuple[runtime.AudioFrame, float] | None]()
         viseme = self.get_stateless_source_pad_required(runtime.Viseme, "viseme")
 
         url = self.get_url()
@@ -78,7 +93,28 @@ class LocalViseme(node.Node):
         async def audio_sink_task() -> None:
             async for audio in audio_sink:
                 stt_impl.push_audio(audio.value)
+                src_q.put_nowait((audio.value, time.time()))
                 audio.ctx.complete()
+
+        # TODO: use timestampes from viseme servie to sync properly instead of hardcoding delay
+        async def audio_source_task() -> None:
+            while True:
+                item = await src_q.get()
+                if item is None:
+                    break
+                audio_frame, timestamp = item
+                # wait until DELAY_SECONDS has passed since timestamp
+                now = time.time()
+                wait_time = (timestamp + DELAY_SECONDS) - now
+                if wait_time > 0:
+                    await asyncio.sleep(wait_time)
+
+                audio_source.push_item(
+                    audio_frame,
+                    pad.RequestContext(
+                        parent=None, publisher_metadata=None, originator=self.id
+                    ),
+                )
 
         async def stt_event_task() -> None:
             ctx: pad.RequestContext | None = None
@@ -97,9 +133,10 @@ class LocalViseme(node.Node):
 
         audio_sink_t = asyncio.create_task(audio_sink_task())
         event_t = asyncio.create_task(stt_event_task())
+        audio_source_t = asyncio.create_task(audio_source_task())
 
         try:
-            await asyncio.gather(stt_run_t, audio_sink_t, event_t)
+            await asyncio.gather(stt_run_t, audio_sink_t, event_t, audio_source_t)
         except asyncio.CancelledError:
             pass
         finally:
