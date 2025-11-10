@@ -64,6 +64,7 @@ export type Value1 =
   | ToolDefinition
   | Schema
   | Object1
+  | Viseme
   | null;
 export type Type8 = "string";
 export type Value2 = string;
@@ -135,6 +136,23 @@ export type Defaults = {
   [k: string]: unknown;
 } | null;
 export type Type29 = "object";
+export type Type30 = "viseme";
+export type VisemeEnum =
+  | "SILENCE"
+  | "PP"
+  | "FF"
+  | "TH"
+  | "DD"
+  | "KK"
+  | "CH"
+  | "SS"
+  | "NN"
+  | "RR"
+  | "AA"
+  | "E"
+  | "IH"
+  | "OH"
+  | "OU";
 export type Items = (
   | String
   | Integer
@@ -152,9 +170,10 @@ export type Items = (
   | ToolDefinition
   | Schema
   | Object1
+  | Viseme
   | null
 )[];
-export type Type30 = "get_list_items";
+export type Type31 = "get_list_items";
 export type Items1 = (
   | String
   | Integer
@@ -172,9 +191,10 @@ export type Items1 = (
   | ToolDefinition
   | Schema
   | Object1
+  | Viseme
   | null
 )[];
-export type Type31 = "lock_publisher";
+export type Type32 = "lock_publisher";
 export type Success = boolean;
 /**
  * Payload for the runtime request complete
@@ -184,12 +204,12 @@ export type RuntimeResponsePayload =
   | RuntimeResponsePayload_GetValue
   | RuntimeResponsePayload_GetListItems
   | RuntimeResponsePayload_LockPublisher;
-export type Type32 = "event";
+export type Type33 = "event";
 /**
  * Payload for the runtime event
  */
 export type Payload2 = RuntimeEventPayload_Value | RuntimeEventPayload_Logs;
-export type Type33 = "value";
+export type Type34 = "value";
 export type Value8 =
   | String
   | Integer
@@ -207,10 +227,11 @@ export type Value8 =
   | ToolDefinition
   | Schema
   | Object1
+  | Viseme
   | null;
 export type NodeId4 = string;
 export type PadId3 = string;
-export type Type34 = "logs";
+export type Type35 = "logs";
 export type Message = string;
 export type Level = string;
 export type Timestamp1 = string;
@@ -239,6 +260,7 @@ export type PadValue =
   | ToolDefinition
   | Schema
   | Object1
+  | Viseme
   | null;
 export type PadConstraint =
   | String1
@@ -261,28 +283,30 @@ export type PadConstraint =
   | List1
   | Schema1
   | Object
-  | NodeReference1;
-export type Type35 = "enum";
+  | NodeReference1
+  | Viseme1;
+export type Type36 = "enum";
 export type Options = string[] | null;
-export type Type36 = "secret";
+export type Type37 = "secret";
 export type UpdatedAt = string;
 export type CreatedAt = string;
 export type Id = string;
 export type Name2 = string;
 export type Options1 = PublicSecret[];
-export type Type37 = "bounding_box";
-export type Type38 = "point";
-export type Type39 = "audio";
-export type Type40 = "video";
-export type Type41 = "audio_clip";
-export type Type42 = "video_clip";
-export type Type43 = "av_clip";
-export type Type44 = "text_stream";
-export type Type45 = "context_message";
-export type Type46 = "context_message_role";
-export type Type47 = "schema";
-export type Type48 = "node_reference";
+export type Type38 = "bounding_box";
+export type Type39 = "point";
+export type Type40 = "audio";
+export type Type41 = "video";
+export type Type42 = "audio_clip";
+export type Type43 = "video_clip";
+export type Type44 = "av_clip";
+export type Type45 = "text_stream";
+export type Type46 = "context_message";
+export type Type47 = "context_message_role";
+export type Type48 = "schema";
+export type Type49 = "node_reference";
 export type NodeTypes = string[];
+export type Type50 = "viseme";
 
 export interface DummyType {
   req: RuntimeRequest;
@@ -506,30 +530,35 @@ export interface Object1 {
 export interface Value7 {
   [k: string]: unknown;
 }
-export interface RuntimeResponsePayload_GetListItems {
+export interface Viseme {
   type?: Type30;
+  value: VisemeEnum;
+  [k: string]: unknown;
+}
+export interface RuntimeResponsePayload_GetListItems {
+  type?: Type31;
   items: Items1;
   [k: string]: unknown;
 }
 export interface RuntimeResponsePayload_LockPublisher {
-  type?: Type31;
+  type?: Type32;
   success: Success;
   [k: string]: unknown;
 }
 export interface RuntimeEvent {
-  type?: Type32;
+  type?: Type33;
   payload: Payload2;
   [k: string]: unknown;
 }
 export interface RuntimeEventPayload_Value {
-  type?: Type33;
+  type?: Type34;
   value: Value8;
   node_id: NodeId4;
   pad_id: PadId3;
   [k: string]: unknown;
 }
 export interface RuntimeEventPayload_Logs {
-  type?: Type34;
+  type?: Type35;
   items: Items2;
   [k: string]: unknown;
 }
@@ -543,12 +572,12 @@ export interface RuntimeEventPayload_LogItem {
   [k: string]: unknown;
 }
 export interface Enum1 {
-  type?: Type35;
+  type?: Type36;
   options?: Options;
   [k: string]: unknown;
 }
 export interface Secret1 {
-  type?: Type36;
+  type?: Type37;
   options?: Options1;
   [k: string]: unknown;
 }
@@ -560,51 +589,55 @@ export interface PublicSecret {
   [k: string]: unknown;
 }
 export interface BoundingBox {
-  type?: Type37;
-  [k: string]: unknown;
-}
-export interface Point {
   type?: Type38;
   [k: string]: unknown;
 }
-export interface Audio {
+export interface Point {
   type?: Type39;
   [k: string]: unknown;
 }
-export interface Video {
+export interface Audio {
   type?: Type40;
   [k: string]: unknown;
 }
-export interface AudioClip1 {
+export interface Video {
   type?: Type41;
   [k: string]: unknown;
 }
-export interface VideoClip1 {
+export interface AudioClip1 {
   type?: Type42;
   [k: string]: unknown;
 }
-export interface AVClip {
+export interface VideoClip1 {
   type?: Type43;
   [k: string]: unknown;
 }
-export interface TextStream {
+export interface AVClip {
   type?: Type44;
   [k: string]: unknown;
 }
-export interface ContextMessage1 {
+export interface TextStream {
   type?: Type45;
   [k: string]: unknown;
 }
-export interface ContextMessageRole1 {
+export interface ContextMessage1 {
   type?: Type46;
   [k: string]: unknown;
 }
-export interface Schema1 {
+export interface ContextMessageRole1 {
   type?: Type47;
   [k: string]: unknown;
 }
-export interface NodeReference1 {
+export interface Schema1 {
   type?: Type48;
+  [k: string]: unknown;
+}
+export interface NodeReference1 {
+  type?: Type49;
   node_types: NodeTypes;
+  [k: string]: unknown;
+}
+export interface Viseme1 {
+  type?: Type50;
   [k: string]: unknown;
 }

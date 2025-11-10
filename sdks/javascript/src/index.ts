@@ -61,4 +61,5 @@ export type {
     RuntimeEventPayload_LogItem,
     PadConstraint,
     AVClip,
+    Viseme,
 } from './generated/runtime';

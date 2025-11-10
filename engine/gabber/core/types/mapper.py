@@ -120,7 +120,7 @@ class Mapper:
         elif isinstance(runtime_value, runtime.Enum):
             return client.Enum(value=runtime_value.value)
         elif isinstance(runtime_value, runtime.Viseme):
-            val = client.VisemeEnum(runtime_value.value)
+            val = client.VisemeEnum(runtime_value.value.value)
             return client.Viseme(value=val)
 
         raise ValueError(f"Unknown runtime pad value ({type(runtime_value)})")

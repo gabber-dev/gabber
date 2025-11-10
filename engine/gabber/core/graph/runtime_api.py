@@ -50,7 +50,13 @@ class RuntimeApi:
         all_pads = list(node_pad_lookup.values())
 
         def on_pad(p: pad.Pad, value: Any):
-            ev_value = mapper.Mapper.runtime_to_client(value)
+            try:
+                ev_value = mapper.Mapper.runtime_to_client(value)
+            except Exception as e:
+                logging.error(
+                    f"Error mapping pad value to client value: {e}", exc_info=e
+                )
+                return
             self._dc_queue.put_nowait(
                 QueueItem(
                     payload=RuntimeEvent(

@@ -107,7 +107,6 @@ class Gabber(STT):
                     self._output_queue.put_nowait(
                         STTEvent_Viseme(viseme=payload.viseme, id="")
                     )
-                self.logger.info(f"Received message: {data}")
 
         async def send_task(ws: aiohttp.ClientWebSocketResponse) -> None:
             nonlocal dur
