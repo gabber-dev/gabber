@@ -1,3 +1,4 @@
+import logging
 import asyncio
 import threading
 
@@ -7,6 +8,8 @@ from core.audio_inference import AudioInferenceInternalResult, AudioInferenceReq
 from transformers import WhisperFeatureExtractor
 
 from .eot import EOTInference
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_MODEL_PATH = "./weights/smart-turn-v3.0.onnx"
 CHUNK_SECONDS = 8
@@ -38,6 +41,10 @@ class PipeCatEOTInference(EOTInference):
     def inference(
         self, input: AudioInferenceRequest
     ) -> list[AudioInferenceInternalResult[float]]:
+        if self._onnx_session is None:
+            logger.warning("EOT ONNX session is not initialized")
+            return [AudioInferenceInternalResult[float](state=None, result=0.0)]
+
         if input.audio_batch.shape[1] != self.full_audio_size:
             raise ValueError(
                 f"Invalid audio chunk size: {input.audio_batch.shape[1]}, expected {self.full_audio_size}"
@@ -57,9 +64,16 @@ class PipeCatEOTInference(EOTInference):
 
         input_features = inputs.input_features.astype(np.float32)
 
-        outputs = self._onnx_session.run(None, {"input_features": input_features})
-        results = outputs[0].flatten().tolist()  # type: ignore
-        return [AudioInferenceInternalResult(result=r, state=None) for r in results]
+        try:
+            outputs = self._onnx_session.run(None, {"input_features": input_features})
+            results = outputs[0].flatten().tolist()  # type: ignore
+            return [AudioInferenceInternalResult(result=r, state=None) for r in results]
+        except Exception as e:
+            logger.error(f"EOT inference failed: {e}")
+
+        self._onnx_session = None
+        self._initialize_onnx()
+        return [AudioInferenceInternalResult[float](state=None, result=0.0)]
 
     @property
     def sample_rate(self) -> int:
