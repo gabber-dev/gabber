@@ -9,8 +9,6 @@ MODEL="${MODEL:-Qwen/Qwen2.5-Omni-7B-AWQ}"
 docker stop local-llm 
 docker rm local-llm 
 
-docker build --tag local-llm:latest "$BASEDIR"
-
 # Run the new container
 docker run \
   --name local-llm \
@@ -18,10 +16,6 @@ docker run \
   -v ~/.cache/huggingface:/root/.cache/huggingface \
   -v ~/.cache/vllm:/root/.cache/vllm \
   --network host \
-  local-llm:latest \
-  --model "$MODEL" \
-  --port 7002 \
-  --gpu-memory-utilization 0.9 \
-  --max-model-len 32000 \
-  --enable-auto-tool-choice \
-  --tool-call-parser hermes
+  --shm-size=8gb \
+  lmsysorg/sglang:v0.5.5.post1 \
+  python3 -m sglang.launch_server --model-path "$MODEL" --port 7002 --host 0.0.0.0 --chunked-prefill-size 2048 --context-length 8000 --mem-fraction-static 0.7 --enable-multimodal --tool-call-parser qwen \

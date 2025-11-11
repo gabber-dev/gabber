@@ -604,6 +604,7 @@ class BaseLLM(node.Node, ABC):
         return notes
 
     async def _supports_video(self, llm: openai_compatible.OpenAICompatibleLLM) -> bool:
+        self.logger.info("Checking if LLM supports video...")
         dummy_request = LLMRequest(
             context=[
                 runtime.ContextMessage(
@@ -612,7 +613,7 @@ class BaseLLM(node.Node, ABC):
                         runtime.ContextMessageContentItem_Text(content="."),
                         runtime.ContextMessageContentItem_Video(
                             clip=runtime.VideoClip(
-                                video=[runtime.VideoFrame.black_frame(16, 16, 0.0)]
+                                video=[runtime.VideoFrame.black_frame(16, 16, 0.0)] * 10
                             )
                         ),
                     ],
@@ -631,6 +632,9 @@ class BaseLLM(node.Node, ABC):
             async for _ in handle:
                 pass
         except openai_compatible.OpenAICompatibleLLMError as e:
+            self.logger.info(
+                f"Video support check failed with error code: {e.code}, {e.msg}"
+            )
             if e.code == 500 or e.code == 400:
                 return False
 
@@ -641,6 +645,7 @@ class BaseLLM(node.Node, ABC):
         return True
 
     async def _supports_audio(self, llm: openai_compatible.OpenAICompatibleLLM) -> bool:
+        return False
         dummy_request = LLMRequest(
             context=[
                 runtime.ContextMessage(

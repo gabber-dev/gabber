@@ -41,6 +41,7 @@ class MockLLM(BaseLLM):
                             tool_calls=[],
                             refusal=None,
                             role=runtime.ContextMessageRole.ASSISTANT,
+                            usage=None,
                         )
                     )
             except Exception:
