@@ -91,7 +91,11 @@ class OpenLipSyncInference(LipSyncInference):
         self, input: AudioInferenceRequest
     ) -> list[AudioInferenceInternalResult[list[LipSyncResult]]]:
         audio_chunks = input.audio_batch
-        assert self._onnx_session is not None
+        if self._onnx_session is None:
+            logger.warning("LipSync ONNX session is not initialized")
+            return [
+                AudioInferenceInternalResult[list[LipSyncResult]](state=None, result=[])
+            ]
 
         if audio_chunks.ndim == 1:
             audio_chunks = np.expand_dims(audio_chunks, axis=0)
@@ -102,41 +106,52 @@ class OpenLipSyncInference(LipSyncInference):
             )
 
         audio_float = torch.from_numpy(audio_chunks.astype(np.float32) / 32768.0)
-        audio_float = torch.from_numpy(audio_chunks.astype(np.float32) / 32768.0)
 
         mels = mel_spectrogram_transform(audio_float)
         mels_db = db_transform(mels)
         mels_db = mels_db.transpose(1, 2)
 
-        ort_inputs = {
-            "audio_features": mels_db.numpy(),
-        }
-        ort_outs = self._onnx_session.run(None, ort_inputs)
-        torch_outs = torch.from_numpy(ort_outs[0])
-        probs = torch.softmax(torch_outs, dim=-1)
-
-        max_indxs = torch.argmax(probs, dim=-1).numpy()
         results: list[list[LipSyncResult]] = []
-        for batch_idx in range(probs.shape[0]):
-            res: list[LipSyncResult] = []
-            for time_idx in range(probs.shape[1]):
-                result = LipSyncResult(
-                    max_viseme_prob=VisemeProability(
-                        viseme=Viseme(max_indxs[batch_idx, time_idx]),
-                        probability=probs[
-                            batch_idx, time_idx, max_indxs[batch_idx, time_idx]
-                        ].item(),
-                    ),
-                    start_sample=time_idx * FFT_HOP_SIZE,
-                    end_sample=time_idx * FFT_HOP_SIZE + FFT_WINDOW_SIZE,
+
+        # TODO, this is slow, the published onnx model is not exported with batch inference. export with batch support to speed this up.
+        try:
+            for i in range(mels_db.shape[0]):
+                ort_inputs = {
+                    "audio_features": mels_db.numpy()[i : i + 1, :, :],
+                }
+                ort_outs = self._onnx_session.run(None, ort_inputs)
+                torch_outs = torch.from_numpy(ort_outs[0])
+                probs = torch.softmax(torch_outs, dim=-1)
+
+                max_indxs = torch.argmax(probs, dim=-1).numpy()
+                res: list[LipSyncResult] = []
+                for time_idx in range(probs.shape[1]):
+                    result = LipSyncResult(
+                        max_viseme_prob=VisemeProability(
+                            viseme=Viseme(max_indxs[0, time_idx]),
+                            probability=probs[
+                                0, time_idx, max_indxs[0, time_idx]
+                            ].item(),
+                        ),
+                        start_sample=time_idx * FFT_HOP_SIZE,
+                        end_sample=time_idx * FFT_HOP_SIZE + FFT_WINDOW_SIZE,
+                    )
+                    res.append(result)
+
+                results.append(res)
+
+            return [
+                AudioInferenceInternalResult[list[LipSyncResult]](
+                    state=None, result=results[i]
                 )
-                res.append(result)
+                for i in range(len(results))
+            ]
+        except Exception as e:
+            logger.error(f"LipSync inference failed: {e}")
 
-            results.append(res)
-
+        self._onnx_session = None
+        self._initialize_onnx()
         return [
-            AudioInferenceInternalResult[list[LipSyncResult]](
-                state=None, result=results[i]
-            )
-            for i in range(len(results))
+            AudioInferenceInternalResult[list[LipSyncResult]](state=None, result=[])
+            for _ in range(audio_chunks.shape[0])
         ]
