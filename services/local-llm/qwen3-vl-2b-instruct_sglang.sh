@@ -1,0 +1,1 @@
+MODEL="Qwen/Qwen3-VL-2B-Instruct" ./_sglang.sh
