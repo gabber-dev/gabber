@@ -22,6 +22,7 @@ import { NodeId } from "./components/NodeId";
 import { Jinja2Node } from "./Jinja2Node";
 import { LLMContextNode } from "./LLMContextNode";
 import { VisemeDebugNode } from "./VisemeDebugNode";
+import { ToolGroupNode } from "./ToolGroupNode";
 
 export interface BaseBlockProps {
   data: NodeEditorRepresentation;
@@ -81,6 +82,10 @@ export function BaseBlock({ data }: BaseBlockProps) {
 
   if (data.type === "VisemeDebug") {
     return <VisemeDebugNode data={data} />;
+  }
+
+  if (data.type === "ToolGroup") {
+    return <ToolGroupNode data={data} />;
   }
 
   // Add ambient-float by default, but remove it if selected
