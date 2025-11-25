@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pydantic import BaseModel, Field
+from pydantic.types import Json
 from typing import Any, Literal, Annotated
 from enum import Enum as PyEnum
 from ..types import pad_constraints
@@ -139,26 +140,27 @@ class NodeReference(BaseModel):
     node_id: str
 
 
-class Schema(BaseModel):
-    type: Literal["schema"] = "schema"
-    properties: dict[
-        str,
-        pad_constraints.String
-        | pad_constraints.Integer
-        | pad_constraints.Float
-        | pad_constraints.Boolean
-        | pad_constraints.Object
-        | pad_constraints.List,
-    ]
-    required: list[str] | None = None
-    defaults: dict[str, Any] | None = None
-
-
 class ToolDefinition(BaseModel):
     type: Literal["tool_definition"] = "tool_definition"
     name: str
     description: str
-    parameters: "Schema | None" = None
+    parameters: dict[str, Any] | None = None
+    destination: "ToolDefinitionDestination"
+
+
+class ToolDefinitionDestination_Webhook(BaseModel):
+    type: Literal["webhook"] = "webhook"
+    url: str
+
+
+class ToolDefinitionDestination_Client(BaseModel):
+    type: Literal["client"] = "client"
+
+
+ToolDefinitionDestination = Annotated[
+    ToolDefinitionDestination_Client | ToolDefinitionDestination_Webhook,
+    Field(discriminator="type"),
+]
 
 
 class List(BaseModel):
@@ -187,7 +189,6 @@ ClientPadValue = (
     | Secret
     | NodeReference
     | ToolDefinition
-    | Schema
     | Object
     | Viseme
     | None

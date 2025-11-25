@@ -27,13 +27,12 @@ export function ToolGroupNode({ data }: BaseBlockProps) {
         isOpen={modalOpen}
         onRequestClose={() => setModalOpen(false)}
         overlayClassName="fixed top-0 bottom-0 left-0 right-0 backdrop-blur-lg bg-blur flex justify-center items-center z-11"
+        className="bg-none"
         shouldCloseOnOverlayClick={true}
       >
-        <ToolGroupEditModal
-          toolGroup={data.toolGroup}
-          onClose={() => setModalOpen(false)}
-          onSave={() => {}}
-        />
+        <div className="fixed top-20 left-20 right-20 bottom-20 flex justify-center items-center border-2 rounded-lg overflow-hidden bg-base-100">
+          <ToolGroupEditModal tools={[]} onClose={() => setModalOpen(false)} />
+        </div>
       </ReactModal>
       <div className="flex w-full items-center gap-2 bg-base-300 border-b-2 border-black p-3 rounded-t-lg drag-handle cursor-grab active:cursor-grabbing">
         <CubeIcon className="h-5 w-5 text-accent" />

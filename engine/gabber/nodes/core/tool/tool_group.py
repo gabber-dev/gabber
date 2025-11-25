@@ -9,8 +9,22 @@ from gabber.core import node, pad
 from gabber.core.types import runtime
 from gabber.core.node import NodeMetadata
 
-from gabber.nodes.core.tool import Tool
 from gabber.core.types import pad_constraints
+
+DEFAULT_TOOLS = {
+    "tools": [
+        {
+            "name": "get_weather",
+            "description": "An example tool to get the current weather for a given location.",
+            "parameters": {
+                "location": {
+                    "type": "string",
+                    "description": "The location to get the weather for.",
+                }
+            },
+        }
+    ]
+}
 
 
 class ToolGroup(node.Node):
@@ -23,26 +37,6 @@ class ToolGroup(node.Node):
         return NodeMetadata(
             primary="core", secondary="tools", tags=["collection", "group"]
         )
-
-    @property
-    def tool_nodes(self):
-        res: list[Tool] = []
-        for p in self.pads:
-            if not isinstance(p, pad.PropertySinkPad):
-                continue
-
-            if p.get_group() != "tool":
-                continue
-
-            v = p.get_value()
-            if v is None:
-                continue
-
-            assert isinstance(v, runtime.NodeReference)
-            tool_node = self.graph.get_node(v.node_id)
-            assert isinstance(tool_node, Tool)
-            res.append(tool_node)
-        return res
 
     def resolve_pads(self):
         self_pad = cast(pad.PropertySourcePad, self.get_pad("self"))
@@ -57,40 +51,37 @@ class ToolGroup(node.Node):
                 value=runtime.NodeReference(node_id=self.id),
             )
 
-        num_tools = cast(pad.PropertySinkPad, self.get_pad("num_tools"))
-        if not num_tools:
-            num_tools = pad.PropertySinkPad(
-                id="num_tools",
+        tools = cast(pad.PropertySinkPad, self.get_pad("tools"))
+        if not tools:
+            tools = pad.PropertySinkPad(
+                id="tools",
                 owner_node=self,
-                default_type_constraints=[pad_constraints.Integer()],
-                group="num_tools",
-                value=1,
+                default_type_constraints=[pad_constraints.Object()],
+                group="tools",
+                value=DEFAULT_TOOLS,
             )
 
-        tools: list[pad.Pad] = []
-        for i in range(num_tools.get_value() or 1):
-            pad_id = f"tool_{i}"
-            tp = self.get_pad(pad_id)
-            if not tp:
-                tp = pad.PropertySinkPad(
-                    id=pad_id,
-                    owner_node=self,
-                    default_type_constraints=[
-                        pad_constraints.NodeReference(node_types=["Tool"])
-                    ],
-                    group="tool",
-                    value=None,
-                )
-            tools.append(tp)
+        self.pads = [tools, self_pad]
 
-        self.pads = [num_tools, self_pad] + tools
+    def fix_tools(self):
+        tool_pad = cast(pad.PropertySinkPad[dict[str, Any]], self.get_pad("tools"))
+        tools = tool_pad.get_value().get("tools", [])
+        for tool in tools:
+            name = tool.get("name")
+            if not name:
+                tool["name"] = "unnamed_tool"
 
+    def resolve_enabled_pads(self):
+        tool_pad = cast(pad.PropertySinkPad[dict[str, Any]], self.get_pad("tools"))
+        tools = tool_pad.get_value().get("tools", [])
+        for tool in tools:
+            name = tool.get("name")
+
+    # TODO
     def has_tool(self, tool_name: str) -> bool:
-        for tool in self.tool_nodes:
-            if tool.get_name() == tool_name:
-                return True
         return False
 
+    # TODO
     async def call_tools(
         self,
         tool_calls: list[runtime.ToolCall],
@@ -99,50 +90,6 @@ class ToolGroup(node.Node):
     ) -> list[str]:
         tasks: list[asyncio.Task[str]] = []
         results: list[str] = []
-
-        for tc in tool_calls:
-            found_tool = False
-            for tool in self.tool_nodes:
-                if tool.get_name() == tc.name:
-                    task = asyncio.create_task(self._safe_tool_call(tool, tc, ctx))
-                    tasks.append(task)
-                    found_tool = True
-                    break
-
-            if not found_tool:
-                logging.warning(
-                    f"Tool call '{tc.name}' not found in ToolGroup '{self.id}'."
-                )
-                tasks.append(
-                    asyncio.create_task(
-                        asyncio.sleep(0, result=f"Tool '{tc.name}' not found.")
-                    )
-                )
-
-        try:
-            done, pending = await asyncio.wait(
-                tasks, timeout=timeout, return_when=asyncio.ALL_COMPLETED
-            )
-
-            for task in done:
-                try:
-                    results.append(await task)
-                except asyncio.CancelledError:
-                    results.append(f"Tool call cancelled: {task.get_name()}")
-                except Exception as e:
-                    results.append(f"Tool call failed: {str(e)}")
-
-            for task in pending:
-                task.cancel()
-                results.append(f"Tool call timed out after {timeout}s")
-
-            while len(results) < len(tool_calls):
-                results.append("Unknown error: Result missing")
-
-        except Exception as e:
-            logging.error(f"Error in call_tools: {str(e)}")
-            results = [f"System error: {str(e)}"] * len(tool_calls)
-
         return results
 
     async def _safe_tool_call(

@@ -14,230 +14,249 @@ import { ToolDefinition } from "@/generated/editor";
 interface ToolGroupEditModalProps {
   tools: ToolDefinition[];
   onClose: () => void;
+  onSave?: (tools: ToolDefinition[]) => void;
 }
 
-const DEFAULT_TOOL_SCHEMA = {
-  type: "object",
-  properties: {
-    input: {
-      type: "string",
-      description: "Input parameter",
+const DEFAULT_TOOL: ToolDefinition = {
+  name: "get_weather",
+  description: "Get the current weather for a given location",
+  destination: { type: "client" },
+  parameters: {
+    type: "object",
+    properties: {
+      location: {
+        type: "string",
+        description: "The city and state, e.g. San Francisco, CA",
+      },
+      unit: {
+        type: "string",
+        enum: ["celsius", "fahrenheit"],
+      },
     },
+    required: ["location"],
   },
-  required: ["input"],
 };
 
 export function ToolGroupEditModal({
   tools: initialTools,
   onClose,
+  onSave,
 }: ToolGroupEditModalProps) {
-  const [tools, setTools] = useState<ToolDefinition[]>(initialTools);
-  const [selectedToolId, setSelectedToolId] = useState<string | null>(null);
+  const [tools, setTools] = useState<ToolDefinition[]>(
+    initialTools.map((t) => ({ ...t, id: t.id ?? crypto.randomUUID() })),
+  );
+  const [selectedName, setSelectedName] = useState<string | null>(
+    tools[0]?.name ?? null,
+  );
   const [hasChanges, setHasChanges] = useState(false);
-  const initialJSONRef = useRef<string>("");
+  const initialDataRef = useRef<string>("");
 
-  const selectedTool = tools.find((t) => t.id === selectedToolId);
+  const selectedTool = tools.find((t) => t.name === selectedName);
 
   // Track changes
-  // TODO
-  useEffect(() => {}, []);
+  useEffect(() => {
+    const initial = JSON.stringify(initialTools);
+    initialDataRef.current = initial;
+    const current = JSON.stringify(tools);
+    setHasChanges(current !== initial);
+  }, [tools, initialTools]);
 
   const addTool = () => {
-    // TODO
+    const newTool = {
+      ...DEFAULT_TOOL,
+      id: crypto.randomUUID(),
+      name: `new_tool_${tools.length + 1}`,
+    };
+    setTools((prev) => [...prev, newTool]);
+    setSelectedName(newTool.id);
   };
 
-  const updateTool = (toolId: string, updates: Partial<ToolDefinition>) => {
+  const updateTool = (id: string, updates: Partial<ToolDefinition>) => {
     setTools((prev) =>
-      prev.map((t) => (t.id === toolId ? { ...t, ...updates } : t)),
+      prev.map((t) => (t.id === id ? { ...t, ...updates } : t)),
     );
-    setSelectedToolId(toolId);
   };
 
-  const deleteTool = (toolId: string) => {
-    setTools((prev) => prev.filter((t) => t.id !== toolId));
-    setSelectedToolId(toolId);
+  const deleteTool = (name: string) => {
+    setTools((prev) => prev.filter((t) => t.name !== name));
+    if (selectedName === name) {
+      setSelectedName(tools.find((t) => t.name !== name)?.name ?? null);
+    }
+  };
+
+  const handleSave = () => {
+    onSave?.(tools);
+    onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"
-        onClick={onClose}
-      />
+    <div className="w-full h-full bg-base-100 rounded-xl flex flex-col">
+      <div className="flex items-center justify-between p-4 border-b border-base-300">
+        <h2 className="text-2xl font-bold">Edit Tools</h2>
+        <button onClick={onClose} className="btn btn-ghost btn-circle">
+          <XMarkIcon className="w-6 h-6" />
+        </button>
+      </div>
 
-      {/* Modal */}
-      <div className="relative w-full max-w-6xl max-h-[90vh] bg-base-100 rounded-xl shadow-2xl overflow-hidden">
-        <div className="flex flex-col h-full">
-          {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-base-300">
-            <h2 className="text-2xl font-bold">Edit Tools</h2>
-            <button onClick={onClose} className="btn btn-ghost btn-circle">
-              <XMarkIcon className="w-6 h-6" />
+      <div className="flex flex-1 overflow-hidden">
+        <div className="w-80 border-r border-base-300 flex flex-col">
+          <div className="p-4 border-b border-base-300 flex justify-between items-center">
+            <h3 className="font-semibold">Tools ({tools.length})</h3>
+            <button onClick={addTool} className="btn btn-sm btn-primary">
+              <PlusIcon className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="flex flex-1 overflow-hidden">
-            {/* Left Panel - Tool List */}
-            <div className="w-96 border-r border-base-300 flex flex-col">
-              <div className="p-6 border-b border-base-300">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Tools</h3>
-                  <button onClick={addTool} className="btn btn-sm btn-primary">
-                    <PlusIcon className="w-4 h-4 mr-1" />
-                    Add Tool
-                  </button>
+          <div className="flex-1 overflow-y-auto">
+            {tools.length === 0 ? (
+              <div className="p-12 text-center text-base-content/50">
+                <div className="w-20 h-20 mx-auto mb-4 bg-base-200 border-2 border-dashed rounded-xl" />
+                <p>No tools yet</p>
+              </div>
+            ) : (
+              <div className="p-3 space-y-2">
+                {tools.map((tool) => (
+                  <div
+                    key={tool.name}
+                    onClick={() => setSelectedName(tool.name)}
+                    className={`p-4 rounded-lg cursor-pointer transition-all border ${
+                      selectedName === tool.id
+                        ? "bg-primary/10 border-primary shadow-sm"
+                        : "bg-base-200 border-transparent hover:bg-base-300"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">
+                          {tool.name || "Untitled"}
+                        </p>
+                        <p className="text-xs text-base-content/60 mt-1">
+                          {tool.description?.slice(0, 50)}...
+                        </p>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteTool(tool.name!);
+                        }}
+                        className="btn btn-ghost btn-xs text-error ml-3"
+                      >
+                        <TrashIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div className="mt-2">
+                      <span
+                        className={`badge badge-sm ${
+                          tool.destination.type === "webhook"
+                            ? "badge-accent"
+                            : "badge-primary"
+                        }`}
+                      >
+                        {tool.destination.type}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right: Editor */}
+        <div className="flex-1 flex flex-col">
+          {selectedTool ? (
+            <>
+              <div className="p-6 border-b border-base-300 space-y-6">
+                <div>
+                  <label className="label">
+                    <span className="label-text font-medium">Tool Name</span>
+                  </label>
+                  <input
+                    type="text"
+                    className="input input-bordered w-full"
+                    value={selectedTool.name}
+                    onChange={(e) =>
+                      updateTool(selectedTool.name!, { name: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div>
+                  <label className="label">
+                    <span className="label-text font-medium">Description</span>
+                  </label>
+                  <textarea
+                    className="textarea textarea-bordered w-full h-24"
+                    value={selectedTool.description}
+                    onChange={(e) =>
+                      updateTool(selectedTool.name!, {
+                        description: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="label">
+                      <span className="label-text font-medium">
+                        Destination
+                      </span>
+                    </label>
+                    <select
+                      className="select select-bordered w-full"
+                      value={selectedTool.destination.type}
+                      onChange={(e) => {}}
+                    >
+                      <option value="client">Client Tool</option>
+                      <option value="webhook">Webhook</option>
+                    </select>
+                  </div>
+
+                  {selectedTool.destination.type === "webhook" && (
+                    <div>
+                      <label className="label">
+                        <span className="label-text font-medium">
+                          Webhook URL
+                        </span>
+                      </label>
+                      <div className="relative">
+                        <LinkIcon className="absolute left-3 top-3.5 w-5 h-5 text-base-content/40" />
+                        <input
+                          type="url"
+                          className="input input-bordered w-full pl-10"
+                          placeholder="https://example.com/api/tool"
+                          value={selectedTool.destination.url ?? ""}
+                          onChange={(e) =>
+                            updateTool(selectedTool.name!, {
+                              destination: {
+                                ...selectedTool.destination,
+                                url: e.target.value,
+                              },
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3">
-                {tools.length === 0 ? (
-                  <div className="text-center text-base-content/60 py-16">
-                    <div className="bg-base-200 border-2 border-dashed rounded-xl w-20 h-20 mx-auto mb-4" />
-                    <p>No tools yet. Add one to get started.</p>
-                  </div>
-                ) : (
-                  tools.map((tool) => (
-                    <div
-                      key={tool.name}
-                      className={`collapse collapse-arrow rounded-lg transition-all ${
-                        selectedToolId === tool.id
-                          ? "bg-primary/10 border border-primary/50"
-                          : "bg-base-200"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="tool-accordion"
-                        checked={selectedToolId === tool.name}
-                        onChange={() => setSelectedToolId(tool.name)}
-                      />
-                      <div className="collapse-title text-sm font-medium pr-10 flex items-center justify-between">
-                        <span className="truncate">
-                          {tool.name || "Untitled Tool"}
-                        </span>
-                        <span
-                          className={`badge badge-sm ml-2 ${
-                            tool.destination === "webhook"
-                              ? "badge-accent"
-                              : "badge-primary"
-                          }`}
-                        >
-                          {tool.destination}
-                        </span>
-                      </div>
-
-                      <div className="collapse-content space-y-3 pt-3">
-                        <input
-                          type="text"
-                          className="input input-sm w-full"
-                          placeholder="Tool name"
-                          value={tool.name}
-                          onChange={(e) =>
-                            updateTool(tool.name, { name: e.target.value })
-                          }
-                        />
-
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => deleteTool(tool.name)}
-                            className="btn btn-xs btn-ghost text-error"
-                            title="Delete"
-                          >
-                            <TrashIcon className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {/* Right Panel - Selected Tool Editor */}
-            <div className="flex-1 flex flex-col">
-              <div className="p-6 border-b border-base-300 space-y-4">
-                {selectedTool ? (
-                  <>
-                    <h3 className="text-xl font-semibold">
-                      {selectedTool.name || "Untitled Tool"}
-                    </h3>
-
-                    {/* Destination & Webhook URL */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="label">
-                          <span className="label-text font-medium">
-                            Destination
-                          </span>
-                        </label>
-                        <select
-                          className="select select-bordered w-full"
-                          value={selectedTool.destination}
-                          onChange={(e) =>
-                            updateTool(selectedTool.name, {
-                              destination: e.target.value as
-                                | "client"
-                                | "webhook",
-                              webhookUrl:
-                                e.target.value === "client"
-                                  ? undefined
-                                  : selectedTool.webhookUrl || "",
-                            })
-                          }
-                        >
-                          <option value="client">Client Tool</option>
-                          <option value="webhook">Webhook</option>
-                        </select>
-                      </div>
-
-                      {selectedTool.destination === "webhook" && (
-                        <div>
-                          <label className="label">
-                            <span className="label-text font-medium">
-                              Webhook URL
-                            </span>
-                          </label>
-                          <div className="relative">
-                            <LinkIcon className="absolute left-3 top-3 w-5 h-5 text-base-content/40" />
-                            <input
-                              type="url"
-                              className="input input-bordered w-full pl-10"
-                              placeholder="https://example.com/webhook"
-                              value={selectedTool.webhookUrl || ""}
-                              onChange={(e) =>
-                                updateTool(selectedTool.id, {
-                                  webhookUrl: e.target.value,
-                                })
-                              }
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-center py-12 text-base-content/50">
-                    <div className="bg-base-200 border-2 border-dashed rounded-xl w-24 h-24 mx-auto mb-4" />
-                    <p>Select a tool to edit its configuration and schema</p>
-                  </div>
-                )}
-              </div>
-
-              {/* JSON Schema Editor */}
               <div className="flex-1 p-6">
-                {selectedTool ? (
+                <div className="h-full border border-base-300 rounded-lg overflow-hidden">
                   <Editor
                     height="100%"
                     defaultLanguage="json"
-                    value={JSON.stringify(selectedTool.bodySchema, null, 2)}
+                    value={JSON.stringify(selectedTool.parameters, null, 2)}
                     onChange={(value) => {
                       if (!value) return;
                       try {
                         const parsed = JSON.parse(value);
-                        updateTool(selectedTool.name, { bodySchema: parsed });
+                        updateTool(selectedTool.name!, {
+                          parameters: parsed,
+                        });
                       } catch {
-                        // Ignore invalid JSON during typing
+                        // Invalid JSON - ignore
                       }
                     }}
                     theme="vs-dark"
@@ -245,45 +264,42 @@ export function ToolGroupEditModal({
                       minimap: { enabled: false },
                       fontSize: 14,
                       wordWrap: "on",
-                      formatOnPaste: true,
-                      formatOnType: true,
-                      scrollBeyondLastLine: false,
                       automaticLayout: true,
+                      scrollBeyondLastLine: false,
                     }}
                   />
-                ) : (
-                  <div className="h-full flex items-center justify-center text-base-content/40">
-                    <p>No tool selected</p>
-                  </div>
-                )}
+                </div>
               </div>
+            </>
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-base-content/40">
+              <p>Select a tool to edit</p>
             </div>
-          </div>
+          )}
+        </div>
+      </div>
 
-          {/* Footer */}
-          <div className="flex justify-between items-center p-6 border-t border-base-300">
-            <div>
-              {hasChanges && (
-                <span className="text-sm text-warning flex items-center gap-1">
-                  <BellAlertIcon className="w-4 h-4" />
-                  Unsaved changes
-                </span>
-              )}
-            </div>
-
-            <div className="flex gap-3">
-              <button onClick={onClose} className="btn btn-ghost">
-                Cancel
-              </button>
-              <button
-                onClick={() => {}}
-                disabled={!hasChanges}
-                className="btn btn-primary"
-              >
-                Save Changes
-              </button>
-            </div>
-          </div>
+      {/* Footer */}
+      <div className="flex justify-between items-center p-6 border-t border-base-300">
+        <div>
+          {hasChanges && (
+            <span className="text-warning text-sm flex items-center gap-1">
+              <BellAlertIcon className="w-4 h-4" />
+              Unsaved changes
+            </span>
+          )}
+        </div>
+        <div className="flex gap-3">
+          <button onClick={onClose} className="btn btn-ghost">
+            Cancel
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={!hasChanges}
+            className="btn btn-primary"
+          >
+            Save Changes
+          </button>
         </div>
       </div>
     </div>

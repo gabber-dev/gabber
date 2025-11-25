@@ -271,10 +271,6 @@ class List(BasePadType):
         return schema
 
 
-class Schema(BasePadType):
-    type: Literal["schema"] = "schema"
-
-
 class Object(BasePadType):
     type: Literal["object"] = "object"
     object_schema: dict[str, Any] | None = None
@@ -345,7 +341,6 @@ PadConstraint = Annotated[
     | ContextMessage
     | ContextMessageRole
     | List
-    | Schema
     | Object
     | NodeReference
     | Viseme,

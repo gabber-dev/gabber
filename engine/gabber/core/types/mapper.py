@@ -52,8 +52,6 @@ class Mapper:
             return client_value.value
         elif client_value.type == "node_reference":
             return runtime.NodeReference(node_id=client_value.node_id)
-        elif client_value.type == "schema":
-            return Mapper.client_schema_to_runtime(client_value)
         elif client_value.type == "viseme":
             val = runtime.VisemeEnum(client_value.value)
             return runtime.Viseme(value=val)
@@ -88,18 +86,10 @@ class Mapper:
         elif isinstance(runtime_value, runtime.ContextMessage):
             client_cm = Mapper.runtime_context_message_to_client(runtime_value)
             return client_cm
-        elif isinstance(runtime_value, runtime.Schema):
-            return Mapper.runtime_schema_to_client(runtime_value)
         elif isinstance(runtime_value, runtime.NodeReference):
             return client.NodeReference(node_id=runtime_value.node_id)
         elif isinstance(runtime_value, runtime.ToolDefinition):
-            return client.ToolDefinition(
-                name=runtime_value.name,
-                description=runtime_value.description,
-                parameters=Mapper.runtime_schema_to_client(runtime_value.parameters)
-                if runtime_value.parameters
-                else None,
-            )
+            return Mapper.runtime_tool_definition_to_client(runtime_value)
         elif isinstance(runtime_value, runtime.ContextMessageRole):
             return client.ContextMessageRole(
                 value=client.ContextMessageRoleEnum(runtime_value.value)
@@ -189,11 +179,14 @@ class Mapper:
         )
 
     @staticmethod
-    def runtime_schema_to_client(runtime_value: runtime.Schema) -> client.Schema:
-        return client.Schema(
-            properties=runtime_value.properties,
-            required=runtime_value.required,
-            defaults=runtime_value.defaults,
+    def runtime_tool_definition_to_client(
+        runtime_value: runtime.ToolDefinition,
+    ) -> client.ToolDefinition:
+        return client.ToolDefinition(
+            name=runtime_value.name,
+            description=runtime_value.description,
+            parameters=runtime_value.parameters if runtime_value.parameters else None,
+            destination=runtime_value.destination,
         )
 
     @staticmethod
@@ -222,11 +215,14 @@ class Mapper:
         )
 
     @staticmethod
-    def client_schema_to_runtime(client_value: client.Schema) -> runtime.Schema:
-        return runtime.Schema(
-            properties=client_value.properties,
-            required=client_value.required,
-            defaults=client_value.defaults,
+    def client_tool_definition_to_runtime(
+        client_value: client.ToolDefinition,
+    ) -> runtime.ToolDefinition:
+        return runtime.ToolDefinition(
+            name=client_value.name,
+            description=client_value.description,
+            parameters=client_value.parameters,
+            destination=client_value.destination,
         )
 
 
