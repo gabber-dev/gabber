@@ -11,20 +11,25 @@ from gabber.core.node import NodeMetadata
 
 from gabber.core.types import pad_constraints
 
-DEFAULT_TOOLS = {
-    "tools": [
-        {
-            "name": "get_weather",
-            "description": "An example tool to get the current weather for a given location.",
-            "parameters": {
+DEFAULT_TOOLS = [
+    runtime.ToolDefinition(
+        name="get_weather",
+        description="Get the current weather for a given location",
+        parameters={
+            "type": "object",
+            "properties": {
                 "location": {
                     "type": "string",
-                    "description": "The location to get the weather for.",
+                    "description": "The location to get the weather for",
                 }
             },
-        }
-    ]
-}
+            "required": ["location"],
+        },
+        destination=runtime.ToolDefinitionDestination_Client(),
+    )
+]
+
+DEFAULT_CONFIG = {"tools": [tool.model_dump() for tool in DEFAULT_TOOLS]}
 
 
 class ToolGroup(node.Node):
@@ -51,20 +56,20 @@ class ToolGroup(node.Node):
                 value=runtime.NodeReference(node_id=self.id),
             )
 
-        tools = cast(pad.PropertySinkPad, self.get_pad("tools"))
-        if not tools:
-            tools = pad.PropertySinkPad(
-                id="tools",
+        config = cast(pad.PropertySinkPad, self.get_pad("config"))
+        if not config:
+            config = pad.PropertySinkPad(
+                id="config",
                 owner_node=self,
                 default_type_constraints=[pad_constraints.Object()],
-                group="tools",
-                value=DEFAULT_TOOLS,
+                group="config",
+                value=DEFAULT_CONFIG,
             )
 
-        self.pads = [tools, self_pad]
+        self.pads = [config, self_pad]
 
     def fix_tools(self):
-        tool_pad = cast(pad.PropertySinkPad[dict[str, Any]], self.get_pad("tools"))
+        tool_pad = cast(pad.PropertySinkPad[dict[str, Any]], self.get_pad("config"))
         tools = tool_pad.get_value().get("tools", [])
         for tool in tools:
             name = tool.get("name")

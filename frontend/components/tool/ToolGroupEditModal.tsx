@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Editor from "@monaco-editor/react";
 import {
   PlusIcon,
@@ -9,12 +9,13 @@ import {
   LinkIcon,
   BellAlertIcon,
 } from "@heroicons/react/24/outline";
-import { ToolDefinition } from "@/generated/editor";
+import { Object, ToolDefinition } from "@/generated/editor";
+import { usePropertyPad } from "../flow/blocks/components/pads/hooks/usePropertyPad";
 
 interface ToolGroupEditModalProps {
-  tools: ToolDefinition[];
+  node: string;
+  pad: string;
   onClose: () => void;
-  onSave?: (tools: ToolDefinition[]) => void;
 }
 
 const DEFAULT_TOOL: ToolDefinition = {
@@ -34,25 +35,22 @@ const DEFAULT_TOOL: ToolDefinition = {
   },
 };
 
-export function ToolGroupEditModal({
-  tools: initialTools,
-  onClose,
-  onSave,
-}: ToolGroupEditModalProps) {
-  const [tools, setTools] = useState<ToolDefinition[]>(
-    initialTools.map((t) => ({ ...t, id: t.id ?? crypto.randomUUID() })),
+export function ToolGroupEditModal({ node, onClose }: ToolGroupEditModalProps) {
+  const { editorValue, setEditorValue } = usePropertyPad<Object>(
+    node,
+    "config",
   );
+
+  const editorTools = useMemo(() => {
+    if (!editorValue || !editorValue.value.tools) return [] as ToolDefinition[];
+    return editorValue.value.tools as ToolDefinition[];
+  }, [editorValue]);
+
+  const [tools, setTools] = useState<ToolDefinition[]>(editorTools);
   const [selectedIdx, setSelectedIdx] = useState<number>(-1);
   const [hasChanges, setHasChanges] = useState(false);
-  const initialDataRef = useRef<string>("");
 
   const selectedTool = tools.find((t, i) => i === selectedIdx);
-
-  useEffect(() => {
-    const initial = JSON.stringify(initialTools);
-    initialDataRef.current = initial;
-    setHasChanges(JSON.stringify(tools) !== initial);
-  }, [tools, initialTools]);
 
   const addTool = () => {
     const newTool = {
@@ -68,6 +66,7 @@ export function ToolGroupEditModal({
     setTools((prev) =>
       prev.map((t) => (t.name === name ? { ...t, ...updates } : t)),
     );
+    setHasChanges(true);
   };
 
   const deleteTool = (idx: number) => {
@@ -80,6 +79,8 @@ export function ToolGroupEditModal({
 
   const handleSave = () => {
     console.log("Saving tools:", tools);
+    setEditorValue({ type: "object", value: { tools } });
+    setHasChanges(false);
     onClose();
   };
 

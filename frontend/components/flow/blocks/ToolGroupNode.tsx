@@ -31,7 +31,10 @@ export function ToolGroupNode({ data }: BaseBlockProps) {
         shouldCloseOnOverlayClick={true}
       >
         <div className="fixed top-20 left-20 right-20 bottom-20 flex justify-center items-center border-2 rounded-lg overflow-hidden bg-base-100">
-          <ToolGroupEditModal tools={[]} onClose={() => setModalOpen(false)} />
+          <ToolGroupEditModal
+            node={data.id}
+            onClose={() => setModalOpen(false)}
+          />
         </div>
       </ReactModal>
       <div className="flex w-full items-center gap-2 bg-base-300 border-b-2 border-black p-3 rounded-t-lg drag-handle cursor-grab active:cursor-grabbing">

@@ -16,8 +16,6 @@ import numpy as np
 from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict, Field, field_serializer
 
-from . import pad_constraints
-
 
 class BaseRuntimeType(ABC):
     def to_log_values(self) -> dict[str, str | float | int | bool]:
