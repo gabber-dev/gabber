@@ -259,7 +259,7 @@ export function ToolGroupEditModal({ node, onClose }: ToolGroupEditModalProps) {
                             <LinkIcon className="absolute left-3 top-2.5 w-4 h-4 text-base-content/40 pointer-events-none" />
                             <input
                               type="url"
-                              className="input input-bordered input-sm w-full pl-10"
+                              className="input input-bordered input-sm w-full"
                               placeholder="https://..."
                               value={selectedTool.destination.url ?? ""}
                               onChange={(e) =>
