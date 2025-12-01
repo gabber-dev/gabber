@@ -308,9 +308,7 @@ export function ToolGroupEditModal({ node, onClose }: ToolGroupEditModalProps) {
                                     max_retries: parseInt(e.target.value) || 0,
                                   };
                                   updateTool(selectedTool.name, {
-                                    destination: {
-                                      ...selectedTool.destination,
-                                    },
+                                    destination: newDest,
                                   });
                                 }}
                               />
@@ -342,9 +340,7 @@ export function ToolGroupEditModal({ node, onClose }: ToolGroupEditModalProps) {
                                       parseFloat(e.target.value) || 1,
                                   };
                                   updateTool(selectedTool.name, {
-                                    destination: {
-                                      ...selectedTool.destination,
-                                    },
+                                    destination: newDest,
                                   });
                                 }}
                               />
@@ -376,9 +372,7 @@ export function ToolGroupEditModal({ node, onClose }: ToolGroupEditModalProps) {
                                       parseFloat(e.target.value) || 2,
                                   };
                                   updateTool(selectedTool.name, {
-                                    destination: {
-                                      ...selectedTool.destination,
-                                    },
+                                    destination: newDest,
                                   });
                                 }}
                               />
