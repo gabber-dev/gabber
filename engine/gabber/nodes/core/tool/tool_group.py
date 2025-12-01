@@ -4,6 +4,7 @@
 import asyncio
 import logging
 from typing import Any, cast
+import re
 
 from gabber.core import node, pad
 from gabber.core.types import runtime
@@ -28,6 +29,10 @@ DEFAULT_TOOLS = [
         destination=runtime.ToolDefinitionDestination_Client(),
     )
 ]
+
+DEFAULT_RETRY_POLICY = runtime.ToolDefinitionDestination_Webhook_RetryPolicy(
+    max_retries=3, backoff_factor=2.0, initial_delay_seconds=1.0
+)
 
 DEFAULT_CONFIG = {"tools": [tool.model_dump() for tool in DEFAULT_TOOLS]}
 
@@ -70,11 +75,65 @@ class ToolGroup(node.Node):
 
     def fix_tools(self):
         tool_pad = cast(pad.PropertySinkPad[dict[str, Any]], self.get_pad("config"))
-        tools = tool_pad.get_value().get("tools", [])
-        for tool in tools:
+        config_value = tool_pad.get_value()
+        tools: list[dict[str, Any]] = config_value.get("tools", [])
+
+        if not tools:
+            return
+
+        seen_names: set[str] = set()
+        valid_tools: list[dict[str, Any]] = []
+
+        for i, tool in enumerate(tools):
+            if not isinstance(tool, dict):
+                logging.warning(f"Skipping invalid tool entry (not a dict): {tool}")
+                continue
+
             name = tool.get("name")
-            if not name:
-                tool["name"] = "unnamed_tool"
+            if not name or not isinstance(name, str) or name.strip() == "":
+                base_name = tool.get("description", "unnamed_tool").strip()
+                if not base_name:
+                    base_name = "tool"
+
+                sanitized = re.sub(r"[^a-zA-Z0-9_]", "_", base_name)[:50]
+                if not sanitized or sanitized[0].isdigit():
+                    sanitized = "tool_" + sanitized
+                name = sanitized or f"tool_{i}"
+
+            name = name.strip()
+
+            original_name = name
+            suffix = 1
+            while name in seen_names:
+                name = f"{original_name}_{suffix}"
+                suffix += 1
+
+            seen_names.add(name)
+            tool["name"] = name
+
+            if "description" not in tool or not isinstance(
+                tool.get("description"), str
+            ):
+                tool["description"] = tool.get("description", f"Tool: {name}")
+
+            if "parameters" not in tool:
+                tool["parameters"] = {
+                    "type": "object",
+                    "properties": {},
+                    "required": [],
+                }
+
+            if "destination" not in tool:
+                tool["destination"] = {"type": "client"}
+
+            valid_tools.append(tool)
+
+        config_value["tools"] = valid_tools
+
+        logging.info(
+            f"ToolGroup '{self.id}' fixed tools: {len(valid_tools)} valid, "
+            f"{len(tools) - len(valid_tools)} removed/invalid"
+        )
 
     def resolve_enabled_pads(self):
         tool_pad = cast(pad.PropertySinkPad[dict[str, Any]], self.get_pad("tools"))

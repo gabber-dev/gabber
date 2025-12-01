@@ -174,6 +174,9 @@ export type Destination = ToolDefinitionDestination_Client | ToolDefinitionDesti
 export type Type23 = "client";
 export type Type24 = "webhook";
 export type Url = string;
+export type MaxRetries = number;
+export type BackoffFactor = number;
+export type InitialDelaySeconds = number;
 export type Type25 = "object";
 export type Type26 = "viseme";
 export type VisemeEnum =
@@ -735,6 +738,13 @@ export interface ToolDefinitionDestination_Client {
 export interface ToolDefinitionDestination_Webhook {
   type?: Type24;
   url: Url;
+  retry_policy: ToolDefinitionDestination_Webhook_RetryPolicy;
+  [k: string]: unknown;
+}
+export interface ToolDefinitionDestination_Webhook_RetryPolicy {
+  max_retries: MaxRetries;
+  backoff_factor: BackoffFactor;
+  initial_delay_seconds: InitialDelaySeconds;
   [k: string]: unknown;
 }
 export interface Object {

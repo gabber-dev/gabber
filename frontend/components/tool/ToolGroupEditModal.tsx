@@ -9,7 +9,11 @@ import {
   LinkIcon,
   BellAlertIcon,
 } from "@heroicons/react/24/outline";
-import { Object, ToolDefinition } from "@/generated/editor";
+import {
+  Object,
+  ToolDefinition,
+  ToolDefinitionDestination_Webhook_RetryPolicy,
+} from "@/generated/editor";
 import { usePropertyPad } from "../flow/blocks/components/pads/hooks/usePropertyPad";
 
 interface ToolGroupEditModalProps {
@@ -50,7 +54,7 @@ export function ToolGroupEditModal({ node, onClose }: ToolGroupEditModalProps) {
   const [selectedIdx, setSelectedIdx] = useState<number>(-1);
   const [hasChanges, setHasChanges] = useState(false);
 
-  const selectedTool = tools.find((t, i) => i === selectedIdx);
+  const selectedTool = tools.find((_, i) => i === selectedIdx);
 
   const addTool = () => {
     const newTool = {
@@ -60,6 +64,7 @@ export function ToolGroupEditModal({ node, onClose }: ToolGroupEditModalProps) {
     };
     setTools((prev) => [...prev, newTool]);
     setSelectedIdx(tools.length);
+    setHasChanges(true);
   };
 
   const updateTool = (name: string, updates: Partial<ToolDefinition>) => {
@@ -70,15 +75,18 @@ export function ToolGroupEditModal({ node, onClose }: ToolGroupEditModalProps) {
   };
 
   const deleteTool = (idx: number) => {
-    setTools((prev) => prev.filter((t, i) => i !== idx));
+    setTools((prev) => prev.filter((_, i) => i !== idx));
+    setHasChanges(true);
+
     if (selectedIdx === idx) {
-      const remaining = tools.filter((t, i) => i !== idx);
-      setSelectedIdx(idx > 0 ? idx - 1 : remaining.length > 0 ? 0 : -1);
+      const newIdx = idx > 0 ? idx - 1 : tools.length > 1 ? 0 : -1;
+      setSelectedIdx(newIdx);
+    } else if (selectedIdx > idx) {
+      setSelectedIdx(selectedIdx - 1);
     }
   };
 
   const handleSave = () => {
-    console.log("Saving tools:", tools);
     setEditorValue({ type: "object", value: { tools } });
     setHasChanges(false);
     onClose();
@@ -94,8 +102,9 @@ export function ToolGroupEditModal({ node, onClose }: ToolGroupEditModalProps) {
         </button>
       </div>
 
+      {/* Main Content */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left: Tool List */}
+        {/* Tools List Sidebar */}
         <div className="w-72 border-r border-base-300 flex flex-col">
           <div className="p-3 border-b border-base-300 flex justify-between items-center">
             <h3 className="font-medium text-sm">Tools ({tools.length})</h3>
@@ -160,13 +169,12 @@ export function ToolGroupEditModal({ node, onClose }: ToolGroupEditModalProps) {
           </div>
         </div>
 
-        {/* Right: Editor */}
+        {/* Tool Editor */}
         <div className="flex-1 flex flex-col">
           {selectedTool ? (
             <>
-              {/* Compact Metadata */}
-              <div className="p-4 border-b border-base-300 space-y-3">
-                {/* Tool Name */}
+              {/* Tool Metadata */}
+              <div className="p-4 border-b border-base-300 space-y-4">
                 <div>
                   <label className="label label-text text-xs font-medium">
                     Name
@@ -181,9 +189,7 @@ export function ToolGroupEditModal({ node, onClose }: ToolGroupEditModalProps) {
                   />
                 </div>
 
-                {/* Description + Destination */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Description */}
                   <div>
                     <label className="label label-text text-xs font-medium">
                       Description
@@ -199,7 +205,6 @@ export function ToolGroupEditModal({ node, onClose }: ToolGroupEditModalProps) {
                     />
                   </div>
 
-                  {/* Destination */}
                   <div className="space-y-3">
                     <div>
                       <label className="label label-text text-xs font-medium">
@@ -210,15 +215,33 @@ export function ToolGroupEditModal({ node, onClose }: ToolGroupEditModalProps) {
                         value={selectedTool.destination.type}
                         onChange={(e) => {
                           const type = e.target.value as "client" | "webhook";
-                          updateTool(selectedTool.name, {
-                            destination:
-                              type === "webhook"
-                                ? {
-                                    type: "webhook",
-                                    url: selectedTool.destination.url ?? "",
-                                  }
-                                : { type: "client" },
-                          });
+
+                          if (type === "client") {
+                            updateTool(selectedTool.name, {
+                              destination: { type: "client" },
+                            });
+                          } else {
+                            // Preserve existing webhook config when switching back
+                            const existing =
+                              selectedTool.destination.type === "webhook"
+                                ? selectedTool.destination
+                                : {
+                                    url: "",
+                                    retry_policy: {
+                                      max_retries: 3,
+                                      initial_delay_seconds: 1,
+                                      backoff_factor: 2,
+                                    } as ToolDefinitionDestination_Webhook_RetryPolicy,
+                                  };
+
+                            updateTool(selectedTool.name, {
+                              destination: {
+                                type: "webhook",
+                                url: existing.url || "",
+                                retry_policy: existing.retry_policy,
+                              },
+                            });
+                          }
                         }}
                       >
                         <option value="client">Client Tool</option>
@@ -227,50 +250,167 @@ export function ToolGroupEditModal({ node, onClose }: ToolGroupEditModalProps) {
                     </div>
 
                     {selectedTool.destination.type === "webhook" && (
-                      <div>
-                        <label className="label label-text text-xs font-medium">
-                          Webhook URL
-                        </label>
-                        <div className="relative">
-                          <LinkIcon className="absolute left-2.5 top-2.5 w-4 h-4 text-base-content/40 pointer-events-none" />
-                          <input
-                            type="url"
-                            className="input input-bordered input-sm w-full"
-                            placeholder="https://..."
-                            value={selectedTool.destination.url ?? ""}
-                            onChange={(e) =>
-                              updateTool(selectedTool.name, {
-                                destination: {
-                                  ...selectedTool.destination,
-                                  url: e.target.value,
-                                },
-                              })
-                            }
-                          />
+                      <>
+                        <div>
+                          <label className="label label-text text-xs font-medium">
+                            Webhook URL
+                          </label>
+                          <div className="relative">
+                            <LinkIcon className="absolute left-3 top-2.5 w-4 h-4 text-base-content/40 pointer-events-none" />
+                            <input
+                              type="url"
+                              className="input input-bordered input-sm w-full pl-10"
+                              placeholder="https://..."
+                              value={selectedTool.destination.url ?? ""}
+                              onChange={(e) =>
+                                updateTool(selectedTool.name, {
+                                  destination: {
+                                    ...selectedTool.destination,
+                                    url: e.target.value,
+                                  },
+                                })
+                              }
+                            />
+                          </div>
                         </div>
-                      </div>
+
+                        {/* Retry Policy */}
+                        <div className="col-span-2 border-t border-base-300 pt-4 -mx-4 px-4 bg-base-100">
+                          <h4 className="text-xs font-semibold mb-3">
+                            Retry Policy
+                          </h4>
+                          <div className="grid grid-cols-3 gap-3">
+                            <div>
+                              <label className="label label-text text-xs">
+                                Max Retries
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="20"
+                                className="input input-bordered input-xs w-full"
+                                value={
+                                  selectedTool.destination.type === "webhook"
+                                    ? (selectedTool.destination.retry_policy
+                                        ?.max_retries ?? 3)
+                                    : 0
+                                }
+                                onChange={(e) => {
+                                  const newDest = {
+                                    ...selectedTool.destination,
+                                  };
+                                  if (newDest.type !== "webhook") return;
+                                  newDest.retry_policy = {
+                                    ...(newDest.retry_policy ?? {
+                                      initial_delay_seconds: 1,
+                                      backoff_factor: 2,
+                                    }),
+                                    max_retries: parseInt(e.target.value) || 0,
+                                  };
+                                  updateTool(selectedTool.name, {
+                                    destination: {
+                                      ...selectedTool.destination,
+                                    },
+                                  });
+                                }}
+                              />
+                            </div>
+                            <div>
+                              <label className="label label-text text-xs">
+                                Initial Delay (s)
+                              </label>
+                              <input
+                                type="number"
+                                min="0.1"
+                                step="0.1"
+                                className="input input-bordered input-xs w-full"
+                                value={
+                                  selectedTool.destination.retry_policy
+                                    ?.initial_delay_seconds ?? 1
+                                }
+                                onChange={(e) => {
+                                  const newDest = {
+                                    ...selectedTool.destination,
+                                  };
+                                  if (newDest.type !== "webhook") return;
+                                  newDest.retry_policy = {
+                                    ...(newDest.retry_policy ?? {
+                                      max_retries: 3,
+                                      backoff_factor: 2,
+                                    }),
+                                    initial_delay_seconds:
+                                      parseFloat(e.target.value) || 1,
+                                  };
+                                  updateTool(selectedTool.name, {
+                                    destination: {
+                                      ...selectedTool.destination,
+                                    },
+                                  });
+                                }}
+                              />
+                            </div>
+                            <div>
+                              <label className="label label-text text-xs">
+                                Backoff Factor
+                              </label>
+                              <input
+                                type="number"
+                                min="1"
+                                step="0.5"
+                                className="input input-bordered input-xs w-full"
+                                value={
+                                  selectedTool.destination.retry_policy
+                                    ?.backoff_factor ?? 2
+                                }
+                                onChange={(e) => {
+                                  const newDest = {
+                                    ...selectedTool.destination,
+                                  };
+                                  if (newDest.type !== "webhook") return;
+                                  newDest.retry_policy = {
+                                    ...(newDest.retry_policy ?? {
+                                      max_retries: 3,
+                                      initial_delay_seconds: 1,
+                                    }),
+                                    backoff_factor:
+                                      parseFloat(e.target.value) || 2,
+                                  };
+                                  updateTool(selectedTool.name, {
+                                    destination: {
+                                      ...selectedTool.destination,
+                                    },
+                                  });
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* Parameters Editor - Maximum height */}
+              {/* JSON Schema Editor */}
               <div className="flex flex-col flex-1 p-4">
                 <div className="bg-base-200 px-3 py-1 border-b border-base-300 text-xs font-medium">
                   Parameters (JSON Schema)
                 </div>
                 <div className="relative border border-base-300 grow w-full">
                   <Editor
-                    className="absolute top-0 bottom-0 left-0 right-0"
+                    className="absolute inset-0"
                     defaultLanguage="json"
                     value={JSON.stringify(selectedTool.parameters, null, 2)}
                     onChange={(value) => {
                       if (!value) return;
                       try {
+                        const parsed = JSON.parse(value);
                         updateTool(selectedTool.name, {
-                          parameters: JSON.parse(value),
+                          parameters: parsed,
                         });
-                      } catch {}
+                      } catch (e) {
+                        // Invalid JSON — ignore
+                      }
                     }}
                     theme="vs-dark"
                     options={{

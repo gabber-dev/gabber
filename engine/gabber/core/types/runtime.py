@@ -326,9 +326,16 @@ class ToolDefinition(BaseModel, BaseRuntimeType):
         return "tool_definition"
 
 
+class ToolDefinitionDestination_Webhook_RetryPolicy(BaseModel):
+    max_retries: int
+    backoff_factor: float
+    initial_delay_seconds: float
+
+
 class ToolDefinitionDestination_Webhook(BaseModel):
     type: Literal["webhook"] = "webhook"
     url: str
+    retry_policy: ToolDefinitionDestination_Webhook_RetryPolicy
 
 
 class ToolDefinitionDestination_Client(BaseModel):
