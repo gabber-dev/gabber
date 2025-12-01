@@ -1,6 +1,6 @@
 import { useEditor } from "@/hooks/useEditor";
 import { usePropertyPad } from "./blocks/components/pads/hooks/usePropertyPad";
-import { ContextMessage, List, PadValue } from "@gabber/client-react";
+import { ContextMessage, List, PadValue, ToolCall } from "@gabber/client-react";
 import { ContextMessageContentItem } from "@/generated/editor";
 import { useEffect, useRef, useState } from "react";
 
@@ -179,7 +179,18 @@ function ContextMessageItem({ item }: { item: ContextMessage }) {
           <ContentItem key={index} item={contentItem} />
         ))}
       </div>
-      <div></div>
+      {item.tool_calls && (
+        <div>
+          <h4 className="font-semibold">
+            Tool Calls (id: {item.tool_call_id})
+          </h4>
+          <ul className="list-disc pl-5">
+            {item.tool_calls.map((call, index) => (
+              <li key={index}>{call.name}</li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
