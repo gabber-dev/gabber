@@ -89,9 +89,18 @@ class ContextMessageRole(BaseModel):
         arbitrary_types_allowed = True
 
 
+class ToolCall(BaseModel):
+    call_id: str
+    index: int
+    name: str
+    arguments: dict[str, Any]
+
+
 class ContextMessage(BaseModel):
     type: Literal["context_message"] = "context_message"
     role: ContextMessageRole
+    tool_calls: list[ToolCall]
+    tool_call_id: str | None = None
     content: list[ContextMessageContentItem]
 
 

@@ -140,6 +140,11 @@ export type Count = number;
 export type Type17 = "context_message_role";
 export type ContextMessageRoleEnum = "user" | "assistant" | "system" | "tool";
 export type Type18 = "context_message";
+export type CallId = string;
+export type Index = number;
+export type Name = string;
+export type ToolCalls = ToolCall[];
+export type ToolCallId = string | null;
 export type ContentType = "text" | "image" | "audio" | "video";
 export type Text = string | null;
 export type Width = number;
@@ -161,11 +166,11 @@ export type Type19 = "enum";
 export type Value5 = string;
 export type Type20 = "secret";
 export type SecretId = string;
-export type Name = string;
+export type Name1 = string;
 export type Type21 = "node_reference";
 export type NodeId1 = string;
 export type Type22 = "tool_definition";
-export type Name1 = string;
+export type Name2 = string;
 export type Description = string;
 export type Parameters = {
   [k: string]: unknown;
@@ -324,7 +329,7 @@ export type Type41 = "secret";
 export type UpdatedAt = string;
 export type CreatedAt = string;
 export type Id5 = string;
-export type Name2 = string;
+export type Name3 = string;
 export type Options1 = PublicSecret[];
 export type Type42 = "bounding_box";
 export type Type43 = "point";
@@ -404,7 +409,7 @@ export type Edits1 =
 export type Nodes = NodeEditorRepresentation[];
 export type Portals = Portal[] | null;
 export type Id6 = string;
-export type Name3 = string;
+export type Name4 = string;
 export type SourceNode1 = string;
 export type SourcePad1 = string;
 /**
@@ -443,7 +448,7 @@ export type Type60 = "node";
 /**
  * Name of the node
  */
-export type Name4 = string;
+export type Name5 = string;
 /**
  * Human-readable description of what the node does
  */
@@ -456,7 +461,7 @@ export type Id8 = string;
 /**
  * Name of the subgraph
  */
-export type Name5 = string;
+export type Name6 = string;
 /**
  * Whether the subgraph can be edited in the editor
  */
@@ -673,7 +678,19 @@ export interface ContextMessageRole {
 export interface ContextMessage {
   type?: Type18;
   role: ContextMessageRole;
+  tool_calls: ToolCalls;
+  tool_call_id?: ToolCallId;
   content: Content;
+  [k: string]: unknown;
+}
+export interface ToolCall {
+  call_id: CallId;
+  index: Index;
+  name: Name;
+  arguments: Arguments;
+  [k: string]: unknown;
+}
+export interface Arguments {
   [k: string]: unknown;
 }
 export interface ContextMessageContentItem {
@@ -715,7 +732,7 @@ export interface Enum {
 export interface Secret {
   type?: Type20;
   secret_id: SecretId;
-  name: Name;
+  name: Name1;
   [k: string]: unknown;
 }
 export interface NodeReference {
@@ -725,7 +742,7 @@ export interface NodeReference {
 }
 export interface ToolDefinition {
   type?: Type22;
-  name: Name1;
+  name: Name2;
   description: Description;
   parameters?: Parameters;
   destination: Destination;
@@ -874,7 +891,7 @@ export interface PublicSecret {
   updated_at: UpdatedAt;
   created_at: CreatedAt;
   id: Id5;
-  name: Name2;
+  name: Name3;
   [k: string]: unknown;
 }
 export interface BoundingBox {
@@ -960,7 +977,7 @@ export interface NodeNoteRecommendation {
 }
 export interface Portal {
   id: Id6;
-  name: Name3;
+  name: Name4;
   source_node: SourceNode1;
   source_pad: SourcePad1;
   editor_position: EditorPosition8;
@@ -1016,7 +1033,7 @@ export interface NodeLibraryResponse {
 }
 export interface GraphLibraryItem_Node {
   type?: Type60;
-  name: Name4;
+  name: Name5;
   node_type: NodeType1;
   description: Description2;
   metadata: NodeMetadata1;
@@ -1040,7 +1057,7 @@ export interface NodeMetadata1 {
 export interface GraphLibraryItem_SubGraph {
   type?: Type61;
   id: Id8;
-  name: Name5;
+  name: Name6;
   graph: GraphEditorRepresentation3;
   editable?: Editable;
   [k: string]: unknown;

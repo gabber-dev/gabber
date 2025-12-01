@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import Editor from "@monaco-editor/react";
 import {
   PlusIcon,
@@ -18,7 +18,6 @@ import { usePropertyPad } from "../flow/blocks/components/pads/hooks/useProperty
 
 interface ToolGroupEditModalProps {
   node: string;
-  pad: string;
   onClose: () => void;
 }
 

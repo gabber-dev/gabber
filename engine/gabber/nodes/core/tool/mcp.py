@@ -98,23 +98,23 @@ class MCP(node.Node):
             self.logger.info("MCP Client ping loop cancelled")
             raise
 
-    # async def to_tool_definitions(self) -> list[runtime.ToolDefinition]:
-    #     async with self.init_lock:
-    #         if not self.session:
-    #             raise ValueError("MCP session not initialized")
-    #         mcp_tools_res = await self.session.list_tools()
-    #         mcp_tools = mcp_tools_res.tools
-    #         tool_defs: list[runtime.ToolDefinition] = []
-    #         for t in mcp_tools:
-    #             tool_def = runtime.ToolDefinition(
-    #                 name=t.name,
-    #                 description=t.description or "",
-    #                 parameters=t.inputSchema,
-    #                 destination=runtime.ToolDefinitionDestination_MCP(),
-    #             )
-    #             tool_defs.append(tool_def)
+    async def to_tool_definitions(self) -> list[runtime.ToolDefinition]:
+        async with self.init_lock:
+            if not self.session:
+                raise ValueError("MCP session not initialized")
+            mcp_tools_res = await self.session.list_tools()
+            mcp_tools = mcp_tools_res.tools
+            tool_defs: list[runtime.ToolDefinition] = []
+            for t in mcp_tools:
+                tool_def = runtime.ToolDefinition(
+                    name=t.name,
+                    description=t.description or "",
+                    parameters=t.inputSchema,
+                    destination=runtime.ToolDefinitionDestination_Client(),
+                )
+                tool_defs.append(tool_def)
 
-    #         return tool_defs
+            return tool_defs
 
     async def call_tool(self, tool_call: runtime.ToolCall):
         self.logger.info(f"MCP Client calling tool '{tool_call.name}'")

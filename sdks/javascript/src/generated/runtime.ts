@@ -85,6 +85,11 @@ export type Count = number;
 export type Type16 = "context_message_role";
 export type ContextMessageRoleEnum = "user" | "assistant" | "system" | "tool";
 export type Type17 = "context_message";
+export type CallId = string;
+export type Index = number;
+export type Name = string;
+export type ToolCalls = ToolCall[];
+export type ToolCallId = string | null;
 export type ContentType = "text" | "image" | "audio" | "video";
 export type Text = string | null;
 export type Width = number;
@@ -106,11 +111,11 @@ export type Type18 = "enum";
 export type Value6 = string;
 export type Type19 = "secret";
 export type SecretId = string;
-export type Name = string;
+export type Name1 = string;
 export type Type20 = "node_reference";
 export type NodeId3 = string;
 export type Type21 = "tool_definition";
-export type Name1 = string;
+export type Name2 = string;
 export type Description = string;
 export type Parameters = {
   [k: string]: unknown;
@@ -283,7 +288,7 @@ export type Type36 = "secret";
 export type UpdatedAt = string;
 export type CreatedAt = string;
 export type Id = string;
-export type Name2 = string;
+export type Name3 = string;
 export type Options1 = PublicSecret[];
 export type Type37 = "bounding_box";
 export type Type38 = "point";
@@ -417,7 +422,19 @@ export interface ContextMessageRole {
 export interface ContextMessage {
   type?: Type17;
   role: ContextMessageRole;
+  tool_calls: ToolCalls;
+  tool_call_id?: ToolCallId;
   content: Content;
+  [k: string]: unknown;
+}
+export interface ToolCall {
+  call_id: CallId;
+  index: Index;
+  name: Name;
+  arguments: Arguments;
+  [k: string]: unknown;
+}
+export interface Arguments {
   [k: string]: unknown;
 }
 export interface ContextMessageContentItem {
@@ -459,7 +476,7 @@ export interface Enum {
 export interface Secret {
   type?: Type19;
   secret_id: SecretId;
-  name: Name;
+  name: Name1;
   [k: string]: unknown;
 }
 export interface NodeReference {
@@ -469,7 +486,7 @@ export interface NodeReference {
 }
 export interface ToolDefinition {
   type?: Type21;
-  name: Name1;
+  name: Name2;
   description: Description;
   parameters?: Parameters;
   destination: Destination;
@@ -576,7 +593,7 @@ export interface PublicSecret {
   updated_at: UpdatedAt;
   created_at: CreatedAt;
   id: Id;
-  name: Name2;
+  name: Name3;
   [k: string]: unknown;
 }
 export interface BoundingBox {

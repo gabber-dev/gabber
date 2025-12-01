@@ -48,7 +48,7 @@ class LLMRequest:
         for tool in self.tool_definitions:
             txt = tool.description
             if tool.parameters is not None:
-                for k, v in tool.parameters.to_json_schema().items():
+                for k, v in tool.parameters.items():
                     txt += f"{k}: {v}\n"
 
             total += token_estimator.estimate_tokens_for_content_item(

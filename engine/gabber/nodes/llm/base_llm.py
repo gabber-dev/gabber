@@ -415,34 +415,32 @@ class BaseLLM(node.Node, ABC):
 
             tool_group_node = self.get_tool_group_node()
             if tool_group_node is not None:
-                pass
-                # TODO
-            #     tool_nodes = cast(ToolGroup, tool_group_node).tool_nodes
-            #     for tn in tool_nodes:
-            #         td = tn.get_tool_definition()
-            #         tg_tool_definitions.append(td)
-            #         all_tool_definitions.append(td)
+                tg_tool_definitions = cast(
+                    ToolGroup, tool_group_node
+                ).list_tool_definitions()
+                all_tool_definitions.extend(tg_tool_definitions)
 
-            # mcp_tool_definitions: dict[mcp.MCP, list[runtime.ToolDefinition]] = {}
-            # mcp_sinks = self.mcp_server_pads()
-            # for mcp_sink in mcp_sinks:
-            #     mcp_node = cast(mcp.MCP, mcp_sink.get_value())
-            #     if not isinstance(mcp_node, mcp.MCP):
-            #         continue
-            #     if mcp_node not in mcp_tool_definitions:
-            #         mcp_tool_definitions[mcp_node] = []
-            # try:
-            #     tdfs = await mcp_node.to_tool_definitions()
-            #     mcp_tool_definitions[mcp_node].extend(tdfs)
-            #     all_tool_definitions.extend(tdfs)
-            # except Exception as e:
-            #     self.logger.error(
-            #         f"BaseLLM: Failed to get tool definitions from MCP node {mcp_node.id}: {e}"
-            #     )
+            mcp_tool_definitions: dict[mcp.MCP, list[runtime.ToolDefinition]] = {}
+            mcp_sinks = self.mcp_server_pads()
+            for mcp_sink in mcp_sinks:
+                mcp_node = cast(mcp.MCP, mcp_sink.get_value())
+                if not isinstance(mcp_node, mcp.MCP):
+                    continue
+                if mcp_node not in mcp_tool_definitions:
+                    mcp_tool_definitions[mcp_node] = []
+                try:
+                    tdfs = await mcp_node.to_tool_definitions()
+                    mcp_tool_definitions[mcp_node].extend(tdfs)
+                    all_tool_definitions.extend(tdfs)
+                except Exception as e:
+                    self.logger.error(
+                        f"BaseLLM: Failed to get tool definitions from MCP node {mcp_node.id}: {e}"
+                    )
 
             request = LLMRequest(
                 context=messages, tool_definitions=all_tool_definitions
             )
+            self.logger.info(f"Starting LLM generation: {request}")
             if running_handle is not None:
                 self.logger.warning(
                     "LLM is already running a generation, skipping new request."

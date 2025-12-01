@@ -13,6 +13,15 @@ import { NodeId } from "./components/NodeId";
 import { SelfPad } from "./components/pads/SelfPad";
 import ReactModal from "react-modal";
 import { ToolGroupEditModal } from "@/components/tool/ToolGroupEditModal";
+import {
+  Object,
+  PadEditorRepresentation,
+  ToolDefinition,
+} from "@/generated/editor";
+import { usePropertyPad } from "./components/pads/hooks/usePropertyPad";
+import { PropertyEdit } from "./components/pads/property_edit/PropertyEdit";
+import { PropertyPad } from "./components/pads/PropertyPad";
+import { PadHandle } from "./components/pads/PadHandle";
 
 export function ToolGroupNode({ data }: BaseBlockProps) {
   const [modalOpen, setModalOpen] = useState(false);
@@ -21,6 +30,14 @@ export function ToolGroupNode({ data }: BaseBlockProps) {
       (p) => p.type === "PropertySourcePad" && p.id === "self",
     );
   }, [data]);
+  const { editorValue, setEditorValue } = usePropertyPad<Object>(
+    data.id,
+    "config",
+  );
+  const tools = (editorValue?.value?.tools as ToolDefinition[]) || [];
+  const toolPads = data.pads.filter(
+    (p) => p.id !== "self" && p.id !== "config",
+  );
   return (
     <div className="w-80 flex flex-col bg-base-200 border-2 border-black border-b-4 border-r-4 rounded-lg relative">
       <ReactModal
@@ -61,7 +78,41 @@ export function ToolGroupNode({ data }: BaseBlockProps) {
         </button>
       </div>
 
-      <div className="flex flex-1 flex-col gap-2 p-4 nodrag cursor-default"></div>
+      <div className="flex flex-1 flex-col gap-2 p-4 nodrag cursor-default">
+        {tools.length === 0 && (
+          <div className="text-sm italic text-base-400">
+            No tools configured.
+          </div>
+        )}
+        {toolPads.map((p) => {
+          const tool = tools.find((t) => t.name === p.id);
+          if (!tool) return null;
+          return <ToolPad key={p.id} tool={tool} node={data.id} pad={p} />;
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ToolPad({
+  tool,
+  node,
+  pad,
+}: {
+  tool: ToolDefinition;
+  node: string;
+  pad: PadEditorRepresentation;
+}) {
+  return (
+    <div className="relative w-full flex flex-col">
+      <div className="font-semibold">{tool.name}</div>
+      <div className={`relative w-full flex items-center gap-2`}>
+        <div className="absolute -left-4">
+          <PadHandle notes={[]} data={pad} />
+        </div>
+        enabled
+        <PropertyEdit padId={pad.id} nodeId={node} />
+      </div>
     </div>
   );
 }

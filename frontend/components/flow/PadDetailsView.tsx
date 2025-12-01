@@ -179,6 +179,7 @@ function ContextMessageItem({ item }: { item: ContextMessage }) {
           <ContentItem key={index} item={contentItem} />
         ))}
       </div>
+      <div></div>
     </div>
   );
 }

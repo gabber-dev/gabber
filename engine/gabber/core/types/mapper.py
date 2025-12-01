@@ -55,6 +55,8 @@ class Mapper:
         elif client_value.type == "viseme":
             val = runtime.VisemeEnum(client_value.value)
             return runtime.Viseme(value=val)
+        elif client_value.type == "tool_definition":
+            return Mapper.client_tool_definition_to_runtime(client_value)
 
         raise ValueError(f"Unsupported client pad value type: {client_value.type}")
 
@@ -175,6 +177,16 @@ class Mapper:
             role=client.ContextMessageRole(
                 value=client.ContextMessageRoleEnum(runtime_value.role.value)
             ),
+            tool_call_id=runtime_value.tool_call_id,
+            tool_calls=[
+                client.ToolCall(
+                    call_id=tc.call_id,
+                    index=tc.index,
+                    name=tc.name,
+                    arguments=tc.arguments,
+                )
+                for tc in runtime_value.tool_calls
+            ],
             content=cnts,
         )
 
@@ -182,11 +194,30 @@ class Mapper:
     def runtime_tool_definition_to_client(
         runtime_value: runtime.ToolDefinition,
     ) -> client.ToolDefinition:
+        client_dest: client.ToolDefinitionDestination
+        if isinstance(
+            runtime_value.destination, runtime.ToolDefinitionDestination_Client
+        ):
+            client_dest = client.ToolDefinitionDestination_Client()
+        elif isinstance(
+            runtime_value.destination,
+            runtime.ToolDefinitionDestination_Webhook,
+        ):
+            client_dest = client.ToolDefinitionDestination_Webhook(
+                url=runtime_value.destination.url,
+                retry_policy=client.ToolDefinitionDestination_Webhook_RetryPolicy(
+                    max_retries=runtime_value.destination.retry_policy.max_retries,
+                    backoff_factor=runtime_value.destination.retry_policy.backoff_factor,
+                    initial_delay_seconds=runtime_value.destination.retry_policy.initial_delay_seconds,
+                ),
+            )
+        else:
+            raise ValueError("Unknown ToolDefinitionDestination type")
         return client.ToolDefinition(
             name=runtime_value.name,
             description=runtime_value.description,
             parameters=runtime_value.parameters if runtime_value.parameters else None,
-            destination=runtime_value.destination,
+            destination=client_dest,
         )
 
     @staticmethod
@@ -209,7 +240,16 @@ class Mapper:
                     )
                 )
         return runtime.ContextMessage(
-            tool_calls=[],
+            tool_calls=[
+                runtime.ToolCall(
+                    call_id=tc.call_id,
+                    index=tc.index,
+                    name=tc.name,
+                    arguments=tc.arguments,
+                )
+                for tc in client_value.tool_calls
+            ],
+            tool_call_id=client_value.tool_call_id,
             role=runtime.ContextMessageRoleEnum(client_value.role.value),
             content=cnts,
         )
@@ -218,11 +258,30 @@ class Mapper:
     def client_tool_definition_to_runtime(
         client_value: client.ToolDefinition,
     ) -> runtime.ToolDefinition:
+        runtime_dest: runtime.ToolDefinitionDestination
+        if isinstance(
+            client_value.destination, client.ToolDefinitionDestination_Client
+        ):
+            runtime_dest = runtime.ToolDefinitionDestination_Client()
+        elif isinstance(
+            client_value.destination,
+            client.ToolDefinitionDestination_Webhook,
+        ):
+            runtime_dest = runtime.ToolDefinitionDestination_Webhook(
+                url=client_value.destination.url,
+                retry_policy=runtime.ToolDefinitionDestination_Webhook_RetryPolicy(
+                    max_retries=client_value.destination.retry_policy.max_retries,
+                    backoff_factor=client_value.destination.retry_policy.backoff_factor,
+                    initial_delay_seconds=client_value.destination.retry_policy.initial_delay_seconds,
+                ),
+            )
+        else:
+            raise ValueError("Unknown ToolDefinitionDestination type")
         return runtime.ToolDefinition(
             name=client_value.name,
             description=client_value.description,
             parameters=client_value.parameters,
-            destination=client_value.destination,
+            destination=runtime_dest,
         )
 
 
