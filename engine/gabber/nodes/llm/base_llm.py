@@ -358,6 +358,7 @@ class BaseLLM(node.Node, ABC):
                 text_stream.eos()
 
                 all_tool_calls = get_tool_calls_from_choice_deltas(all_deltas)
+                self.logger.info(f"NEIL Detected tool calls: {all_tool_calls}")
                 if all_tool_calls:
                     if tool_calls_started_source:
                         tool_calls_started_source.push_item(runtime.Trigger(), ctx)
@@ -378,6 +379,9 @@ class BaseLLM(node.Node, ABC):
                             runtime.ContextMessageContentItem_Text(content=full_content)
                         ],
                         tool_calls=all_tool_calls,
+                        tool_call_id=all_tool_calls[0].call_id
+                        if all_tool_calls
+                        else None,
                     ),
                     ctx,
                 )

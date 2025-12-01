@@ -179,16 +179,34 @@ function ContextMessageItem({ item }: { item: ContextMessage }) {
           <ContentItem key={index} item={contentItem} />
         ))}
       </div>
-      {item.tool_calls && (
-        <div>
-          <h4 className="font-semibold">
-            Tool Calls (id: {item.tool_call_id})
-          </h4>
-          <ul className="list-disc pl-5">
+      {item.tool_calls && item.tool_calls.length > 0 && (
+        <div className="pt-1 border-t border-base-300">
+          <div className="text-sm">
+            Tool Calls{" "}
+            {item.tool_call_id && (
+              <span className="font-mono text-xs">({item.tool_call_id})</span>
+            )}
+          </div>
+          <div className="space-y-3">
             {item.tool_calls.map((call, index) => (
-              <li key={index}>{call.name}</li>
+              <div key={index} className="bg-base-100 p-3 rounded-box">
+                <div className="font-mono text-sm font-bold text-info mb-2">
+                  {call.name}
+                </div>
+                {call.arguments && Object.keys(call.arguments).length > 0 && (
+                  <div className="bg-base-200 p-2 rounded text-xs font-mono overflow-x-auto">
+                    <pre>{JSON.stringify(call.arguments, null, 2)}</pre>
+                  </div>
+                )}
+                {(!call.arguments ||
+                  Object.keys(call.arguments).length === 0) && (
+                  <div className="text-xs text-base-content/60 italic">
+                    No arguments provided
+                  </div>
+                )}
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
       )}
     </div>
