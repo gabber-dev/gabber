@@ -155,7 +155,6 @@ class ToolGroup(node.Node):
     async def call_tools(
         self,
         tool_calls: list[runtime.ToolCall],
-        ctx: pad.RequestContext,
     ):
         tool_definitions = self.list_tool_definitions()
         tasks: list[asyncio.Task[str]] = []
@@ -171,15 +170,13 @@ class ToolGroup(node.Node):
             if isinstance(
                 tool_defn.destination, runtime.ToolDefinitionDestination_Client
             ):
-                task = asyncio.create_task(
-                    self._client_tool_call(tool_defn, tool_call, ctx)
-                )
+                task = asyncio.create_task(self._client_tool_call(tool_defn, tool_call))
                 tasks.append(task)
             elif isinstance(
                 tool_defn.destination, runtime.ToolDefinitionDestination_Webhook
             ):
                 task = asyncio.create_task(
-                    self._webhook_tool_call(tool_defn, tool_call, ctx)
+                    self._webhook_tool_call(tool_defn, tool_call)
                 )
                 tasks.append(task)
 
@@ -191,7 +188,6 @@ class ToolGroup(node.Node):
         self,
         tool: runtime.ToolDefinition,
         tc: runtime.ToolCall,
-        ctx: pad.RequestContext,
     ):
         assert isinstance(tool.destination, runtime.ToolDefinitionDestination_Webhook)
         retry_policy = tool.destination.retry_policy
@@ -246,7 +242,6 @@ class ToolGroup(node.Node):
         self,
         tool: runtime.ToolDefinition,
         tc: runtime.ToolCall,
-        ctx: pad.RequestContext,
     ):
         assert isinstance(tool.destination, runtime.ToolDefinitionDestination_Client)
         fut = asyncio.Future[str]()
