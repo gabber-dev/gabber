@@ -50,6 +50,7 @@ export class Engine  {
     this.getSourcePad = this.getSourcePad.bind(this);
     this.getSinkPad = this.getSinkPad.bind(this);
     this.getPropertyPad = this.getPropertyPad.bind(this);
+    this.registerToolCallHandler = this.registerToolCallHandler.bind(this);
   }
 
   public registerToolCallHandler(toolName: string, handler: (args: string) => Promise<string>): void {
