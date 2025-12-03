@@ -310,6 +310,23 @@ export type ObjectSchema = {
 export type Type49 = "node_reference";
 export type NodeTypes = string[];
 export type Type50 = "viseme";
+export type Type51 = "tool_call_request";
+/**
+ * Request for a tool call
+ */
+export type Payload3 = ToolCallRequest_Payload_InitiateRequest;
+export type Type52 = "initiate_request";
+export type Type53 = "tool_call_response";
+/**
+ * Response for a tool call
+ */
+export type Payload4 = ToolCallResponse_Payload_InitiateAck | ToolCallResponse_Payload_Result;
+export type Type54 = "initiate_ack";
+export type CallId1 = string;
+export type Type55 = "result";
+export type CallId2 = string;
+export type Result = string | null;
+export type Error1 = string | null;
 
 export interface DummyType {
   req: RuntimeRequest;
@@ -321,6 +338,8 @@ export interface DummyType {
   pad_value: PadValue;
   pad_constraint: PadConstraint;
   log_item: RuntimeEventPayload_LogItem;
+  tool_call_request: ToolCallRequest;
+  tool_call_response: ToolCallResponse;
   [k: string]: unknown;
 }
 export interface RuntimeRequest {
@@ -657,5 +676,33 @@ export interface NodeReference1 {
 }
 export interface Viseme1 {
   type?: Type50;
+  [k: string]: unknown;
+}
+export interface ToolCallRequest {
+  type?: Type51;
+  payload: Payload3;
+  [k: string]: unknown;
+}
+export interface ToolCallRequest_Payload_InitiateRequest {
+  type?: Type52;
+  tool_definition: ToolDefinition;
+  tool_call: ToolCall;
+  [k: string]: unknown;
+}
+export interface ToolCallResponse {
+  type?: Type53;
+  payload: Payload4;
+  [k: string]: unknown;
+}
+export interface ToolCallResponse_Payload_InitiateAck {
+  type?: Type54;
+  call_id: CallId1;
+  [k: string]: unknown;
+}
+export interface ToolCallResponse_Payload_Result {
+  type?: Type55;
+  call_id: CallId2;
+  result: Result;
+  error: Error1;
   [k: string]: unknown;
 }

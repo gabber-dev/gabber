@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
-import logging
-from typing import Any, cast
+import aiohttp
+from typing import Any, cast, Tuple
 import jsonschema
 
 from gabber.core import node, pad
@@ -127,10 +127,6 @@ class ToolGroup(node.Node):
 
         self.pads = cast(list[pad.Pad], [config_pad, self_pad] + tool_pads)
 
-    # TODO
-    def has_tool(self, tool_name: str) -> bool:
-        return False
-
     def list_tool_definitions(self):
         config_pad = cast(pad.PropertySinkPad[dict[str, Any]], self.get_pad("config"))
         tools = config_pad.get_value().get("tools", [])
@@ -156,28 +152,111 @@ class ToolGroup(node.Node):
 
         return res
 
-    # TODO
     async def call_tools(
         self,
         tool_calls: list[runtime.ToolCall],
         ctx: pad.RequestContext,
-        timeout: float = 30.0,  # Added timeout parameter with default
-    ) -> list[str]:
+    ):
+        tool_definitions = self.list_tool_definitions()
         tasks: list[asyncio.Task[str]] = []
-        results: list[str] = []
+        results: list[str | BaseException] = []
+        for tool_call in tool_calls:
+            tool = next(
+                (td for td in tool_definitions if td.name == tool_call.name), None
+            )
+            if not tool:
+                results.append(f"Tool '{tool_call.name}' not found")
+                continue
+
+            if isinstance(tool.destination, runtime.ToolDefinitionDestination_Client):
+                task = asyncio.create_task(self._client_tool_call(tool, tool_call, ctx))
+                tasks.append(task)
+            elif isinstance(
+                tool.destination, runtime.ToolDefinitionDestination_Webhook
+            ):
+                task = asyncio.create_task(
+                    self._webhook_tool_call(tool, tool_call, ctx)
+                )
+                tasks.append(task)
+
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
         return results
 
-    async def _safe_tool_call(
+    async def _webhook_tool_call(
         self,
-        tool: Any,  # Replace with actual tool type
+        tool: runtime.ToolDefinition,
         tc: runtime.ToolCall,
         ctx: pad.RequestContext,
-    ) -> str:
-        try:
-            res = await tool.call_tool(tc, ctx)
-            return res
-        except asyncio.CancelledError:
-            return f"Tool '{tc.name}' cancelled"
-        except Exception as e:
-            logging.error(f"Error in tool '{tc.name}': {str(e)}")
-            return f"Tool '{tc.name}' failed: {str(e)}"
+    ):
+        assert isinstance(tool.destination, runtime.ToolDefinitionDestination_Webhook)
+        retry_policy = tool.destination.retry_policy
+        url = tool.destination.url
+        run_id = self.room.name
+        last_exception = None
+        for i in range(retry_policy.max_retries + 1):
+            try:
+                async with aiohttp.ClientSession(
+                    headers={
+                        "x-run-id": run_id,
+                    }
+                ) as session:
+                    async with session.post(
+                        url,
+                        json={
+                            "tool_name": tool.name,
+                            "parameters": tc.arguments,
+                        },
+                    ) as response:
+                        if response.status == 200:
+                            data = await response.text()
+                            return data
+                        else:
+                            self.logger.warning(
+                                f"ToolGroup '{self.id}' webhook call to '{url}' failed with status {response.status}"
+                            )
+            except Exception as e:
+                self.logger.warning(
+                    f"ToolGroup '{self.id}' webhook call to '{url}' failed with error: {str(e)}"
+                )
+                last_exception = e
+                await asyncio.sleep(
+                    retry_policy.initial_delay_seconds
+                    * (retry_policy.backoff_factor**i)
+                )
+
+        raise (
+            last_exception if last_exception else Exception("Webhook tool call failed")
+        )
+
+    async def _client_tool_call(
+        self,
+        tool: runtime.ToolDefinition,
+        tc: runtime.ToolCall,
+        ctx: pad.RequestContext,
+    ):
+        assert isinstance(tool.destination, runtime.ToolDefinitionDestination_Client)
+        fut = asyncio.Future[str]()
+        self.client_call_queue.put_nowait((tool, tc, fut))
+        return await fut
+
+    @property
+    def client_call_queue(
+        self,
+    ) -> asyncio.Queue[
+        Tuple[
+            runtime.ToolDefinition,
+            runtime.ToolCall,
+            asyncio.Future[str],
+        ]
+    ]:
+        if not hasattr(self, "_client_call_queue"):
+            self._client_call_queue = asyncio.Queue[
+                Tuple[
+                    runtime.ToolDefinition,
+                    runtime.ToolCall,
+                    asyncio.Future[str],
+                ]
+            ]()
+
+        return self._client_call_queue

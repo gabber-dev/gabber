@@ -221,44 +221,42 @@ export class Engine  {
       return;
     }
 
-    if (topic !== "runtime_api") {
-      return; // Ignore data not on this pad's channel
-    }
-
-    const msg = JSON.parse(new TextDecoder().decode(data));
-    if (msg.type === "ack") {
-    } else if (msg.type === "complete") {
-        if(msg.error) {
-            console.error("Error in request:", msg.error);
-            const pendingRequest = this.pendingRequests.get(msg.req_id);
-            if (pendingRequest) {
-                pendingRequest.rej(msg.error);
-            }
-        } else {
-            const pendingRequest = this.pendingRequests.get(msg.req_id);
-            if (pendingRequest) {
-                pendingRequest.res(msg.payload);
-            }
-        }
-        this.pendingRequests.delete(msg.req_id);
-    } else if (msg.type === "event") {
-        const castedMsg: RuntimeEvent = msg
-        const payload = castedMsg.payload;
-        if(payload.type === "value") {
-          const nodeId = payload.node_id;
-          const padId = payload.pad_id;
-          const handlers = this.padValueHandlers.get(`${nodeId}:${padId}`);
-          for(const handler of handlers || []) {
-            handler(payload.value);
+    if (topic === "runtime_api") {
+      const msg = JSON.parse(new TextDecoder().decode(data));
+      if (msg.type === "ack") {
+      } else if (msg.type === "complete") {
+          if(msg.error) {
+              console.error("Error in request:", msg.error);
+              const pendingRequest = this.pendingRequests.get(msg.req_id);
+              if (pendingRequest) {
+                  pendingRequest.rej(msg.error);
+              }
+          } else {
+              const pendingRequest = this.pendingRequests.get(msg.req_id);
+              if (pendingRequest) {
+                  pendingRequest.res(msg.payload);
+              }
           }
-        } else if (payload.type === "logs") {
-          if(this.handler?.onLogItem) {
-            for(const item of payload.items) {
-              this.handler.onLogItem(item);
+          this.pendingRequests.delete(msg.req_id);
+      } else if (msg.type === "event") {
+          const castedMsg: RuntimeEvent = msg
+          const payload = castedMsg.payload;
+          if(payload.type === "value") {
+            const nodeId = payload.node_id;
+            const padId = payload.pad_id;
+            const handlers = this.padValueHandlers.get(`${nodeId}:${padId}`);
+            for(const handler of handlers || []) {
+              handler(payload.value);
+            }
+          } else if (payload.type === "logs") {
+            if(this.handler?.onLogItem) {
+              for(const item of payload.items) {
+                this.handler.onLogItem(item);
+              }
             }
           }
-        }
-    }
+      }
+    } else if (topic === "tool_call") {}
   }
 }
 
