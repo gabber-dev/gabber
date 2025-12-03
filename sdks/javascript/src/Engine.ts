@@ -20,12 +20,17 @@ import { DataPacket_Kind, RemoteParticipant, Room } from 'livekit-client';
 import { PropertyPad, SinkPad, SourcePad } from './pad/Pad';
 import { LocalAudioTrack, LocalVideoTrack, LocalTrack } from './LocalTrack';
 import { Subscription } from './Subscription';
-import { PadValue, Payload, RuntimeEvent, RuntimeEventPayload_LogItem, RuntimeRequest, RuntimeRequestPayload_LockPublisher, RuntimeResponsePayload } from './generated/runtime';
+import { PadValue, Payload, RuntimeEvent, RuntimeEventPayload_LogItem, RuntimeRequest, RuntimeRequestPayload_LockPublisher, RuntimeResponsePayload, ToolCallRequest, ToolCallResponse, ToolCallResponse_Payload_InitiateAck, ToolCallResponse_Payload_Result } from './generated/runtime';
 import { Publication } from './Publication';
 
 export interface EngineHandler {
   onConnectionStateChange?: (state: ConnectionState) => void;
   onLogItem?(item: RuntimeEventPayload_LogItem): void;
+}
+
+export interface ToolCallHandler<ARGS> {
+  tool_name: string;
+  handleToolCall(args: ARGS): Promise<string>;
 }
 
 export class Engine  {
@@ -35,9 +40,16 @@ export class Engine  {
   private runtimeRequestIdCounter: number = 1;
   private pendingRequests: Map<string, {res: (response: any) => void, rej: (error: string) => void}> = new Map();
   private padValueHandlers: Map<string, Array<(data: PadValue) => void>> = new Map();
+  private toolCallHandlers: Map<string, ToolCallHandler<any>> = new Map();
 
-  constructor(params: {handler?: EngineHandler}) {
+  constructor(params: {handler?: EngineHandler, toolCallHandlers?: ToolCallHandler<any>[]}) {
     console.debug("Creating new Engine instance");
+    for(const handler of params.toolCallHandlers || []) {
+      if (this.toolCallHandlers.has(handler.tool_name)) {
+        throw new Error(`Duplicate tool call handler for tool: ${handler.tool_name}`);
+      }
+      this.toolCallHandlers.set(handler.tool_name, handler);
+    }
     this.livekitRoom = new Room();
     this.handler = params.handler;
     this.connect = this.connect.bind(this);
@@ -49,7 +61,6 @@ export class Engine  {
     this.getSourcePad = this.getSourcePad.bind(this);
     this.getSinkPad = this.getSinkPad.bind(this);
     this.getPropertyPad = this.getPropertyPad.bind(this);
-    this.setupRoomEventListeners();
   }
 
   public get connectionState(): ConnectionState {
@@ -256,7 +267,47 @@ export class Engine  {
             }
           }
       }
-    } else if (topic === "tool_call") {}
+    } else if (topic === "tool_call") {
+      const msg = JSON.parse(new TextDecoder().decode(data));
+      const castedMsg: ToolCallRequest = msg;
+      if(castedMsg.payload.type == "initiate_request") {
+        const toolHandler = this.toolCallHandlers.get(castedMsg.payload.tool_definition.name);
+        const ackPayload: ToolCallResponse_Payload_InitiateAck = {
+          type: "initiate_ack",
+          call_id: castedMsg.payload.tool_call.call_id,
+        }
+        const ackMsg: ToolCallResponse = {
+          type: "tool_call_response",
+          payload: ackPayload,
+        }
+        this.livekitRoom.localParticipant.publishData(new TextEncoder().encode(JSON.stringify(ackMsg)), { topic: "tool_call", destinationIdentities: ["gabber-engine"] });
+        toolHandler?.handleToolCall(castedMsg.payload.tool_call.args).then((result) => {
+          const respPayload: ToolCallResponse_Payload_Result = {
+            type: "result",
+            call_id: castedMsg.payload.tool_call.call_id,
+            result,
+            error: null,
+          }
+          const respMsg: ToolCallResponse = {
+            type: "tool_call_response",
+            payload: respPayload,
+          }
+          this.livekitRoom.localParticipant.publishData(new TextEncoder().encode(JSON.stringify(respMsg)), { topic: "tool_call", destinationIdentities: ["gabber-engine"] });
+        }).catch((err) => {
+          const respPayload: ToolCallResponse_Payload_Result = {
+            type: "result",
+            call_id: castedMsg.payload.tool_call.call_id,
+            result: null,
+            error: err.message,
+          }
+          const respMsg: ToolCallResponse = {
+            type: "tool_call_response",
+            payload: respPayload,
+          }
+          this.livekitRoom.localParticipant.publishData(new TextEncoder().encode(JSON.stringify(respMsg)), { topic: "tool_call", destinationIdentities: ["gabber-engine"] });
+        });
+      }
+    }
   }
 }
 
