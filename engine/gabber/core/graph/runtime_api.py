@@ -58,10 +58,12 @@ class RuntimeApi:
             tc: runtime.ToolCall,
             fut: asyncio.Future[str],
         ):
-            assert isinstance(td, runtime.ToolDefinitionDestination_Client)
+            assert isinstance(td.destination, runtime.ToolDefinitionDestination_Client)
             client_td = mapper.Mapper.runtime_to_client(td)
             assert isinstance(client_td, client.ToolDefinition)
-            client_tc = mapper.Mapper.runtime_to_client(tc)
+            client_tc = client.ToolCall(
+                call_id=tc.call_id, index=tc.index, name=tc.name, arguments=tc.arguments
+            )
             assert isinstance(client_tc, client.ToolCall)
 
             ack_fut = asyncio.Future[None]()
@@ -107,10 +109,11 @@ class RuntimeApi:
 
         async def tg_task(tg: ToolGroup):
             q = tg.client_call_queue
-            (td, tc, fut) = await q.get()
-            t = asyncio.create_task(single_tg_task(tg, td, tc, fut))
-            all_tasks.add(t)
-            t.add_done_callback(lambda _: all_tasks.remove(t))
+            while True:
+                (td, tc, fut) = await q.get()
+                t = asyncio.create_task(single_tg_task(tg, td, tc, fut))
+                all_tasks.add(t)
+                t.add_done_callback(lambda _: all_tasks.remove(t))
 
         tc_tasks = [asyncio.create_task(tg_task(tg)) for tg in tool_group_nodes]
         await asyncio.gather(*tc_tasks)

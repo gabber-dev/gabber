@@ -68,7 +68,6 @@ async def entrypoint_inner(
     log_handler_t = asyncio.create_task(log_handler.run())
     await graph.load_from_snapshot(graph_rep)
     await ctx.connect()
-    logger.info("NEIL Starting graph execution")
     room = ctx.room
     graph_t: asyncio.Task | None = asyncio.create_task(
         graph.run(room=room, runtime_api=runtime_api)

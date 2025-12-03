@@ -358,7 +358,6 @@ class BaseLLM(node.Node, ABC):
                 text_stream.eos()
 
                 all_tool_calls = get_tool_calls_from_choice_deltas(all_deltas)
-                self.logger.info(f"NEIL Detected tool calls: {all_tool_calls}")
                 if all_tool_calls:
                     if tool_calls_started_source:
                         tool_calls_started_source.push_item(runtime.Trigger(), ctx)
@@ -444,7 +443,6 @@ class BaseLLM(node.Node, ABC):
             request = LLMRequest(
                 context=messages, tool_definitions=all_tool_definitions
             )
-            self.logger.info(f"Starting LLM generation: {request}")
             if running_handle is not None:
                 self.logger.warning(
                     "LLM is already running a generation, skipping new request."
@@ -509,6 +507,8 @@ class BaseLLM(node.Node, ABC):
         async def run_tg_task():
             tg_res = await self.call_tg_calls(tg_tool_calls=tg_tool_calls, ctx=ctx)
             for i, res in enumerate(tg_res):
+                if isinstance(res, BaseException):
+                    res = f"Error calling tool '{tg_tool_calls[i].name}': {res}"
                 msg = runtime.ContextMessage(
                     role=runtime.ContextMessageRoleEnum.TOOL,
                     content=[runtime.ContextMessageContentItem_Text(content=res)],

@@ -161,21 +161,25 @@ class ToolGroup(node.Node):
         tasks: list[asyncio.Task[str]] = []
         results: list[str | BaseException] = []
         for tool_call in tool_calls:
-            tool = next(
+            tool_defn = next(
                 (td for td in tool_definitions if td.name == tool_call.name), None
             )
-            if not tool:
+            if not tool_defn:
                 results.append(f"Tool '{tool_call.name}' not found")
                 continue
 
-            if isinstance(tool.destination, runtime.ToolDefinitionDestination_Client):
-                task = asyncio.create_task(self._client_tool_call(tool, tool_call, ctx))
-                tasks.append(task)
-            elif isinstance(
-                tool.destination, runtime.ToolDefinitionDestination_Webhook
+            if isinstance(
+                tool_defn.destination, runtime.ToolDefinitionDestination_Client
             ):
                 task = asyncio.create_task(
-                    self._webhook_tool_call(tool, tool_call, ctx)
+                    self._client_tool_call(tool_defn, tool_call, ctx)
+                )
+                tasks.append(task)
+            elif isinstance(
+                tool_defn.destination, runtime.ToolDefinitionDestination_Webhook
+            ):
+                task = asyncio.create_task(
+                    self._webhook_tool_call(tool_defn, tool_call, ctx)
                 )
                 tasks.append(task)
 
@@ -195,6 +199,9 @@ class ToolGroup(node.Node):
         run_id = self.room.name
         last_exception = None
         for i in range(retry_policy.max_retries + 1):
+            sleep_time = retry_policy.initial_delay_seconds * (
+                retry_policy.backoff_factor**i
+            )
             try:
                 async with aiohttp.ClientSession(
                     headers={
@@ -215,15 +222,21 @@ class ToolGroup(node.Node):
                             self.logger.warning(
                                 f"ToolGroup '{self.id}' webhook call to '{url}' failed with status {response.status}"
                             )
+                            last_exception = Exception(
+                                f"Webhook tool call failed with status {response.status}"
+                            )
+                            if i < retry_policy.max_retries:
+                                await asyncio.sleep(sleep_time)
             except Exception as e:
                 self.logger.warning(
                     f"ToolGroup '{self.id}' webhook call to '{url}' failed with error: {str(e)}"
                 )
                 last_exception = e
-                await asyncio.sleep(
-                    retry_policy.initial_delay_seconds
-                    * (retry_policy.backoff_factor**i)
+                self.logger.info(
+                    f"ToolGroup '{self.id}' retrying webhook call to '{url}' in {sleep_time} seconds"
                 )
+                if i < retry_policy.max_retries:
+                    await asyncio.sleep(sleep_time)
 
         raise (
             last_exception if last_exception else Exception("Webhook tool call failed")
