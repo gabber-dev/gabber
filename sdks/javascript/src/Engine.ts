@@ -28,11 +28,6 @@ export interface EngineHandler {
   onLogItem?(item: RuntimeEventPayload_LogItem): void;
 }
 
-export interface ToolCallHandler<ARGS> {
-  tool_name: string;
-  handleToolCall(args: ARGS): Promise<string>;
-}
-
 export class Engine  {
   private livekitRoom: Room;
   private handler?: EngineHandler;
@@ -40,16 +35,10 @@ export class Engine  {
   private runtimeRequestIdCounter: number = 1;
   private pendingRequests: Map<string, {res: (response: any) => void, rej: (error: string) => void}> = new Map();
   private padValueHandlers: Map<string, Array<(data: PadValue) => void>> = new Map();
-  private toolCallHandlers: Map<string, ToolCallHandler<any>> = new Map();
+  private toolCallHandlers: Map<string, (args: any) => Promise<string>> = new Map();
 
-  constructor(params: {handler?: EngineHandler, toolCallHandlers?: ToolCallHandler<any>[]}) {
+  constructor(params: {handler?: EngineHandler}) {
     console.debug("Creating new Engine instance");
-    for(const handler of params.toolCallHandlers || []) {
-      if (this.toolCallHandlers.has(handler.tool_name)) {
-        throw new Error(`Duplicate tool call handler for tool: ${handler.tool_name}`);
-      }
-      this.toolCallHandlers.set(handler.tool_name, handler);
-    }
     this.livekitRoom = new Room();
     this.handler = params.handler;
     this.connect = this.connect.bind(this);
@@ -61,6 +50,13 @@ export class Engine  {
     this.getSourcePad = this.getSourcePad.bind(this);
     this.getSinkPad = this.getSinkPad.bind(this);
     this.getPropertyPad = this.getPropertyPad.bind(this);
+  }
+
+  public registerToolCallHandler(toolName: string, handler: (args: string) => Promise<string>): void {
+    if (this.toolCallHandlers.has(toolName)) {
+      throw new Error(`Tool call handler already registered for tool: ${toolName}`);
+    }
+    this.toolCallHandlers.set(toolName, handler);
   }
 
   public get connectionState(): ConnectionState {
@@ -281,7 +277,20 @@ export class Engine  {
           payload: ackPayload,
         }
         this.livekitRoom.localParticipant.publishData(new TextEncoder().encode(JSON.stringify(ackMsg)), { topic: "tool_call", destinationIdentities: ["gabber-engine"] });
-        toolHandler?.handleToolCall(castedMsg.payload.tool_call.args).then((result) => {
+        if(!toolHandler) {
+          this.livekitRoom.localParticipant.publishData(new TextEncoder().encode(JSON.stringify({
+            type: "tool_call_response",
+            payload: {
+              type: "result",
+              call_id: castedMsg.payload.tool_call.call_id,
+              result: null,
+              error: `No handler registered for tool: ${castedMsg.payload.tool_definition.name}`,
+            }
+          })), { topic: "tool_call", destinationIdentities: ["gabber-engine"] });
+          return;
+        }
+
+        toolHandler(castedMsg.payload.tool_call.args).then((result) => {
           const respPayload: ToolCallResponse_Payload_Result = {
             type: "result",
             call_id: castedMsg.payload.tool_call.call_id,
