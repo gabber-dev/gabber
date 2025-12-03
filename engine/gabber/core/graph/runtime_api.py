@@ -163,6 +163,7 @@ class RuntimeApi:
                     ack_fut = self._tc_acks.get(payload.call_id)
                     if ack_fut and not ack_fut.done():
                         ack_fut.set_result(None)
+
                 elif response.payload.type == "result":
                     payload = response.payload
                     res_fut = self._tc_results.get(payload.call_id)
