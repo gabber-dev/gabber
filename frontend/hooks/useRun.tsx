@@ -60,10 +60,23 @@ function Inner({
   children?: React.ReactNode;
   generateConnectionDetailsImpl: GenerateConnectionDetails;
 }) {
-  const { connect, disconnect, connectionState } = useEngine();
+  const { connect, disconnect, connectionState, registerToolCallHandler } =
+    useEngine();
   const [runId, setRunId] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const startingRef = useRef(false);
+  const registered = useRef(false);
+
+  useMemo(() => {
+    if (registered.current) {
+      return;
+    }
+    registered.current = true;
+    registerToolCallHandler("get_weather", async (params) => {
+      console.log("Getting weather for:", params);
+      return "Cold";
+    });
+  }, [registerToolCallHandler]);
 
   const startRun = useCallback(
     async (params: { graph: GraphEditorRepresentation }) => {

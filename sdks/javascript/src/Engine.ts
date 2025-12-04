@@ -55,9 +55,6 @@ export class Engine  {
   }
 
   public registerToolCallHandler(toolName: string, handler: (args: string) => Promise<string>): void {
-    if (this.toolCallHandlers.has(toolName)) {
-      throw new Error(`Tool call handler already registered for tool: ${toolName}`);
-    }
     this.toolCallHandlers.set(toolName, handler);
   }
 
