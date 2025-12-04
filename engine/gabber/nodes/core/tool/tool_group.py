@@ -70,7 +70,8 @@ class ToolGroup(node.Node):
                 value=DEFAULT_CONFIG,
             )
 
-        self.pads = [config, self_pad]
+        other_pads = [p for p in self.pads if p.get_id() not in ["config", "self"]]
+        self.pads = [config, self_pad] + other_pads
         self.resolve_enabled_pads()
 
     def resolve_enabled_pads(self):
@@ -114,6 +115,7 @@ class ToolGroup(node.Node):
         for tool in sanitized_tools:
             pad_id = f"{tool['name']}"
             if not self.get_pad(pad_id):
+                print("NEIL sanitized tool:", tool, pad_id)
                 tool_pad = pad.PropertySinkPad(
                     id=pad_id,
                     group=pad_id,

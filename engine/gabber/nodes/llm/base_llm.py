@@ -568,7 +568,7 @@ class BaseLLM(node.Node, ABC):
         tool_group_node = self.get_tool_group_node()
         if not tool_group_node:
             raise RuntimeError("Tool group node not found")
-        return await tool_group_node.call_tools(tg_tool_calls, ctx)
+        return await tool_group_node.call_tools(tg_tool_calls)
 
     def get_notes(self) -> list[node.NodeNote]:
         notes: list[node.NodeNote] = []
