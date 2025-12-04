@@ -289,7 +289,7 @@ export class Engine  {
           return;
         }
 
-        toolHandler(castedMsg.payload.tool_call.args).then((result) => {
+        toolHandler(castedMsg.payload.tool_call.arguments).then((result) => {
           const respPayload: ToolCallResponse_Payload_Result = {
             type: "result",
             call_id: castedMsg.payload.tool_call.call_id,
