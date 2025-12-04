@@ -9,13 +9,12 @@ from abc import abstractmethod, ABC
 from dataclasses import dataclass
 from enum import Enum as PyEnum
 from typing import Annotated, Any, Literal, cast, TypeVar
+from pydantic.types import Json
 
 import cv2
 import numpy as np
 from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict, Field, field_serializer
-
-from . import pad_constraints
 
 
 class BaseRuntimeType(ABC):
@@ -320,10 +319,33 @@ class ToolCall(BaseModel, BaseRuntimeType):
 class ToolDefinition(BaseModel, BaseRuntimeType):
     name: str
     description: str
-    parameters: "Schema | None" = None
+    parameters: dict[str, Any] | None = None
+    destination: "ToolDefinitionDestination"
 
     def log_type(self) -> str:
         return "tool_definition"
+
+
+class ToolDefinitionDestination_Webhook_RetryPolicy(BaseModel):
+    max_retries: int
+    backoff_factor: float
+    initial_delay_seconds: float
+
+
+class ToolDefinitionDestination_Webhook(BaseModel):
+    type: Literal["webhook"] = "webhook"
+    url: str
+    retry_policy: ToolDefinitionDestination_Webhook_RetryPolicy
+
+
+class ToolDefinitionDestination_Client(BaseModel):
+    type: Literal["client"] = "client"
+
+
+ToolDefinitionDestination = Annotated[
+    ToolDefinitionDestination_Client | ToolDefinitionDestination_Webhook,
+    Field(discriminator="type"),
+]
 
 
 class ContextMessageContentItem_Audio(BaseModel):
@@ -409,113 +431,6 @@ class ContextMessageContent_ToolCallDelta(BaseModel):
     id: str | None
     name: str | None
     arguments: str | None
-
-
-class Schema(BaseModel, BaseRuntimeType):
-    properties: dict[
-        str,
-        pad_constraints.String
-        | pad_constraints.Integer
-        | pad_constraints.Float
-        | pad_constraints.Boolean
-        | pad_constraints.Object
-        | pad_constraints.List,
-    ]
-    required: list[str] | None = None
-    defaults: dict[str, Any] | None = None
-
-    def to_json_schema(self) -> dict[str, Any]:
-        properties = {k: v.to_json_schema() for k, v in self.properties.items()}
-        for d in self.defaults or {}:
-            if self.defaults is None:
-                continue
-            if d in properties:
-                properties[d]["default"] = self.defaults[d]
-        return {
-            "type": "object",
-            "properties": properties,
-            "required": self.required or [],
-        }
-
-    @classmethod
-    def from_json_schema(cls, schema: dict[str, Any]) -> "Schema":
-        properties: dict[
-            str,
-            pad_constraints.String
-            | pad_constraints.Integer
-            | pad_constraints.Float
-            | pad_constraints.Boolean
-            | pad_constraints.Object
-            | pad_constraints.List,
-        ] = {}
-        for key, value in schema.get("properties", {}).items():
-            type_ = value.get("type")
-            if type_ == "string":
-                properties[key] = pad_constraints.String()
-            elif type_ == "integer":
-                properties[key] = pad_constraints.Integer()
-            elif type_ == "number":
-                properties[key] = pad_constraints.Float()
-            elif type_ == "boolean":
-                properties[key] = pad_constraints.Boolean()
-            elif type_ == "object":
-                properties[key] = pad_constraints.Object()
-            elif type_ == "array":
-                properties[key] = pad_constraints.List(item_type_constraints=None)
-            else:
-                raise ValueError(f"Unsupported property type: {type_}")
-        return cls(
-            properties=properties,
-            required=schema.get("required", []),
-            defaults={
-                k: v.get("default")
-                for k, v in schema.get("properties", {}).items()
-                if "default" in v
-            },
-        )
-
-    def intersect(self, other: "Schema"):
-        if not isinstance(other, Schema):
-            return None
-        properties: dict[
-            str,
-            pad_constraints.String
-            | pad_constraints.Integer
-            | pad_constraints.Float
-            | pad_constraints.Boolean
-            | pad_constraints.Object
-            | pad_constraints.List,
-        ] = {}
-        defaults: dict[str, Any] = {}
-        for d in self.defaults or {}:
-            if self.defaults is None:
-                continue
-            defaults[d] = self.defaults[d]
-        for key, value in self.properties.items():
-            if key in other.properties:
-                intersection = cast(pad_constraints.BasePadType, value).intersect(
-                    cast(pad_constraints.BasePadType, other.properties[key])
-                )
-                intersection = cast(
-                    pad_constraints.String
-                    | pad_constraints.Integer
-                    | pad_constraints.Float
-                    | pad_constraints.Boolean
-                    | None,
-                    intersection,
-                )
-                if intersection is not None:
-                    properties[key] = intersection
-        my_required = set(self.required or [])
-        other_required = set(other.required or [])
-        return Schema(
-            properties=properties,
-            required=list(my_required | other_required),
-            defaults=defaults,
-        )
-
-    def log_type(self) -> str:
-        return "schema"
 
 
 class Trigger(BaseModel, BaseRuntimeType):
@@ -618,7 +533,6 @@ RuntimePadValue = (
     | ContextMessageRole
     | ContextMessage
     | ToolDefinition
-    | Schema
     | NodeReference
     | Secret
     | Enum

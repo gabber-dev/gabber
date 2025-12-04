@@ -7,6 +7,7 @@ import io
 import json
 import logging
 import wave
+from pydantic.types import Json
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Any, Callable, cast
@@ -22,7 +23,6 @@ from gabber.core.types.runtime import (
     ContextMessageContentItem_Video,
     ContextMessageRoleEnum,
     ToolDefinition,
-    Schema,
 )
 from gabber.lib.video.mp4_encoder import MP4_Encoder
 from .token_estimator import TokenEstimator
@@ -48,7 +48,7 @@ class LLMRequest:
         for tool in self.tool_definitions:
             txt = tool.description
             if tool.parameters is not None:
-                for k, v in tool.parameters.to_json_schema().items():
+                for k, v in tool.parameters.items():
                     txt += f"{k}: {v}\n"
 
             total += token_estimator.estimate_tokens_for_content_item(
@@ -202,7 +202,7 @@ class LLMRequest:
     def to_openai_completion_tools_input(self) -> list[chat.ChatCompletionToolParam]:
         tools: list[chat.ChatCompletionToolParam] = []
         for tool in self.tool_definitions:
-            parameters: dict[str, Any] | None = None
+            parameters: Json
             if tool.parameters is None:
                 parameters = {
                     "type": "object",
@@ -211,8 +211,6 @@ class LLMRequest:
                 }
             elif isinstance(tool.parameters, dict):
                 parameters = tool.parameters
-            elif isinstance(tool.parameters, Schema):
-                parameters = tool.parameters.to_json_schema()
             else:
                 parameters = {
                     "type": "object",

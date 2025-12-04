@@ -62,8 +62,7 @@ export type Value1 =
   | Secret
   | NodeReference
   | ToolDefinition
-  | Schema
-  | Object1
+  | Object
   | Viseme
   | null;
 export type Type8 = "string";
@@ -86,6 +85,11 @@ export type Count = number;
 export type Type16 = "context_message_role";
 export type ContextMessageRoleEnum = "user" | "assistant" | "system" | "tool";
 export type Type17 = "context_message";
+export type CallId = string;
+export type Index = number;
+export type Name = string;
+export type ToolCalls = ToolCall[];
+export type ToolCallId = string | null;
 export type ContentType = "text" | "image" | "audio" | "video";
 export type Text = string | null;
 export type Width = number;
@@ -107,36 +111,24 @@ export type Type18 = "enum";
 export type Value6 = string;
 export type Type19 = "secret";
 export type SecretId = string;
-export type Name = string;
+export type Name1 = string;
 export type Type20 = "node_reference";
 export type NodeId3 = string;
 export type Type21 = "tool_definition";
-export type Name1 = string;
+export type Name2 = string;
 export type Description = string;
-export type Type22 = "schema";
-export type Type23 = "string";
-export type MaxLength = number | null;
-export type MinLength = number | null;
-export type Type24 = "integer";
-export type Maximum = number | null;
-export type Minimum = number | null;
-export type Type25 = "float";
-export type Maximum1 = number | null;
-export type Minimum1 = number | null;
-export type Type26 = "boolean";
-export type Type27 = "object";
-export type ObjectSchema = {
+export type Parameters = {
   [k: string]: unknown;
 } | null;
-export type Type28 = "list";
-export type MaxLength1 = number | null;
-export type ItemTypeConstraints = BasePadType[] | null;
-export type Required = string[] | null;
-export type Defaults = {
-  [k: string]: unknown;
-} | null;
-export type Type29 = "object";
-export type Type30 = "viseme";
+export type Destination = ToolDefinitionDestination_Client | ToolDefinitionDestination_Webhook;
+export type Type22 = "client";
+export type Type23 = "webhook";
+export type Url = string;
+export type MaxRetries = number;
+export type BackoffFactor = number;
+export type InitialDelaySeconds = number;
+export type Type24 = "object";
+export type Type25 = "viseme";
 export type VisemeEnum =
   | "SILENCE"
   | "PP"
@@ -168,12 +160,11 @@ export type Items = (
   | Secret
   | NodeReference
   | ToolDefinition
-  | Schema
-  | Object1
+  | Object
   | Viseme
   | null
 )[];
-export type Type31 = "get_list_items";
+export type Type26 = "get_list_items";
 export type Items1 = (
   | String
   | Integer
@@ -189,12 +180,11 @@ export type Items1 = (
   | Secret
   | NodeReference
   | ToolDefinition
-  | Schema
-  | Object1
+  | Object
   | Viseme
   | null
 )[];
-export type Type32 = "lock_publisher";
+export type Type27 = "lock_publisher";
 export type Success = boolean;
 /**
  * Payload for the runtime request complete
@@ -204,12 +194,12 @@ export type RuntimeResponsePayload =
   | RuntimeResponsePayload_GetValue
   | RuntimeResponsePayload_GetListItems
   | RuntimeResponsePayload_LockPublisher;
-export type Type33 = "event";
+export type Type28 = "event";
 /**
  * Payload for the runtime event
  */
 export type Payload2 = RuntimeEventPayload_Value | RuntimeEventPayload_Logs;
-export type Type34 = "value";
+export type Type29 = "value";
 export type Value8 =
   | String
   | Integer
@@ -225,13 +215,12 @@ export type Value8 =
   | Secret
   | NodeReference
   | ToolDefinition
-  | Schema
-  | Object1
+  | Object
   | Viseme
   | null;
 export type NodeId4 = string;
 export type PadId3 = string;
-export type Type35 = "logs";
+export type Type30 = "logs";
 export type Message = string;
 export type Level = string;
 export type Timestamp1 = string;
@@ -258,8 +247,7 @@ export type PadValue =
   | Secret
   | NodeReference
   | ToolDefinition
-  | Schema
-  | Object1
+  | Object
   | Viseme
   | null;
 export type PadConstraint =
@@ -281,32 +269,64 @@ export type PadConstraint =
   | ContextMessage1
   | ContextMessageRole1
   | List1
-  | Schema1
-  | Object
+  | Object1
   | NodeReference1
   | Viseme1;
-export type Type36 = "enum";
+export type Type31 = "string";
+export type MaxLength = number | null;
+export type MinLength = number | null;
+export type Type32 = "integer";
+export type Maximum = number | null;
+export type Minimum = number | null;
+export type Type33 = "float";
+export type Maximum1 = number | null;
+export type Minimum1 = number | null;
+export type Type34 = "boolean";
+export type Type35 = "enum";
 export type Options = string[] | null;
-export type Type37 = "secret";
+export type Type36 = "secret";
 export type UpdatedAt = string;
 export type CreatedAt = string;
 export type Id = string;
-export type Name2 = string;
+export type Name3 = string;
 export type Options1 = PublicSecret[];
-export type Type38 = "bounding_box";
-export type Type39 = "point";
-export type Type40 = "audio";
-export type Type41 = "video";
-export type Type42 = "audio_clip";
-export type Type43 = "video_clip";
-export type Type44 = "av_clip";
-export type Type45 = "text_stream";
-export type Type46 = "context_message";
-export type Type47 = "context_message_role";
-export type Type48 = "schema";
+export type Type37 = "bounding_box";
+export type Type38 = "point";
+export type Type39 = "audio";
+export type Type40 = "video";
+export type Type41 = "audio_clip";
+export type Type42 = "video_clip";
+export type Type43 = "av_clip";
+export type Type44 = "text_stream";
+export type Type45 = "context_message";
+export type Type46 = "context_message_role";
+export type Type47 = "list";
+export type MaxLength1 = number | null;
+export type ItemTypeConstraints = BasePadType[] | null;
+export type Type48 = "object";
+export type ObjectSchema = {
+  [k: string]: unknown;
+} | null;
 export type Type49 = "node_reference";
 export type NodeTypes = string[];
 export type Type50 = "viseme";
+export type Type51 = "tool_call_request";
+/**
+ * Request for a tool call
+ */
+export type Payload3 = ToolCallRequest_Payload_InitiateRequest;
+export type Type52 = "initiate_request";
+export type Type53 = "tool_call_response";
+/**
+ * Response for a tool call
+ */
+export type Payload4 = ToolCallResponse_Payload_InitiateAck | ToolCallResponse_Payload_Result;
+export type Type54 = "initiate_ack";
+export type CallId1 = string;
+export type Type55 = "result";
+export type CallId2 = string;
+export type Result = string | null;
+export type Error1 = string | null;
 
 export interface DummyType {
   req: RuntimeRequest;
@@ -318,6 +338,8 @@ export interface DummyType {
   pad_value: PadValue;
   pad_constraint: PadConstraint;
   log_item: RuntimeEventPayload_LogItem;
+  tool_call_request: ToolCallRequest;
+  tool_call_response: ToolCallResponse;
   [k: string]: unknown;
 }
 export interface RuntimeRequest {
@@ -419,7 +441,19 @@ export interface ContextMessageRole {
 export interface ContextMessage {
   type?: Type17;
   role: ContextMessageRole;
+  tool_calls: ToolCalls;
+  tool_call_id?: ToolCallId;
   content: Content;
+  [k: string]: unknown;
+}
+export interface ToolCall {
+  call_id: CallId;
+  index: Index;
+  name: Name;
+  arguments: Arguments;
+  [k: string]: unknown;
+}
+export interface Arguments {
   [k: string]: unknown;
 }
 export interface ContextMessageContentItem {
@@ -461,7 +495,7 @@ export interface Enum {
 export interface Secret {
   type?: Type19;
   secret_id: SecretId;
-  name: Name;
+  name: Name1;
   [k: string]: unknown;
 }
 export interface NodeReference {
@@ -471,59 +505,30 @@ export interface NodeReference {
 }
 export interface ToolDefinition {
   type?: Type21;
-  name: Name1;
+  name: Name2;
   description: Description;
-  parameters?: Schema | null;
+  parameters?: Parameters;
+  destination: Destination;
   [k: string]: unknown;
 }
-export interface Schema {
+export interface ToolDefinitionDestination_Client {
   type?: Type22;
-  properties: Properties;
-  required?: Required;
-  defaults?: Defaults;
   [k: string]: unknown;
 }
-export interface Properties {
-  [k: string]: String1 | Integer1 | Float1 | Boolean1 | Object | List1;
-}
-export interface String1 {
+export interface ToolDefinitionDestination_Webhook {
   type?: Type23;
-  max_length?: MaxLength;
-  min_length?: MinLength;
+  url: Url;
+  retry_policy: ToolDefinitionDestination_Webhook_RetryPolicy;
   [k: string]: unknown;
 }
-export interface Integer1 {
-  type?: Type24;
-  maximum?: Maximum;
-  minimum?: Minimum;
-  [k: string]: unknown;
-}
-export interface Float1 {
-  type?: Type25;
-  maximum?: Maximum1;
-  minimum?: Minimum1;
-  [k: string]: unknown;
-}
-export interface Boolean1 {
-  type?: Type26;
+export interface ToolDefinitionDestination_Webhook_RetryPolicy {
+  max_retries: MaxRetries;
+  backoff_factor: BackoffFactor;
+  initial_delay_seconds: InitialDelaySeconds;
   [k: string]: unknown;
 }
 export interface Object {
-  type?: Type27;
-  object_schema?: ObjectSchema;
-  [k: string]: unknown;
-}
-export interface List1 {
-  type?: Type28;
-  max_length?: MaxLength1;
-  item_type_constraints: ItemTypeConstraints;
-  [k: string]: unknown;
-}
-export interface BasePadType {
-  [k: string]: unknown;
-}
-export interface Object1 {
-  type?: Type29;
+  type?: Type24;
   value: Value7;
   [k: string]: unknown;
 }
@@ -531,34 +536,34 @@ export interface Value7 {
   [k: string]: unknown;
 }
 export interface Viseme {
-  type?: Type30;
+  type?: Type25;
   value: VisemeEnum;
   [k: string]: unknown;
 }
 export interface RuntimeResponsePayload_GetListItems {
-  type?: Type31;
+  type?: Type26;
   items: Items1;
   [k: string]: unknown;
 }
 export interface RuntimeResponsePayload_LockPublisher {
-  type?: Type32;
+  type?: Type27;
   success: Success;
   [k: string]: unknown;
 }
 export interface RuntimeEvent {
-  type?: Type33;
+  type?: Type28;
   payload: Payload2;
   [k: string]: unknown;
 }
 export interface RuntimeEventPayload_Value {
-  type?: Type34;
+  type?: Type29;
   value: Value8;
   node_id: NodeId4;
   pad_id: PadId3;
   [k: string]: unknown;
 }
 export interface RuntimeEventPayload_Logs {
-  type?: Type35;
+  type?: Type30;
   items: Items2;
   [k: string]: unknown;
 }
@@ -571,13 +576,35 @@ export interface RuntimeEventPayload_LogItem {
   pad?: Pad;
   [k: string]: unknown;
 }
+export interface String1 {
+  type?: Type31;
+  max_length?: MaxLength;
+  min_length?: MinLength;
+  [k: string]: unknown;
+}
+export interface Integer1 {
+  type?: Type32;
+  maximum?: Maximum;
+  minimum?: Minimum;
+  [k: string]: unknown;
+}
+export interface Float1 {
+  type?: Type33;
+  maximum?: Maximum1;
+  minimum?: Minimum1;
+  [k: string]: unknown;
+}
+export interface Boolean1 {
+  type?: Type34;
+  [k: string]: unknown;
+}
 export interface Enum1 {
-  type?: Type36;
+  type?: Type35;
   options?: Options;
   [k: string]: unknown;
 }
 export interface Secret1 {
-  type?: Type37;
+  type?: Type36;
   options?: Options1;
   [k: string]: unknown;
 }
@@ -585,51 +612,61 @@ export interface PublicSecret {
   updated_at: UpdatedAt;
   created_at: CreatedAt;
   id: Id;
-  name: Name2;
+  name: Name3;
   [k: string]: unknown;
 }
 export interface BoundingBox {
-  type?: Type38;
+  type?: Type37;
   [k: string]: unknown;
 }
 export interface Point {
-  type?: Type39;
+  type?: Type38;
   [k: string]: unknown;
 }
 export interface Audio {
-  type?: Type40;
+  type?: Type39;
   [k: string]: unknown;
 }
 export interface Video {
-  type?: Type41;
+  type?: Type40;
   [k: string]: unknown;
 }
 export interface AudioClip1 {
-  type?: Type42;
+  type?: Type41;
   [k: string]: unknown;
 }
 export interface VideoClip1 {
-  type?: Type43;
+  type?: Type42;
   [k: string]: unknown;
 }
 export interface AVClip {
-  type?: Type44;
+  type?: Type43;
   [k: string]: unknown;
 }
 export interface TextStream {
-  type?: Type45;
+  type?: Type44;
   [k: string]: unknown;
 }
 export interface ContextMessage1 {
-  type?: Type46;
+  type?: Type45;
   [k: string]: unknown;
 }
 export interface ContextMessageRole1 {
-  type?: Type47;
+  type?: Type46;
   [k: string]: unknown;
 }
-export interface Schema1 {
+export interface List1 {
+  type?: Type47;
+  max_length?: MaxLength1;
+  item_type_constraints: ItemTypeConstraints;
+  [k: string]: unknown;
+}
+export interface BasePadType {
+  [k: string]: unknown;
+}
+export interface Object1 {
   type?: Type48;
+  object_schema?: ObjectSchema;
   [k: string]: unknown;
 }
 export interface NodeReference1 {
@@ -639,5 +676,33 @@ export interface NodeReference1 {
 }
 export interface Viseme1 {
   type?: Type50;
+  [k: string]: unknown;
+}
+export interface ToolCallRequest {
+  type?: Type51;
+  payload: Payload3;
+  [k: string]: unknown;
+}
+export interface ToolCallRequest_Payload_InitiateRequest {
+  type?: Type52;
+  tool_definition: ToolDefinition;
+  tool_call: ToolCall;
+  [k: string]: unknown;
+}
+export interface ToolCallResponse {
+  type?: Type53;
+  payload: Payload4;
+  [k: string]: unknown;
+}
+export interface ToolCallResponse_Payload_InitiateAck {
+  type?: Type54;
+  call_id: CallId1;
+  [k: string]: unknown;
+}
+export interface ToolCallResponse_Payload_Result {
+  type?: Type55;
+  call_id: CallId2;
+  result: Result;
+  error: Error1;
   [k: string]: unknown;
 }

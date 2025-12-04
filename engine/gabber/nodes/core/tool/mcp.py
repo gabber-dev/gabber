@@ -109,7 +109,8 @@ class MCP(node.Node):
                 tool_def = runtime.ToolDefinition(
                     name=t.name,
                     description=t.description or "",
-                    parameters=runtime.Schema.from_json_schema(t.inputSchema),
+                    parameters=t.inputSchema,
+                    destination=runtime.ToolDefinitionDestination_Client(),
                 )
                 tool_defs.append(tool_def)
 

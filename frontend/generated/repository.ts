@@ -53,7 +53,6 @@ export type DefaultAllowedTypes =
       | ContextMessage
       | ContextMessageRole
       | List
-      | Schema
       | Object
       | NodeReference
       | Viseme
@@ -91,14 +90,13 @@ export type Type19 = "context_message_role";
 export type Type20 = "list";
 export type MaxLength1 = number | null;
 export type ItemTypeConstraints = BasePadType[] | null;
-export type Type21 = "schema";
-export type Type22 = "object";
+export type Type21 = "object";
 export type ObjectSchema = {
   [k: string]: unknown;
 } | null;
-export type Type23 = "node_reference";
+export type Type22 = "node_reference";
 export type NodeTypes = string[];
-export type Type24 = "viseme";
+export type Type23 = "viseme";
 export type AllowedTypes =
   | (
       | String
@@ -119,7 +117,6 @@ export type AllowedTypes =
       | ContextMessage
       | ContextMessageRole
       | List
-      | Schema
       | Object
       | NodeReference
       | Viseme
@@ -249,29 +246,33 @@ export type Value7 =
   | Secret1
   | NodeReference1
   | ToolDefinition
-  | Schema1
   | Object1
   | Viseme1
   | null;
-export type Type25 = "string";
+export type Type24 = "string";
 export type Value1 = string;
-export type Type26 = "integer";
+export type Type25 = "integer";
 export type Value2 = number;
-export type Type27 = "float";
+export type Type26 = "float";
 export type Value3 = number;
-export type Type28 = "boolean";
+export type Type27 = "boolean";
 export type Value4 = boolean;
-export type Type29 = "audio_clip";
+export type Type28 = "audio_clip";
 export type Transcription = string | null;
 export type Duration = number;
-export type Type30 = "video_clip";
+export type Type29 = "video_clip";
 export type Duration1 = number;
 export type FrameCount = number;
-export type Type31 = "list";
+export type Type30 = "list";
 export type Count = number;
-export type Type32 = "context_message_role";
+export type Type31 = "context_message_role";
 export type ContextMessageRoleEnum = "user" | "assistant" | "system" | "tool";
-export type Type33 = "context_message";
+export type Type32 = "context_message";
+export type CallId = string;
+export type Index = number;
+export type Name2 = string;
+export type ToolCalls = ToolCall[];
+export type ToolCallId = string | null;
 export type ContentType = "text" | "image" | "audio" | "video";
 export type Text = string | null;
 export type Width = number;
@@ -289,21 +290,26 @@ export type Handle2 = string;
 export type FrameCount1 = number;
 export type StartTimestamp1 = number | null;
 export type Content = ContextMessageContentItem[];
-export type Type34 = "enum";
+export type Type33 = "enum";
 export type Value5 = string;
-export type Type35 = "secret";
+export type Type34 = "secret";
 export type SecretId = string;
-export type Name2 = string;
-export type Type36 = "node_reference";
-export type NodeId = string;
-export type Type37 = "tool_definition";
 export type Name3 = string;
+export type Type35 = "node_reference";
+export type NodeId = string;
+export type Type36 = "tool_definition";
+export type Name4 = string;
 export type Description = string;
-export type Type38 = "schema";
-export type Required = string[] | null;
-export type Defaults = {
+export type Parameters = {
   [k: string]: unknown;
 } | null;
+export type Destination = ToolDefinitionDestination_Client | ToolDefinitionDestination_Webhook;
+export type Type37 = "client";
+export type Type38 = "webhook";
+export type Url = string;
+export type MaxRetries = number;
+export type BackoffFactor = number;
+export type InitialDelaySeconds = number;
 export type Type39 = "object";
 export type Type40 = "viseme";
 export type VisemeEnum =
@@ -337,7 +343,6 @@ export type Items = (
   | Secret1
   | NodeReference1
   | ToolDefinition
-  | Schema1
   | Object1
   | Viseme1
   | null
@@ -381,7 +386,7 @@ export type NextPads1 = PadReference[];
 export type Nodes = NodeEditorRepresentation[];
 export type Portals = Portal[] | null;
 export type Id7 = string;
-export type Name4 = string;
+export type Name5 = string;
 export type SourceNode1 = string;
 export type SourcePad1 = string;
 /**
@@ -399,18 +404,18 @@ export type NextPads2 = PadReference[];
 export type Ends = PortalEnd[];
 export type Type54 = "save_app";
 export type Id9 = string | null;
-export type Name5 = string;
+export type Name6 = string;
 export type Type55 = "create_app_run";
 export type RunId = string;
 export type Type56 = "create_debug_connection";
 export type RunId1 = string;
 export type Type57 = "import_app";
 export type Id10 = string;
-export type Name6 = string;
+export type Name7 = string;
 export type CreatedAt1 = string;
 export type UpdatedAt1 = string;
 export type Id11 = string;
-export type Name7 = string;
+export type Name8 = string;
 export type CreatedAt2 = string;
 export type UpdatedAt2 = string;
 export type Subgraphs = RepositorySubGraph[];
@@ -419,7 +424,7 @@ export type NestedSubgraphs = RepositorySubGraph[];
 export type Type59 = "mcp_proxy_connection";
 export type RunId2 = string;
 export type Type60 = "add_secret";
-export type Name8 = string;
+export type Name9 = string;
 export type Value8 = string;
 export type Type61 = "update_secret";
 export type Value9 = string;
@@ -452,7 +457,7 @@ export type Type66 = "get_subgraph";
 export type Type67 = "list_subgraphs";
 export type SubGraphs = RepositorySubGraph[];
 export type Type68 = "create_app_run";
-export type Url = string;
+export type Url1 = string;
 export type Token = string;
 export type Type69 = "debug_connection";
 export type Type70 = "import_app";
@@ -595,22 +600,18 @@ export interface List {
 export interface BasePadType {
   [k: string]: unknown;
 }
-export interface Schema {
-  type?: Type21;
-  [k: string]: unknown;
-}
 export interface Object {
-  type?: Type22;
+  type?: Type21;
   object_schema?: ObjectSchema;
   [k: string]: unknown;
 }
 export interface NodeReference {
-  type?: Type23;
+  type?: Type22;
   node_types: NodeTypes;
   [k: string]: unknown;
 }
 export interface Viseme {
-  type?: Type24;
+  type?: Type23;
   [k: string]: unknown;
 }
 export interface PadReference {
@@ -692,52 +693,64 @@ export interface UpdatePadEdit {
   [k: string]: unknown;
 }
 export interface String1 {
-  type?: Type25;
+  type?: Type24;
   value: Value1;
   [k: string]: unknown;
 }
 export interface Integer1 {
-  type?: Type26;
+  type?: Type25;
   value: Value2;
   [k: string]: unknown;
 }
 export interface Float1 {
-  type?: Type27;
+  type?: Type26;
   value: Value3;
   [k: string]: unknown;
 }
 export interface Boolean1 {
-  type?: Type28;
+  type?: Type27;
   value: Value4;
   [k: string]: unknown;
 }
 export interface AudioClip1 {
-  type?: Type29;
+  type?: Type28;
   transcription: Transcription;
   duration: Duration;
   [k: string]: unknown;
 }
 export interface VideoClip1 {
-  type?: Type30;
+  type?: Type29;
   duration: Duration1;
   frame_count: FrameCount;
   [k: string]: unknown;
 }
 export interface List1 {
-  type?: Type31;
+  type?: Type30;
   count: Count;
   items: Items;
   [k: string]: unknown;
 }
 export interface ContextMessageRole1 {
-  type?: Type32;
+  type?: Type31;
   value: ContextMessageRoleEnum;
   [k: string]: unknown;
 }
 export interface ContextMessage1 {
-  type?: Type33;
+  type?: Type32;
   role: ContextMessageRole1;
+  tool_calls: ToolCalls;
+  tool_call_id?: ToolCallId;
   content: Content;
+  [k: string]: unknown;
+}
+export interface ToolCall {
+  call_id: CallId;
+  index: Index;
+  name: Name2;
+  arguments: Arguments;
+  [k: string]: unknown;
+}
+export interface Arguments {
   [k: string]: unknown;
 }
 export interface ContextMessageContentItem {
@@ -772,37 +785,44 @@ export interface ContextMessageContentItem_Video {
   [k: string]: unknown;
 }
 export interface Enum1 {
-  type?: Type34;
+  type?: Type33;
   value: Value5;
   [k: string]: unknown;
 }
 export interface Secret1 {
-  type?: Type35;
+  type?: Type34;
   secret_id: SecretId;
-  name: Name2;
+  name: Name3;
   [k: string]: unknown;
 }
 export interface NodeReference1 {
-  type?: Type36;
+  type?: Type35;
   node_id: NodeId;
   [k: string]: unknown;
 }
 export interface ToolDefinition {
-  type?: Type37;
-  name: Name3;
+  type?: Type36;
+  name: Name4;
   description: Description;
-  parameters?: Schema1 | null;
+  parameters?: Parameters;
+  destination: Destination;
   [k: string]: unknown;
 }
-export interface Schema1 {
+export interface ToolDefinitionDestination_Client {
+  type?: Type37;
+  [k: string]: unknown;
+}
+export interface ToolDefinitionDestination_Webhook {
   type?: Type38;
-  properties: Properties;
-  required?: Required;
-  defaults?: Defaults;
+  url: Url;
+  retry_policy: ToolDefinitionDestination_Webhook_RetryPolicy;
   [k: string]: unknown;
 }
-export interface Properties {
-  [k: string]: String | Integer | Float | Boolean | Object | List;
+export interface ToolDefinitionDestination_Webhook_RetryPolicy {
+  max_retries: MaxRetries;
+  backoff_factor: BackoffFactor;
+  initial_delay_seconds: InitialDelaySeconds;
+  [k: string]: unknown;
 }
 export interface Object1 {
   type?: Type39;
@@ -857,7 +877,7 @@ export interface UpdatePortalEndEdit {
 }
 export interface Portal {
   id: Id7;
-  name: Name4;
+  name: Name5;
   source_node: SourceNode1;
   source_pad: SourcePad1;
   editor_position: EditorPosition8;
@@ -873,7 +893,7 @@ export interface PortalEnd {
 export interface SaveAppRequest {
   type?: Type54;
   id?: Id9;
-  name: Name5;
+  name: Name6;
   graph: GraphEditorRepresentation;
   [k: string]: unknown;
 }
@@ -900,7 +920,7 @@ export interface AppExport {
 }
 export interface RepositoryApp {
   id: Id10;
-  name: Name6;
+  name: Name7;
   created_at: CreatedAt1;
   updated_at: UpdatedAt1;
   graph: GraphEditorRepresentation;
@@ -908,7 +928,7 @@ export interface RepositoryApp {
 }
 export interface RepositorySubGraph {
   id: Id11;
-  name: Name7;
+  name: Name8;
   created_at: CreatedAt2;
   updated_at: UpdatedAt2;
   graph: GraphEditorRepresentation;
@@ -931,7 +951,7 @@ export interface MCPProxyConnectionRequest {
 }
 export interface AddSecretRequest {
   type?: Type60;
-  name: Name8;
+  name: Name9;
   value: Value8;
   [k: string]: unknown;
 }
@@ -976,7 +996,7 @@ export interface CreateAppRunResponse {
   [k: string]: unknown;
 }
 export interface AppRunConnectionDetails {
-  url: Url;
+  url: Url1;
   token: Token;
   [k: string]: unknown;
 }

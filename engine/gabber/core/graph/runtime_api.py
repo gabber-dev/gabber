@@ -10,7 +10,8 @@ from .. import node, pad
 import logging
 from ..node import Node
 from gabber.nodes.core.media.publish import Publish
-from ..types import client, mapper, pad_constraints
+from gabber.nodes.core.tool.tool_group import ToolGroup
+from ..types import client, mapper, pad_constraints, runtime
 
 client_value_adapter = TypeAdapter(client.ClientPadValue)
 
@@ -32,6 +33,10 @@ class RuntimeApi:
         self.room = room
         self._publish_locks: dict[str, PublishLock] = {}
         self._dc_queue = asyncio.Queue[QueueItem | None]()
+        self._tc_acks: dict[str, asyncio.Future[None]] = {}
+        self._tc_results: dict[
+            str, asyncio.Future[ToolCallResponse_Payload_Result]
+        ] = {}
 
     def emit_logs(self, items: list["RuntimeEventPayload_LogItem"]):
         self._dc_queue.put_nowait(
@@ -43,7 +48,78 @@ class RuntimeApi:
             )
         )
 
+    async def client_tool_call_task(self, nodes: list[node.Node]):
+        tool_group_nodes = [n for n in nodes if isinstance(n, ToolGroup)]
+        all_tasks = set()
+
+        async def single_tg_task(
+            node: ToolGroup,
+            td: runtime.ToolDefinition,
+            tc: runtime.ToolCall,
+            fut: asyncio.Future[str],
+        ):
+            assert isinstance(td.destination, runtime.ToolDefinitionDestination_Client)
+            client_td = mapper.Mapper.runtime_to_client(td)
+            assert isinstance(client_td, client.ToolDefinition)
+            client_tc = client.ToolCall(
+                call_id=tc.call_id, index=tc.index, name=tc.name, arguments=tc.arguments
+            )
+            assert isinstance(client_tc, client.ToolCall)
+
+            ack_fut = asyncio.Future[None]()
+            self._tc_acks[client_tc.call_id] = ack_fut
+            res_fut = asyncio.Future[ToolCallResponse_Payload_Result]()
+            self._tc_results[client_tc.call_id] = res_fut
+            req = ToolCallRequest(
+                payload=ToolCallRequest_Payload_InitiateRequest(
+                    tool_definition=client_td,
+                    tool_call=client_tc,
+                )
+            )
+            await self.room.local_participant.publish_data(
+                req.model_dump_json().encode("utf-8"),
+                destination_identities=[],
+                topic="tool_call",
+            )
+
+            try:
+                await asyncio.wait_for(ack_fut, timeout=5.0)
+                node.logger.info(
+                    f"Tool call '{client_tc.call_id}' initiated with client."
+                )
+                del self._tc_acks[client_tc.call_id]
+            except asyncio.TimeoutError:
+                fut.set_exception(
+                    Exception("Timeout initiating tool call with client.")
+                )
+                return
+
+            try:
+                result_resp = await asyncio.wait_for(res_fut, timeout=60.0)
+                node.logger.info(
+                    f"Tool call '{client_tc.call_id}' completed from client."
+                )
+                del self._tc_results[client_tc.call_id]
+                if result_resp.error:
+                    fut.set_exception(Exception(result_resp.error))
+                else:
+                    fut.set_result(result_resp.result or "")
+            except asyncio.TimeoutError:
+                fut.set_exception(Exception("Timeout waiting for tool call result."))
+
+        async def tg_task(tg: ToolGroup):
+            q = tg.client_call_queue
+            while True:
+                (td, tc, fut) = await q.get()
+                t = asyncio.create_task(single_tg_task(tg, td, tc, fut))
+                all_tasks.add(t)
+                t.add_done_callback(lambda _: all_tasks.remove(t))
+
+        tc_tasks = [asyncio.create_task(tg_task(tg)) for tg in tool_group_nodes]
+        await asyncio.gather(*tc_tasks)
+
     async def run(self, nodes: list[node.Node]):
+        tool_task = asyncio.create_task(self.client_tool_call_task(nodes))
         node_pad_lookup: dict[tuple[str, str], pad.Pad] = {
             (n.id, p.get_id()): p for n in nodes for p in n.pads
         }
@@ -74,9 +150,33 @@ class RuntimeApi:
             p._add_update_handler(on_pad)
 
         def on_data(packet: rtc.DataPacket):
-            if not packet.topic or packet.topic != "runtime_api":
+            if not packet.topic:
                 return
 
+            if packet.topic == "runtime_api":
+                on_runtime_api_data(packet)
+            elif packet.topic == "tool_call":
+                on_tool_call_data(packet)
+
+        def on_tool_call_data(packet: rtc.DataPacket):
+            try:
+                response = ToolCallResponse.model_validate_json(packet.data)
+                if response.payload.type == "initiate_ack":
+                    payload = response.payload
+                    ack_fut = self._tc_acks.get(payload.call_id)
+                    if ack_fut and not ack_fut.done():
+                        ack_fut.set_result(None)
+
+                elif response.payload.type == "result":
+                    payload = response.payload
+                    res_fut = self._tc_results.get(payload.call_id)
+                    if res_fut and not res_fut.done():
+                        res_fut.set_result(payload)
+            except Exception as e:
+                logging.error(f"Invalid tool_call response: {e}", exc_info=e)
+                return
+
+        def on_runtime_api_data(packet: rtc.DataPacket):
             try:
                 request = RuntimeRequest.model_validate_json(packet.data)
             except Exception as e:
@@ -280,6 +380,7 @@ class RuntimeApi:
                     logging.error(f"Error sending data packet: {e}", exc_info=e)
 
         await dc_queue_consumer()
+        await tool_task
         self.room.off("data_received", on_data)
 
 
@@ -394,6 +495,46 @@ class RuntimeResponse(BaseModel):
     payload: RuntimeResponsePayload | None = None
 
 
+class ToolCallRequest_Payload_InitiateRequest(BaseModel):
+    type: Literal["initiate_request"] = "initiate_request"
+    tool_definition: client.ToolDefinition
+    tool_call: client.ToolCall
+
+
+ToolCallRequestPayload = Annotated[
+    ToolCallRequest_Payload_InitiateRequest,
+    Field(discriminator="type", description="Request for a tool call"),
+]
+
+
+class ToolCallRequest(BaseModel):
+    type: Literal["tool_call_request"] = "tool_call_request"
+    payload: ToolCallRequestPayload
+
+
+class ToolCallResponse_Payload_InitiateAck(BaseModel):
+    type: Literal["initiate_ack"] = "initiate_ack"
+    call_id: str
+
+
+class ToolCallResponse_Payload_Result(BaseModel):
+    type: Literal["result"] = "result"
+    call_id: str
+    result: str | None
+    error: str | None
+
+
+ToolCallResponsePayload = Annotated[
+    ToolCallResponse_Payload_InitiateAck | ToolCallResponse_Payload_Result,
+    Field(discriminator="type", description="Response for a tool call"),
+]
+
+
+class ToolCallResponse(BaseModel):
+    type: Literal["tool_call_response"] = "tool_call_response"
+    payload: ToolCallResponsePayload
+
+
 class PublishLock:
     def __init__(
         self, room: rtc.Room, participant_id: str, publish_node: str, node: Publish
@@ -460,3 +601,5 @@ class DummyType(BaseModel):
     pad_value: client.ClientPadValue
     pad_constraint: pad_constraints.PadConstraint
     log_item: RuntimeEventPayload_LogItem
+    tool_call_request: ToolCallRequest
+    tool_call_response: ToolCallResponse

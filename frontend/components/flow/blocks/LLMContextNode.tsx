@@ -4,7 +4,6 @@
  */
 
 import { BaseBlockProps } from "./BaseBlock";
-import { usePropertyPad } from "./components/pads/hooks/usePropertyPad";
 import { CubeIcon } from "@heroicons/react/24/outline";
 import { NodeName } from "./components/NodeName";
 import { NodeId } from "./components/NodeId";
@@ -12,15 +11,10 @@ import { PropertyPad } from "./components/pads/PropertyPad";
 import { StatelessPad } from "./components/pads/StatelessPad";
 import { SelfPad } from "./components/pads/SelfPad";
 import { useMemo } from "react";
-import { List, PadValue } from "@gabber/client-react";
 import { useEditor } from "@/hooks/useEditor";
-import { useRun } from "@/hooks/useRun";
 
 export function LLMContextNode({ data }: BaseBlockProps) {
-  const { detailedView, setDetailedView } = useEditor();
-  const propertyPadResult = usePropertyPad<List>(data.id, "source");
-  const { runtimeValue: contextMessages, editorValue } = propertyPadResult;
-  const { connectionState } = useRun();
+  const { setDetailedView } = useEditor();
 
   const sinkPads = useMemo(() => {
     return data.pads.filter(

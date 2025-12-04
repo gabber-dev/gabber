@@ -25,6 +25,7 @@ import { createContext, useContext, useRef, useState } from "react";
 type EngineContextType = {
     connectionState: ConnectionState;
     getLocalTrack: (opts: GetLocalTrackOptions) => Promise<LocalTrack>;
+    registerToolCallHandler: (toolName: string, handler: (args: any) => Promise<string>) => void;
     connect: (details: ConnectionDetails) => Promise<void>;
     disconnect: () => Promise<void>;
     publishToNode: (params: PublishParams) => Promise<Publication>;
@@ -75,6 +76,7 @@ export function EngineProvider({ children, maxLogItems }: { children: React.Reac
                 disconnect: engineRef.current.disconnect,
                 publishToNode: engineRef.current.publishToNode,
                 subscribeToNode: engineRef.current.subscribeToNode,
+                registerToolCallHandler: engineRef.current.registerToolCallHandler,
                 logItems,
                 clearLogItems: () => setLogItems([]),
             },

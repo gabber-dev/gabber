@@ -75,7 +75,10 @@ async def entrypoint_inner(
 
     try:
         await graph_t
+    except Exception as e:
+        logger.error(f"Graph execution failed: {str(e)}")
     finally:
+        logger.info("Graph task completed.")
         log_handler.close()
         log_handler_t.cancel()
 
@@ -92,7 +95,7 @@ async def entrypoint(ctx: agents.JobContext):
 
 
 def cpu_load_fnc(worker: agents.Worker) -> float:
-    return float(len(worker.active_jobs)) / 4
+    return float(len(worker.active_jobs)) / 8
 
 
 async def req_fnc(worker: agents.JobRequest):

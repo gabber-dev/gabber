@@ -10,7 +10,6 @@ from . import (
     timing,
     tool,
     utility,
-    web,
 )
 
 ALL_NODES = (
@@ -21,6 +20,5 @@ ALL_NODES = (
     + logic.ALL_NODES
     + utility.ALL_NODES
     + sub_graph.ALL_NODES
-    + web.ALL_NODES
     + timing.ALL_NODES
 )

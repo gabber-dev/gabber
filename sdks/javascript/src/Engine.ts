@@ -20,7 +20,7 @@ import { DataPacket_Kind, RemoteParticipant, Room } from 'livekit-client';
 import { PropertyPad, SinkPad, SourcePad } from './pad/Pad';
 import { LocalAudioTrack, LocalVideoTrack, LocalTrack } from './LocalTrack';
 import { Subscription } from './Subscription';
-import { PadValue, Payload, RuntimeEvent, RuntimeEventPayload_LogItem, RuntimeRequest, RuntimeRequestPayload_LockPublisher, RuntimeResponsePayload } from './generated/runtime';
+import { PadValue, Payload, RuntimeEvent, RuntimeEventPayload_LogItem, RuntimeRequest, RuntimeRequestPayload_LockPublisher, RuntimeResponsePayload, ToolCallRequest, ToolCallResponse, ToolCallResponse_Payload_InitiateAck, ToolCallResponse_Payload_Result } from './generated/runtime';
 import { Publication } from './Publication';
 
 export interface EngineHandler {
@@ -35,6 +35,7 @@ export class Engine  {
   private runtimeRequestIdCounter: number = 1;
   private pendingRequests: Map<string, {res: (response: any) => void, rej: (error: string) => void}> = new Map();
   private padValueHandlers: Map<string, Array<(data: PadValue) => void>> = new Map();
+  private toolCallHandlers: Map<string, (args: any) => Promise<string>> = new Map();
 
   constructor(params: {handler?: EngineHandler}) {
     console.debug("Creating new Engine instance");
@@ -49,7 +50,12 @@ export class Engine  {
     this.getSourcePad = this.getSourcePad.bind(this);
     this.getSinkPad = this.getSinkPad.bind(this);
     this.getPropertyPad = this.getPropertyPad.bind(this);
+    this.registerToolCallHandler = this.registerToolCallHandler.bind(this);
     this.setupRoomEventListeners();
+  }
+
+  public registerToolCallHandler(toolName: string, handler: (args: string) => Promise<string>): void {
+    this.toolCallHandlers.set(toolName, handler);
   }
 
   public get connectionState(): ConnectionState {
@@ -221,43 +227,94 @@ export class Engine  {
       return;
     }
 
-    if (topic !== "runtime_api") {
-      return; // Ignore data not on this pad's channel
-    }
+    if (topic === "runtime_api") {
+      const msg = JSON.parse(new TextDecoder().decode(data));
+      if (msg.type === "ack") {
+      } else if (msg.type === "complete") {
+          if(msg.error) {
+              console.error("Error in request:", msg.error);
+              const pendingRequest = this.pendingRequests.get(msg.req_id);
+              if (pendingRequest) {
+                  pendingRequest.rej(msg.error);
+              }
+          } else {
+              const pendingRequest = this.pendingRequests.get(msg.req_id);
+              if (pendingRequest) {
+                  pendingRequest.res(msg.payload);
+              }
+          }
+          this.pendingRequests.delete(msg.req_id);
+      } else if (msg.type === "event") {
+          const castedMsg: RuntimeEvent = msg
+          const payload = castedMsg.payload;
+          if(payload.type === "value") {
+            const nodeId = payload.node_id;
+            const padId = payload.pad_id;
+            const handlers = this.padValueHandlers.get(`${nodeId}:${padId}`);
+            for(const handler of handlers || []) {
+              handler(payload.value);
+            }
+          } else if (payload.type === "logs") {
+            if(this.handler?.onLogItem) {
+              for(const item of payload.items) {
+                this.handler.onLogItem(item);
+              }
+            }
+          }
+      }
+    } else if (topic === "tool_call") {
+      const msg = JSON.parse(new TextDecoder().decode(data));
+      const castedMsg: ToolCallRequest = msg;
+      if(castedMsg.payload.type == "initiate_request") {
+        const toolHandler = this.toolCallHandlers.get(castedMsg.payload.tool_definition.name);
+        const ackPayload: ToolCallResponse_Payload_InitiateAck = {
+          type: "initiate_ack",
+          call_id: castedMsg.payload.tool_call.call_id,
+        }
+        const ackMsg: ToolCallResponse = {
+          type: "tool_call_response",
+          payload: ackPayload,
+        }
+        this.livekitRoom.localParticipant.publishData(new TextEncoder().encode(JSON.stringify(ackMsg)), { topic: "tool_call", destinationIdentities: ["gabber-engine"] });
+        if(!toolHandler) {
+          this.livekitRoom.localParticipant.publishData(new TextEncoder().encode(JSON.stringify({
+            type: "tool_call_response",
+            payload: {
+              type: "result",
+              call_id: castedMsg.payload.tool_call.call_id,
+              result: null,
+              error: `No handler registered for tool: ${castedMsg.payload.tool_definition.name}`,
+            }
+          })), { topic: "tool_call", destinationIdentities: ["gabber-engine"] });
+          return;
+        }
 
-    const msg = JSON.parse(new TextDecoder().decode(data));
-    if (msg.type === "ack") {
-    } else if (msg.type === "complete") {
-        if(msg.error) {
-            console.error("Error in request:", msg.error);
-            const pendingRequest = this.pendingRequests.get(msg.req_id);
-            if (pendingRequest) {
-                pendingRequest.rej(msg.error);
-            }
-        } else {
-            const pendingRequest = this.pendingRequests.get(msg.req_id);
-            if (pendingRequest) {
-                pendingRequest.res(msg.payload);
-            }
-        }
-        this.pendingRequests.delete(msg.req_id);
-    } else if (msg.type === "event") {
-        const castedMsg: RuntimeEvent = msg
-        const payload = castedMsg.payload;
-        if(payload.type === "value") {
-          const nodeId = payload.node_id;
-          const padId = payload.pad_id;
-          const handlers = this.padValueHandlers.get(`${nodeId}:${padId}`);
-          for(const handler of handlers || []) {
-            handler(payload.value);
+        toolHandler(castedMsg.payload.tool_call.arguments).then((result) => {
+          const respPayload: ToolCallResponse_Payload_Result = {
+            type: "result",
+            call_id: castedMsg.payload.tool_call.call_id,
+            result,
+            error: null,
           }
-        } else if (payload.type === "logs") {
-          if(this.handler?.onLogItem) {
-            for(const item of payload.items) {
-              this.handler.onLogItem(item);
-            }
+          const respMsg: ToolCallResponse = {
+            type: "tool_call_response",
+            payload: respPayload,
           }
-        }
+          this.livekitRoom.localParticipant.publishData(new TextEncoder().encode(JSON.stringify(respMsg)), { topic: "tool_call", destinationIdentities: ["gabber-engine"] });
+        }).catch((err) => {
+          const respPayload: ToolCallResponse_Payload_Result = {
+            type: "result",
+            call_id: castedMsg.payload.tool_call.call_id,
+            result: null,
+            error: err.message,
+          }
+          const respMsg: ToolCallResponse = {
+            type: "tool_call_response",
+            payload: respPayload,
+          }
+          this.livekitRoom.localParticipant.publishData(new TextEncoder().encode(JSON.stringify(respMsg)), { topic: "tool_call", destinationIdentities: ["gabber-engine"] });
+        });
+      }
     }
   }
 }

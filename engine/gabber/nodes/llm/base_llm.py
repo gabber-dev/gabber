@@ -378,6 +378,9 @@ class BaseLLM(node.Node, ABC):
                             runtime.ContextMessageContentItem_Text(content=full_content)
                         ],
                         tool_calls=all_tool_calls,
+                        tool_call_id=all_tool_calls[0].call_id
+                        if all_tool_calls
+                        else None,
                     ),
                     ctx,
                 )
@@ -415,11 +418,10 @@ class BaseLLM(node.Node, ABC):
 
             tool_group_node = self.get_tool_group_node()
             if tool_group_node is not None:
-                tool_nodes = cast(ToolGroup, tool_group_node).tool_nodes
-                for tn in tool_nodes:
-                    td = tn.get_tool_definition()
-                    tg_tool_definitions.append(td)
-                    all_tool_definitions.append(td)
+                tg_tool_definitions = cast(
+                    ToolGroup, tool_group_node
+                ).list_tool_definitions()
+                all_tool_definitions.extend(tg_tool_definitions)
 
             mcp_tool_definitions: dict[mcp.MCP, list[runtime.ToolDefinition]] = {}
             mcp_sinks = self.mcp_server_pads()
@@ -462,7 +464,7 @@ class BaseLLM(node.Node, ABC):
                         running_handle,
                         ctx,
                         tg_tool_definitions,
-                        mcp_tool_definitions,
+                        {},
                         estimated_prompt_tokens=estimated_prompt_tokens,
                     )
                 )
@@ -505,6 +507,8 @@ class BaseLLM(node.Node, ABC):
         async def run_tg_task():
             tg_res = await self.call_tg_calls(tg_tool_calls=tg_tool_calls, ctx=ctx)
             for i, res in enumerate(tg_res):
+                if isinstance(res, BaseException):
+                    res = f"Error calling tool '{tg_tool_calls[i].name}': {res}"
                 msg = runtime.ContextMessage(
                     role=runtime.ContextMessageRoleEnum.TOOL,
                     content=[runtime.ContextMessageContentItem_Text(content=res)],
@@ -564,7 +568,7 @@ class BaseLLM(node.Node, ABC):
         tool_group_node = self.get_tool_group_node()
         if not tool_group_node:
             raise RuntimeError("Tool group node not found")
-        return await tool_group_node.call_tools(tg_tool_calls, ctx)
+        return await tool_group_node.call_tools(tg_tool_calls)
 
     def get_notes(self) -> list[node.NodeNote]:
         notes: list[node.NodeNote] = []

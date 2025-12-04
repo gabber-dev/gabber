@@ -60,10 +60,17 @@ function Inner({
   children?: React.ReactNode;
   generateConnectionDetailsImpl: GenerateConnectionDetails;
 }) {
-  const { connect, disconnect, connectionState } = useEngine();
+  const { connect, disconnect, connectionState, registerToolCallHandler } =
+    useEngine();
   const [runId, setRunId] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const startingRef = useRef(false);
+
+  useMemo(() => {
+    registerToolCallHandler("__gabber_test_tool__", async (params) => {
+      return `Test Response with params: ${JSON.stringify(params)}`;
+    });
+  }, [registerToolCallHandler]);
 
   const startRun = useCallback(
     async (params: { graph: GraphEditorRepresentation }) => {

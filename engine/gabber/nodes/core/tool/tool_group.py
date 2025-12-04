@@ -2,15 +2,38 @@
 # SPDX-License-Identifier: SUL-1.0
 
 import asyncio
-import logging
-from typing import Any, cast
+import aiohttp
+from typing import Any, cast, Tuple
+import jsonschema
 
 from gabber.core import node, pad
-from gabber.core.types import runtime
+from gabber.core.types import runtime, client, pad_constraints, mapper
 from gabber.core.node import NodeMetadata
 
-from gabber.nodes.core.tool import Tool
-from gabber.core.types import pad_constraints
+
+DEFAULT_TOOLS = [
+    runtime.ToolDefinition(
+        name="get_weather",
+        description="Get the current weather for a given location",
+        parameters={
+            "type": "object",
+            "properties": {
+                "location": {
+                    "type": "string",
+                    "description": "The location to get the weather for",
+                }
+            },
+            "required": ["location"],
+        },
+        destination=runtime.ToolDefinitionDestination_Client(),
+    )
+]
+
+DEFAULT_RETRY_POLICY = runtime.ToolDefinitionDestination_Webhook_RetryPolicy(
+    max_retries=3, backoff_factor=2.0, initial_delay_seconds=1.0
+)
+
+DEFAULT_CONFIG = {"tools": [tool.model_dump() for tool in DEFAULT_TOOLS]}
 
 
 class ToolGroup(node.Node):
@@ -23,26 +46,6 @@ class ToolGroup(node.Node):
         return NodeMetadata(
             primary="core", secondary="tools", tags=["collection", "group"]
         )
-
-    @property
-    def tool_nodes(self):
-        res: list[Tool] = []
-        for p in self.pads:
-            if not isinstance(p, pad.PropertySinkPad):
-                continue
-
-            if p.get_group() != "tool":
-                continue
-
-            v = p.get_value()
-            if v is None:
-                continue
-
-            assert isinstance(v, runtime.NodeReference)
-            tool_node = self.graph.get_node(v.node_id)
-            assert isinstance(tool_node, Tool)
-            res.append(tool_node)
-        return res
 
     def resolve_pads(self):
         self_pad = cast(pad.PropertySourcePad, self.get_pad("self"))
@@ -57,105 +60,212 @@ class ToolGroup(node.Node):
                 value=runtime.NodeReference(node_id=self.id),
             )
 
-        num_tools = cast(pad.PropertySinkPad, self.get_pad("num_tools"))
-        if not num_tools:
-            num_tools = pad.PropertySinkPad(
-                id="num_tools",
+        config = cast(pad.PropertySinkPad, self.get_pad("config"))
+        if not config:
+            config = pad.PropertySinkPad(
+                id="config",
                 owner_node=self,
-                default_type_constraints=[pad_constraints.Integer()],
-                group="num_tools",
-                value=1,
+                default_type_constraints=[pad_constraints.Object()],
+                group="config",
+                value=DEFAULT_CONFIG,
             )
 
-        tools: list[pad.Pad] = []
-        for i in range(num_tools.get_value() or 1):
-            pad_id = f"tool_{i}"
-            tp = self.get_pad(pad_id)
-            if not tp:
-                tp = pad.PropertySinkPad(
-                    id=pad_id,
-                    owner_node=self,
-                    default_type_constraints=[
-                        pad_constraints.NodeReference(node_types=["Tool"])
-                    ],
-                    group="tool",
-                    value=None,
+        other_pads = [p for p in self.pads if p.get_id() not in ["config", "self"]]
+        self.pads = [config, self_pad] + other_pads
+        self.resolve_enabled_pads()
+
+    def resolve_enabled_pads(self):
+        config_pad = cast(pad.PropertySinkPad[dict[str, Any]], self.get_pad("config"))
+        self_pad = cast(pad.PropertySourcePad, self.get_pad("self"))
+        tools = config_pad.get_value().get("tools", [])
+        sanitized_tools: list[dict[str, Any]] = []
+        for tool in tools:
+            if not isinstance(tool, dict):
+                continue
+            name = tool.get("name")
+            if not name or not isinstance(name, str):
+                continue
+
+            parameters = tool.get("parameters")
+            if not parameters or not isinstance(parameters, dict):
+                continue
+
+            try:
+                jsonschema.validate(
+                    instance=parameters,
+                    schema={
+                        "type": "object",
+                        "properties": {
+                            "type": {"type": "string"},
+                            "properties": {"type": "object"},
+                            "required": {"type": "array"},
+                        },
+                        "required": ["type", "properties", "required"],
+                    },
                 )
-            tools.append(tp)
+            except jsonschema.ValidationError as e:
+                self.logger.warning(
+                    f"ToolGroup '{self.id}' tool '{name}' has invalid parameters schema: {str(e)}"
+                )
+                continue
 
-        self.pads = [num_tools, self_pad] + tools
+            sanitized_tools.append(tool)
 
-    def has_tool(self, tool_name: str) -> bool:
-        for tool in self.tool_nodes:
-            if tool.get_name() == tool_name:
-                return True
-        return False
+        tool_pads: list[pad.PropertySinkPad] = []
+        for tool in sanitized_tools:
+            pad_id = f"{tool['name']}"
+            if not self.get_pad(pad_id):
+                tool_pad = pad.PropertySinkPad(
+                    id=pad_id,
+                    group=pad_id,
+                    owner_node=self,
+                    default_type_constraints=[pad_constraints.Boolean()],
+                    value=True,
+                )
+                tool_pads.append(tool_pad)
+            else:
+                tool_pads.append(cast(pad.PropertySinkPad, self.get_pad(pad_id)))
+
+        self.pads = cast(list[pad.Pad], [config_pad, self_pad] + tool_pads)
+
+    def list_tool_definitions(self):
+        config_pad = cast(pad.PropertySinkPad[dict[str, Any]], self.get_pad("config"))
+        tools = config_pad.get_value().get("tools", [])
+        res: list[runtime.ToolDefinition] = []
+        for t in tools:
+            if not isinstance(t, dict):
+                continue
+
+            enabled_pad = cast(pad.PropertySinkPad, self.get_pad(t.get("name", "")))
+            if not enabled_pad or not enabled_pad.get_value():
+                continue
+
+            try:
+                client_def = client.ToolDefinition.model_validate(t)
+                runtime_def = mapper.Mapper.client_to_runtime(client_def)
+                if isinstance(runtime_def, runtime.ToolDefinition):
+                    res.append(runtime_def)
+            except Exception as e:
+                self.logger.warning(
+                    f"ToolGroup '{self.id}' has invalid tool definition: {str(e)}"
+                )
+                continue
+
+        return res
 
     async def call_tools(
         self,
         tool_calls: list[runtime.ToolCall],
-        ctx: pad.RequestContext,
-        timeout: float = 30.0,  # Added timeout parameter with default
-    ) -> list[str]:
+    ):
+        tool_definitions = self.list_tool_definitions()
         tasks: list[asyncio.Task[str]] = []
-        results: list[str] = []
-
-        for tc in tool_calls:
-            found_tool = False
-            for tool in self.tool_nodes:
-                if tool.get_name() == tc.name:
-                    task = asyncio.create_task(self._safe_tool_call(tool, tc, ctx))
-                    tasks.append(task)
-                    found_tool = True
-                    break
-
-            if not found_tool:
-                logging.warning(
-                    f"Tool call '{tc.name}' not found in ToolGroup '{self.id}'."
-                )
-                tasks.append(
-                    asyncio.create_task(
-                        asyncio.sleep(0, result=f"Tool '{tc.name}' not found.")
-                    )
-                )
-
-        try:
-            done, pending = await asyncio.wait(
-                tasks, timeout=timeout, return_when=asyncio.ALL_COMPLETED
+        results: list[str | BaseException] = []
+        for tool_call in tool_calls:
+            tool_defn = next(
+                (td for td in tool_definitions if td.name == tool_call.name), None
             )
+            if not tool_defn:
+                results.append(f"Tool '{tool_call.name}' not found")
+                continue
 
-            for task in done:
-                try:
-                    results.append(await task)
-                except asyncio.CancelledError:
-                    results.append(f"Tool call cancelled: {task.get_name()}")
-                except Exception as e:
-                    results.append(f"Tool call failed: {str(e)}")
+            if isinstance(
+                tool_defn.destination, runtime.ToolDefinitionDestination_Client
+            ):
+                task = asyncio.create_task(self._client_tool_call(tool_defn, tool_call))
+                tasks.append(task)
+            elif isinstance(
+                tool_defn.destination, runtime.ToolDefinitionDestination_Webhook
+            ):
+                task = asyncio.create_task(
+                    self._webhook_tool_call(tool_defn, tool_call)
+                )
+                tasks.append(task)
 
-            for task in pending:
-                task.cancel()
-                results.append(f"Tool call timed out after {timeout}s")
-
-            while len(results) < len(tool_calls):
-                results.append("Unknown error: Result missing")
-
-        except Exception as e:
-            logging.error(f"Error in call_tools: {str(e)}")
-            results = [f"System error: {str(e)}"] * len(tool_calls)
+        results = await asyncio.gather(*tasks, return_exceptions=True)
 
         return results
 
-    async def _safe_tool_call(
+    async def _webhook_tool_call(
         self,
-        tool: Any,  # Replace with actual tool type
+        tool: runtime.ToolDefinition,
         tc: runtime.ToolCall,
-        ctx: pad.RequestContext,
-    ) -> str:
-        try:
-            res = await tool.call_tool(tc, ctx)
-            return res
-        except asyncio.CancelledError:
-            return f"Tool '{tc.name}' cancelled"
-        except Exception as e:
-            logging.error(f"Error in tool '{tc.name}': {str(e)}")
-            return f"Tool '{tc.name}' failed: {str(e)}"
+    ):
+        assert isinstance(tool.destination, runtime.ToolDefinitionDestination_Webhook)
+        retry_policy = tool.destination.retry_policy
+        url = tool.destination.url
+        run_id = self.room.name
+        last_exception = None
+        for i in range(retry_policy.max_retries + 1):
+            sleep_time = retry_policy.initial_delay_seconds * (
+                retry_policy.backoff_factor**i
+            )
+            try:
+                async with aiohttp.ClientSession(
+                    headers={
+                        "x-run-id": run_id,
+                    }
+                ) as session:
+                    async with session.post(
+                        url,
+                        json={
+                            "tool_name": tool.name,
+                            "parameters": tc.arguments,
+                        },
+                    ) as response:
+                        if response.status == 200:
+                            data = await response.text()
+                            return data
+                        else:
+                            self.logger.warning(
+                                f"ToolGroup '{self.id}' webhook call to '{url}' failed with status {response.status}"
+                            )
+                            last_exception = Exception(
+                                f"Webhook tool call failed with status {response.status}"
+                            )
+                            if i < retry_policy.max_retries:
+                                await asyncio.sleep(sleep_time)
+            except Exception as e:
+                self.logger.warning(
+                    f"ToolGroup '{self.id}' webhook call to '{url}' failed with error: {str(e)}"
+                )
+                last_exception = e
+                self.logger.info(
+                    f"ToolGroup '{self.id}' retrying webhook call to '{url}' in {sleep_time} seconds"
+                )
+                if i < retry_policy.max_retries:
+                    await asyncio.sleep(sleep_time)
+
+        raise (
+            last_exception if last_exception else Exception("Webhook tool call failed")
+        )
+
+    async def _client_tool_call(
+        self,
+        tool: runtime.ToolDefinition,
+        tc: runtime.ToolCall,
+    ):
+        assert isinstance(tool.destination, runtime.ToolDefinitionDestination_Client)
+        fut = asyncio.Future[str]()
+        self.client_call_queue.put_nowait((tool, tc, fut))
+        return await fut
+
+    @property
+    def client_call_queue(
+        self,
+    ) -> asyncio.Queue[
+        Tuple[
+            runtime.ToolDefinition,
+            runtime.ToolCall,
+            asyncio.Future[str],
+        ]
+    ]:
+        if not hasattr(self, "_client_call_queue"):
+            self._client_call_queue = asyncio.Queue[
+                Tuple[
+                    runtime.ToolDefinition,
+                    runtime.ToolCall,
+                    asyncio.Future[str],
+                ]
+            ]()
+
+        return self._client_call_queue
