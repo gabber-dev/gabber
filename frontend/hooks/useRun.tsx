@@ -65,16 +65,10 @@ function Inner({
   const [runId, setRunId] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const startingRef = useRef(false);
-  const registered = useRef(false);
 
   useMemo(() => {
-    if (registered.current) {
-      return;
-    }
-    registered.current = true;
-    registerToolCallHandler("get_weather", async (params) => {
-      console.log("Getting weather for:", params);
-      return "Cold";
+    registerToolCallHandler("__gabber_test_tool__", async (params) => {
+      return `Test Response with params: ${JSON.stringify(params)}`;
     });
   }, [registerToolCallHandler]);
 
