@@ -115,7 +115,6 @@ class ToolGroup(node.Node):
         for tool in sanitized_tools:
             pad_id = f"{tool['name']}"
             if not self.get_pad(pad_id):
-                print("NEIL sanitized tool:", tool, pad_id)
                 tool_pad = pad.PropertySinkPad(
                     id=pad_id,
                     group=pad_id,
