@@ -83,6 +83,15 @@ class TTS(node.Node):
                 default_type_constraints=[pad_constraints.Audio()],
             )
 
+        audio_clip_source = cast(pad.StatelessSourcePad, self.get_pad("audio_clip"))
+        if audio_clip_source is None:
+            audio_clip_source = pad.StatelessSourcePad(
+                id="audio_clip",
+                group="audio_clip",
+                owner_node=self,
+                default_type_constraints=[pad_constraints.AudioClip()],
+            )
+
         cancel_trigger = cast(pad.StatelessSinkPad, self.get_pad("cancel_trigger"))
         if cancel_trigger is None:
             cancel_trigger = pad.StatelessSinkPad(
@@ -137,6 +146,7 @@ class TTS(node.Node):
             voice_id,
             text_sink,
             audio_source,
+            audio_clip_source,
             cancel_trigger,
             final_transcription_source,
             tts_started_source,
@@ -152,6 +162,9 @@ class TTS(node.Node):
         voice_id = self.get_property_sink_pad_required(str, "voice_id")
         audio_source = self.get_stateless_source_pad_required(
             runtime.AudioFrame, "audio"
+        )
+        audio_clip_source = self.get_stateless_source_pad_required(
+            runtime.AudioClip, "audio_clip"
         )
         text_sink = cast(
             pad.StatelessSinkPad[runtime.TextStream | str],
@@ -169,9 +182,7 @@ class TTS(node.Node):
         tts_ended_source = cast(
             pad.StatelessSourcePad, self.get_pad_required("tts_ended")
         )
-        is_talking = cast(
-            pad.PropertySourcePad, self.get_pad_required("is_talking")
-        )
+        is_talking = cast(pad.PropertySourcePad, self.get_pad_required("is_talking"))
         tts: BaseTTS
         if service.get_value().value == "gabber":
             tts = GabberTTS(api_key=api_key, logger=self.logger)
@@ -255,15 +266,23 @@ class TTS(node.Node):
                 is_talking.push_item(True, new_job.ctx)
                 tts_started_source.push_item(runtime.Trigger(), new_job.ctx)
                 try:
+                    all_audio_frames = []
                     async for audio_frame in new_job:
                         if clock_start_time is None:
                             clock_start_time = time.time()
+                        all_audio_frames.append(audio_frame)
                         audio_source.push_item(audio_frame, new_job.ctx)
                         played_time += audio_frame.original_data.duration
 
                         # Don't go faster than real-time
                         while (played_time + clock_start_time) - time.time() > 0.25:
                             await asyncio.sleep(0.05)
+
+                    audio_clip = runtime.AudioClip(
+                        audio=all_audio_frames,
+                        transcription=new_job.spoken_text,
+                    )
+                    audio_clip_source.push_item(audio_clip, new_job.ctx)
                 except Exception as e:
                     logging.error(f"Error occurred while processing TTS job: {e}")
                     final_transcription_source.push_item("", new_job.ctx)

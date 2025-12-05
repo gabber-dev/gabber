@@ -268,24 +268,6 @@ class LLMContext(node.Node):
                 assert isinstance(source_value, list)
                 source_value = cast(list[runtime.ContextMessage], source_value)
                 new_msgs = prune(source_value + [item.value])
-                # types = {"image": 0, "video": 0, "audio": 0, "text": 0}
-                # for m in new_msgs:
-                #     for c in m.content:
-                #         if isinstance(c, runtime.ContextMessageContentItem_Image):
-                #             types["image"] += 1
-                #         elif isinstance(
-                #             c, runtime.ContextMessageContentItem_Video
-                #         ):
-                #             types["video"] += 1
-                #         elif isinstance(
-                #             c, runtime.ContextMessageContentItem_Audio
-                #         ):
-                #             types["audio"] += 1
-                #         elif isinstance(
-                #             c, runtime.ContextMessageContentItem_Text
-                #         ):
-                #             types["text"] += 1
-                # logging.info(f"NEIL Context now has {types}")
                 if item.value.role == runtime.ContextMessageRoleEnum.USER:
                     new_user_message.push_item(item.value, item.ctx)
 
