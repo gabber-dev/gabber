@@ -26,6 +26,7 @@ from pydantic import TypeAdapter
 from ..node import Node
 from ..secret import PublicSecret, SecretProvider
 from gabber.nodes.core.sub_graph import SubGraph
+from typing import Any
 from gabber.utils import short_uuid
 from .runtime_api import RuntimeApi
 from ..types import pad_constraints, mapper, client, runtime
@@ -46,12 +47,14 @@ class Graph:
         secrets: list[PublicSecret],
         library_items: list[GraphLibraryItem],
         logger: logging.Logger | logging.LoggerAdapter,
+        extra: dict[str, Any] = {},
     ):
         self.id = id
         self.secret_provider = secret_provider
         self.secrets = secrets
         self.library_items = library_items
         self.logger = logger
+        self.extra = extra
 
         self.nodes: list[Node] = []
         self.portals: list[models.Portal] = []
@@ -203,6 +206,7 @@ class Graph:
             secrets=self.secrets,
             library_items=self.library_items,
             logger=self.logger,
+            extra=self.extra,
         )
         await graph.load_from_snapshot(subgraph_item.graph)
         node = SubGraph(

@@ -20,6 +20,7 @@ from gabber.core.secret import SecretProvider
 from .default_graph_library import DefaultGraphLibrary
 from .default_secret_provider import DefaultSecretProvider
 from gabber.core.logger import GabberLogHandler
+from typing import Any
 
 
 async def entrypoint_inner(
@@ -27,6 +28,7 @@ async def entrypoint_inner(
     graph_library: GraphLibrary,
     secret_provider: SecretProvider,
     extra_secrets_to_omit: list[str] = [],
+    extra: dict[str, Any] = {},
 ):
     md_str = ctx.job.metadata
     try:
@@ -64,6 +66,7 @@ async def entrypoint_inner(
         secret_provider=secret_provider,
         library_items=library_items,
         logger=logger,
+        extra=extra,
     )
     log_handler_t = asyncio.create_task(log_handler.run())
     await graph.load_from_snapshot(graph_rep)
