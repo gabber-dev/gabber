@@ -18,6 +18,7 @@ class MinimaxTTS(SingleplexWebSocketTTS):
         model: MinimaxModel,
         logger: logging.Logger | logging.LoggerAdapter,
     ):
+        super().__init__(logger=logger)
         self.api_key = api_key
         self.model = model
         self.logger = logger
@@ -44,6 +45,9 @@ class MinimaxTTS(SingleplexWebSocketTTS):
         }
 
     def push_text_payload(self, *, text: str, voice: str) -> dict[str, Any] | None:
+        text = self._emoji_remover.push_text(text)
+        text = self._parenthesis_remover.push_text(text)
+        text = self._italic_remover.push_text(text)
         return {
             "event": "task_continue",
             "text": text,

@@ -5,6 +5,7 @@ from .cartesia_tts import CartesiaTTS
 from .elevenlabs_tts import ElevenLabsTTS
 from .gabber_tts import GabberTTS
 from .openai_tts import OpenAITTS
+from .minimax_tts import MinimaxTTS
 from .tts import TTS, TTSSession
 
 __all__ = [
@@ -12,6 +13,7 @@ __all__ = [
     "ElevenLabsTTS",
     "CartesiaTTS",
     "OpenAITTS",
+    "MinimaxTTS",
     "TTS",
     "TTSSession",
 ]

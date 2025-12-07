@@ -227,7 +227,6 @@ class MultiplexWebSocketTTS(ABC, TTS):
 class SingleplexWebSocketTTS(ABC, TTS):
     def __init__(self, *, logger: logging.Logger | logging.LoggerAdapter):
         self._closed = False
-
         self._task_queue: asyncio.Queue[asyncio.Task | None] = asyncio.Queue()
         self.logger = logger
 
@@ -236,17 +235,21 @@ class SingleplexWebSocketTTS(ABC, TTS):
         r_44100hz = Resampler(44100)
         r_48000hz = Resampler(48000)
         headers = self.get_headers()
-        send_queue = asyncio.Queue[dict[str, Any] | None]()
 
         async def send_task(ws: aiohttp.ClientWebSocketResponse):
             while True:
-                send_item = await send_queue.get()
-                if send_item is None:
-                    await ws.close()
+                input_item = await session._text_queue.get()
+                if input_item is None:
+                    eos_msg = self.eos_payloads(voice=session.voice)
+                    for ws_msg in eos_msg:
+                        await ws.send_json(ws_msg)
                     break
 
                 try:
-                    await ws.send_json(send_item)
+                    text_msg = self.push_text_payload(
+                        text=input_item, voice=session.voice
+                    )
+                    await ws.send_json(text_msg)
                 except aiohttp.ClientError as e:
                     logging.error("WebSocket send failed", exc_info=e)
                     session._output_queue.put_nowait(Exception("WebSocket send failed"))
