@@ -9,7 +9,7 @@ from typing import cast
 from gabber.core import node, pad
 from gabber.core.types import runtime, pad_constraints
 from gabber.lib.tts import TTS as BaseTTS
-from gabber.lib.tts import CartesiaTTS, ElevenLabsTTS, GabberTTS, OpenAITTS
+from gabber.lib.tts import CartesiaTTS, ElevenLabsTTS, GabberTTS, OpenAITTS, MinimaxTTS
 
 
 class TTS(node.Node):
@@ -24,10 +24,6 @@ class TTS(node.Node):
         )
 
     def resolve_pads(self):
-        # Migrate from old version
-        PADS_TO_REMOVE = ["text_stream", "complete_text"]
-        self.pads = [p for p in self.pads if p.get_id() not in PADS_TO_REMOVE]
-
         service = cast(pad.PropertySinkPad, self.get_pad("service"))
         if not service:
             service = pad.PropertySinkPad(
@@ -36,7 +32,13 @@ class TTS(node.Node):
                 owner_node=self,
                 default_type_constraints=[
                     pad_constraints.Enum(
-                        options=["gabber", "cartesia", "elevenlabs", "openai"]
+                        options=[
+                            "gabber",
+                            "cartesia",
+                            "elevenlabs",
+                            "openai",
+                            "minimax",
+                        ]
                     )
                 ],
                 value=runtime.Enum(value="gabber"),
@@ -153,6 +155,33 @@ class TTS(node.Node):
             tts_ended_source,
             is_talking,
         ]
+        self.resolve_model_pad()
+
+    def resolve_model_pad(self):
+        service_pad = self.get_property_sink_pad_required(runtime.Enum, "service")
+        service_value = service_pad.get_value().value
+
+        enum_options = []
+        if service_value == "minimax":
+            enum_options = [
+                "speech-2.6-hd",
+                "speech-2.6-turbo",
+                "speech-02-hd",
+                "speech-02-turbo",
+            ]
+
+        model_pad = self.get_property_sink_pad(runtime.Enum, "model")
+        if not model_pad and enum_options:
+            model_pad = pad.PropertySinkPad(
+                id="model",
+                group="model",
+                owner_node=self,
+                default_type_constraints=[pad_constraints.Enum(options=enum_options)],
+                value=runtime.Enum(value=enum_options[0]),
+            )
+
+        if model_pad:
+            self.pads = [p for p in self.pads if p.get_id() != "model"] + [model_pad]
 
     async def run(self):
         api_key_pad = self.get_property_sink_pad_required(runtime.Secret, "api_key")
@@ -192,9 +221,15 @@ class TTS(node.Node):
             )
         elif service.get_value().value == "cartesia":
             tts = CartesiaTTS(api_key=api_key, logger=self.logger)
-        elif service.get_value() == "openai":
+        elif service.get_value().value == "openai":
             tts = OpenAITTS(
                 model="gpt-4o-mini-tts", api_key=api_key, logger=self.logger
+            )
+        elif service.get_value().value == "minimax":
+            tts = MinimaxTTS(
+                api_key=api_key,
+                model="speech-2.6-hd",
+                logger=self.logger,
             )
         else:
             raise ValueError(f"Unknown TTS service: {service.get_value()}")
