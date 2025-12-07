@@ -76,6 +76,7 @@ class MultiplexWebSocketTTS(ABC, TTS):
             while True:
                 send_item = await self._send_queue.get()
                 if send_item is None:
+                    await ws.close()
                     break
 
                 try:
@@ -217,6 +218,153 @@ class MultiplexWebSocketTTS(ABC, TTS):
 
     @abstractmethod
     def is_error_message(self, msg: dict[str, Any]) -> bool: ...
+
+    async def close(self):
+        self._closed = True
+        self._send_queue.put_nowait(None)
+
+
+class SingleplexWebSocketTTS(ABC, TTS):
+    def __init__(self, *, logger: logging.Logger | logging.LoggerAdapter):
+        self._closed = False
+
+        self._task_queue: asyncio.Queue[asyncio.Task | None] = asyncio.Queue()
+        self.logger = logger
+
+    async def session_task(self, session: "TTSSession"):
+        r_16000hz = Resampler(16000)
+        r_44100hz = Resampler(44100)
+        r_48000hz = Resampler(48000)
+        headers = self.get_headers()
+        send_queue = asyncio.Queue[dict[str, Any] | None]()
+
+        async def send_task(ws: aiohttp.ClientWebSocketResponse):
+            while True:
+                send_item = await send_queue.get()
+                if send_item is None:
+                    await ws.close()
+                    break
+
+                try:
+                    await ws.send_json(send_item)
+                except aiohttp.ClientError as e:
+                    logging.error("WebSocket send failed", exc_info=e)
+                    session._output_queue.put_nowait(Exception("WebSocket send failed"))
+                    break
+
+        async def receive_task(ws: aiohttp.ClientWebSocketResponse):
+            while True:
+                msg = await ws.receive()
+
+                # Handle different WebSocket message types
+                if msg.type == aiohttp.WSMsgType.TEXT:
+                    receive_item = msg.json()
+                elif msg.type == aiohttp.WSMsgType.CLOSE:
+                    self.logger.warning(
+                        f"WebSocket closed by server - code: {msg.data}, reason: {msg.extra}"
+                    )
+                    break
+                elif msg.type == aiohttp.WSMsgType.ERROR:
+                    self.logger.error(f"WebSocket error: {ws.exception()}")
+                    break
+                else:
+                    self.logger.warning(
+                        f"Unexpected WebSocket message type: {msg.type}"
+                    )
+                    raise ValueError(f"Unexpected WebSocket message type: {msg.type}")
+
+                if self.is_final_message(receive_item):
+                    session._output_queue.put_nowait(None)
+                elif self.is_audio_message(receive_item):
+                    bytes_24000 = self.get_pcm_bytes(receive_item)
+                    frame_data_24000 = AudioFrameData(
+                        data=np.frombuffer(bytes_24000, dtype=np.int16).reshape(1, -1),
+                        sample_rate=24000,
+                        num_channels=1,
+                    )
+                    frame_data_16000 = r_16000hz.push_audio(frame_data_24000)
+                    frame_data_44100 = r_44100hz.push_audio(frame_data_24000)
+                    frame_data_48000 = r_48000hz.push_audio(frame_data_24000)
+                    frame = AudioFrame(
+                        start_timestamp=time.time(),
+                        original_data=frame_data_24000,
+                        data_16000hz=frame_data_16000,
+                        data_24000hz=frame_data_24000,
+                        data_44100hz=frame_data_44100,
+                        data_48000hz=frame_data_48000,
+                    )
+                    session._output_queue.put_nowait(frame)
+                elif self.is_error_message(receive_item):
+                    self.logger.error(
+                        f"TTS error for session {self.get_error_message(receive_item)}"
+                    )
+                    error_message = self.get_error_message(receive_item)
+                    session._output_queue.put_nowait(Exception(error_message))
+
+        async with aiohttp.ClientSession(headers=headers) as http_session:
+            try:
+                ws = await http_session.ws_connect(self.get_url())
+                start_msg = self.start_session_payload(voice=session.voice)
+                await ws.send_json(start_msg)
+                self.logger.info("Connected to WebSocket")
+                await asyncio.gather(send_task(ws), receive_task(ws))
+            except Exception as e:
+                self.logger.error("WebSocket connection failed", exc_info=e)
+                session._output_queue.put_nowait(
+                    Exception("WebSocket connection failed")
+                )
+
+    async def run(self):
+        while True:
+            task = await self._task_queue.get()
+            if task is None:
+                break
+            await task
+
+    def __aiter__(self):
+        return self
+
+    def start_session(self, *, voice: str):
+        tts_sess = TTSSession(voice=voice, logger=self.logger)
+        t = asyncio.create_task(self.session_task(tts_sess))
+        self._task_queue.put_nowait(t)
+        return tts_sess
+
+    @abstractmethod
+    def get_url(self) -> str: ...
+
+    @abstractmethod
+    def get_headers(self) -> dict[str, str]:
+        """Return headers to be used in the WebSocket connection."""
+        return {}
+
+    @abstractmethod
+    def start_session_payload(self, *, voice: str) -> dict[str, Any] | None: ...
+
+    @abstractmethod
+    def push_text_payload(self, *, voice: str, text: str) -> dict[str, Any] | None: ...
+
+    @abstractmethod
+    def eos_payloads(self, *, voice: str) -> list[dict[str, Any]]: ...
+
+    @abstractmethod
+    def get_pcm_bytes(self, msg: dict[str, Any]) -> bytes: ...
+
+    @abstractmethod
+    def get_error_message(self, msg: dict[str, Any]) -> str: ...
+
+    @abstractmethod
+    def is_audio_message(self, msg: dict[str, Any]) -> bool: ...
+
+    @abstractmethod
+    def is_final_message(self, msg: dict[str, Any]) -> bool: ...
+
+    @abstractmethod
+    def is_error_message(self, msg: dict[str, Any]) -> bool: ...
+
+    async def close(self):
+        self._closed = True
+        self._task_queue.put_nowait(None)
 
 
 class TTSSession:
