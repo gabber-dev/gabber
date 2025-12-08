@@ -114,6 +114,17 @@ class TTS(node.Node):
                 default_type_constraints=[pad_constraints.String()],
             )
 
+        transcription_source = cast(
+            pad.StatelessSourcePad, self.get_pad("transcription")
+        )
+        if transcription_source is None:
+            transcription_source = pad.StatelessSourcePad(
+                id="transcription",
+                group="transcription",
+                owner_node=self,
+                default_type_constraints=[pad_constraints.TextStream()],
+            )
+
         tts_started_source = cast(pad.StatelessSourcePad, self.get_pad("tts_started"))
         if tts_started_source is None:
             tts_started_source = pad.StatelessSourcePad(
@@ -151,6 +162,7 @@ class TTS(node.Node):
             audio_clip_source,
             cancel_trigger,
             final_transcription_source,
+            transcription_source,
             tts_started_source,
             tts_ended_source,
             is_talking,
@@ -211,7 +223,11 @@ class TTS(node.Node):
         tts_ended_source = cast(
             pad.StatelessSourcePad, self.get_pad_required("tts_ended")
         )
+        transcription_source = cast(
+            pad.StatelessSourcePad, self.get_pad_required("transcription")
+        )
         is_talking = cast(pad.PropertySourcePad, self.get_pad_required("is_talking"))
+
         tts: BaseTTS
         if service.get_value().value == "gabber":
             tts = GabberTTS(api_key=api_key, logger=self.logger)
@@ -237,6 +253,8 @@ class TTS(node.Node):
         running_job: TTSJob | None = None
 
         tts_run_task = asyncio.create_task(tts.run())
+
+        chars_per_second = 15.0
 
         async def cancel_task():
             nonlocal running_job
@@ -286,7 +304,7 @@ class TTS(node.Node):
                     job.eos()
 
         async def job_task():
-            nonlocal running_job
+            nonlocal running_job, chars_per_second
             while True:
                 new_job = await job_queue.get()
                 if new_job is None:
@@ -300,6 +318,8 @@ class TTS(node.Node):
                 )  # Speech playout can take a while so we snooze the timeout. TODO: make this tied to the actual audio playout duration
                 is_talking.push_item(True, new_job.ctx)
                 tts_started_source.push_item(runtime.Trigger(), new_job.ctx)
+                transcription_stream = runtime.TextStream()
+                transcription_source.push_item(transcription_stream, new_job.ctx)
                 try:
                     all_audio_frames = []
                     async for audio_frame in new_job:
@@ -308,6 +328,11 @@ class TTS(node.Node):
                         all_audio_frames.append(audio_frame)
                         audio_source.push_item(audio_frame, new_job.ctx)
                         played_time += audio_frame.original_data.duration
+
+                        text = new_job._running_text
+                        end_idx = min(int(played_time * chars_per_second), len(text))
+                        chars = text[:end_idx]
+                        transcription_stream.push_text(chars)
 
                         # Don't go faster than real-time
                         while (played_time + clock_start_time) - time.time() > 0.25:
@@ -324,11 +349,13 @@ class TTS(node.Node):
                     is_talking.push_item(False, new_job.ctx)
                     tts_ended_source.push_item(runtime.Trigger(), new_job.ctx)
                     new_job.ctx.complete()
+                    transcription_stream.eos()
                     continue
 
                 final_transcription_source.push_item(new_job.spoken_text, new_job.ctx)
                 is_talking.push_item(False, new_job.ctx)
                 tts_ended_source.push_item(runtime.Trigger(), new_job.ctx)
+                transcription_stream.eos()
                 new_job.ctx.complete()
 
         await asyncio.gather(
