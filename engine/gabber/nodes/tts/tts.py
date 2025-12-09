@@ -320,8 +320,8 @@ class TTS(node.Node):
                 tts_started_source.push_item(runtime.Trigger(), new_job.ctx)
                 transcription_stream = runtime.TextStream()
                 transcription_source.push_item(transcription_stream, new_job.ctx)
+                all_audio_frames = []
                 try:
-                    all_audio_frames = []
                     async for audio_frame in new_job:
                         if clock_start_time is None:
                             clock_start_time = time.time()
@@ -338,14 +338,15 @@ class TTS(node.Node):
                         while (played_time + clock_start_time) - time.time() > 0.25:
                             await asyncio.sleep(0.05)
 
+                except Exception as e:
+                    logging.error(f"Error occurred while processing TTS job: {e}")
+                    final_transcription_source.push_item("", new_job.ctx)
                     audio_clip = runtime.AudioClip(
                         audio=all_audio_frames,
                         transcription=new_job.spoken_text,
                     )
                     audio_clip_source.push_item(audio_clip, new_job.ctx)
-                except Exception as e:
-                    logging.error(f"Error occurred while processing TTS job: {e}")
-                    final_transcription_source.push_item("", new_job.ctx)
+                    all_audio_frames = []
                     is_talking.push_item(False, new_job.ctx)
                     tts_ended_source.push_item(runtime.Trigger(), new_job.ctx)
                     new_job.ctx.complete()
@@ -353,6 +354,12 @@ class TTS(node.Node):
                     continue
 
                 final_transcription_source.push_item(new_job.spoken_text, new_job.ctx)
+                audio_clip = runtime.AudioClip(
+                    audio=all_audio_frames,
+                    transcription=new_job.spoken_text,
+                )
+                audio_clip_source.push_item(audio_clip, new_job.ctx)
+                all_audio_frames = []
                 is_talking.push_item(False, new_job.ctx)
                 tts_ended_source.push_item(runtime.Trigger(), new_job.ctx)
                 transcription_stream.eos()
