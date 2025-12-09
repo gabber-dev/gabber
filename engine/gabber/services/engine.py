@@ -72,9 +72,13 @@ async def entrypoint_inner(
     await graph.load_from_snapshot(graph_rep)
     await ctx.connect()
     room = ctx.room
-    graph_t: asyncio.Task | None = asyncio.create_task(
-        graph.run(room=room, runtime_api=runtime_api)
-    )
+    graph_t = asyncio.create_task(graph.run(room=room, runtime_api=runtime_api))
+
+    async def shutdown():
+        logger.info("Shutdown signal received. Cancelling graph task...")
+        graph_t.cancel()
+
+    ctx.add_shutdown_callback(shutdown)
 
     try:
         await graph_t
@@ -94,7 +98,10 @@ async def entrypoint_inner(
 async def entrypoint(ctx: agents.JobContext):
     graph_library: GraphLibrary = DefaultGraphLibrary()
     secret_provider: SecretProvider = DefaultSecretProvider()
-    await entrypoint_inner(ctx, graph_library, secret_provider)
+    try:
+        await entrypoint_inner(ctx, graph_library, secret_provider)
+    except Exception as e:
+        logging.error(f"Engine entrypoint failed: {str(e)}")
 
 
 def cpu_load_fnc(worker: agents.Worker) -> float:
