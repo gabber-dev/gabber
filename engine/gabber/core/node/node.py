@@ -190,3 +190,5 @@ class Node:
                         pad.disconnect(np)
         except Exception as e:
             print(f"Error disconnecting pads for node {self.id}: {e}")
+
+    async def cleanup(self): ...

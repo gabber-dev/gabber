@@ -623,6 +623,19 @@ class Graph:
             except asyncio.CancelledError:
                 self.logger.info(f"Node {n_t.get_name()} run cancelled.")
 
+        async def cleanup_node(n: Node):
+            try:
+                await asyncio.wait_for(n.cleanup(), timeout=10.0)
+                n.logger.info(f"Node {n.id} cleanup completed.")
+            except asyncio.TimeoutError:
+                n.logger.warning(f"Timeout during cleanup of node {n.id}.")
+            except Exception as e:
+                n.logger.error(f"Error in node {n.id} cleanup: {e}", exc_info=e)
+
+        cleanup_tasks = [cleanup_node(n) for n in self.nodes]
+
+        await asyncio.gather(*cleanup_tasks)
+
         self.logger.info("Graph run completed.")
 
 

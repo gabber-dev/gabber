@@ -25,6 +25,7 @@ class MinimaxTTS(SingleplexWebSocketTTS):
         self._italic_remover = ItalicRemover()
         self._parenthesis_remover = ParenthesisRemover()
         self._emoji_remover = EmojiRemover()
+        self._running_text = ""  # TODO: For now, minimax does not support context continuation well. Instead of tokenizing sentences, we will just send the full text each time.
 
     def start_session_payload(self, *, voice: str) -> dict[str, Any]:
         return {
@@ -48,17 +49,21 @@ class MinimaxTTS(SingleplexWebSocketTTS):
         text = self._emoji_remover.push_text(text)
         text = self._parenthesis_remover.push_text(text)
         text = self._italic_remover.push_text(text)
-        return {
-            "event": "task_continue",
-            "text": text,
-        }
+        self._running_text += text
+        return None
 
     def eos_payloads(self, *, voice: str) -> list[dict[str, Any]]:
-        return [
+        msgs = [
+            {
+                "event": "task_continue",
+                "text": self._running_text,
+            },
             {
                 "event": "task_finish",
-            }
+            },
         ]
+        self._running_text = ""
+        return msgs
 
     def get_context_id(self, msg: dict[str, Any]) -> str | None:
         return msg.get("session_id")
