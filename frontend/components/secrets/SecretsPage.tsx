@@ -1,8 +1,3 @@
-/**
- * Copyright 2025 Fluently AI, Inc. DBA Gabber. All rights reserved.
- * SPDX-License-Identifier: SUL-1.0
- */
-
 "use client";
 
 import { useRepository } from "@/hooks/useRepository";
@@ -12,6 +7,7 @@ import {
   KeyIcon,
   PencilIcon,
   TrashIcon,
+  DocumentDuplicateIcon, // new icon for copy
 } from "@heroicons/react/24/outline";
 
 interface SecretsPageProps {
@@ -36,6 +32,20 @@ export function SecretsPage({ storageDescription }: SecretsPageProps = {}) {
     name: string;
   } | null>(null);
   const [editValue, setEditValue] = useState("");
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    // DaisyUI toast (you can replace with your own toast library if preferred)
+    const toast = document.createElement("div");
+    toast.className = "toast toast-top toast-center";
+    toast.innerHTML = `
+      <div class="alert alert-success">
+        <span>Copied secret ID to clipboard!</span>
+      </div>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2000);
+  };
 
   const handleDeleteSecret = async (secretId: string, secretName: string) => {
     if (
@@ -90,7 +100,7 @@ export function SecretsPage({ storageDescription }: SecretsPageProps = {}) {
   const startEditing = (secretId: string, secretName: string) => {
     setEditingSecret({ id: secretId, name: secretName });
     setEditValue("");
-    setShowAddForm(false); // Close add form if open
+    setShowAddForm(false);
   };
 
   const cancelEditing = () => {
@@ -110,7 +120,7 @@ export function SecretsPage({ storageDescription }: SecretsPageProps = {}) {
         <button
           onClick={() => {
             setShowAddForm(true);
-            setEditingSecret(null); // Close edit if open
+            setEditingSecret(null);
           }}
           className="btn btn-primary gap-2"
           disabled={showAddForm || editingSecret !== null}
@@ -120,6 +130,7 @@ export function SecretsPage({ storageDescription }: SecretsPageProps = {}) {
         </button>
       </div>
 
+      {/* Add form and edit form remain unchanged */}
       {showAddForm && (
         <div className="card bg-base-200 shadow-lg mb-6">
           <div className="card-body">
@@ -273,9 +284,21 @@ export function SecretsPage({ storageDescription }: SecretsPageProps = {}) {
                   {secrets.map((secret) => (
                     <tr key={secret.id} className="hover">
                       <td>
-                        <div className="flex items-center gap-2">
-                          <KeyIcon className="w-4 h-4 text-primary" />
-                          <span className="font-medium">{secret.name}</span>
+                        <div className="flex items-center gap-3">
+                          <KeyIcon className="w-5 h-5 text-primary" />
+                          <div>
+                            <div className="font-medium">{secret.name}</div>
+                            <button
+                              onClick={() => copyToClipboard(secret.id)}
+                              className="flex items-center gap-1 text-xs text-base-content/60 hover:text-primary transition-colors"
+                              title="Copy secret ID"
+                            >
+                              <code className="font-mono bg-base-200 px-2 py-1 rounded">
+                                {secret.id}
+                              </code>
+                              <DocumentDuplicateIcon className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       </td>
                       <td className="text-right">
