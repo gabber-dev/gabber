@@ -9,6 +9,7 @@ import {
   TrashIcon,
   DocumentDuplicateIcon, // new icon for copy
 } from "@heroicons/react/24/outline";
+import toast from "react-hot-toast";
 
 interface SecretsPageProps {
   storageDescription?: string | null;
@@ -35,16 +36,7 @@ export function SecretsPage({ storageDescription }: SecretsPageProps = {}) {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    // DaisyUI toast (you can replace with your own toast library if preferred)
-    const toast = document.createElement("div");
-    toast.className = "toast toast-top toast-center";
-    toast.innerHTML = `
-      <div class="alert alert-success">
-        <span>Copied secret ID to clipboard!</span>
-      </div>
-    `;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 2000);
+    toast.success("Secret ID copied to clipboard");
   };
 
   const handleDeleteSecret = async (secretId: string, secretName: string) => {
