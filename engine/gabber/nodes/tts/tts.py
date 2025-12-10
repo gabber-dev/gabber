@@ -362,6 +362,7 @@ class TTS(node.Node):
                 all_audio_frames = []
                 is_talking.push_item(False, new_job.ctx)
                 tts_ended_source.push_item(runtime.Trigger(), new_job.ctx)
+                transcription_stream.push_text(new_job.spoken_text)
                 transcription_stream.eos()
                 new_job.ctx.complete()
 
