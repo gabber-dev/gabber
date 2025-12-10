@@ -64,27 +64,6 @@ class MinimaxTTS(TTS):
             },
         }
 
-    def push_text_payload(self, *, text: str, voice: str) -> dict[str, Any] | None:
-        text = self._emoji_remover.push_text(text)
-        text = self._parenthesis_remover.push_text(text)
-        text = self._italic_remover.push_text(text)
-        self._running_text += text
-        return None
-
-    def eos_payloads(self, *, voice: str) -> list[dict[str, Any]]:
-        msgs = [
-            {
-                "event": "task_continue",
-                "text": self._running_text,
-            },
-            # {
-            #     "event": "task_finish",
-            # },
-        ]
-        self._running_text = ""
-        self.logger.info(f"NEIL EOS payloads: {msgs}")
-        return msgs
-
     def get_pcm_bytes(self, msg: dict[str, Any]) -> bytes:
         hex_data = msg["data"]["audio"]
         audio_bytes = bytes.fromhex(hex_data)
@@ -117,7 +96,6 @@ class MinimaxTTS(TTS):
         async def receive_task(ws: aiohttp.ClientWebSocketResponse):
             while True:
                 msg = await ws.receive()
-                self.logger.info(f"NEIL Received WebSocket message: {msg}")
 
                 # Handle different WebSocket message types
                 if msg.type == aiohttp.WSMsgType.TEXT:
@@ -175,16 +153,19 @@ class MinimaxTTS(TTS):
                         break
 
                 receive_t = asyncio.create_task(receive_task(ws))
+                running_text = ""
                 while True:
                     input_item = await session._text_queue.get()
                     if input_item is None:
+                        await ws.send_json(
+                            {"event": "task_continue", "text": running_text}
+                        )
                         await ws.send_json({"event": "task_finish"})
                         break
 
-                    await ws.send_json({"event": "task_continue", "text": input_item})
+                    running_text += input_item
 
                 await receive_t
-
                 self.logger.info("Minimax task started")
             except Exception as e:
                 self.logger.error("WebSocket connection failed", exc_info=e)
