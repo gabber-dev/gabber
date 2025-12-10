@@ -96,7 +96,6 @@ class MinimaxTTS(TTS):
         async def receive_task(ws: aiohttp.ClientWebSocketResponse):
             while True:
                 msg = await ws.receive()
-                self.logger.info(f"NEIL Received WebSocket message: {msg}")
 
                 # Handle different WebSocket message types
                 if msg.type == aiohttp.WSMsgType.TEXT:
