@@ -104,7 +104,7 @@ async def entrypoint(ctx: agents.JobContext):
         logging.error(f"Engine entrypoint failed: {str(e)}")
 
 
-def cpu_load_fnc(worker: agents.Worker) -> float:
+def cpu_load_fnc(worker: agents.AgentServer) -> float:
     return float(len(worker.active_jobs)) / 8
 
 
