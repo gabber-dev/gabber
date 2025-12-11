@@ -76,7 +76,7 @@ export function BaseBlock({ data }: BaseBlockProps) {
     return <Jinja2Node data={data} />;
   }
 
-  if (data.type === "LLMContext") {
+  if (data.type.indexOf("LLMContext") !== -1) {
     return <LLMContextNode data={data} />;
   }
 
