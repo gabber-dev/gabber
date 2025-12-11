@@ -248,43 +248,52 @@ class RuntimeApi:
                         QueueItem(payload=complete_resp, participant=packet.participant)
                     )
                     return
-                if not isinstance(pad_obj, pad.SourcePad):
-                    logging.error(f"Pad {pad_id} in node {node_id} is not a SourcePad.")
-                    complete_resp.error = (
-                        f"Pad {pad_id} in node {node_id} is not a SourcePad."
-                    )
-                    self._dc_queue.put_nowait(
-                        QueueItem(payload=complete_resp, participant=packet.participant)
-                    )
-                    return
-
-                tcs = pad_obj.get_type_constraints()
-                if not tcs or len(tcs) != 1:
-                    logging.error(
-                        f"Pad {pad_id} in node {node_id} has no type constraints."
-                    )
-                    complete_resp.error = (
-                        f"Pad {pad_id} in node {node_id} has no type constraints."
-                    )
-                    self._dc_queue.put_nowait(
-                        QueueItem(payload=complete_resp, participant=packet.participant)
-                    )
-                    return
                 parsed: client.ClientPadValue = None
                 if payload.value is not None:
                     parsed = client_value_adapter.validate_python(payload.value)
                 value = mapper.Mapper.client_to_runtime(parsed)
-                ctx = pad.RequestContext(parent=None, publisher_metadata=None)
-                complete_resp.payload = RuntimeResponsePayload_PushValue(
-                    type="push_value"
-                )
-                pad_obj.push_item(value, ctx)
-                ctx.add_done_callback(
-                    lambda _: self._dc_queue.put_nowait(
-                        QueueItem(payload=complete_resp, participant=packet.participant)
+                if isinstance(pad_obj, pad.SourcePad):
+                    ctx = pad.RequestContext(parent=None, publisher_metadata=None)
+                    pad_obj.push_item(value, ctx)
+                    complete_resp.payload = RuntimeResponsePayload_PushValue(
+                        type="push_value"
                     )
-                )
-                ctx.complete()
+                    ctx.add_done_callback(
+                        lambda _: self._dc_queue.put_nowait(
+                            QueueItem(
+                                payload=complete_resp, participant=packet.participant
+                            )
+                        )
+                    )
+                    ctx.complete()
+                elif isinstance(pad_obj, pad.SinkPad):
+                    if not isinstance(pad_obj, pad.PropertyPad):
+                        logging.error(
+                            f"Pad {pad_id} in node {node_id} is not a PropertyPad."
+                        )
+                        complete_resp.error = (
+                            f"Pad {pad_id} in node {node_id} is not a PropertyPad."
+                        )
+                        self._dc_queue.put_nowait(
+                            QueueItem(
+                                payload=complete_resp, participant=packet.participant
+                            )
+                        )
+                        return
+                    ctx = pad.RequestContext(parent=None, publisher_metadata=None)
+                    pad_obj._set_value(value)
+                    complete_resp.payload = RuntimeResponsePayload_PushValue(
+                        type="push_value"
+                    )
+                    ctx.add_done_callback(
+                        lambda _: self._dc_queue.put_nowait(
+                            QueueItem(
+                                payload=complete_resp, participant=packet.participant
+                            )
+                        )
+                    )
+                    ctx.complete()
+
             elif request.payload.type == "get_value":
                 payload = request.payload
                 node_id = payload.node_id
