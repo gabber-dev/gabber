@@ -179,6 +179,16 @@ function ContextMessageItem({ item }: { item: ContextMessage }) {
           <ContentItem key={index} item={contentItem} />
         ))}
       </div>
+      <div className="max-w-none pt-1">
+        {item.refusal && (
+          <div className="p-2 bg-base-300 rounded-box">
+            <div className="font-mono text-sm font-bold text-error mb-2">
+              Refusal
+            </div>
+            <div>{item.refusal}</div>
+          </div>
+        )}
+      </div>
       {item.tool_calls && item.tool_calls.length > 0 && (
         <div className="pt-1 border-t border-base-300">
           <div className="text-sm">
