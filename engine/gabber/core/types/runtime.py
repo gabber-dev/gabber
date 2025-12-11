@@ -405,6 +405,7 @@ class ContextMessage(BaseModel, BaseRuntimeType):
     content: list[ContextMessageContentItem]
     tool_calls: list[ToolCall]
     tool_call_id: str | None = None
+    refusal: str | None = None
 
     @field_serializer("content")
     def serialize_value(self, content: list[ContextMessageContentItem]):

@@ -101,6 +101,7 @@ class ContextMessage(BaseModel):
     role: ContextMessageRole
     tool_calls: list[ToolCall]
     tool_call_id: str | None = None
+    refusal: str | None = None
     content: list[ContextMessageContentItem]
 
 
