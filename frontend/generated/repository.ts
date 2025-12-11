@@ -273,6 +273,7 @@ export type Index = number;
 export type Name2 = string;
 export type ToolCalls = ToolCall[];
 export type ToolCallId = string | null;
+export type Refusal = string | null;
 export type ContentType = "text" | "image" | "audio" | "video";
 export type Text = string | null;
 export type Width = number;
@@ -740,6 +741,7 @@ export interface ContextMessage1 {
   role: ContextMessageRole1;
   tool_calls: ToolCalls;
   tool_call_id?: ToolCallId;
+  refusal?: Refusal;
   content: Content;
   [k: string]: unknown;
 }
