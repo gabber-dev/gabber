@@ -188,6 +188,7 @@ class Mapper:
                 for tc in runtime_value.tool_calls
             ],
             content=cnts,
+            refusal=runtime_value.refusal,
         )
 
     @staticmethod
@@ -252,6 +253,7 @@ class Mapper:
             tool_call_id=client_value.tool_call_id,
             role=runtime.ContextMessageRoleEnum(client_value.role.value),
             content=cnts,
+            refusal=client_value.refusal,
         )
 
     @staticmethod
