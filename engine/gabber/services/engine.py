@@ -29,6 +29,7 @@ async def entrypoint_inner(
     secret_provider: SecretProvider,
     extra_secrets_to_omit: list[str] = [],
     extra: dict[str, Any] = {},
+    emit_logs: bool = True,
 ):
     md_str = ctx.job.metadata
     try:
@@ -54,7 +55,7 @@ async def entrypoint_inner(
     all_secrets.extend(extra_secrets_to_omit)
     runtime_api = RuntimeApi(room=ctx.room)
     log_handler = GabberLogHandler(
-        runtime_api=runtime_api, secrets_to_remove=all_secrets
+        runtime_api=runtime_api, secrets_to_remove=all_secrets, emit_logs=emit_logs
     )
     logger = logging.getLogger()
     logger.setLevel(logging.INFO)
