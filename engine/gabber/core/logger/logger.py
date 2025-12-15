@@ -10,8 +10,14 @@ from ..graph.runtime_api import RuntimeApi, RuntimeEventPayload_LogItem
 
 
 class GabberLogHandler(logging.Handler):
-    def __init__(self, runtime_api: RuntimeApi, secrets_to_remove: list[str]):
+    def __init__(
+        self,
+        runtime_api: RuntimeApi,
+        secrets_to_remove: list[str],
+        emit_logs: bool = True,
+    ):
         super().__init__()
+        self.emit_logs = emit_logs
         self.secrets_to_remove = secrets_to_remove
         self._runtime_api = runtime_api
         self.q = queue.Queue[RuntimeEventPayload_LogItem]()
@@ -57,7 +63,8 @@ class GabberLogHandler(logging.Handler):
 
             if entries:
                 try:
-                    self._runtime_api.emit_logs(entries)
+                    if self.emit_logs:
+                        self._runtime_api.emit_logs(entries)
                 except Exception as e:
                     logging.error(f"Failed to publish log entry: {e}")
 
