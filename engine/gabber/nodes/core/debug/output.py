@@ -79,6 +79,8 @@ class Output(Node):
         video = self.get_stateless_sink_pad_required(runtime.VideoFrame, "video")
 
         async def audio_consume():
+            if audio.get_previous_pad() is None:
+                return
             source = rtc.AudioSource(24000, 1)
             track = rtc.LocalAudioTrack.create_audio_track(f"{self.id}:audio", source)
             options = rtc.TrackPublishOptions()
@@ -96,6 +98,8 @@ class Output(Node):
                 item.ctx.complete()
 
         async def video_consume():
+            if video.get_previous_pad() is None:
+                return
             source = rtc.VideoSource(width=640, height=480)
             track = rtc.LocalVideoTrack.create_video_track(f"{self.id}:video", source)
             options = rtc.TrackPublishOptions()
