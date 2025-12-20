@@ -1,6 +1,6 @@
 import { useEditor } from "@/hooks/useEditor";
 import { usePropertyPad } from "./blocks/components/pads/hooks/usePropertyPad";
-import { ContextMessage, List, PadValue, ToolCall } from "@gabber/client-react";
+import { ContextMessage, List, PadValue } from "@gabber/client-react";
 import { ContextMessageContentItem } from "@/generated/editor";
 import { useEffect, useRef, useState } from "react";
 

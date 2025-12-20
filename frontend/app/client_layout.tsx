@@ -103,12 +103,9 @@ export function ClientLayout({
     return await deleteSecret(id);
   }, []);
 
-  const importSubGraphImpl = useCallback(
-    async (exp: SubGraphExport) => {
-      return await importSubGraph(exp);
-    },
-    [],
-  );
+  const importSubGraphImpl = useCallback(async (exp: SubGraphExport) => {
+    return await importSubGraph(exp);
+  }, []);
 
   const exportSubGraphImpl = useCallback(async (subGraphId: string) => {
     return await exportSubGraph(subGraphId);

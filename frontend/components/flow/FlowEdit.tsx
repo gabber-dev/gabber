@@ -69,8 +69,6 @@ function FlowEditInner({ editable }: Props) {
     onReactFlowNodesChange,
     onReactFlowConnect,
     detailedView,
-    setDetailedView,
-    setLogsShowing,
   } = useEditor();
   const { screenToFlowPosition } = useReactFlow();
   const [quickAdd, setQuickAdd] = useState<QuickAddProps | undefined>(
