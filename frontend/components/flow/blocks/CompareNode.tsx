@@ -13,7 +13,7 @@ import { useMemo } from "react";
 import { NodeEditorRepresentation } from "@/generated/repository";
 import { NodeName } from "./components/NodeName";
 import { NodeId } from "./components/NodeId";
-import { Boolean, Enum, Integer, String } from "@gabber/client-react";
+import { Enum, Integer, String } from "@gabber/client-react";
 
 export function CompareNode({}: BaseBlockProps) {
   return (

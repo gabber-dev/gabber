@@ -9,7 +9,6 @@ import { StringPropertyEdit } from "./StringPropertyEdit";
 import { FloatPropertyEdit } from "./FloatPropertyEdit";
 import { IntPropertyEdit } from "./IntPropertyEdit";
 import { BooleanPropertyEdit } from "./BooleanPropertyEdit";
-import { JsonSchemaEdit } from "./JsonSchemaEdit";
 import { NodeReferenceEdit } from "./NodeReferenceEdit";
 import { SecretPropertyEdit } from "./SecretPropertyEdit";
 
@@ -45,10 +44,6 @@ export function PropertyEdit({ nodeId, padId }: PropertyEditProps) {
 
   if (singleAllowedType.type === "boolean") {
     return <BooleanPropertyEdit nodeId={nodeId} padId={padId} />;
-  }
-
-  if (singleAllowedType.type === "schema") {
-    return <JsonSchemaEdit nodeId={nodeId} padId={padId} />;
   }
 
   if (singleAllowedType.type === "node_reference") {

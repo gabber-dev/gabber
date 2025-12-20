@@ -12,11 +12,11 @@ import { CubeIcon } from "@heroicons/react/24/outline";
 import { useStatelessPad } from "./components/pads/hooks/useStatelessPad";
 import { NodeName } from "./components/NodeName";
 import { NodeId } from "./components/NodeId";
-import { Object1, Value6 } from "@/generated/editor";
+import { Object, Value6 } from "@/generated/editor";
 
 export function JsonNode({ data }: BaseBlockProps) {
   const {} = useEditor();
-  const { runtimeValue, setEditorValue, pad } = usePropertyPad<Object1>(
+  const { runtimeValue, setEditorValue, pad } = usePropertyPad<Object>(
     data.id,
     "value",
   );

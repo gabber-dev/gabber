@@ -6,7 +6,7 @@
 import {
   BasePadType,
   NodeEditorRepresentation,
-  Object1,
+  Object,
 } from "@/generated/editor";
 import {
   Edge,
@@ -88,7 +88,7 @@ export function StateMachineProvider({ children, nodeId }: Props) {
   const {
     editorValue: configurationPadValue,
     setEditorValue: setConfiguration,
-  } = usePropertyPad<Object1>(nodeId || "", "configuration");
+  } = usePropertyPad<Object>(nodeId || "", "configuration");
 
   const configuration = configurationPadValue?.value as
     | StateMachineConfiguration
